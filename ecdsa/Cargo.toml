@@ -5,9 +5,9 @@ authors = ["RustCrypto Developers"]
 license = "Apache-2.0 OR MIT"
 description = "Elliptic Curve Digital Signature Algorithm"
 documentation = "https://docs.rs/ecdsa"
-repository = "https://github.com/RustCrypto/ecdsa"
+repository = "https://github.com/RustCrypto/signatures"
 categories = ["cryptography", "no-std"]
 keywords = ["crypto", "ecc", "ecdsa", "signature", "signing"]
 
 [dependencies]
-signature-traits = { version = "0", path = "../signature-traits" }
+signature = { version = "0", path = "../signature-crate" }

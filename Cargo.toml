@@ -2,5 +2,5 @@
 members = [
     "ecdsa",
     "ed25519",
-    "signature-traits",
+    "signature-crate",
 ]
