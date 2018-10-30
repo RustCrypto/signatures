@@ -1,0 +1,12 @@
+[package]
+name = "signature-traits"
+version = "0.0.0"
+authors = ["RustCrypto Developers"]
+license = "Apache-2.0 OR MIT"
+description = "Traits for cryptographic signature algorithms"
+documentation = "https://docs.rs/signature-traits"
+repository = "https://github.com/RustCrypto/signature-algorithms"
+keywords = ["crypto", "signature", "signing"]
+categories = ["cryptography", "no-std"]
+
+[dependencies]
