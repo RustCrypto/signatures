@@ -10,3 +10,8 @@ keywords = ["crypto", "signature", "signing"]
 categories = ["cryptography", "no-std"]
 
 [dependencies]
+
+[features]
+alloc = []
+default = ["std"]
+std = ["alloc"]
