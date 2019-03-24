@@ -1,5 +1,10 @@
-//! Trait for verifying digital signatures of message bytestrings
+//! Trait for verifying digital signatures
 
+#[cfg(feature = "digest")]
+pub(crate) mod digest;
+
+#[cfg(feature = "digest")]
+pub use self::digest::VerifyDigest;
 use crate::{error::Error, Signature};
 
 /// Verify the provided message bytestring using `Self` (e.g. a public key)
