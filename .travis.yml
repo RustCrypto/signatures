@@ -2,12 +2,46 @@ language: rust
 cache: cargo
 
 rust:
+  - 1.31.0
   - stable
   - beta
   - nightly
 
+install:
+  - rustup component add rustfmt
+  - rustup component add clippy
+  - rustup target add thumbv7em-none-eabihf
+  - rustup target add wasm32-unknown-unknown
+
+script:
+  - cargo test --verbose --release
+  # Can't use `--no-default-features` with a workspace. See rust-lang/cargo#4753
+  - cd signature-crate && cargo build --no-default-features --release
+
 matrix:
   allow_failures:
     - rust: nightly
+  include:
+    - name: "Rust: stable (thumbv7em-none-eabihf)"
+      rust: stable
+      script:
+        - cd signature-crate && cargo build --target thumbv7em-none-eabihf --no-default-features --release
+    - name: "Rust: stable (wasm32-unknown-unknown)"
+      rust: stable
+      script:
+        - cd signature-crate && cargo build --target wasm32-unknown-unknown --no-default-features --release
+    - name: rustfmt
+      rust: stable
+      script:
+        - cargo fmt --all -- --check
+    - name: clippy
+      rust: stable
+      script:
+        - cargo clippy --all
+    - name: docs
+      script:
+        - cargo doc --all --no-deps
 
-script: cargo test --verbose --all
+branches:
+  only:
+    - master
