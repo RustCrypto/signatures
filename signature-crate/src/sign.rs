@@ -1,4 +1,4 @@
-//! Trait for producing digital signatures
+//! Trait for generating digital signatures of message bytestrings
 
 use crate::{error::Error, Signature};
 
