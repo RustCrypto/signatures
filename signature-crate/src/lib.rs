@@ -1,4 +1,6 @@
-//! Digital signature types and traits
+//! Traits which provide generic, object-safe APIs for generating and verifying
+//! digital signatures, which provide message authentication using public-key
+//! cryptography.
 
 #![no_std]
 #![cfg_attr(all(feature = "nightly", not(feature = "std")), feature(alloc))]
@@ -17,7 +19,7 @@
 extern crate std;
 
 mod error;
-pub(crate) mod prelude;
+mod prelude;
 mod signature;
 
 pub use crate::{error::Error, signature::Signature};

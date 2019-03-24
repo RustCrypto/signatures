@@ -1,8 +1,8 @@
 use core::fmt::Debug;
 
-use error::Error;
-#[allow(unused_imports)]
-use prelude::*;
+use crate::error::Error;
+#[cfg(feature = "alloc")]
+use crate::prelude::*;
 
 /// Trait impl'd by concrete types that represent digital signatures
 pub trait Signature: AsRef<[u8]> + Debug + Sized {
