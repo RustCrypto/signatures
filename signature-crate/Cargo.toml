@@ -1,17 +1,19 @@
 [package]
-name = "signature"
-version = "0.0.0"
-authors = ["RustCrypto Developers"]
-license = "Apache-2.0 OR MIT"
-description = "Traits for cryptographic signature algorithms"
+name          = "signature"
+version       = "0.0.0"
+authors       = ["RustCrypto Developers"]
+license       = "Apache-2.0 OR MIT"
+description   = "Traits for cryptographic signature algorithms (e.g. ECDSA, Ed25519)"
 documentation = "https://docs.rs/signature"
-repository = "https://github.com/RustCrypto/signatures"
-keywords = ["crypto", "signature", "signing"]
-categories = ["cryptography", "no-std"]
+repository    = "https://github.com/RustCrypto/signatures/tree/master/signature-crate"
+readme        = "README.md"
+edition       = "2018"
+keywords      = ["crypto", "ecdsa", "ed25519", "signature", "signing"]
+categories    = ["cryptography", "no-std"]
 
 [dependencies]
 
 [features]
-alloc = []
 default = ["std"]
-std = ["alloc"]
+alloc   = []
+std     = ["alloc"]
