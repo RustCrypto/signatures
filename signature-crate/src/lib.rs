@@ -20,6 +20,7 @@ extern crate std;
 
 mod error;
 mod prelude;
+mod sign;
 mod signature;
 
-pub use crate::{error::Error, signature::Signature};
+pub use crate::{error::Error, sign::Sign, signature::Signature};
