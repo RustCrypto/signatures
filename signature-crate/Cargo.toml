@@ -12,8 +12,9 @@ keywords      = ["crypto", "ecdsa", "ed25519", "signature", "signing"]
 categories    = ["cryptography", "no-std"]
 
 [dependencies]
+digest = { version = "0.8", optional = true, default-features = false }
 
 [features]
-default = ["std"]
+default = ["digest", "std"]
 alloc   = []
 std     = ["alloc"]
