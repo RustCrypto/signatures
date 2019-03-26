@@ -22,3 +22,15 @@ pub trait Signature: AsRef<[u8]> + Debug + Sized {
         self.as_slice().into()
     }
 }
+
+/// Marker trait for "raw digest" signature algorithms, i.e. any algorithm
+/// where signatures are exclusively computed as `S(H(m)))` where:
+///
+/// - `S`: signature algorithm
+/// - `H`: hash (a.k.a. digest) function
+/// - `m`: message
+///
+/// Notably this does not hold true for Ed25519, which hashes the input message
+/// twice in an effort to remain secure even in the event of collisions in the
+/// underlying hash function.
+pub trait RawDigestSignature {}
