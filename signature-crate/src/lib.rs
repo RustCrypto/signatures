@@ -27,4 +27,4 @@ pub mod sign;
 mod signature;
 pub mod verify;
 
-pub use crate::{error::Error, sign::Sign, signature::Signature, verify::Verify};
+pub use crate::{error::Error, sign::*, signature::*, verify::*};

@@ -1,7 +1,7 @@
 //! Traits for generating digital signatures
 
 #[cfg(feature = "digest")]
-pub(crate) mod digest;
+mod digest;
 
 #[cfg(feature = "digest")]
 pub use self::digest::SignDigest;
