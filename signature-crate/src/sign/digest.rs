@@ -9,27 +9,28 @@ use crate::{Error, Signature};
 use digest::Digest;
 
 /// Sign the given prehashed message `Digest` using `Self`.
-pub trait SignDigest<S>: Send + Sync
+pub trait SignDigest<D, S>: Send + Sync
 where
+    D: Digest,
     S: Signature,
 {
-    /// Digest type to use when computing a signature
-    type Digest: Digest;
-
     /// Sign the given prehashed message `Digest`, returning a signature.
-    fn sign_digest(&self, digest: Self::Digest) -> Result<S, Error>;
+    fn sign_digest(&self, digest: D) -> Result<S, Error>;
 }
 
 /// Marker trait for digest verifiers who wish to use a blanket impl of the
 /// `Sign` trait which works with any type that implements `SignDigest`
-pub trait UseDigestToSign {}
+pub trait UseDigestToSign {
+    /// Digest type to use when computing a signature
+    type Digest: Digest;
+}
 
 impl<S, T> Sign<S> for T
 where
     S: Signature,
-    T: SignDigest<S> + UseDigestToSign,
+    T: UseDigestToSign + SignDigest<<T as UseDigestToSign>::Digest, S>,
 {
     fn sign(&self, msg: &[u8]) -> Result<S, Error> {
-        self.sign_digest(<Self as SignDigest<S>>::Digest::new().chain(msg))
+        self.sign_digest(<T as UseDigestToSign>::Digest::new().chain(msg))
     }
 }
