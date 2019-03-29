@@ -4,12 +4,11 @@
 //! For use signature algorithms that support an Initialize-Update-Finalize
 //! (IUF) API, such as ECDSA or Ed25519ph.
 
-use crate::{error::Error, Signature};
-use digest::Digest;
+use crate::{digest::Digest, error::Error, Signature};
 
 /// Verify the provided signature for the given prehashed message `Digest`
 /// is authentic.
-pub trait VerifyDigest<D, S>: Send + Sync
+pub trait Verifier<D, S>
 where
     D: Digest,
     S: Signature,
