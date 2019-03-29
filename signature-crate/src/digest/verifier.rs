@@ -14,5 +14,15 @@ where
     S: Signature,
 {
     /// Verify the signature against the given `Digest`
-    fn verify(&self, digest: D, signature: &S) -> Result<(), Error>;
+    fn verify_digest(&self, digest: D, signature: &S) -> Result<(), Error>;
+}
+
+impl<S, T> crate::Verifier<S> for T
+where
+    S: crate::digest::Signature,
+    T: Verifier<S::Digest, S>,
+{
+    fn verify(&self, msg: &[u8], signature: &S) -> Result<(), Error> {
+        self.verify_digest(S::Digest::new().chain(msg), signature)
+    }
 }

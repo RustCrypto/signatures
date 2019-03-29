@@ -13,5 +13,15 @@ where
     S: Signature,
 {
     /// Sign the given prehashed message `Digest`, returning a signature.
-    fn sign(&self, digest: D) -> Result<S, Error>;
+    fn sign_digest(&self, digest: D) -> Result<S, Error>;
+}
+
+impl<S, T> crate::Signer<S> for T
+where
+    S: crate::digest::Signature,
+    T: Signer<S::Digest, S>,
+{
+    fn sign(&self, msg: &[u8]) -> Result<S, Error> {
+        self.sign_digest(S::Digest::new().chain(msg))
+    }
 }
