@@ -1,4 +1,10 @@
-use crate::{digest::Digest, signature::Signature};
+use crate::{
+    digest::{self, Digest},
+    error::Error,
+    signature::Signature,
+    signer::Signer,
+    verifier::Verifier,
+};
 
 /// Marker trait for `Signature` types computable as `S(H(m))` where:
 ///
@@ -11,4 +17,24 @@ use crate::{digest::Digest, signature::Signature};
 pub trait Digestable: Signature {
     /// Preferred `Digest` algorithm to use when computing this signature type.
     type Digest: Digest;
+}
+
+impl<S, T> Signer<S> for T
+where
+    S: Digestable + Signature,
+    T: digest::Signer<S::Digest, S>,
+{
+    fn sign(&self, msg: &[u8]) -> Result<S, Error> {
+        self.sign_digest(S::Digest::new().chain(msg))
+    }
+}
+
+impl<S, T> Verifier<S> for T
+where
+    S: Digestable + Signature,
+    T: digest::Verifier<S::Digest, S>,
+{
+    fn verify(&self, msg: &[u8], signature: &S) -> Result<(), Error> {
+        self.verify_digest(S::Digest::new().chain(msg), signature)
+    }
 }
