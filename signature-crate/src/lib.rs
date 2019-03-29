@@ -14,17 +14,16 @@
     unused_qualifications
 )]
 
-#[cfg(feature = "digest")]
-pub extern crate digest;
-
 #[cfg(any(feature = "std", test))]
 #[macro_use]
 extern crate std;
 
+#[cfg(feature = "digest")]
+mod digest;
 mod error;
 mod prelude;
-pub mod sign;
 mod signature;
-pub mod verify;
+pub mod signer;
+pub mod verifier;
 
-pub use crate::{error::Error, sign::Sign, signature::Signature, verify::Verify};
+pub use crate::{error::Error, signature::Signature, signer::Signer, verifier::Verifier};
