@@ -27,3 +27,6 @@ pub mod signer;
 pub mod verifier;
 
 pub use crate::{error::Error, signature::Signature, signer::Signer, verifier::Verifier};
+
+#[cfg(feature = "digest")]
+pub use crate::digest::Digestable;

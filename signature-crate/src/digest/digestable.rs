@@ -1,4 +1,4 @@
-use super::Digest;
+use crate::{digest::Digest, signature::Signature};
 
 /// Marker trait for `Signature` types computable as `S(H(m))` where:
 ///
@@ -8,6 +8,7 @@ use super::Digest;
 ///
 /// For signature types that implement this trait, a blanket impl of
 /// `Signer` will be provided for all types that `impl digest::Signer`.
-pub trait Signature: crate::signature::Signature {
+pub trait Digestable: Signature {
+    /// Preferred `Digest` algorithm to use when computing this signature type.
     type Digest: Digest;
 }

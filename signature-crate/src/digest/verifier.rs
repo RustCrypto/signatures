@@ -4,7 +4,8 @@
 //! For use signature algorithms that support an Initialize-Update-Finalize
 //! (IUF) API, such as ECDSA or Ed25519ph.
 
-use crate::{digest::Digest, error::Error, Signature};
+use super::{Digest, Digestable};
+use crate::{error::Error, signature::Signature};
 
 /// Verify the provided signature for the given prehashed message `Digest`
 /// is authentic.
@@ -17,9 +18,9 @@ where
     fn verify_digest(&self, digest: D, signature: &S) -> Result<(), Error>;
 }
 
-impl<S, T> crate::Verifier<S> for T
+impl<S, T> crate::verifier::Verifier<S> for T
 where
-    S: crate::digest::Signature,
+    S: Digestable + Signature,
     T: Verifier<S::Digest, S>,
 {
     fn verify(&self, msg: &[u8], signature: &S) -> Result<(), Error> {
