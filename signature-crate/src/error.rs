@@ -30,6 +30,12 @@ impl Error {
         }
     }
 
+    /// Borrow the error's underlying cause (if available)
+    #[cfg(feature = "std")]
+    pub fn cause(&self) -> Option<&dyn StdError> {
+        self.cause.as_ref().map(|c| c.as_ref())
+    }
+
     /// Extract the underlying cause of this error.
     ///
     /// Panics if the error does not have a cause.
