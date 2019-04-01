@@ -19,11 +19,14 @@
 extern crate std;
 
 #[cfg(feature = "digest")]
-mod digest;
+pub mod digest;
 mod error;
 mod prelude;
 mod signature;
-pub mod signer;
-pub mod verifier;
+mod signer;
+mod verifier;
 
 pub use crate::{error::Error, signature::Signature, signer::Signer, verifier::Verifier};
+
+#[cfg(feature = "digest")]
+pub use crate::digest::Digestable;
