@@ -25,7 +25,7 @@ where
     T: digest::Signer<S::Digest, S>,
 {
     fn sign(&self, msg: &[u8]) -> Result<S, Error> {
-        self.sign_digest(S::Digest::new().chain(msg))
+        self.sign_digest(S::Digest::digest(msg))
     }
 }
 
@@ -35,6 +35,6 @@ where
     T: digest::Verifier<S::Digest, S>,
 {
     fn verify(&self, msg: &[u8], signature: &S) -> Result<(), Error> {
-        self.verify_digest(S::Digest::new().chain(msg), signature)
+        self.verify_digest(S::Digest::digest(msg), signature)
     }
 }

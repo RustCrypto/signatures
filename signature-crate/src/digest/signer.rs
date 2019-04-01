@@ -6,6 +6,7 @@
 
 use super::Digest;
 use crate::{error::Error, signature::Signature};
+use digest::generic_array::GenericArray;
 
 /// Sign the given prehashed message `Digest` using `Self`.
 pub trait Signer<D, S>
@@ -14,5 +15,5 @@ where
     S: Signature,
 {
     /// Sign the given prehashed message `Digest`, returning a signature.
-    fn sign_digest(&self, digest: D) -> Result<S, Error>;
+    fn sign_digest(&self, digest: GenericArray<u8, D::OutputSize>) -> Result<S, Error>;
 }
