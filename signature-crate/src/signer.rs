@@ -11,7 +11,16 @@ use crate::{error::Error, Signature};
 /// or connection to an HSM), returning a digital signature.
 pub trait Signer<S: Signature> {
     /// Sign the given message and return a digital signature
-    fn sign(&self, msg: &[u8]) -> Result<S, Error>;
+    fn sign(&self, msg: &[u8]) -> S {
+        self.try_sign(msg).expect("signature operation failed")
+    }
+
+    /// Attempt to sign the given message, returning a digital signature on
+    /// success, or an error if something went wrong.
+    ///
+    /// The main intended use case for signing errors is when communicating
+    /// with external signers, e.g. cloud KMS, HSMs, or other hardware tokens.
+    fn try_sign(&self, msg: &[u8]) -> Result<S, Error>;
 }
 
 /// Sign the given prehashed message `Digest` using `Self`.
@@ -22,7 +31,14 @@ where
     S: Signature,
 {
     /// Sign the given prehashed message `Digest`, returning a signature.
-    fn sign_digest(&self, digest: GenericArray<u8, D::OutputSize>) -> Result<S, Error>;
+    fn sign_digest(&self, digest: GenericArray<u8, D::OutputSize>) -> S {
+        self.try_sign_digest(digest)
+            .expect("signature operation failed")
+    }
+
+    /// Attempt to sign the given prehashed message `Digest`, returning a
+    /// digital signature on success, or an error if something went wrong.
+    fn try_sign_digest(&self, digest: GenericArray<u8, D::OutputSize>) -> Result<S, Error>;
 }
 
 #[cfg(feature = "digest")]
@@ -31,7 +47,7 @@ where
     S: DigestSignature,
     T: DigestSigner<S::Digest, S>,
 {
-    fn sign(&self, msg: &[u8]) -> Result<S, Error> {
-        self.sign_digest(S::Digest::digest(msg))
+    fn try_sign(&self, msg: &[u8]) -> Result<S, Error> {
+        self.try_sign_digest(S::Digest::digest(msg))
     }
 }
