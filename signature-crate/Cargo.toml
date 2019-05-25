@@ -1,6 +1,6 @@
 [package]
 name          = "signature"
-version       = "0.0.0"
+version       = "0.1.0"
 authors       = ["RustCrypto Developers"]
 license       = "Apache-2.0 OR MIT"
 description   = "Traits for cryptographic signature algorithms (e.g. ECDSA, Ed25519)"
