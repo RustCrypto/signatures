@@ -1,7 +1,7 @@
 //! Trait for verifying digital signatures
 
 #[cfg(feature = "digest")]
-use crate::digest::{generic_array::GenericArray, Digest};
+use crate::digest::Digest;
 use crate::{error::Error, Signature};
 
 /// Verify the provided message bytestring using `Self` (e.g. a public key)
@@ -23,13 +23,9 @@ where
 {
     /// Verify the signature against the computed `Digest` output.
     fn verify_msg_digest(&self, msg: &[u8], signature: &S) -> Result<(), Error> {
-        self.verify_digest(D::digest(msg), signature)
+        self.verify_digest(D::new().chain(msg), signature)
     }
 
     /// Verify the signature against the given `Digest` output.
-    fn verify_digest(
-        &self,
-        digest: GenericArray<u8, D::OutputSize>,
-        signature: &S,
-    ) -> Result<(), Error>;
+    fn verify_digest(&self, digest: D, signature: &S) -> Result<(), Error>;
 }
