@@ -1,7 +1,7 @@
 //! Traits for generating digital signatures
 
 #[cfg(feature = "digest")]
-use crate::digest::{generic_array::GenericArray, Digest};
+use crate::digest::Digest;
 use crate::{error::Error, Signature};
 
 /// Sign the provided message bytestring using `Self` (e.g. a cryptographic key
@@ -37,18 +37,18 @@ where
 
     /// Attempt to sign the computed digest of the given message.
     fn try_sign_msg_digest(&self, msg: &[u8]) -> Result<S, Error> {
-        self.try_sign_digest(D::digest(msg))
+        self.try_sign_digest(D::new().chain(msg))
     }
 
     /// Sign the given prehashed message `Digest`, returning a signature.
     ///
     /// Panics in the event of a signing error.
-    fn sign_digest(&self, digest: GenericArray<u8, D::OutputSize>) -> S {
+    fn sign_digest(&self, digest: D) -> S {
         self.try_sign_digest(digest)
             .expect("signature operation failed")
     }
 
     /// Attempt to sign the given prehashed message `Digest`, returning a
     /// digital signature on success, or an error if something went wrong.
-    fn try_sign_digest(&self, digest: GenericArray<u8, D::OutputSize>) -> Result<S, Error>;
+    fn try_sign_digest(&self, digest: D) -> Result<S, Error>;
 }
