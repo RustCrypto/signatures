@@ -21,11 +21,6 @@ where
     D: Digest,
     S: Signature,
 {
-    /// Verify the signature against the computed `Digest` output.
-    fn verify_msg_digest(&self, msg: &[u8], signature: &S) -> Result<(), Error> {
-        self.verify_digest(D::new().chain(msg), signature)
-    }
-
     /// Verify the signature against the given `Digest` output.
     fn verify_digest(&self, digest: D, signature: &S) -> Result<(), Error>;
 }

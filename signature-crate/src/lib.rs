@@ -18,8 +18,17 @@
 #[macro_use]
 extern crate std;
 
+#[cfg(feature = "signature_derive")]
+#[allow(unused_imports)]
+#[macro_use]
+extern crate signature_derive;
+
+#[cfg(feature = "signature_derive")]
+#[doc(hidden)]
+pub use signature_derive::{Signer, Verifier};
+
 #[cfg(feature = "digest")]
-pub extern crate digest;
+pub use digest;
 
 mod error;
 mod prelude;
