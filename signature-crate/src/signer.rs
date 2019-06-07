@@ -27,19 +27,6 @@ where
     D: Digest,
     S: Signature,
 {
-    /// Sign the computed digest of the given message.
-    ///
-    /// Panics in the event of a signing error.
-    fn sign_msg_digest(&self, msg: &[u8]) -> S {
-        self.try_sign_msg_digest(msg)
-            .expect("signature operation failed")
-    }
-
-    /// Attempt to sign the computed digest of the given message.
-    fn try_sign_msg_digest(&self, msg: &[u8]) -> Result<S, Error> {
-        self.try_sign_digest(D::new().chain(msg))
-    }
-
     /// Sign the given prehashed message `Digest`, returning a signature.
     ///
     /// Panics in the event of a signing error.
