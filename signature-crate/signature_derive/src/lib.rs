@@ -18,14 +18,12 @@ use synstructure::{decl_derive, AddBounds};
 fn derive_signer(mut s: synstructure::Structure) -> TokenStream {
     s.add_bounds(AddBounds::None);
     s.gen_impl(quote! {
-        use signature::{DigestSignature, DigestSigner, Error};
-
-        gen impl<S> Signer<S> for @Self
+        gen impl<S> signature::Signer<S> for @Self
         where
-            S: DigestSignature,
-            Self: DigestSigner<S::Digest, S>,
+            S: signature::DigestSignature,
+            Self: signature::DigestSigner<S::Digest, S>,
         {
-            fn try_sign(&self, msg: &[u8]) -> Result<S, Error> {
+            fn try_sign(&self, msg: &[u8]) -> Result<S, signature::Error> {
                 self.try_sign_digest(S::Digest::new().chain(msg))
             }
         }
@@ -37,14 +35,12 @@ decl_derive!([Signer] => derive_signer);
 fn derive_verifier(mut s: synstructure::Structure) -> TokenStream {
     s.add_bounds(AddBounds::None);
     s.gen_impl(quote! {
-        use signature::{DigestSignature, DigestVerifier, Error};
-
-        gen impl<S> Verifier<S> for @Self
+        gen impl<S> signature::Verifier<S> for @Self
         where
-            S: DigestSignature,
-            Self: DigestVerifier<S::Digest, S>,
+            S: signature::DigestSignature,
+            Self: signature::DigestVerifier<S::Digest, S>,
         {
-            fn verify(&self, msg: &[u8], signature: &S) -> Result<(), Error> {
+            fn verify(&self, msg: &[u8], signature: &S) -> Result<(), signature::Error> {
                 self.verify_digest(S::Digest::new().chain(msg), signature)
             }
         }
@@ -67,15 +63,13 @@ mod tests {
             }
             expands to {
                 #[allow(non_upper_case_globals)]
-                const _DERIVE_Signer_S_FOR_MySigner: () = {
-                    use signature::{DigestSignature, DigestSigner, Error};
-
-                    impl<S, C: EllipticCurve> Signer<S> for MySigner<C>
+                const _DERIVE_signature_Signer_S_FOR_MySigner: () = {
+                    impl<S, C: EllipticCurve> signature::Signer<S> for MySigner<C>
                     where
-                        S: DigestSignature,
-                        Self: DigestSigner<S::Digest, S>,
+                        S: signature::DigestSignature,
+                        Self: signature::DigestSigner<S::Digest, S>,
                     {
-                        fn try_sign(&self, msg: &[u8]) -> Result <S, Error> {
+                        fn try_sign(&self, msg: &[u8]) -> Result <S, signature::Error> {
                             self.try_sign_digest(S::Digest::new().chain(msg))
                         }
                     }
@@ -95,15 +89,13 @@ mod tests {
             }
             expands to {
                 #[allow(non_upper_case_globals)]
-                const _DERIVE_Verifier_S_FOR_MyVerifier: () = {
-                    use signature::{DigestSignature, DigestVerifier, Error};
-
-                    impl<S, C: EllipticCurve> Verifier<S> for MyVerifier<C>
+                const _DERIVE_signature_Verifier_S_FOR_MyVerifier: () = {
+                    impl<S, C: EllipticCurve> signature::Verifier<S> for MyVerifier<C>
                     where
-                        S: DigestSignature,
-                        Self: DigestVerifier<S::Digest, S>,
+                        S: signature::DigestSignature,
+                        Self: signature::DigestVerifier<S::Digest, S>,
                     {
-                        fn verify(&self, msg: &[u8], signature: &S) -> Result<(), Error> {
+                        fn verify(&self, msg: &[u8], signature: &S) -> Result<(), signature::Error> {
                             self.verify_digest(S::Digest::new().chain(msg), signature)
                         }
                     }
