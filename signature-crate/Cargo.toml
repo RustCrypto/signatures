@@ -1,9 +1,9 @@
 [package]
 name          = "signature"
-version       = "0.1.0"
+description   = "Traits for cryptographic signature algorithms (e.g. ECDSA, Ed25519)"
+version       = "0.2.0" # Also update html_root_url in lib.rs when bumping this
 authors       = ["RustCrypto Developers"]
 license       = "Apache-2.0 OR MIT"
-description   = "Traits for cryptographic signature algorithms (e.g. ECDSA, Ed25519)"
 documentation = "https://docs.rs/signature"
 repository    = "https://github.com/RustCrypto/signatures/tree/master/signature-crate"
 readme        = "README.md"
@@ -13,7 +13,7 @@ categories    = ["cryptography", "no-std"]
 
 [dependencies]
 digest = { version = "0.8", optional = true, default-features = false }
-signature_derive = { version = "0", optional = true, path = "signature_derive" }
+signature_derive = { version = "0.2", optional = true, path = "signature_derive" }
 
 [dev-dependencies]
 hex-literal = "0.2"
