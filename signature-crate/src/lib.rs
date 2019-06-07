@@ -3,7 +3,6 @@
 //! cryptography.
 
 #![no_std]
-#![cfg_attr(all(feature = "nightly", not(feature = "std")), feature(alloc))]
 #![deny(
     warnings,
     missing_docs,
@@ -13,6 +12,12 @@
     unused_import_braces,
     unused_qualifications
 )]
+#![doc(html_root_url = "https://docs.rs/signature/0.2.0")]
+
+#[cfg(all(feature = "alloc", not(feature = "std")))]
+#[allow(unused_imports)] // rustc bug?
+#[macro_use]
+extern crate alloc;
 
 #[cfg(feature = "std")]
 #[macro_use]
