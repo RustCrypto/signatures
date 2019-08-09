@@ -1,13 +1,18 @@
 [package]
-name = "ed25519"
-version = "0.0.0"
-authors = ["RustCrypto Developers"]
-license = "Apache-2.0 OR MIT"
-description = "Edwards Digital Signature Algorithm (EdDSA) over Curve25519 (as specified in RFC 8032)"
+name          = "ed25519"
+version       = "0.0.0"
+authors       = ["RustCrypto Developers"]
+license       = "Apache-2.0 OR MIT"
+description   = "Edwards Digital Signature Algorithm (EdDSA) over Curve25519 (as specified in RFC 8032)"
 documentation = "https://docs.rs/ed25519"
-repository = "https://github.com/RustCrypto/signatures"
-categories = ["cryptography", "no-std"]
-keywords = ["crypto", "curve25519", "ecc", "signature", "signing"]
+repository    = "https://github.com/RustCrypto/signatures"
+edition       = "2018"
+categories    = ["cryptography", "no-std"]
+keywords      = ["crypto", "curve25519", "ecc", "signature", "signing"]
 
 [dependencies]
-signature = { version = "0", path = "../signature-crate" }
+signature = { version = "0", path = "../signature-crate", default-features = false }
+
+[features]
+default = ["alloc"]
+alloc = ["signature/alloc"]
