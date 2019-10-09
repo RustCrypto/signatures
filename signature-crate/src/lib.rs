@@ -3,20 +3,11 @@
 //! cryptography.
 
 #![no_std]
-#![deny(
-    warnings,
-    missing_docs,
-    trivial_casts,
-    trivial_numeric_casts,
-    unsafe_code,
-    unused_import_braces,
-    unused_qualifications
-)]
+#![forbid(unsafe_code)]
+#![warn(missing_docs, rust_2018_idioms, unused_qualifications)]
 #![doc(html_root_url = "https://docs.rs/signature/0.2.0")]
 
-#[cfg(all(feature = "alloc", not(feature = "std")))]
-#[allow(unused_imports)] // rustc bug?
-#[macro_use]
+#[cfg(feature = "alloc")]
 extern crate alloc;
 
 #[cfg(feature = "std")]
@@ -36,7 +27,6 @@ pub use signature_derive::{Signer, Verifier};
 pub use digest;
 
 mod error;
-mod prelude;
 mod signature;
 mod signer;
 mod verifier;

@@ -7,13 +7,16 @@
 [![Build Status][build-image]][build-link]
 
 This crate contains traits which provide generic, object-safe APIs for
-generating and verifying [digital signatures].
+generating and verifying [digital signatures][1].
 
-The long-term goal is to use this crate in conjunction with the
-[`ecdsa`][ecdsa-crate] and [`ed25519`][ed25519-crate], however those crates
-are a work-in-progress.
+It's presently useful in conjunction with the [`ed25519`][2] crate.
+Support is also planned for the [`ecdsa`][3] and [`rsa`][4] crates.
 
 [Documentation][docs-link]
+
+## Requirements
+
+- Rust **1.36+**
 
 ## License
 
@@ -37,12 +40,13 @@ dual licensed as above, without any additional terms or conditions.
 [docs-image]: https://docs.rs/signature/badge.svg
 [docs-link]: https://docs.rs/signature/
 [license-image]: https://img.shields.io/badge/license-Apache2.0/MIT-blue.svg
-[rustc-image]: https://img.shields.io/badge/rustc-1.31+-blue.svg
+[rustc-image]: https://img.shields.io/badge/rustc-1.36+-blue.svg
 [build-image]: https://travis-ci.org/RustCrypto/signatures.svg?branch=master
 [build-link]: https://travis-ci.org/RustCrypto/signatures
 
 [//]: # (general links)
 
-[digital signatures]: https://en.wikipedia.org/wiki/Digital_signature
-[ecdsa-crate]: https://github.com/RustCrypto/signatures/tree/master/ecdsa
-[ed25519-crate]: https://github.com/RustCrypto/signatures/tree/master/ed25519
+[1]: https://en.wikipedia.org/wiki/Digital_signature
+[2]: https://github.com/RustCrypto/signatures/tree/master/ed25519
+[3]: https://github.com/RustCrypto/signatures/tree/master/ecdsa
+[4]: https://github.com/RustCrypto/RSA

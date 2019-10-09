@@ -2,16 +2,10 @@ language: rust
 cache: cargo
 
 rust:
-  - 1.31.0
+  - 1.36.0
   - stable
   - beta
   - nightly
-
-install:
-  - rustup component add rustfmt
-  - rustup component add clippy
-  - rustup target add thumbv7em-none-eabihf
-  - rustup target add wasm32-unknown-unknown
 
 script:
   - cargo test --verbose --release
@@ -25,23 +19,22 @@ matrix:
   include:
     - name: "Rust: stable (thumbv7em-none-eabihf)"
       rust: stable
-      script:
-        - cd signature-crate && cargo build --target thumbv7em-none-eabihf --no-default-features --release
+      install: rustup target add thumbv7em-none-eabihf
+      script: cd signature-crate && cargo build --target thumbv7em-none-eabihf --no-default-features --release
     - name: "Rust: stable (wasm32-unknown-unknown)"
       rust: stable
-      script:
-        - cd signature-crate && cargo build --target wasm32-unknown-unknown --no-default-features --release
+      install: rustup target add wasm32-unknown-unknown
+      script: cd signature-crate && cargo build --target wasm32-unknown-unknown --no-default-features --release
     - name: rustfmt
       rust: stable
-      script:
-        - cargo fmt --all -- --check
+      install: rustup component add rustfmt
+      script: cargo fmt --all -- --check
     - name: clippy
+      install: rustup component add clippy
       rust: stable
-      script:
-        - cargo clippy --all
+      script: cargo clippy --all
     - name: docs
-      script:
-        - cargo doc --all --no-deps
+      script: cargo doc --all --no-deps
 
 branches:
   only:

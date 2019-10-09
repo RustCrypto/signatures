@@ -2,7 +2,7 @@ use core::fmt::Debug;
 
 use crate::error::Error;
 #[cfg(feature = "alloc")]
-use crate::prelude::*;
+use alloc::vec::Vec;
 
 /// Trait impl'd by concrete types that represent digital signatures
 pub trait Signature: AsRef<[u8]> + Debug + Sized {
