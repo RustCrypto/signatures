@@ -4,9 +4,7 @@ mod tests {
     use digest::{generic_array::GenericArray, Digest};
     use hex_literal::hex;
     use sha2::Sha256;
-    use signature::{
-        DigestSignature, DigestSigner, DigestVerifier, Error, Signature, Signer, Verifier,
-    };
+    use signature::{DigestSigner, DigestVerifier, Error, Signature, Signer, Verifier};
 
     /// Test vector to compute SHA-256 digest of
     const INPUT_STRING: &[u8] = b"abc";
@@ -33,12 +31,9 @@ mod tests {
         }
     }
 
-    impl DigestSignature for DummySignature {
-        type Digest = Sha256;
-    }
-
     /// Dummy signer which just returns the message digest as a `DummySignature`
     #[derive(Signer, Default)]
+    #[digest(Sha256)]
     struct DummySigner {}
 
     impl DigestSigner<Sha256, DummySignature> for DummySigner {
@@ -52,6 +47,7 @@ mod tests {
     ///
     /// Panics (via `assert_eq!`) if the value is not what is expected.
     #[derive(Verifier, Default)]
+    #[digest(Sha256)]
     struct DummyVerifier {}
 
     impl DigestVerifier<Sha256, DummySignature> for DummyVerifier {
