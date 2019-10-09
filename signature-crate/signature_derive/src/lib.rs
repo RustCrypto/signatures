@@ -21,7 +21,7 @@ fn derive_signer(mut s: synstructure::Structure) -> TokenStream {
         gen impl<S> signature::Signer<S> for @Self
         where
             S: signature::DigestSignature,
-            Self: signature::DigestSigner<S::Digest, S>,
+            Self: signature::DigestSigner<S::Digest, S>
         {
             fn try_sign(&self, msg: &[u8]) -> Result<S, signature::Error> {
                 self.try_sign_digest(S::Digest::new().chain(msg))
@@ -38,7 +38,7 @@ fn derive_verifier(mut s: synstructure::Structure) -> TokenStream {
         gen impl<S> signature::Verifier<S> for @Self
         where
             S: signature::DigestSignature,
-            Self: signature::DigestVerifier<S::Digest, S>,
+            Self: signature::DigestVerifier<S::Digest, S>
         {
             fn verify(&self, msg: &[u8], signature: &S) -> Result<(), signature::Error> {
                 self.verify_digest(S::Digest::new().chain(msg), signature)
@@ -67,7 +67,7 @@ mod tests {
                     impl<S, C: EllipticCurve> signature::Signer<S> for MySigner<C>
                     where
                         S: signature::DigestSignature,
-                        Self: signature::DigestSigner<S::Digest, S>,
+                        Self: signature::DigestSigner<S::Digest, S>
                     {
                         fn try_sign(&self, msg: &[u8]) -> Result <S, signature::Error> {
                             self.try_sign_digest(S::Digest::new().chain(msg))
@@ -93,7 +93,7 @@ mod tests {
                     impl<S, C: EllipticCurve> signature::Verifier<S> for MyVerifier<C>
                     where
                         S: signature::DigestSignature,
-                        Self: signature::DigestVerifier<S::Digest, S>,
+                        Self: signature::DigestVerifier<S::Digest, S>
                     {
                         fn verify(&self, msg: &[u8], signature: &S) -> Result<(), signature::Error> {
                             self.verify_digest(S::Digest::new().chain(msg), signature)
