@@ -11,7 +11,7 @@ categories    = ["cryptography", "no-std"]
 keywords      = ["crypto", "curve25519", "ecc", "signature", "signing"]
 
 [dependencies]
-signature = { version = "0", path = "../signature-crate", default-features = false }
+signature = { version = "0.3", path = "../signature-crate", default-features = false }
 
 [features]
 default = ["alloc"]
