@@ -19,7 +19,13 @@ impl Error {
         Self::default()
     }
 
-    /// Create a new error from a cause
+    /// Create a new error with an associated cause.
+    ///
+    /// NOTE: The "cause" should NOT be used to propagate cryptographic errors
+    /// e.g. signature parsing or verification errors.
+    ///
+    /// The intended use cases are for propagating errors related to external
+    /// signers, e.g. communication/authentication errors with HSMs, KMS, etc.
     #[cfg(feature = "std")]
     pub fn from_cause<E>(cause: E) -> Self
     where
