@@ -5,7 +5,7 @@
 #![no_std]
 #![forbid(unsafe_code)]
 #![warn(missing_docs, rust_2018_idioms, unused_qualifications)]
-#![doc(html_root_url = "https://docs.rs/signature/0.2.0")]
+#![doc(html_root_url = "https://docs.rs/signature/0.3.0")]
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
