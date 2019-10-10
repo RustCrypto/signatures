@@ -2,8 +2,21 @@
 //!
 //! Edwards Digital Signature Algorithm (EdDSA) over Curve25519 as specified in
 //! RFC 8032: <https://tools.ietf.org/html/rfc8032>
+//!
+//! This crate doesn't contain an implementation of Ed25519, but instead
+//! contains an [`ed25519::Signature`] type which other crates can use in
+//! conjunction with the [`signature::Signer`] and [`signature::Verifier`]
+//! traits.
+//!
+//! These traits allow crates which produce and consume Ed25519 signatures
+//! to be written abstractly in such a way that different signer/verifier
+//! providers can be plugged in, enabling support for using different
+//! Ed25519 implementations, including HSMs or Cloud KMS services.
 
 #![no_std]
+#![forbid(unsafe_code)]
+#![warn(missing_docs, rust_2018_idioms, unused_qualifications)]
+#![doc(html_root_url = "https://docs.rs/ed25519/0.2.0")]
 
 /// Re-export the `signature` crate
 pub use signature::{self, Error};
