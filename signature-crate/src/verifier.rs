@@ -1,6 +1,6 @@
 //! Trait for verifying digital signatures
 
-#[cfg(feature = "digest")]
+#[cfg(feature = "digest-preview")]
 use crate::digest::Digest;
 use crate::{error::Error, Signature};
 
@@ -15,7 +15,16 @@ pub trait Verifier<S: Signature> {
 
 /// Verify the provided signature for the given prehashed message `Digest`
 /// is authentic.
-#[cfg(feature = "digest")]
+///
+/// This trait is only available when the `digest-preview` cargo feature is
+/// enabled.
+///
+/// It accepts a [`Digest`] instance, as opposed to a raw digest byte array,
+/// as the security of signature algorithms built on hash functions often
+/// depends critically on the input being a random oracle as opposed to a
+/// value an attacker can choose and solve for. This is enforced at the API
+/// level by taking a [`Digest`] instance in order to better resist misuse.
+#[cfg(feature = "digest-preview")]
 pub trait DigestVerifier<D, S>
 where
     D: Digest,

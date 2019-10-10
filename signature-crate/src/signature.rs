@@ -29,7 +29,7 @@ pub trait Signature: AsRef<[u8]> + Debug + Sized {
 /// - `H`: hash (a.k.a. digest) function
 /// - `m`: message
 ///
-/// For signature types that implement this trait, when the `signature_derive`
+/// For signature types that implement this trait, when the `derive-preview`
 /// Cargo feature is enabled a custom derive for `Signer` is available for any
 /// types that impl `DigestSigner`, and likewise for deriving `Verifier` for
 /// types which impl `DigestVerifier`.
