@@ -38,7 +38,7 @@ impl Signature {
 
     /// Return the inner byte array
     pub fn to_bytes(&self) -> [u8; SIGNATURE_LENGTH] {
-        self.0.clone()
+        self.0
     }
 }
 

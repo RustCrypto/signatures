@@ -1,6 +1,6 @@
 //! Traits for generating digital signatures
 
-#[cfg(feature = "digest")]
+#[cfg(feature = "digest-preview")]
 use crate::digest::Digest;
 use crate::{error::Error, Signature};
 
@@ -21,7 +21,10 @@ pub trait Signer<S: Signature> {
 }
 
 /// Sign the given prehashed message `Digest` using `Self`.
-#[cfg(feature = "digest")]
+///
+/// This trait is only available when the `digest-preview` cargo feature is
+/// enabled.
+#[cfg(feature = "digest-preview")]
 pub trait DigestSigner<D, S>
 where
     D: Digest,

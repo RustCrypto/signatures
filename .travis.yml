@@ -7,6 +7,10 @@ rust:
   - beta
   - nightly
 
+env:
+  global:
+    - RUSTFLAGS="-D warnings"
+
 script:
   - cargo test --verbose --release
   - cargo test --verbose --all-features --release

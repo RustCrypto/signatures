@@ -14,9 +14,21 @@ Support is also planned for the [`ecdsa`][3] and [`rsa`][4] crates.
 
 [Documentation][docs-link]
 
-## Requirements
+## Minimum Supported Rust Version
 
-- Rust **1.36+**
+All crates in this repository support Rust **1.36** or higher.
+
+Minimum supported Rust version can be changed in the future, but it will be
+done with a minor version bump.
+
+## SemVer Policy
+
+- All on-by-default features of this library are covered by SemVer
+- MSRV is considered exempt from SemVer as noted above
+- The off-by-default features `derive-preview` and `digest-preview` are
+  unstable "preview" features which are also considered exempt from SemVer.
+  Breaking changes to these features will, like MSRV, be done with a minor
+  version bump.
 
 ## License
 
