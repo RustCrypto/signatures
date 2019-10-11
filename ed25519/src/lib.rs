@@ -16,7 +16,7 @@
 #![no_std]
 #![forbid(unsafe_code)]
 #![warn(missing_docs, rust_2018_idioms, unused_qualifications)]
-#![doc(html_root_url = "https://docs.rs/ed25519/0.2.0")]
+#![doc(html_root_url = "https://docs.rs/ed25519/1.0.0-pre.0")]
 
 /// Re-export the `signature` crate
 pub use signature::{self, Error};
