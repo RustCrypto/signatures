@@ -29,10 +29,10 @@ pub trait Signature: AsRef<[u8]> + Debug + Sized {
 /// - `H`: hash (a.k.a. digest) function
 /// - `m`: message
 ///
-/// For signature types that implement this trait, a blanket impl of
-/// `Signer` will be provided for all types that `impl DigestSigner`
-/// along with a corresponding impl of `Verifier` for all types that
-/// `impl DigestVerifier`.
+/// For signature types that implement this trait, when the `signature_derive`
+/// Cargo feature is enabled a custom derive for `Signer` is available for any
+/// types that impl `DigestSigner`, and likewise for deriving `Verifier` for
+/// types which impl `DigestVerifier`.
 #[cfg(feature = "digest")]
 pub trait DigestSignature: Signature {
     /// Preferred `Digest` algorithm to use when computing this signature type.
