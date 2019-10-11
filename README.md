@@ -17,7 +17,7 @@ for bare-metal or WebAssembly programming.
 | Name | Crates.io | Documentation |
 | ---- | :--------:| :------------:|
 | [ECDSA](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm) | [![crates.io](https://img.shields.io/crates/v/ecdsa.svg)](https://crates.io/crates/ecdsa) | [![Documentation](https://docs.rs/ecdsa/badge.svg)](https://docs.rs/ecdsa) |
-| [Ed25519](https://en.wikipedia.org/wiki/EdDSA) | [![crates.io](https://img.shields.io/crates/v/ed25519.svg)](https://crates.io/crates/aes-gcm-siv) | [![Documentation](https://docs.rs/ed25519/badge.svg)](https://docs.rs/ed25519) |
+| [Ed25519](https://en.wikipedia.org/wiki/EdDSA) | [![crates.io](https://img.shields.io/crates/v/ed25519.svg)](https://crates.io/crates/ed25519) | [![Documentation](https://docs.rs/ed25519/badge.svg)](https://docs.rs/ed25519) |
 
 ## Minimum Supported Rust Version
 
