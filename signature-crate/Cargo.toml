@@ -21,10 +21,9 @@ sha2 = { version = "0.8", default-features = false }
 
 [features]
 default = ["std"]
-alloc = []
 derive-preview = ["digest-preview", "signature_derive"]
 digest-preview = ["digest"]
-std = ["alloc"]
+std = []
 
 [package.metadata.docs.rs]
 all-features = true

@@ -23,7 +23,7 @@ Ed25519 implementations, including HSMs or Cloud KMS services.
 
 ## Requirements
 
-- Rust **1.36+**
+- Rust **1.31+**
 
 ## License
 
@@ -47,7 +47,7 @@ dual licensed as above, without any additional terms or conditions.
 [docs-image]: https://docs.rs/ed25519/badge.svg
 [docs-link]: https://docs.rs/ed25519/
 [license-image]: https://img.shields.io/badge/license-Apache2.0/MIT-blue.svg
-[rustc-image]: https://img.shields.io/badge/rustc-1.36+-blue.svg
+[rustc-image]: https://img.shields.io/badge/rustc-1.31+-blue.svg
 [build-image]: https://travis-ci.org/RustCrypto/signatures.svg?branch=master
 [build-link]: https://travis-ci.org/RustCrypto/signatures
 
