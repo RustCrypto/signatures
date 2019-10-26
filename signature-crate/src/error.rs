@@ -5,70 +5,36 @@ use core::fmt::{self, Display};
 #[cfg(feature = "std")]
 use std::boxed::Box;
 
+/// Box containing a thread-safe + `'static` error suitable for use as a
+/// as an `std::error::Error::source`
+#[cfg(feature = "std")]
+pub type BoxError = Box<dyn std::error::Error + Send + Sync + 'static>;
+
 /// Signature errors
 #[derive(Debug, Default)]
 pub struct Error {
-    /// Cause of the error (if applicable)
+    /// Source of the error (if applicable).
     #[cfg(feature = "std")]
-    cause: Option<Box<dyn std::error::Error>>,
+    source: Option<BoxError>,
 }
 
 impl Error {
-    /// Create a new error with no cause
+    /// Create a new error with no associated source
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Create a new error with an associated cause.
+    /// Create a new error with an associated source.
     ///
-    /// NOTE: The "cause" should NOT be used to propagate cryptographic errors
-    /// e.g. signature parsing or verification errors.
-    ///
-    /// The intended use cases are for propagating errors related to external
-    /// signers, e.g. communication/authentication errors with HSMs, KMS, etc.
+    /// **NOTE:** The "source" should NOT be used to propagate cryptographic
+    /// errors e.g. signature parsing or verification errors. The intended use
+    /// cases are for propagating errors related to external signers, e.g.
+    /// communication/authentication errors with HSMs, KMS, etc.
     #[cfg(feature = "std")]
-    pub fn from_cause<E>(cause: E) -> Self
-    where
-        E: Into<Box<dyn std::error::Error>>,
-    {
+    pub fn from_source(source: impl Into<BoxError>) -> Self {
         Self {
-            cause: Some(cause.into()),
+            source: Some(source.into()),
         }
-    }
-
-    /// Borrow the error's underlying cause (if available)
-    #[cfg(feature = "std")]
-    pub fn cause(&self) -> Option<&dyn std::error::Error> {
-        self.cause.as_ref().map(|c| c.as_ref())
-    }
-
-    /// Extract the underlying cause of this error.
-    ///
-    /// Panics if the error does not have a cause.
-    #[cfg(feature = "std")]
-    pub fn into_cause(self) -> Box<dyn std::error::Error> {
-        self.cause
-            .expect("into_cause called on an error with no cause")
-    }
-
-    /// Attempt to downcast this error's cause into a concrete type
-    #[cfg(feature = "std")]
-    pub fn downcast<T>(self) -> Result<Box<T>, Box<dyn std::error::Error>>
-    where
-        T: std::error::Error + 'static,
-    {
-        self.cause
-            .map(|cause| cause.downcast())
-            .unwrap_or_else(|| Err(Error::new().into()))
-    }
-
-    /// Attempt to downcast a reference to this error's cause into a concrete type
-    #[cfg(feature = "std")]
-    pub fn downcast_ref<T>(&self) -> Option<&T>
-    where
-        T: std::error::Error + 'static,
-    {
-        self.cause.as_ref().and_then(|cause| cause.downcast_ref())
     }
 }
 
@@ -78,8 +44,8 @@ impl Display for Error {
 
         #[cfg(feature = "std")]
         {
-            if let Some(ref cause) = self.cause {
-                write!(f, ": {}", cause)?;
+            if let Some(ref source) = self.source {
+                write!(f, ": {}", source)?;
             }
         }
 
@@ -89,7 +55,9 @@ impl Display for Error {
 
 #[cfg(feature = "std")]
 impl std::error::Error for Error {
-    fn cause(&self) -> Option<&dyn std::error::Error> {
-        self.cause.as_ref().map(|cause| cause.as_ref())
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        self.source
+            .as_ref()
+            .map(|source| source.as_ref() as &(dyn std::error::Error + 'static))
     }
 }

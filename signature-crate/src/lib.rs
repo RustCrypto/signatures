@@ -19,9 +19,9 @@
 //!   version bump.
 
 #![no_std]
+#![doc(html_root_url = "https://docs.rs/signature/1.0.0-pre.0")]
 #![forbid(unsafe_code)]
 #![warn(missing_docs, rust_2018_idioms, unused_qualifications)]
-#![doc(html_root_url = "https://docs.rs/signature/1.0.0-pre.0")]
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
