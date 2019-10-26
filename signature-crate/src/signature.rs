@@ -1,8 +1,7 @@
-use core::fmt::Debug;
+//! Signature traits
 
 use crate::error::Error;
-#[cfg(feature = "alloc")]
-use alloc::vec::Vec;
+use core::fmt::Debug;
 
 /// Trait impl'd by concrete types that represent digital signatures
 pub trait Signature: AsRef<[u8]> + Debug + Sized {
@@ -13,13 +12,6 @@ pub trait Signature: AsRef<[u8]> + Debug + Sized {
     #[inline]
     fn as_slice(&self) -> &[u8] {
         self.as_ref()
-    }
-
-    /// Convert this signature into a byte vector
-    #[cfg(feature = "alloc")]
-    #[inline]
-    fn into_vec(self) -> Vec<u8> {
-        self.as_slice().into()
     }
 }
 

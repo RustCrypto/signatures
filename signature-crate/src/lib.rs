@@ -4,7 +4,7 @@
 //!
 //! ## Minimum Supported Rust Version
 //!
-//! Rust **1.36** or higher.
+//! Rust **1.31** or higher.
 //!
 //! Minimum supported Rust version can be changed in the future, but it will be
 //! done with a minor version bump.
@@ -22,9 +22,6 @@
 #![doc(html_root_url = "https://docs.rs/signature/1.0.0-pre.0")]
 #![forbid(unsafe_code)]
 #![warn(missing_docs, rust_2018_idioms, unused_qualifications)]
-
-#[cfg(feature = "alloc")]
-extern crate alloc;
 
 #[cfg(feature = "std")]
 #[macro_use]

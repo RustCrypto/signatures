@@ -21,7 +21,7 @@ for bare-metal or WebAssembly programming.
 
 ## Minimum Supported Rust Version
 
-All crates in this repository support Rust **1.36** or higher. In future minimum
+All crates in this repository support Rust **1.31** or higher. In future minimum
 supported Rust version can be changed, but it will be done with the minor
 version bump.
 
@@ -51,7 +51,7 @@ dual licensed as above, without any additional terms or conditions.
 [build-link]: https://travis-ci.org/RustCrypto/signatures
 [deps-image]: https://deps.rs/repo/github/RustCrypto/signatures/status.svg
 [deps-link]: https://deps.rs/repo/github/RustCrypto/signatures
-[rustc-image]: https://img.shields.io/badge/rustc-1.36+-blue.svg
+[rustc-image]: https://img.shields.io/badge/rustc-1.31+-blue.svg
 
 [//]: # (general links)
 
