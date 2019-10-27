@@ -21,6 +21,9 @@
     html_root_url = "https://docs.rs/ed25519/1.0.0-pre.0"
 )]
 
+#[cfg(feature = "serde")]
+use serde::{de, ser, Deserialize, Serialize};
+
 /// Re-export the `signature` crate
 pub use signature::{self, Error};
 
@@ -54,20 +57,6 @@ impl signature::Signature for Signature {
     }
 }
 
-impl<'a> TryFrom<&'a [u8]> for Signature {
-    type Error = Error;
-
-    fn try_from(bytes: &'a [u8]) -> Result<Self, Error> {
-        if bytes.len() == SIGNATURE_LENGTH {
-            let mut arr = [0u8; SIGNATURE_LENGTH];
-            arr.copy_from_slice(bytes);
-            Ok(Signature(arr))
-        } else {
-            Err(Error::new())
-        }
-    }
-}
-
 impl AsRef<[u8]> for Signature {
     fn as_ref(&self) -> &[u8] {
         self.0.as_ref()
@@ -80,9 +69,29 @@ impl From<[u8; SIGNATURE_LENGTH]> for Signature {
     }
 }
 
+impl<'a> TryFrom<&'a [u8]> for Signature {
+    type Error = Error;
+
+    fn try_from(bytes: &'a [u8]) -> Result<Self, Error> {
+        // can't use `try_from` ourselves here because core array types only
+        // have TryFrom trait implementations for lengths 0..=32
+        // TODO(tarcieri): switch to `TryFrom` after const generics are available
+        if bytes.len() == SIGNATURE_LENGTH {
+            let mut arr = [0u8; SIGNATURE_LENGTH];
+            arr.copy_from_slice(bytes);
+            Ok(Signature(arr))
+        } else {
+            Err(Error::new())
+        }
+    }
+}
+
+// can't derive `Debug`, `PartialEq`, or `Eq` below because core array types
+// only have  trait implementations for lengths 0..=32
+// TODO(tarcieri): derive `PartialEq` and `Eq` after const generics are available
 impl Debug for Signature {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Signature({:?})", &self.0[..])
+        write!(f, "ed25519::Signature({:?})", &self.0[..])
     }
 }
 
@@ -93,3 +102,47 @@ impl PartialEq for Signature {
 }
 
 impl Eq for Signature {}
+
+#[cfg(feature = "serde")]
+impl Serialize for Signature {
+    fn serialize<S: ser::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.to_bytes().serialize(serializer)
+    }
+}
+
+// serde lacks support for deserializing arrays larger than 32-bytes
+// see: <https://github.com/serde-rs/serde/issues/631>
+#[cfg(feature = "serde")]
+impl<'de> Deserialize<'de> for Signature {
+    fn deserialize<D: de::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        struct ByteArrayVisitor;
+
+        impl<'de> de::Visitor<'de> for ByteArrayVisitor {
+            type Value = [u8; SIGNATURE_LENGTH];
+
+            fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+                formatter.write_str("bytestring of length 64")
+            }
+
+            fn visit_seq<A>(self, mut seq: A) -> Result<[u8; SIGNATURE_LENGTH], A::Error>
+            where
+                A: de::SeqAccess<'de>,
+            {
+                use de::Error;
+                let mut arr = [0u8; SIGNATURE_LENGTH];
+
+                for i in 0..SIGNATURE_LENGTH {
+                    arr[i] = seq
+                        .next_element()?
+                        .ok_or_else(|| Error::invalid_length(i, &self))?;
+                }
+
+                Ok(arr)
+            }
+        }
+
+        deserializer
+            .deserialize_tuple(SIGNATURE_LENGTH, ByteArrayVisitor)
+            .map(|bytes| bytes.into())
+    }
+}
