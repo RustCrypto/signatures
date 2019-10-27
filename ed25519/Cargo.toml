@@ -20,3 +20,7 @@ default-features = false
 version = "1"
 optional = true
 default-features = false
+
+[features]
+default = ["std"]
+std = ["signature/std"]

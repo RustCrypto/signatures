@@ -23,12 +23,12 @@ matrix:
   include:
     - name: "Rust: stable (thumbv7em-none-eabihf)"
       rust: stable
-      install: rustup target add thumbv7em-none-eabihf
-      script: cd signature-crate && cargo build --target thumbv7em-none-eabihf --no-default-features --release
+      install: rustup target add thumbv7em-none-eabi
+      script: ./build_nostd.sh
     - name: "Rust: stable (wasm32-unknown-unknown)"
       rust: stable
       install: rustup target add wasm32-unknown-unknown
-      script: cd signature-crate && cargo build --target wasm32-unknown-unknown --no-default-features --release
+      script: ./build_wasm.sh
     - name: rustfmt
       rust: stable
       install: rustup component add rustfmt
