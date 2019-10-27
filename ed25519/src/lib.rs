@@ -16,12 +16,18 @@
 #![no_std]
 #![forbid(unsafe_code)]
 #![warn(missing_docs, rust_2018_idioms, unused_qualifications)]
-#![doc(html_root_url = "https://docs.rs/ed25519/1.0.0-pre.0")]
+#![doc(
+    html_logo_url = "https://raw.githubusercontent.com/RustCrypto/meta/master/logo_small.png",
+    html_root_url = "https://docs.rs/ed25519/1.0.0-pre.0"
+)]
 
 /// Re-export the `signature` crate
 pub use signature::{self, Error};
 
-use core::fmt::{self, Debug};
+use core::{
+    convert::{TryFrom, TryInto},
+    fmt::{self, Debug},
+};
 
 /// Length of an Ed25519 signature
 pub const SIGNATURE_LENGTH: usize = 64;
@@ -43,9 +49,15 @@ impl Signature {
 }
 
 impl signature::Signature for Signature {
-    fn from_bytes<B: AsRef<[u8]>>(bytes: B) -> Result<Self, Error> {
-        let bytes = bytes.as_ref();
+    fn from_bytes(bytes: impl AsRef<[u8]>) -> Result<Self, Error> {
+        bytes.as_ref().try_into()
+    }
+}
 
+impl<'a> TryFrom<&'a [u8]> for Signature {
+    type Error = Error;
+
+    fn try_from(bytes: &'a [u8]) -> Result<Self, Error> {
         if bytes.len() == SIGNATURE_LENGTH {
             let mut arr = [0u8; SIGNATURE_LENGTH];
             arr.copy_from_slice(bytes);
