@@ -26,5 +26,8 @@ impl Curve for NistP256 {
     type ScalarSize = U32;
 }
 
+/// ASN.1 DER encoded NIST P-256 ECDSA signature
+pub type Asn1Signature = crate::Asn1Signature<NistP256>;
+
 /// Fixed-sized (a.k.a. "raw") NIST P-256 ECDSA signature
-pub type FixedSignature = crate::fixed_signature::FixedSignature<NistP256>;
+pub type FixedSignature = crate::FixedSignature<NistP256>;

@@ -63,6 +63,23 @@ impl AsRef<[u8]> for Signature {
     }
 }
 
+// can't derive `Debug`, `PartialEq`, or `Eq` below because core array types
+// only have  trait implementations for lengths 0..=32
+// TODO(tarcieri): derive `PartialEq` and `Eq` after const generics are available
+impl Debug for Signature {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "ed25519::Signature({:?})", &self.0[..])
+    }
+}
+
+impl Eq for Signature {}
+
+impl PartialEq for Signature {
+    fn eq(&self, other: &Self) -> bool {
+        self.as_ref().eq(other.as_ref())
+    }
+}
+
 impl From<[u8; SIGNATURE_LENGTH]> for Signature {
     fn from(bytes: [u8; SIGNATURE_LENGTH]) -> Signature {
         Signature(bytes)
@@ -85,23 +102,6 @@ impl<'a> TryFrom<&'a [u8]> for Signature {
         }
     }
 }
-
-// can't derive `Debug`, `PartialEq`, or `Eq` below because core array types
-// only have  trait implementations for lengths 0..=32
-// TODO(tarcieri): derive `PartialEq` and `Eq` after const generics are available
-impl Debug for Signature {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "ed25519::Signature({:?})", &self.0[..])
-    }
-}
-
-impl PartialEq for Signature {
-    fn eq(&self, other: &Self) -> bool {
-        self.as_ref().eq(other.as_ref())
-    }
-}
-
-impl Eq for Signature {}
 
 #[cfg(feature = "serde")]
 impl Serialize for Signature {
