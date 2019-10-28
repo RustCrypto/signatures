@@ -1,16 +1,12 @@
-//! An ECDSA signature comprises 2 scalars: `r` and `s`. The scalars are
-//! the same size as the curve's modulus, i.e. for an elliptic curve over
-//! a ~256-bit prime field, they will also be 256-bit (i.e. the `ScalarSize`
-//! for a particular `WeierstrassCurve`)
+//! Support for converting ECDSA signatures between the ASN.1 DER and "fixed"
+//! encodings using a self-contained implementation of the relevant parts of
+//! ASN.1 DER (i.e. `SEQUENCE` and `INTEGER`).
 //!
-//! This type provides a convenient representation for converting between
-//! formats, i.e. all of the serialization code is in this module.
-
-// Adapted from BearSSL. Copyright (c) 2016 Thomas Pornin <pornin@bolet.org>.
-// Relicensed under Apache 2.0 + MIT (from original MIT) with permission.
-//
-// <https://www.bearssl.org/gitweb/?p=BearSSL;a=blob;f=src/ec/ecdsa_atr.c>
-// <https://www.bearssl.org/gitweb/?p=BearSSL;a=blob;f=src/ec/ecdsa_rta.c>
+//! Adapted from BearSSL. Copyright (c) 2016 Thomas Pornin <pornin@bolet.org>.
+//! Relicensed under Apache 2.0 + MIT (from original MIT) with permission.
+//!
+//! <https://www.bearssl.org/gitweb/?p=BearSSL;a=blob;f=src/ec/ecdsa_atr.c>
+//! <https://www.bearssl.org/gitweb/?p=BearSSL;a=blob;f=src/ec/ecdsa_rta.c>
 
 use crate::{
     asn1_signature::{self, Asn1Signature},
@@ -32,7 +28,14 @@ pub(crate) enum Asn1Tag {
 }
 
 /// ECDSA signature `r` and `s` values, represented as slices which are at
-/// most `C::ScalarSize` bytes (but *may* be smaller)
+/// most `C::ScalarSize` bytes (but *may* be smaller).
+///
+/// The `r` and `s` scalars are the same size as the curve's modulus, i.e.
+/// for an elliptic curve over a ~256-bit prime field, they will also be
+/// 256-bit (i.e. the `ScalarSize` for a particular `Curve`).
+///
+/// This type provides a convenient representation for converting between
+/// formats, i.e. all of the serialization code is in this module.
 pub struct ScalarPair<'a, C: Curve + 'a> {
     /// `r` scalar value
     r: &'a [u8],
@@ -274,5 +277,27 @@ where
     /// them as ASN.1 DER.
     fn from(fixed_signature: &FixedSignature<C>) -> Self {
         ScalarPair::from_fixed_signature(fixed_signature).to_asn1_signature()
+    }
+}
+
+#[cfg(all(test, feature = "test-vectors"))]
+mod tests {
+    use crate::{
+        curve::nistp256::{Asn1Signature, FixedSignature},
+        test_vectors::nistp256::SHA256_FIXED_SIZE_TEST_VECTORS,
+    };
+    use signature::Signature;
+
+    #[test]
+    fn test_fixed_to_asn1_signature_roundtrip() {
+        for vector in SHA256_FIXED_SIZE_TEST_VECTORS {
+            let fixed_signature = FixedSignature::from_bytes(&vector.sig).unwrap();
+
+            // Convert to DER and back
+            let asn1_signature = Asn1Signature::from(&fixed_signature);
+            let fixed_signature2 = FixedSignature::from(&asn1_signature);
+
+            assert_eq!(fixed_signature, fixed_signature2);
+        }
     }
 }

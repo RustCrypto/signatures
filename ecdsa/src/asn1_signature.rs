@@ -1,6 +1,6 @@
 //! ASN.1 DER-encoded ECDSA signatures
 
-use crate::{curve::Curve, scalar_pair::ScalarPair};
+use crate::{convert::ScalarPair, curve::Curve};
 use core::{
     convert::{TryFrom, TryInto},
     fmt::{self, Debug},

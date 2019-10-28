@@ -10,7 +10,7 @@ use core::{fmt::Debug, ops::Add};
 use generic_array::typenum::Unsigned;
 
 /// Elliptic curve in short Weierstrass form suitable for use with ECDSA
-pub trait Curve: Debug + Default + Send + Sync {
+pub trait Curve: Debug + Default + Eq + PartialEq + Send + Sync {
     /// Size of an integer modulo p (i.e. the curve's order) when serialized
     /// as octets (i.e. bytes). This also describes the size of an ECDSA
     /// private key, as well as half the size of a fixed-width signature.
