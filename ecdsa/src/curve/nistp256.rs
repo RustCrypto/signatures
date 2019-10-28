@@ -31,3 +31,13 @@ pub type Asn1Signature = crate::Asn1Signature<NistP256>;
 
 /// Fixed-sized (a.k.a. "raw") NIST P-256 ECDSA signature
 pub type FixedSignature = crate::FixedSignature<NistP256>;
+
+#[cfg(feature = "digest")]
+impl signature::DigestSignature for Asn1Signature {
+    type Digest = sha2::Sha256;
+}
+
+#[cfg(feature = "digest")]
+impl signature::DigestSignature for FixedSignature {
+    type Digest = sha2::Sha256;
+}
