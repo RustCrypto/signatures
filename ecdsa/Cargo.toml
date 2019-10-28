@@ -28,4 +28,7 @@ default-features = false
 default = ["digest", "std"]
 digest = ["signature/digest-preview", "sha2"]
 std = ["signature/std"]
+test-vectors = []
 
+[package.metadata.docs.rs]
+all-features = true

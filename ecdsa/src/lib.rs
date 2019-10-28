@@ -25,8 +25,10 @@
 pub use signature;
 
 pub mod asn1_signature;
+mod convert;
 pub mod curve;
 pub mod fixed_signature;
-mod scalar_pair;
+#[cfg(feature = "test-vectors")]
+pub mod test_vectors;
 
 pub use self::{asn1_signature::Asn1Signature, curve::Curve, fixed_signature::FixedSignature};
