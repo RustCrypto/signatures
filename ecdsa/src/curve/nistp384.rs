@@ -27,5 +27,8 @@ impl Curve for NistP384 {
     type ScalarSize = U48;
 }
 
+/// ASN.1 DER encoded NIST P-384 ECDSA signature
+pub type Asn1Signature = crate::Asn1Signature<NistP384>;
+
 /// Fixed-sized (a.k.a. "raw") NIST P-384 ECDSA signature
-pub type FixedSignature = crate::fixed_signature::FixedSignature<NistP384>;
+pub type FixedSignature = crate::FixedSignature<NistP384>;

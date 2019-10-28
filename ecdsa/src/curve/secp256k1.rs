@@ -17,5 +17,8 @@ impl Curve for Secp256k1 {
     type ScalarSize = U32;
 }
 
+/// ASN.1 DER encoded secp256k1 ECDSA signature
+pub type Asn1Signature = crate::Asn1Signature<Secp256k1>;
+
 /// Fixed-sized (a.k.a. "raw") secp256k1 ECDSA signature
-pub type FixedSignature = crate::fixed_signature::FixedSignature<Secp256k1>;
+pub type FixedSignature = crate::FixedSignature<Secp256k1>;

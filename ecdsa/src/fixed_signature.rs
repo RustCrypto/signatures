@@ -1,47 +1,41 @@
 //! Fixed-sized (a.k.a. "raw") ECDSA signatures
 
 use crate::curve::Curve;
-use core::{fmt, ops::Add};
+use core::{
+    convert::{TryFrom, TryInto},
+    fmt::{self, Debug},
+    ops::Add,
+};
 use generic_array::{typenum::Unsigned, ArrayLength, GenericArray};
 use signature::Error;
 
-/// Size of a fixed sized signature: double that of the scalar size
-// TODO(tarcieri): use typenum's `Double` op or switch to const generics
-pub type Size<ScalarSize> = <ScalarSize as Add<ScalarSize>>::Output;
+/// Size of a fixed sized signature for the given elliptic curve.
+// TODO(tarcieri): const generics
+pub type Size<ScalarSize> = <ScalarSize as Add>::Output;
 
-/// Fixed-sized (a.k.a. "raw") ECDSA signatures: serialized as fixed-sized
-/// big endian scalar values with no additional framing.
+/// Fixed-sized (a.k.a. "raw") ECDSA signatures generic over elliptic curves.
+///
+/// These signatures are serialized as fixed-sized big endian scalar values
+/// with no additional framing.
 #[derive(Clone, Eq, PartialEq)]
-pub struct FixedSignature<C>
+pub struct FixedSignature<C: Curve>
 where
-    C: Curve,
-    C::ScalarSize: Add<C::ScalarSize>,
     Size<C::ScalarSize>: ArrayLength<u8>,
 {
     bytes: GenericArray<u8, Size<C::ScalarSize>>,
 }
 
-impl<C> signature::Signature for FixedSignature<C>
+impl<C: Curve> signature::Signature for FixedSignature<C>
 where
-    C: Curve,
-    C::ScalarSize: Add<C::ScalarSize>,
     Size<C::ScalarSize>: ArrayLength<u8>,
 {
     fn from_bytes(bytes: impl AsRef<[u8]>) -> Result<Self, Error> {
-        if bytes.as_ref().len() == <Size<C::ScalarSize>>::to_usize() {
-            Ok(Self {
-                bytes: GenericArray::clone_from_slice(bytes.as_ref()),
-            })
-        } else {
-            Err(Error::new())
-        }
+        bytes.as_ref().try_into()
     }
 }
 
-impl<C> AsRef<[u8]> for FixedSignature<C>
+impl<C: Curve> AsRef<[u8]> for FixedSignature<C>
 where
-    C: Curve,
-    C::ScalarSize: Add<C::ScalarSize>,
     Size<C::ScalarSize>: ArrayLength<u8>,
 {
     fn as_ref(&self) -> &[u8] {
@@ -49,10 +43,8 @@ where
     }
 }
 
-impl<C> fmt::Debug for FixedSignature<C>
+impl<C: Curve> Debug for FixedSignature<C>
 where
-    C: Curve,
-    C::ScalarSize: Add<C::ScalarSize>,
     Size<C::ScalarSize>: ArrayLength<u8>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -62,5 +54,22 @@ where
             C::default(),
             self.as_ref()
         )
+    }
+}
+
+impl<'a, C: Curve> TryFrom<&'a [u8]> for FixedSignature<C>
+where
+    Size<C::ScalarSize>: ArrayLength<u8>,
+{
+    type Error = Error;
+
+    fn try_from(bytes: &'a [u8]) -> Result<Self, Error> {
+        if bytes.len() == <Size<C::ScalarSize>>::to_usize() {
+            Ok(Self {
+                bytes: GenericArray::clone_from_slice(bytes),
+            })
+        } else {
+            Err(Error::new())
+        }
     }
 }

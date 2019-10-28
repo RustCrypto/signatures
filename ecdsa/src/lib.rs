@@ -11,7 +11,8 @@
 
 pub use signature;
 
+pub mod asn1_signature;
 pub mod curve;
-mod fixed_signature;
+pub mod fixed_signature;
 
-pub use self::{curve::Curve, fixed_signature::FixedSignature};
+pub use self::{asn1_signature::Asn1Signature, curve::Curve, fixed_signature::FixedSignature};
