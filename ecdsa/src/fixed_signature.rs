@@ -73,3 +73,12 @@ where
         }
     }
 }
+
+impl<C: Curve> From<GenericArray<u8, Size<C::ScalarSize>>> for FixedSignature<C>
+where
+    Size<C::ScalarSize>: ArrayLength<u8>,
+{
+    fn from(bytes: GenericArray<u8, Size<C::ScalarSize>>) -> Self {
+        Self { bytes }
+    }
+}
