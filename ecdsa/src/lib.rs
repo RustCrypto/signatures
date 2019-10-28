@@ -9,4 +9,9 @@
     html_root_url = "https://docs.rs/ecdsa/0.0.0"
 )]
 
+pub use signature;
+
 pub mod curve;
+mod fixed_signature;
+
+pub use self::{curve::Curve, fixed_signature::FixedSignature};
