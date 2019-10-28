@@ -14,12 +14,18 @@ keywords      = ["crypto", "ecc", "ecdsa", "signature", "signing"]
 version = "0.12"
 default-features = false
 
+[dependencies.sha2]
+version = "0.8"
+optional = true
+default-features = false
+
 [dependencies.signature]
 version = "1.0.0-pre.1"
 path = "../signature-crate"
 default-features = false
 
 [features]
-default = ["std"]
+default = ["digest", "std"]
+digest = ["signature/digest-preview", "sha2"]
 std = ["signature/std"]
 
