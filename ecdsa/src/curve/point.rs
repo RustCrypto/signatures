@@ -15,7 +15,7 @@ pub type CompressedPointSize<ScalarSize> = <ScalarSize as Add<U1>>::Output;
 /// Size of an uncompressed elliptic curve point for the given curve when
 /// serialized using the `Elliptic-Curve-Point-to-Octet-String` encoding
 /// (including the `0x04` tag).
-pub type UncompressedPointSize<ScalarSize> = <ScalarSize as Add<ScalarSize>>::Output;
+pub type UncompressedPointSize<ScalarSize> = <<ScalarSize as Add>::Output as Add<U1>>::Output;
 
 /// Compressed elliptic curve points serialized according to the
 /// `Elliptic-Curve-Point-to-Octet-String` algorithm defined
@@ -98,6 +98,7 @@ where
 #[derive(Eq, Hash, PartialEq, PartialOrd, Ord)]
 pub struct UncompressedCurvePoint<C: Curve>
 where
+    <C::ScalarSize as Add>::Output: Add<U1>,
     UncompressedPointSize<C::ScalarSize>: ArrayLength<u8>,
 {
     /// Raw serialized bytes of the uncompressed point
@@ -106,6 +107,7 @@ where
 
 impl<C: Curve> UncompressedCurvePoint<C>
 where
+    <C::ScalarSize as Add>::Output: Add<U1>,
     UncompressedPointSize<C::ScalarSize>: ArrayLength<u8>,
 {
     /// Create a new uncompressed elliptic curve point
@@ -137,6 +139,7 @@ where
 
 impl<C: Curve> AsRef<[u8]> for UncompressedCurvePoint<C>
 where
+    <C::ScalarSize as Add>::Output: Add<U1>,
     UncompressedPointSize<C::ScalarSize>: ArrayLength<u8>,
 {
     #[inline]
@@ -147,6 +150,7 @@ where
 
 impl<C: Curve> Copy for UncompressedCurvePoint<C>
 where
+    <C::ScalarSize as Add>::Output: Add<U1>,
     UncompressedPointSize<C::ScalarSize>: ArrayLength<u8>,
     <UncompressedPointSize<C::ScalarSize> as ArrayLength<u8>>::ArrayType: Copy,
 {
@@ -154,6 +158,7 @@ where
 
 impl<C: Curve> Clone for UncompressedCurvePoint<C>
 where
+    <C::ScalarSize as Add>::Output: Add<U1>,
     UncompressedPointSize<C::ScalarSize>: ArrayLength<u8>,
 {
     fn clone(&self) -> Self {
