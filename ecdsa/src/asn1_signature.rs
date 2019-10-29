@@ -26,7 +26,6 @@ use signature::Error;
 pub type MaxOverhead = generic_array::typenum::U9;
 
 /// Maximum size of an ASN.1 DER encoded signature for the given elliptic curve.
-// TODO(tarcieri): const generics
 pub type MaxSize<ScalarSize> = <<ScalarSize as Add>::Output as Add<MaxOverhead>>::Output;
 
 /// ASN.1 DER-encoded ECDSA signature generic over elliptic curves.

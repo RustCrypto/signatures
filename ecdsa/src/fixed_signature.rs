@@ -10,7 +10,6 @@ use generic_array::{typenum::Unsigned, ArrayLength, GenericArray};
 use signature::Error;
 
 /// Size of a fixed sized signature for the given elliptic curve.
-// TODO(tarcieri): const generics
 pub type Size<ScalarSize> = <ScalarSize as Add>::Output;
 
 /// Fixed-sized (a.k.a. "raw") ECDSA signatures generic over elliptic curves.

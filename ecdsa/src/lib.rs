@@ -12,6 +12,11 @@
 //! providers can be plugged in, enabling support for using different
 //! ECDSA implementations, including HSMs or Cloud KMS services.
 //!
+//! ## TODO
+//!
+//! - NIST P521
+//! - Const generics(!)
+//!
 //! [1]: https://csrc.nist.gov/publications/detail/fips/186/4/final
 
 #![no_std]
@@ -22,6 +27,10 @@
     html_root_url = "https://docs.rs/ecdsa/0.0.0"
 )]
 
+// Re-export the `generic-array` crate
+pub use generic_array;
+
+// Re-export the `signature` crate
 pub use signature;
 
 pub mod asn1_signature;
