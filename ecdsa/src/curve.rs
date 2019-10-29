@@ -1,4 +1,4 @@
-//! Elliptic curves used by ECDSA
+//! Elliptic curves (short Weierstrass form) used by ECDSA
 
 // Elliptic curves
 pub mod nistp256;

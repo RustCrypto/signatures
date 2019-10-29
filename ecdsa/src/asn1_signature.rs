@@ -10,7 +10,7 @@ use generic_array::{typenum::Unsigned, ArrayLength, GenericArray};
 use signature::Error;
 
 /// Maximum overhead of an ASN.1 DER-encoded ECDSA signature for a given curve:
-/// 9 bytes.
+/// 9-bytes.
 ///
 /// Includes 3-byte ASN.1 DER header:
 ///
