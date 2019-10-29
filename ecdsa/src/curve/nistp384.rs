@@ -19,7 +19,7 @@ use generic_array::typenum::U48;
 ///
 /// This curve is part of the US National Security Agency's "Suite B" and
 /// and is widely used in protocols like TLS and the associated X.509 PKI.
-#[derive(Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, PartialOrd, Ord)]
 pub struct NistP384;
 
 impl Curve for NistP384 {
