@@ -3,21 +3,26 @@
 use super::Curve;
 use generic_array::typenum::U32;
 
-/// The NIST P-256 elliptic curve: y² = x³ - 3x + b over a ~256-bit prime field
-/// where b is "verifiably random"† constant:
+/// NIST P-256 elliptic curve.
 ///
-/// b = 41058363725152142129326129780047268409114441015993725554835256314039467401291
-///
-/// † NOTE: the specific origins of this constant have never been fully disclosed
-///   (it is the SHA-1 digest of an inexplicable NSA-selected constant)
-///
-/// NIST P-256 is also known as prime256v1 (ANSI X9.62) and secp256r1 (SECG)
+/// This curve is also known as prime256v1 (ANSI X9.62) and secp256r1 (SECG)
 /// and is specified in FIPS 186-4: Digital Signature Standard (DSS):
 ///
 /// <https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.186-4.pdf>
 ///
-/// This curve is part of the US National Security Agency's "Suite B" and
-/// and is widely used in protocols like TLS and the associated X.509 PKI.
+/// It's included in the US National Security Agency's "Suite B" and is widely
+/// used in protocols like TLS and the associated X.509 PKI.
+///
+/// Its equation is `y² = x³ - 3x + b` over a ~256-bit prime field where `b` is
+/// the "verifiably random"† constant:
+///
+/// ```text
+/// b = 41058363725152142129326129780047268409114441015993725554835256314039467401291
+/// ```
+///
+/// † *NOTE: the specific origins of this constant have never been fully disclosed
+///   (it is the SHA-1 digest of an inexplicable NSA-selected constant)*
+
 #[derive(Clone, Debug, Default, Eq, PartialEq, PartialOrd, Ord)]
 pub struct NistP256;
 

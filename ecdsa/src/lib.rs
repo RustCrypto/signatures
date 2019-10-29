@@ -2,7 +2,7 @@
 //! [FIPS 186-4][1] (Digital Signature Standard)
 //!
 //! This crate doesn't contain an implementation of ECDSA itself, but instead
-//! contains an [`ecdsa::Asn1Signature`] and [`ecdsa::FixedSignature`] type
+//! contains [`ecdsa::Asn1Signature`] and [`ecdsa::FixedSignature`] types
 //! generic over an [`ecdsa::Curve`] type which other crates can use in
 //! conjunction with the [`signature::Signer`] and [`signature::Verifier`]
 //! traits.
@@ -14,14 +14,15 @@
 //!
 //! ## TODO
 //!
-//! - NIST P521
+//! - NIST P-521
+//! - Brainpool
 //! - Const generics(!)
 //!
 //! [1]: https://csrc.nist.gov/publications/detail/fips/186/4/final
 
 #![no_std]
 #![forbid(unsafe_code)]
-#![warn(missing_docs, rust_2018_idioms, unused_qualifications)]
+#![warn(missing_docs, rust_2018_idioms, intra_doc_link_resolution_failure)]
 #![doc(
     html_logo_url = "https://raw.githubusercontent.com/RustCrypto/meta/master/logo_small.png",
     html_root_url = "https://docs.rs/ecdsa/0.0.0"

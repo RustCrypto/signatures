@@ -3,12 +3,15 @@
 use super::Curve;
 use generic_array::typenum::U32;
 
-/// The secp256k1 elliptic curve: y² = x³ + 7 over a ~256-bit prime field.
+/// secp256k1 elliptic curve.
+///
 /// Specified in Certicom's SECG in SEC 2: Recommended Elliptic Curve Domain Parameters:
 ///
-/// <http://www.secg.org/sec2-v2.pdf>
+/// <https://www.secg.org/sec2-v2.pdf>
 ///
-/// This curve is most notable for its use in Bitcoin and other cryptocurrencies.
+/// The curve's equation is `y² = x³ + 7` over a ~256-bit prime field.
+///
+/// It's primarily notable for its use in Bitcoin and other cryptocurrencies.
 #[derive(Clone, Debug, Default, Eq, PartialEq, PartialOrd, Ord)]
 pub struct Secp256k1;
 

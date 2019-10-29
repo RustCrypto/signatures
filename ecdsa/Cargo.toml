@@ -1,14 +1,18 @@
 [package]
 name          = "ecdsa"
 version       = "0.0.0"
+description   = """
+Signature and elliptic curve types providing interoperable support for the
+Elliptic Curve Digital Signature Algorithm (ECDSA)
+"""
 authors       = ["RustCrypto Developers"]
 license       = "Apache-2.0 OR MIT"
-description   = "Elliptic Curve Digital Signature Algorithm"
 documentation = "https://docs.rs/ecdsa"
 repository    = "https://github.com/RustCrypto/signatures"
 edition       = "2018"
+readme        = "README.md"
 categories    = ["cryptography", "no-std"]
-keywords      = ["crypto", "ecc", "ecdsa", "signature", "signing"]
+keywords      = ["crypto", "ecc", "nist", "secp256k1", "signature"]
 
 [dependencies.generic-array]
 version = "0.12"

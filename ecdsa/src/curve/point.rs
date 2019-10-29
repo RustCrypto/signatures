@@ -1,6 +1,8 @@
-//! Compressed and uncompressed Weierstrass elliptic curve points serialized
-//! according to the `Elliptic-Curve-Point-to-Octet-String` algorithm described
-//! in SEC 1: Elliptic Curve Cryptography (Version 2.0) section 2.3.3 (page 10)
+//! Compressed and uncompressed Weierstrass elliptic curve points.
+//!
+//! Serialized according to the `Elliptic-Curve-Point-to-Octet-String`
+//! algorithm described in SEC 1: Elliptic Curve Cryptography (Version 2.0)
+//! section 2.3.3 (page 10):
 //!
 //! <https://www.secg.org/sec1-v2.pdf>
 
@@ -9,17 +11,19 @@ use core::ops::Add;
 use generic_array::{typenum::U1, ArrayLength, GenericArray};
 
 /// Size of a compressed elliptic curve point for the given curve when
-/// serialized using `Elliptic-Curve-Point-to-Octet-String` encoding.
+/// serialized using `Elliptic-Curve-Point-to-Octet-String` encoding
+/// (including leading `0x02` or `0x03` tag byte).
 pub type CompressedPointSize<ScalarSize> = <ScalarSize as Add<U1>>::Output;
 
 /// Size of an uncompressed elliptic curve point for the given curve when
 /// serialized using the `Elliptic-Curve-Point-to-Octet-String` encoding
-/// (including the `0x04` tag).
+/// (including leading `0x04` tag byte).
 pub type UncompressedPointSize<ScalarSize> = <<ScalarSize as Add>::Output as Add<U1>>::Output;
 
 /// Compressed elliptic curve points serialized according to the
-/// `Elliptic-Curve-Point-to-Octet-String` algorithm defined
-/// in section 2.3.3 of SEC 1: Elliptic Curve Cryptography (Version 2.0):
+/// `Elliptic-Curve-Point-to-Octet-String` algorithm.
+///
+/// See section 2.3.3 of SEC 1: Elliptic Curve Cryptography (Version 2.0):
 ///
 /// <https://www.secg.org/sec1-v2.pdf>
 #[derive(Eq, Hash, PartialEq, PartialOrd, Ord)]
@@ -90,9 +94,9 @@ where
 }
 
 /// Uncompressed elliptic curve points serialized according to the
-/// `Elliptic-Curve-Point-to-Octet-String` algorithm, including the `0x04`
-/// tag identifying the bytestring as a curve point, as defined
-/// in section 2.3.3 of SEC 1: Elliptic Curve Cryptography (Version 2.0):
+/// `Elliptic-Curve-Point-to-Octet-String` algorithm.
+///
+/// See section 2.3.3 of SEC 1: Elliptic Curve Cryptography (Version 2.0):
 ///
 /// <https://www.secg.org/sec1-v2.pdf>
 #[derive(Eq, Hash, PartialEq, PartialOrd, Ord)]
