@@ -90,16 +90,25 @@ impl<'a> TryFrom<&'a [u8]> for Signature {
     type Error = Error;
 
     fn try_from(bytes: &'a [u8]) -> Result<Self, Error> {
-        // can't use `try_from` ourselves here because core array types only
-        // have TryFrom trait implementations for lengths 0..=32
-        // TODO(tarcieri): switch to `TryFrom` after const generics are available
-        if bytes.len() == SIGNATURE_LENGTH {
-            let mut arr = [0u8; SIGNATURE_LENGTH];
-            arr.copy_from_slice(bytes);
-            Ok(Signature(arr))
-        } else {
-            Err(Error::new())
+        if bytes.len() != SIGNATURE_LENGTH {
+            return Err(Error::new());
         }
+
+        // Perform a partial reduction check on the signature's `s` scalar.
+        // When properly reduced, at least the three highest bits of the scalar
+        // will be unset so as to fit within the order of ~2^(252.5).
+        //
+        // This doesn't ensure that `s` is fully reduced (which would require a
+        // full reduction check in the event that the 4th most significant bit
+        // is set), however it will catch a number of invalid signatures
+        // relatively inexpensively.
+        if bytes[SIGNATURE_LENGTH - 1] & 0b1110_0000 != 0 {
+            return Err(Error::new());
+        }
+
+        let mut arr = [0u8; SIGNATURE_LENGTH];
+        arr.copy_from_slice(bytes);
+        Ok(Signature(arr))
     }
 }
 
