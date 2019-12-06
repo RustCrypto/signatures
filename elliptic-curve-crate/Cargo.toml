@@ -1,0 +1,36 @@
+[package]
+name = "elliptic-curve"
+description = """
+Types and traits providing generic support for Elliptic Curve Cryptography,
+including a registry of commonly used elliptic curve types.
+"""
+version       = "0.0.0" # Also update html_root_url in lib.rs when bumping this
+authors       = ["RustCrypto Developers"]
+license       = "Apache-2.0 OR MIT"
+documentation = "https://docs.rs/elliptic-curve"
+repository    = "https://github.com/RustCrypto/signatures/tree/master/elliptic-curve-crate"
+readme        = "README.md"
+edition       = "2018"
+categories    = ["cryptography", "no-std"]
+keywords      = ["ecc", "edwards", "elliptic", "montgomery", "weierstrass"]
+
+[dependencies.getrandom]
+version = "0.1"
+optional = true
+
+[dependencies.generic-array]
+version = "0.12"
+default-features = false
+
+[dependencies.zeroize]
+version = "1"
+optional = true
+default-features = false
+
+[features]
+default = ["getrandom", "weierstrass", "std", "zeroize"]
+weierstrass = []
+std = []
+
+[package.metadata.docs.rs]
+all-features = true
