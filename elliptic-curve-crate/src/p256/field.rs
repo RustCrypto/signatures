@@ -1,5 +1,6 @@
 //! Field arithmetic modulo p = 2^{224}(2^{32} − 1) + 2^{192} + 2^{96} − 1
 
+use getrandom::getrandom;
 use std::convert::TryInto;
 use std::ops::{Add, Mul, Sub};
 use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
@@ -78,6 +79,28 @@ impl FieldElement {
     /// Returns the multiplicative identity.
     pub const fn one() -> FieldElement {
         R
+    }
+
+    /// Returns a uniformly-random element within the field.
+    pub fn generate() -> Self {
+        // We reduce a random 512-bit value into a 256-bit field, which results in a
+        // negligible bias from the uniform distribution.
+        let mut buf = [0; 64];
+        getrandom(&mut buf).unwrap();
+        FieldElement::from_bytes_wide(buf)
+    }
+
+    fn from_bytes_wide(bytes: [u8; 64]) -> Self {
+        FieldElement::montgomery_reduce(
+            u64::from_be_bytes(bytes[0..8].try_into().unwrap()),
+            u64::from_be_bytes(bytes[8..16].try_into().unwrap()),
+            u64::from_be_bytes(bytes[16..24].try_into().unwrap()),
+            u64::from_be_bytes(bytes[24..32].try_into().unwrap()),
+            u64::from_be_bytes(bytes[32..40].try_into().unwrap()),
+            u64::from_be_bytes(bytes[40..48].try_into().unwrap()),
+            u64::from_be_bytes(bytes[48..56].try_into().unwrap()),
+            u64::from_be_bytes(bytes[56..64].try_into().unwrap()),
+        )
     }
 
     /// Attempts to parse the given byte array as an SEC-1-encoded field element.
