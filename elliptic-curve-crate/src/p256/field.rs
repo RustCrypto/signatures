@@ -312,6 +312,53 @@ impl FieldElement {
 
         FieldElement::montgomery_reduce(w0, w1, w2, w3, w4, w5, w6, w7)
     }
+
+    /// Returns self * self mod p
+    pub const fn square(&self) -> Self {
+        // Schoolbook multiplication.
+        self.mul(self)
+    }
+
+    /// Returns `self^by`, where `by` is a little-endian integer exponent.
+    ///
+    /// **This operation is variable time with respect to the exponent.** If the exponent
+    /// is fixed, this operation is effectively constant time.
+    pub fn pow_vartime(&self, by: &[u64; 4]) -> Self {
+        let mut res = Self::one();
+        for e in by.iter().rev() {
+            for i in (0..64).rev() {
+                res = res.square();
+
+                if ((*e >> i) & 1) == 1 {
+                    res = res * self;
+                }
+            }
+        }
+        res
+    }
+
+    /// Returns the square root of self mod p, or `None` if no square root exists.
+    pub fn sqrt(&self) -> CtOption<Self> {
+        // We need to find alpha such that alpha^2 = beta mod p. For secp256r1,
+        // p ≡ 3 mod 4. By Euler's Criterion, beta^(p-1)/2 ≡ 1 mod p. So:
+        //
+        //     alpha^2 = beta beta^((p - 1) / 2) mod p ≡ beta^((p + 1) / 2) mod p
+        //     alpha = ± beta^((p + 1) / 4) mod p
+        //
+        // Thus sqrt can be implemented with a single exponentiation.
+
+        let sqrt = self.pow_vartime(&[
+            0x0000_0000_0000_0000,
+            0x0000_0000_4000_0000,
+            0x4000_0000_0000_0000,
+            0x3fff_ffff_c000_0000,
+        ]);
+
+        CtOption::new(
+            sqrt,
+            (&sqrt * &sqrt).ct_eq(self), // Only return Some if it's the square root.
+        )
+    }
 }
 
 impl Add<&FieldElement> for &FieldElement {
@@ -429,6 +476,22 @@ mod tests {
             assert_eq!(hex::encode(r.to_bytes()), DBL_TEST_VECTORS[i]);
             r = r * &two;
         }
+    }
+
+    #[test]
+    fn pow_vartime() {
+        let one = FieldElement::one();
+        let two = one + &one;
+        let four = two.square();
+        assert_eq!(two.pow_vartime(&[2, 0, 0, 0]), four);
+    }
+
+    #[test]
+    fn sqrt() {
+        let one = FieldElement::one();
+        let two = one + &one;
+        let four = two.square();
+        assert_eq!(four.sqrt().unwrap(), two);
     }
 
     proptest! {
