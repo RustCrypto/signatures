@@ -2,3 +2,6 @@
 
 mod field;
 mod util;
+
+#[cfg(test)]
+mod test_vectors;

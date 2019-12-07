@@ -1,6 +1,7 @@
 //! Field arithmetic modulo p = 2^{224}(2^{32} − 1) + 2^{192} + 2^{96} − 1
 
 use std::convert::TryInto;
+use std::ops::{Add, Mul, Sub};
 use subtle::{Choice, ConstantTimeEq, CtOption};
 
 use super::util::{adc, mac, sbb};
@@ -277,11 +278,60 @@ impl FieldElement {
     }
 }
 
+impl Add<&FieldElement> for &FieldElement {
+    type Output = FieldElement;
+
+    fn add(self, other: &FieldElement) -> FieldElement {
+        FieldElement::add(self, other)
+    }
+}
+
+impl Add<&FieldElement> for FieldElement {
+    type Output = FieldElement;
+
+    fn add(self, other: &FieldElement) -> FieldElement {
+        FieldElement::add(&self, other)
+    }
+}
+
+impl Sub<&FieldElement> for &FieldElement {
+    type Output = FieldElement;
+
+    fn sub(self, other: &FieldElement) -> FieldElement {
+        FieldElement::sub(self, other)
+    }
+}
+
+impl Sub<&FieldElement> for FieldElement {
+    type Output = FieldElement;
+
+    fn sub(self, other: &FieldElement) -> FieldElement {
+        FieldElement::sub(&self, other)
+    }
+}
+
+impl Mul<&FieldElement> for &FieldElement {
+    type Output = FieldElement;
+
+    fn mul(self, other: &FieldElement) -> FieldElement {
+        FieldElement::mul(self, other)
+    }
+}
+
+impl Mul<&FieldElement> for FieldElement {
+    type Output = FieldElement;
+
+    fn mul(self, other: &FieldElement) -> FieldElement {
+        FieldElement::mul(&self, other)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use proptest::{num::u64::ANY, prelude::*};
 
     use super::FieldElement;
+    use crate::p256::test_vectors::DBL_TEST_VECTORS;
 
     #[test]
     fn zero_is_additive_identity() {
@@ -324,6 +374,25 @@ mod tests {
                 0, 0, 0, 1
             ]
         );
+    }
+
+    #[test]
+    fn repeated_add() {
+        let mut r = FieldElement::one();
+        for i in 0..DBL_TEST_VECTORS.len() {
+            assert_eq!(hex::encode(r.to_bytes()), DBL_TEST_VECTORS[i]);
+            r = r + &r;
+        }
+    }
+
+    #[test]
+    fn repeated_mul() {
+        let mut r = FieldElement::one();
+        let two = r + &r;
+        for i in 0..DBL_TEST_VECTORS.len() {
+            assert_eq!(hex::encode(r.to_bytes()), DBL_TEST_VECTORS[i]);
+            r = r * &two;
+        }
     }
 
     proptest! {

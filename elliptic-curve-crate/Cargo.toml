@@ -32,6 +32,7 @@ optional = true
 default-features = false
 
 [dev-dependencies]
+hex = "0.4"
 proptest = "0.9"
 
 [features]
