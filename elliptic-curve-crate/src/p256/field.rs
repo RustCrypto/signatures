@@ -1,9 +1,11 @@
 //! Field arithmetic modulo p = 2^{224}(2^{32} − 1) + 2^{192} + 2^{96} − 1
 
-use getrandom::getrandom;
 use std::convert::TryInto;
 use std::ops::{Add, Mul, Sub};
 use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
+
+#[cfg(feature = "getrandom")]
+use getrandom::getrandom;
 
 use super::util::{adc, mac, sbb};
 
@@ -82,6 +84,7 @@ impl FieldElement {
     }
 
     /// Returns a uniformly-random element within the field.
+    #[cfg(feature = "getrandom")]
     pub fn generate() -> Self {
         // We reduce a random 512-bit value into a 256-bit field, which results in a
         // negligible bias from the uniform distribution.
@@ -90,6 +93,7 @@ impl FieldElement {
         FieldElement::from_bytes_wide(buf)
     }
 
+    #[cfg(feature = "getrandom")]
     fn from_bytes_wide(bytes: [u8; 64]) -> Self {
         FieldElement::montgomery_reduce(
             u64::from_be_bytes(bytes[0..8].try_into().unwrap()),
