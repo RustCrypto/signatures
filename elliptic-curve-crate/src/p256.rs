@@ -8,8 +8,8 @@
 mod field;
 mod util;
 
-#[cfg(test)]
-mod test_vectors;
+#[cfg(any(feature = "test-vectors", test))]
+pub mod test_vectors;
 
 use core::convert::TryInto;
 use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
