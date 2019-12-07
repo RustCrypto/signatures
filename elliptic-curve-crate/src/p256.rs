@@ -10,7 +10,7 @@ use std::convert::TryInto;
 use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
 
 use crate::weierstrass::curve::nistp256::PublicKey;
-use field::FieldElement;
+use field::{FieldElement, MODULUS};
 
 /// a = -3
 const CURVE_EQUATION_A: FieldElement = FieldElement::zero()
@@ -64,7 +64,28 @@ impl AffinePoint {
     /// `None` value if `pubkey` is not on the secp256r1 curve.
     pub fn from_pubkey(pubkey: &PublicKey) -> CtOption<Self> {
         match pubkey {
-            PublicKey::Compressed(_) => unimplemented!(),
+            PublicKey::Compressed(point) => {
+                let bytes = point.as_bytes();
+
+                let y_is_odd = Choice::from(bytes[0] & 0x01);
+                let x = FieldElement::from_bytes(bytes[1..33].try_into().unwrap());
+
+                x.and_then(|x| {
+                    let alpha = x * &x * &x + &(CURVE_EQUATION_A * &x) + &CURVE_EQUATION_B;
+                    let beta = alpha.sqrt();
+
+                    beta.map(|beta| {
+                        let y = FieldElement::conditional_select(
+                            &(MODULUS - &beta),
+                            &beta,
+                            // beta.is_odd() == y_is_odd
+                            !(beta.is_odd() ^ y_is_odd),
+                        );
+
+                        AffinePoint { x, y }
+                    })
+                })
+            }
             PublicKey::Uncompressed(point) => {
                 let bytes = point.as_bytes();
 
@@ -143,6 +164,18 @@ mod tests {
     }
 
     #[test]
+    fn compressed_round_trip() {
+        let pubkey = PublicKey::from_bytes(&hex::decode(COMPRESSED_BASEPOINT).unwrap()).unwrap();
+
+        assert_eq!(
+            AffinePoint::from_pubkey(&pubkey)
+                .unwrap()
+                .to_compressed_pubkey(),
+            pubkey
+        );
+    }
+
+    #[test]
     fn uncompressed_to_compressed() {
         let encoded = PublicKey::from_bytes(&hex::decode(UNCOMPRESSED_BASEPOINT).unwrap()).unwrap();
 
@@ -153,6 +186,20 @@ mod tests {
         assert_eq!(
             hex::encode(res.as_bytes()).to_uppercase(),
             COMPRESSED_BASEPOINT
+        );
+    }
+
+    #[test]
+    fn compressed_to_uncompressed() {
+        let encoded = PublicKey::from_bytes(&hex::decode(COMPRESSED_BASEPOINT).unwrap()).unwrap();
+
+        let res = AffinePoint::from_pubkey(&encoded)
+            .unwrap()
+            .to_uncompressed_pubkey();
+
+        assert_eq!(
+            hex::encode(res.as_bytes()).to_uppercase(),
+            UNCOMPRESSED_BASEPOINT
         );
     }
 }
