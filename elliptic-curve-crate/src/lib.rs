@@ -1,5 +1,6 @@
 //! General purpose Elliptic Curve Cryptography (ECC) support, including types
-//! and traits for representing various elliptic curve forms.
+//! and traits for representing various elliptic curve forms, scalars, points,
+//! and public/secret keys composed thereof.
 //!
 //! ## Minimum Supported Rust Version
 //!
@@ -13,7 +14,7 @@
 #![warn(missing_docs, rust_2018_idioms, unused_qualifications)]
 #![doc(
     html_logo_url = "https://raw.githubusercontent.com/RustCrypto/meta/master/logo_small.png",
-    html_root_url = "https://docs.rs/elliptic-curve/0.0.0"
+    html_root_url = "https://docs.rs/elliptic-curve/0.1.0"
 )]
 
 #[cfg(feature = "std")]
