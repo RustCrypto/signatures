@@ -25,6 +25,7 @@ default-features = false
 
 [dependencies.subtle]
 version = "2.2.2"
+default-features = false
 
 [dependencies.zeroize]
 version = "1"

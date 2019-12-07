@@ -11,7 +11,7 @@ mod util;
 #[cfg(test)]
 mod test_vectors;
 
-use std::convert::TryInto;
+use core::convert::TryInto;
 use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
 
 use crate::weierstrass::curve::nistp256::PublicKey;

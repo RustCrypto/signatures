@@ -1,7 +1,7 @@
 //! Field arithmetic modulo p = 2^{224}(2^{32} − 1) + 2^{192} + 2^{96} − 1
 
-use std::convert::TryInto;
-use std::ops::{Add, Mul, Sub};
+use core::convert::TryInto;
+use core::ops::{Add, Mul, Sub};
 use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
 
 #[cfg(feature = "getrandom")]
