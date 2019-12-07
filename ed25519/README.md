@@ -23,7 +23,7 @@ Ed25519 implementations, including HSMs or Cloud KMS services.
 
 ## Requirements
 
-- Rust **1.34+**
+- Rust **1.37+**
 
 ## License
 

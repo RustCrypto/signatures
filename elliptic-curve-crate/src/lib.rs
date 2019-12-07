@@ -28,4 +28,8 @@ pub mod error;
 #[cfg(feature = "weierstrass")]
 pub mod weierstrass;
 
+// TODO(str4d): Move to separate crate
+#[cfg(feature = "arithmetic")]
+pub mod p256;
+
 pub use self::error::Error;

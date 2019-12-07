@@ -16,7 +16,7 @@ Support is also planned for the [`ecdsa`][3] and [`rsa`][4] crates.
 
 ## Minimum Supported Rust Version
 
-All crates in this repository support Rust **1.34** or higher.
+All crates in this repository support Rust **1.37** or higher.
 
 Minimum supported Rust version can be changed in the future, but it will be
 done with a minor version bump.
