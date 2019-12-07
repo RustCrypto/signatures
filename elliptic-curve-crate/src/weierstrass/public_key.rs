@@ -133,3 +133,25 @@ where
         write!(f, "PublicKey<{:?}>({:?})", C::default(), self.as_ref())
     }
 }
+
+impl<C: Curve> From<CompressedCurvePoint<C>> for PublicKey<C>
+where
+    <C::ScalarSize as Add>::Output: Add<U1>,
+    CompressedPointSize<C::ScalarSize>: ArrayLength<u8>,
+    UncompressedPointSize<C::ScalarSize>: ArrayLength<u8>,
+{
+    fn from(point: CompressedCurvePoint<C>) -> Self {
+        PublicKey::Compressed(point)
+    }
+}
+
+impl<C: Curve> From<UncompressedCurvePoint<C>> for PublicKey<C>
+where
+    <C::ScalarSize as Add>::Output: Add<U1>,
+    CompressedPointSize<C::ScalarSize>: ArrayLength<u8>,
+    UncompressedPointSize<C::ScalarSize>: ArrayLength<u8>,
+{
+    fn from(point: UncompressedCurvePoint<C>) -> Self {
+        PublicKey::Uncompressed(point)
+    }
+}
