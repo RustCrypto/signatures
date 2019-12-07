@@ -21,7 +21,7 @@ for bare-metal or WebAssembly programming.
 
 ## Minimum Supported Rust Version
 
-All crates in this repository support Rust **1.34** or higher. In future minimum
+All crates in this repository support Rust **1.37** or higher. In future minimum
 supported Rust version can be changed, but it will be done with the minor
 version bump.
 
