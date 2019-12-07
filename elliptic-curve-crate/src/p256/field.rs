@@ -1,6 +1,7 @@
 //! Field arithmetic modulo p = 2^{224}(2^{32} − 1) + 2^{192} + 2^{96} − 1
 
-use subtle::{Choice, ConstantTimeEq};
+use std::convert::TryInto;
+use subtle::{Choice, ConstantTimeEq, CtOption};
 
 use super::util::{adc, mac, sbb};
 
@@ -19,6 +20,14 @@ const R: FieldElement = FieldElement([
     0xffff_ffff_0000_0000,
     0xffff_ffff_ffff_ffff,
     0x0000_0000_ffff_fffe,
+]);
+
+/// R^2 = 2^512 mod p
+const R2: FieldElement = FieldElement([
+    0x0000_0000_0000_0003,
+    0xffff_fffb_ffff_ffff,
+    0xffff_ffff_ffff_fffe,
+    0x0000_0004_ffff_fffd,
 ]);
 
 /// An element in the finite field modulo p = 2^{224}(2^{32} − 1) + 2^{192} + 2^{96} − 1.
@@ -51,6 +60,45 @@ impl FieldElement {
     /// Returns the multiplicative identity.
     pub const fn one() -> FieldElement {
         R
+    }
+
+    /// Attempts to parse the given byte array as an SEC-1-encoded field element.
+    ///
+    /// Returns None if the byte array does not contain a big-endian integer in the range
+    /// [0, p).
+    pub fn from_bytes(bytes: [u8; 32]) -> CtOption<Self> {
+        let mut w = [0u64; 4];
+
+        // Interpret the bytes as a big-endian integer w.
+        w[3] = u64::from_be_bytes(bytes[0..8].try_into().unwrap());
+        w[2] = u64::from_be_bytes(bytes[8..16].try_into().unwrap());
+        w[1] = u64::from_be_bytes(bytes[16..24].try_into().unwrap());
+        w[0] = u64::from_be_bytes(bytes[24..32].try_into().unwrap());
+
+        // If w is in the range [0, p) then w - p will overflow, resulting in a borrow
+        // value of 2^64 - 1.
+        let (_, borrow) = sbb(w[0], MODULUS.0[0], 0);
+        let (_, borrow) = sbb(w[1], MODULUS.0[1], borrow);
+        let (_, borrow) = sbb(w[2], MODULUS.0[2], borrow);
+        let (_, borrow) = sbb(w[3], MODULUS.0[3], borrow);
+        let is_some = (borrow as u8) & 1;
+
+        // Convert w to Montgomery form: w * R^2 * R^-1 mod p = wR mod p
+        CtOption::new(FieldElement(w).mul(&R2), Choice::from(is_some))
+    }
+
+    /// Returns the SEC-1 encoding of this field element.
+    pub fn to_bytes(&self) -> [u8; 32] {
+        // Convert from Montgomery form to canonical form
+        let tmp =
+            FieldElement::montgomery_reduce(self.0[0], self.0[1], self.0[2], self.0[3], 0, 0, 0, 0);
+
+        let mut ret = [0; 32];
+        ret[0..8].copy_from_slice(&tmp.0[3].to_be_bytes());
+        ret[8..16].copy_from_slice(&tmp.0[2].to_be_bytes());
+        ret[16..24].copy_from_slice(&tmp.0[1].to_be_bytes());
+        ret[24..32].copy_from_slice(&tmp.0[0].to_be_bytes());
+        ret
     }
 
     /// Returns self + rhs mod p
@@ -247,6 +295,35 @@ mod tests {
     fn one_is_multiplicative_identity() {
         let one = FieldElement::one();
         assert_eq!(one.mul(&one), one);
+    }
+
+    #[test]
+    fn from_bytes() {
+        assert_eq!(
+            FieldElement::from_bytes([0; 32]).unwrap(),
+            FieldElement::zero()
+        );
+        assert_eq!(
+            FieldElement::from_bytes([
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 1
+            ])
+            .unwrap(),
+            FieldElement::one()
+        );
+        assert!(bool::from(FieldElement::from_bytes([0xff; 32]).is_none()));
+    }
+
+    #[test]
+    fn to_bytes() {
+        assert_eq!(FieldElement::zero().to_bytes(), [0; 32]);
+        assert_eq!(
+            FieldElement::one().to_bytes(),
+            [
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 1
+            ]
+        );
     }
 
     proptest! {
