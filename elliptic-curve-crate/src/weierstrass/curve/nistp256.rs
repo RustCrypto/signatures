@@ -29,3 +29,9 @@ impl Curve for NistP256 {
     /// 256-bit (32-byte) private scalar
     type ScalarSize = U32;
 }
+
+/// NIST P-256 secret keys
+pub type SecretKey = crate::weierstrass::SecretKey<NistP256>;
+
+/// NIST P-256 public keys
+pub type PublicKey = crate::weierstrass::PublicKey<NistP256>;
