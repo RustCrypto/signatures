@@ -83,6 +83,15 @@ impl AffinePoint {
         }
     }
 
+    /// Returns the SEC-1 compressed encoding of this point, as a [`PublicKey`].
+    pub fn to_compressed_pubkey(&self) -> PublicKey {
+        let mut encoded = [0; 33];
+        encoded[0] = if self.y.is_odd().into() { 0x03 } else { 0x02 };
+        encoded[1..33].copy_from_slice(&self.x.to_bytes());
+
+        PublicKey::from_bytes(&encoded[..]).expect("we encoded it correctly")
+    }
+
     /// Returns the SEC-1 uncompressed encoding of this point, as a [`PublicKey`].
     pub fn to_uncompressed_pubkey(&self) -> PublicKey {
         let mut encoded = [0; 65];
@@ -106,6 +115,8 @@ mod tests {
 
     const UNCOMPRESSED_BASEPOINT: &str =
         "046B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C2964FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5";
+    const COMPRESSED_BASEPOINT: &str =
+        "036B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296";
 
     #[test]
     fn verify_constants() {
@@ -128,6 +139,20 @@ mod tests {
                 .unwrap()
                 .to_uncompressed_pubkey(),
             pubkey
+        );
+    }
+
+    #[test]
+    fn uncompressed_to_compressed() {
+        let encoded = PublicKey::from_bytes(&hex::decode(UNCOMPRESSED_BASEPOINT).unwrap()).unwrap();
+
+        let res = AffinePoint::from_pubkey(&encoded)
+            .unwrap()
+            .to_compressed_pubkey();
+
+        assert_eq!(
+            hex::encode(res.as_bytes()).to_uppercase(),
+            COMPRESSED_BASEPOINT
         );
     }
 }

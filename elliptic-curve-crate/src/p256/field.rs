@@ -119,6 +119,25 @@ impl FieldElement {
         ret
     }
 
+    /// Determine if this `FieldElement` is zero.
+    ///
+    /// # Returns
+    ///
+    /// If zero, return `Choice(1)`.  Otherwise, return `Choice(0)`.
+    pub fn is_zero(&self) -> Choice {
+        self.ct_eq(&FieldElement::zero())
+    }
+
+    /// Determine if this `FieldElement` is odd in the SEC-1 sense: `self mod 2 == 1`.
+    ///
+    /// # Returns
+    ///
+    /// If odd, return `Choice(1)`.  Otherwise, return `Choice(0)`.
+    pub fn is_odd(&self) -> Choice {
+        let bytes = self.to_bytes();
+        (bytes[31] & 1).into()
+    }
+
     /// Returns self + rhs mod p
     pub const fn add(&self, rhs: &Self) -> Self {
         // Bit 256 of p is set, so addition can result in five words.
