@@ -2,7 +2,7 @@
 
 use std::convert::TryInto;
 use std::ops::{Add, Mul, Sub};
-use subtle::{Choice, ConstantTimeEq, CtOption};
+use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
 
 use super::util::{adc, mac, sbb};
 
@@ -35,7 +35,18 @@ const R2: FieldElement = FieldElement([
 // The internal representation is in little-endian order. Elements are always in
 // Montgomery form; i.e., FieldElement(a) = aR mod p, with R = 2^256.
 #[derive(Clone, Copy, Debug)]
-pub struct FieldElement([u64; 4]);
+pub struct FieldElement(pub(crate) [u64; 4]);
+
+impl ConditionallySelectable for FieldElement {
+    fn conditional_select(a: &FieldElement, b: &FieldElement, choice: Choice) -> FieldElement {
+        FieldElement([
+            u64::conditional_select(&a.0[0], &b.0[0], choice),
+            u64::conditional_select(&a.0[1], &b.0[1], choice),
+            u64::conditional_select(&a.0[2], &b.0[2], choice),
+            u64::conditional_select(&a.0[3], &b.0[3], choice),
+        ])
+    }
+}
 
 impl ConstantTimeEq for FieldElement {
     fn ct_eq(&self, other: &Self) -> Choice {
@@ -49,6 +60,12 @@ impl ConstantTimeEq for FieldElement {
 impl PartialEq for FieldElement {
     fn eq(&self, other: &Self) -> bool {
         self.ct_eq(other).into()
+    }
+}
+
+impl Default for FieldElement {
+    fn default() -> Self {
+        FieldElement::zero()
     }
 }
 
