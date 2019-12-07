@@ -19,3 +19,9 @@ impl Curve for Secp256k1 {
     /// 256-bit (32-byte) private scalar
     type ScalarSize = U32;
 }
+
+/// secp256k1 secret keys
+pub type SecretKey = crate::weierstrass::SecretKey<Secp256k1>;
+
+/// secp256k1 public keys
+pub type PublicKey = crate::weierstrass::PublicKey<Secp256k1>;

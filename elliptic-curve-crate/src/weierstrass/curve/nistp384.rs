@@ -30,3 +30,9 @@ impl Curve for NistP384 {
     /// 384-bit (48-byte) private scalar
     type ScalarSize = U48;
 }
+
+/// NIST P-384 secret keys
+pub type SecretKey = crate::weierstrass::SecretKey<NistP384>;
+
+/// NIST P-384 public keys
+pub type PublicKey = crate::weierstrass::PublicKey<NistP384>;

@@ -14,6 +14,12 @@ readme        = "README.md"
 categories    = ["cryptography", "no-std"]
 keywords      = ["crypto", "ecc", "nist", "secp256k1", "signature"]
 
+[dependencies.elliptic-curve]
+version = "0.0.0"
+path = "../elliptic-curve-crate"
+default-features = false
+features = ["weierstrass"]
+
 [dependencies.generic-array]
 version = "0.12"
 default-features = false
@@ -29,9 +35,10 @@ path = "../signature-crate"
 default-features = false
 
 [features]
-default = ["digest", "std"]
+default = ["digest", "std", "zeroize"]
 digest = ["signature/digest-preview", "sha2"]
-std = ["signature/std"]
+std = ["elliptic-curve/getrandom", "elliptic-curve/std", "signature/std"]
+zeroize = ["elliptic-curve/zeroize"]
 test-vectors = []
 
 [package.metadata.docs.rs]
