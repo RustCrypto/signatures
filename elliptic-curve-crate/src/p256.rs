@@ -1,4 +1,9 @@
 //! A pure-Rust implementation of group operations on secp256r1.
+//!
+//! # Status
+//!
+//! Currently, no actual group operations are implemented. Only point compression and
+//! decompression is supported.
 
 mod field;
 mod util;
