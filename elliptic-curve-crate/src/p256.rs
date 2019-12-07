@@ -12,9 +12,13 @@ mod util;
 pub mod test_vectors;
 
 use core::convert::TryInto;
+use generic_array::GenericArray;
 use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
 
-use crate::weierstrass::curve::nistp256::PublicKey;
+use crate::weierstrass::{
+    curve::nistp256::{NistP256, PublicKey},
+    CompressedCurvePoint, UncompressedCurvePoint,
+};
 use field::{FieldElement, MODULUS};
 
 /// a = -3
@@ -109,23 +113,25 @@ impl AffinePoint {
         }
     }
 
-    /// Returns the SEC-1 compressed encoding of this point, as a [`PublicKey`].
-    pub fn to_compressed_pubkey(&self) -> PublicKey {
+    /// Returns the SEC-1 compressed encoding of this point.
+    pub fn to_compressed_pubkey(&self) -> CompressedCurvePoint<NistP256> {
         let mut encoded = [0; 33];
         encoded[0] = if self.y.is_odd().into() { 0x03 } else { 0x02 };
         encoded[1..33].copy_from_slice(&self.x.to_bytes());
 
-        PublicKey::from_bytes(&encoded[..]).expect("we encoded it correctly")
+        CompressedCurvePoint::from_bytes(GenericArray::clone_from_slice(&encoded[..]))
+            .expect("we encoded it correctly")
     }
 
-    /// Returns the SEC-1 uncompressed encoding of this point, as a [`PublicKey`].
-    pub fn to_uncompressed_pubkey(&self) -> PublicKey {
+    /// Returns the SEC-1 uncompressed encoding of this point.
+    pub fn to_uncompressed_pubkey(&self) -> UncompressedCurvePoint<NistP256> {
         let mut encoded = [0; 65];
         encoded[0] = 0x04;
         encoded[1..33].copy_from_slice(&self.x.to_bytes());
         encoded[33..65].copy_from_slice(&self.y.to_bytes());
 
-        PublicKey::from_bytes(&encoded[..]).expect("we encoded it correctly")
+        UncompressedCurvePoint::from_bytes(GenericArray::clone_from_slice(&encoded[..]))
+            .expect("we encoded it correctly")
     }
 }
 
@@ -159,25 +165,23 @@ mod tests {
     #[test]
     fn uncompressed_round_trip() {
         let pubkey = PublicKey::from_bytes(&hex::decode(UNCOMPRESSED_BASEPOINT).unwrap()).unwrap();
+        let res: PublicKey = AffinePoint::from_pubkey(&pubkey)
+            .unwrap()
+            .to_uncompressed_pubkey()
+            .into();
 
-        assert_eq!(
-            AffinePoint::from_pubkey(&pubkey)
-                .unwrap()
-                .to_uncompressed_pubkey(),
-            pubkey
-        );
+        assert_eq!(res, pubkey);
     }
 
     #[test]
     fn compressed_round_trip() {
         let pubkey = PublicKey::from_bytes(&hex::decode(COMPRESSED_BASEPOINT).unwrap()).unwrap();
+        let res: PublicKey = AffinePoint::from_pubkey(&pubkey)
+            .unwrap()
+            .to_compressed_pubkey()
+            .into();
 
-        assert_eq!(
-            AffinePoint::from_pubkey(&pubkey)
-                .unwrap()
-                .to_compressed_pubkey(),
-            pubkey
-        );
+        assert_eq!(res, pubkey);
     }
 
     #[test]
