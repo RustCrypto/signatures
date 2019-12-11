@@ -3,7 +3,7 @@
 [![crate][crate-image]][crate-link]
 [![Docs][docs-image]][docs-link]
 ![Apache2/MIT licensed][license-image]
-![Rust Version][rustc-image]
+![MSRV][rustc-image]
 [![Build Status][build-image]][build-link]
 
 Elliptic Curve Digital Signature Algorithm (ECDSA) as specified in
@@ -48,7 +48,7 @@ dual licensed as above, without any additional terms or conditions.
 [docs-image]: https://docs.rs/ecdsa/badge.svg
 [docs-link]: https://docs.rs/ecdsa/
 [license-image]: https://img.shields.io/badge/license-Apache2.0/MIT-blue.svg
-[rustc-image]: https://img.shields.io/badge/rustc-1.34+-blue.svg
+[rustc-image]: https://img.shields.io/badge/rustc-1.37+-blue.svg
 [build-image]: https://travis-ci.org/RustCrypto/signatures.svg?branch=master
 [build-link]: https://travis-ci.org/RustCrypto/signatures
 
