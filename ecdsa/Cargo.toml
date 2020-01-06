@@ -16,7 +16,6 @@ keywords      = ["crypto", "ecc", "nist", "secp256k1", "signature"]
 
 [dependencies.elliptic-curve]
 version = "0.2.0"
-path = "../elliptic-curve-crate"
 default-features = false
 features = ["weierstrass"]
 
