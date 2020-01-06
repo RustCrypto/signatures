@@ -2,7 +2,6 @@
 members = [
     "ecdsa",
     "ed25519",
-    "elliptic-curve-crate",
     "signature-crate",
     "signature-crate/signature_derive"
 ]
