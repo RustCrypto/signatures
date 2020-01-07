@@ -1,6 +1,6 @@
 //! secp256k1 elliptic curve
 
-pub use elliptic_curve::weierstrass::curve::secp256k1::{PublicKey, Secp256k1, SecretKey};
+pub use k256::{PublicKey, Secp256k1, SecretKey};
 
 /// ASN.1 DER encoded secp256k1 ECDSA signature
 pub type Asn1Signature = crate::Asn1Signature<Secp256k1>;

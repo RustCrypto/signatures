@@ -53,4 +53,7 @@ pub mod fixed_signature;
 pub mod test_vectors;
 
 pub use self::{asn1_signature::Asn1Signature, fixed_signature::FixedSignature};
-pub use elliptic_curve::weierstrass::{Curve, PublicKey, SecretKey};
+pub use elliptic_curve::{
+    weierstrass::{Curve, PublicKey},
+    SecretKey,
+};
