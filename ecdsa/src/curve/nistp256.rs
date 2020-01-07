@@ -1,6 +1,6 @@
 //! NIST P-256 elliptic curve (a.k.a. prime256v1, secp256r1)
 
-pub use elliptic_curve::weierstrass::curve::nistp256::{NistP256, PublicKey, SecretKey};
+pub use p256::{NistP256, PublicKey, SecretKey};
 
 /// ASN.1 DER encoded NIST P-256 ECDSA signature
 pub type Asn1Signature = crate::Asn1Signature<NistP256>;

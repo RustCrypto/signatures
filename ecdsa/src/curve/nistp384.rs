@@ -1,6 +1,6 @@
 //! NIST P-384 elliptic curve (a.k.a. secp384r1)
 
-pub use elliptic_curve::weierstrass::curve::nistp384::{NistP384, PublicKey, SecretKey};
+pub use p384::{NistP384, PublicKey, SecretKey};
 
 /// ASN.1 DER encoded NIST P-384 ECDSA signature
 pub type Asn1Signature = crate::Asn1Signature<NistP384>;
