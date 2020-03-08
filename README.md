@@ -4,13 +4,14 @@
 [![Dependency Status][deps-image]][deps-link]
 ![Rust Version][rustc-image]
 
-Traits which provide generic, object-safe APIs for generating and verifying
-[digital signatures][1].
+Support for [digital signatures][1], which provide authentication of data using
+public-key cryptography.
 
 All algorithms reside in the separate crates and implemented using traits from
-the [`signature`](https://docs.rs/signature/) crate. Additionally all crates do
-not require the standard library (i.e. `no_std` capable) and can be easily used
-for bare-metal or WebAssembly programming.
+the [`signature`](https://docs.rs/signature/) crate.
+
+Crates are designed so they do not require the standard library (i.e. `no_std`)
+and can be easily used for bare-metal or lightweight WebAssembly programming.
 
 ## Crates
 
