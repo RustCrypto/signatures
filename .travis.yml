@@ -14,8 +14,6 @@ env:
 script:
   - cargo test --verbose --release
   - cargo test --verbose --all-features --release
-  # Can't use `--no-default-features` with a workspace. See rust-lang/cargo#4753
-  - cd signature-crate && cargo build --no-default-features --release
 
 matrix:
   fast_finish: true
