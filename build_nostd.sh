@@ -9,7 +9,7 @@ DIRS=`ls -d */`
 TARGET="thumbv7em-none-eabi"
 
 for dir in $DIRS; do
-    if [ $dir = "target/" ]
+    if [ $dir = "target/" -o $dir = "signature-crate/" ]
     then
         continue
     fi

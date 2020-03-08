@@ -13,7 +13,6 @@ keywords      = ["crypto", "curve25519", "ecc", "signature", "signing"]
 
 [dependencies.signature]
 version = "1.0.0-pre.1"
-path = "../signature-crate"
 default-features = false
 
 [dependencies.serde]
