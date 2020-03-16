@@ -46,8 +46,8 @@ where
     MaxSize<C::ScalarSize>: ArrayLength<u8>,
     <C::ScalarSize as Add>::Output: ArrayLength<u8> + Add<MaxOverhead>,
 {
-    fn from_bytes(bytes: impl AsRef<[u8]>) -> Result<Self, Error> {
-        bytes.as_ref().try_into()
+    fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
+        bytes.try_into()
     }
 }
 
