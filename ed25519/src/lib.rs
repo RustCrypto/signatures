@@ -65,15 +65,16 @@ impl AsRef<[u8]> for Signature {
 
 // can't derive `Debug`, `PartialEq`, or `Eq` below because core array types
 // only have  trait implementations for lengths 0..=32
-// TODO(tarcieri): derive `PartialEq` and `Eq` after const generics are available
 impl Debug for Signature {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "ed25519::Signature({:?})", &self.0[..])
     }
 }
 
+// TODO(tarcieri): derive `Eq` after const generics are available
 impl Eq for Signature {}
 
+// TODO(tarcieri): derive `PartialEq` after const generics are available
 impl PartialEq for Signature {
     fn eq(&self, other: &Self) -> bool {
         self.as_ref().eq(other.as_ref())
@@ -140,8 +141,8 @@ impl<'de> Deserialize<'de> for Signature {
                 use de::Error;
                 let mut arr = [0u8; SIGNATURE_LENGTH];
 
-                for i in 0..SIGNATURE_LENGTH {
-                    arr[i] = seq
+                for (i, byte) in arr.iter_mut().enumerate() {
+                    *byte = seq
                         .next_element()?
                         .ok_or_else(|| Error::invalid_length(i, &self))?;
                 }

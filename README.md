@@ -1,8 +1,4 @@
-# RustCrypto: signatures
-
-[![Build Status][build-image]][build-link]
-[![Dependency Status][deps-image]][deps-link]
-![Rust Version][rustc-image]
+# RustCrypto: signatures [![Dependency Status][deps-image]][deps-link] ![Rust Version][rustc-image]
 
 Support for [digital signatures][1], which provide authentication of data using
 public-key cryptography.
@@ -22,7 +18,7 @@ and can be easily used for bare-metal or lightweight WebAssembly programming.
 
 ## Minimum Supported Rust Version
 
-All crates in this repository support Rust **1.37** or higher. In future minimum
+All crates in this repository support Rust **1.40** or higher. In future minimum
 supported Rust version can be changed, but it will be done with the minor
 version bump.
 
@@ -48,11 +44,9 @@ dual licensed as above, without any additional terms or conditions.
 
 [//]: # (badges)
 
-[build-image]: https://travis-ci.org/RustCrypto/signatures.svg?branch=master
-[build-link]: https://travis-ci.org/RustCrypto/signatures
 [deps-image]: https://deps.rs/repo/github/RustCrypto/signatures/status.svg
 [deps-link]: https://deps.rs/repo/github/RustCrypto/signatures
-[rustc-image]: https://img.shields.io/badge/rustc-1.37+-blue.svg
+[rustc-image]: https://img.shields.io/badge/rustc-1.40+-blue.svg
 
 [//]: # (general links)
 
