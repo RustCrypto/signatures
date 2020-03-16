@@ -49,7 +49,7 @@ dual licensed as above, without any additional terms or conditions.
 [license-image]: https://img.shields.io/badge/license-Apache2.0/MIT-blue.svg
 [rustc-image]: https://img.shields.io/badge/rustc-1.40+-blue.svg
 [build-image]: https://github.com/RustCrypto/signatures/workflows/ed25519/badge.svg?branch=master&event=push
-[build-link]: https://github.com/RustCrypto/signatures/actions
+[build-link]: https://github.com/RustCrypto/signatures/actions?query=workflow%3Aed25519
 
 [//]: # (general links)
 

@@ -11,10 +11,10 @@ and can be easily used for bare-metal or lightweight WebAssembly programming.
 
 ## Crates
 
-| Name | Crates.io | Documentation |
-| ---- | :--------:| :------------:|
-| [ECDSA](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm) | [![crates.io](https://img.shields.io/crates/v/ecdsa.svg)](https://crates.io/crates/ecdsa) | [![Documentation](https://docs.rs/ecdsa/badge.svg)](https://docs.rs/ecdsa) |
-| [Ed25519](https://en.wikipedia.org/wiki/EdDSA) | [![crates.io](https://img.shields.io/crates/v/ed25519.svg)](https://crates.io/crates/ed25519) | [![Documentation](https://docs.rs/ed25519/badge.svg)](https://docs.rs/ed25519) |
+| Name        | Algorithm | Crates.io | Documentation | Build |
+|-------------|-----------|-----------|---------------|-------|
+| [`ecdsa`]   | [ECDSA](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm) | [![crates.io](https://img.shields.io/crates/v/ecdsa.svg)](https://crates.io/crates/ecdsa) | [![Documentation](https://docs.rs/ecdsa/badge.svg)](https://docs.rs/ecdsa) | [![ecdsa build](https://github.com/RustCrypto/signatures/workflows/ecdsa/badge.svg?branch=master&event=push)](https://github.com/RustCrypto/signatures/actions?query=workflow%3Aecdsa) |
+| [`ed25519`] | [Ed25519](https://en.wikipedia.org/wiki/EdDSA) | [![crates.io](https://img.shields.io/crates/v/ed25519.svg)](https://crates.io/crates/ed25519) | [![Documentation](https://docs.rs/ed25519/badge.svg)](https://docs.rs/ed25519) | [![ed25519 build](https://github.com/RustCrypto/signatures/workflows/ed25519/badge.svg?branch=master&event=push)](https://github.com/RustCrypto/signatures/actions?query=workflow%3Aed25519)
 
 ## Minimum Supported Rust Version
 
@@ -47,6 +47,11 @@ dual licensed as above, without any additional terms or conditions.
 [deps-image]: https://deps.rs/repo/github/RustCrypto/signatures/status.svg
 [deps-link]: https://deps.rs/repo/github/RustCrypto/signatures
 [rustc-image]: https://img.shields.io/badge/rustc-1.40+-blue.svg
+
+[//]: # (crates)
+
+[`ecdsa`]: https://github.com/RustCrypto/signatures/tree/master/ecdsa
+[`ed25519`]: https://github.com/RustCrypto/signatures/tree/master/ed25519
 
 [//]: # (general links)
 
