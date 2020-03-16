@@ -63,7 +63,7 @@ dependencies = [
 
 [[package]]
 name = "ed25519"
-version = "1.0.0-pre.2"
+version = "1.0.0-pre.3"
 dependencies = [
  "serde",
  "signature",

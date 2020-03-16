@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.0.0-pre.3 (2020-03-16)
+### Changed
+- Upgrade to `signature` crate v1.0.0-pre.3 ([#74])
+- Bump MSRV to 1.40 ([#75])
+
+[#74]: https://github.com/RustCrypto/signatures/pull/74
+[#75]: https://github.com/RustCrypto/signatures/pull/75
+
 ## 1.0.0-pre.2 (2020-03-08)
 ### Changed
 - Upgrade to `signature` crate v1.0.0-pre.3 ([#71])
