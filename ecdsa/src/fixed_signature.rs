@@ -28,8 +28,8 @@ impl<C: Curve> signature::Signature for FixedSignature<C>
 where
     Size<C::ScalarSize>: ArrayLength<u8>,
 {
-    fn from_bytes(bytes: impl AsRef<[u8]>) -> Result<Self, Error> {
-        bytes.as_ref().try_into()
+    fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
+        bytes.try_into()
     }
 }
 

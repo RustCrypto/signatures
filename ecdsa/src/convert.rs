@@ -59,7 +59,7 @@ where
         // support only integers of less than 127 bytes each (signed
         // encoding) so the resulting raw signature will have length
         // at most 254 bytes.
-        let mut bytes = signature.as_slice();
+        let mut bytes = signature.as_bytes();
 
         // First byte is SEQUENCE tag.
         if bytes[0] != Asn1Tag::Sequence as u8 {
