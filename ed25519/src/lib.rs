@@ -4,9 +4,9 @@
 //! RFC 8032: <https://tools.ietf.org/html/rfc8032>
 //!
 //! This crate doesn't contain an implementation of Ed25519, but instead
-//! contains an [`ed25519::Signature`] type which other crates can use in
-//! conjunction with the [`signature::Signer`] and [`signature::Verifier`]
-//! traits.
+//! contains an [`ed25519::Signature`][`Signature`] type which other crates can
+//! use in conjunction with the [`signature::Signer`] and
+//! [`signature::Verifier`] traits.
 //!
 //! These traits allow crates which produce and consume Ed25519 signatures
 //! to be written abstractly in such a way that different signer/verifier
@@ -24,7 +24,9 @@
 #[cfg(feature = "serde")]
 use serde::{de, ser, Deserialize, Serialize};
 
-/// Re-export the `signature` crate
+#[cfg(all(test, feature = "std"))]
+extern crate std;
+
 pub use signature::{self, Error};
 
 use core::{
@@ -37,7 +39,7 @@ pub const SIGNATURE_LENGTH: usize = 64;
 
 /// Ed25519 signature.
 #[derive(Copy, Clone)]
-pub struct Signature(pub [u8; SIGNATURE_LENGTH]);
+pub struct Signature([u8; SIGNATURE_LENGTH]);
 
 impl Signature {
     /// Create a new signature from a byte array
@@ -91,6 +93,7 @@ impl<'a> TryFrom<&'a [u8]> for Signature {
     type Error = Error;
 
     fn try_from(bytes: &'a [u8]) -> Result<Self, Error> {
+        // TODO(tarcieri): use TryInto when const generics are available
         if bytes.len() != SIGNATURE_LENGTH {
             return Err(Error::new());
         }
@@ -116,7 +119,15 @@ impl<'a> TryFrom<&'a [u8]> for Signature {
 #[cfg(feature = "serde")]
 impl Serialize for Signature {
     fn serialize<S: ser::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        self.to_bytes().serialize(serializer)
+        use ser::SerializeTuple;
+
+        let mut seq = serializer.serialize_tuple(SIGNATURE_LENGTH)?;
+
+        for byte in &self.0[..] {
+            seq.serialize_element(byte)?;
+        }
+
+        seq.end()
     }
 }
 
@@ -154,5 +165,31 @@ impl<'de> Deserialize<'de> for Signature {
         deserializer
             .deserialize_tuple(SIGNATURE_LENGTH, ByteArrayVisitor)
             .map(|bytes| bytes.into())
+    }
+}
+
+#[cfg(all(test, feature = "serde", feature = "std"))]
+mod tests {
+    use super::*;
+    use signature::Signature as _;
+    use std::{convert::TryFrom, vec::Vec};
+
+    const EXAMPLE_SIGNATURE: [u8; SIGNATURE_LENGTH] = [
+        63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41,
+        40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18,
+        17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,
+    ];
+
+    #[test]
+    fn test_serialize() {
+        let signature = Signature::try_from(&EXAMPLE_SIGNATURE[..]).unwrap();
+        let encoded_signature: Vec<u8> = bincode::serialize(&signature).unwrap();
+        assert_eq!(&EXAMPLE_SIGNATURE[..], &encoded_signature[..]);
+    }
+
+    #[test]
+    fn test_deserialize() {
+        let signature = bincode::deserialize::<Signature>(&EXAMPLE_SIGNATURE).unwrap();
+        assert_eq!(&EXAMPLE_SIGNATURE[..], signature.as_bytes());
     }
 }
