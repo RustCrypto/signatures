@@ -9,11 +9,11 @@ pub type Asn1Signature = crate::Asn1Signature<NistP384>;
 pub type FixedSignature = crate::FixedSignature<NistP384>;
 
 #[cfg(feature = "digest")]
-impl signature::DigestSignature for Asn1Signature {
+impl signature::PrehashSignature for Asn1Signature {
     type Digest = sha2::Sha384;
 }
 
 #[cfg(feature = "digest")]
-impl signature::DigestSignature for FixedSignature {
+impl signature::PrehashSignature for FixedSignature {
     type Digest = sha2::Sha384;
 }

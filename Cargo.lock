@@ -177,9 +177,9 @@ dependencies = [
 
 [[package]]
 name = "signature"
-version = "1.0.0-pre.5"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7633506bfb9bb78fd228f8fa51d46802fc72fe642e707b42a64f57b07eaf8fb8"
+checksum = "c6a893a09d55d59208e489aa572859071d2c691f1d3d6d54a806fcad7f35a253"
 dependencies = [
  "digest",
 ]
