@@ -44,7 +44,7 @@ optional = true
 default-features = false
 
 [dependencies.signature]
-version = "= 1.0.0-pre.5"
+version = "1"
 default-features = false
 
 [features]
