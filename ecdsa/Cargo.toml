@@ -1,6 +1,6 @@
 [package]
 name          = "ecdsa"
-version       = "0.5.0-pre" # Also update html_root_url in lib.rs when bumping this
+version       = "0.5.0" # Also update html_root_url in lib.rs when bumping this
 description   = """
 Signature and elliptic curve types providing interoperable support for the
 Elliptic Curve Digital Signature Algorithm (ECDSA)
@@ -44,7 +44,7 @@ optional = true
 default-features = false
 
 [dependencies.signature]
-version = "1"
+version = ">= 1.0.0, < 1.1.0"
 default-features = false
 
 [features]
