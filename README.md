@@ -1,4 +1,4 @@
-# RustCrypto: signatures [![Dependency Status][deps-image]][deps-link] ![Rust Version][rustc-image]
+# RustCrypto: signatures ![Rust Version][rustc-image]
 
 Support for [digital signatures][1], which provide authentication of data using
 public-key cryptography.
@@ -44,8 +44,6 @@ dual licensed as above, without any additional terms or conditions.
 
 [//]: # (badges)
 
-[deps-image]: https://deps.rs/repo/github/RustCrypto/signatures/status.svg
-[deps-link]: https://deps.rs/repo/github/RustCrypto/signatures
 [rustc-image]: https://img.shields.io/badge/rustc-1.40+-blue.svg
 
 [//]: # (crates)
