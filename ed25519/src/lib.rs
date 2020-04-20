@@ -6,19 +6,119 @@
 //! This crate doesn't contain an implementation of Ed25519, but instead
 //! contains an [`ed25519::Signature`][`Signature`] type which other crates can
 //! use in conjunction with the [`signature::Signer`] and
-//! [`signature::Verifier`] traits.
+//! [`signature::Verifier`] traits defined in the [`signature`] crate.
 //!
 //! These traits allow crates which produce and consume Ed25519 signatures
 //! to be written abstractly in such a way that different signer/verifier
 //! providers can be plugged in, enabling support for using different
 //! Ed25519 implementations, including HSMs or Cloud KMS services.
+//!
+//! ## Minimum Supported Rust Version
+//!
+//! Rust **1.40** or higher.
+//!
+//! Minimum supported Rust version may be changed in the future, but such
+//! changes will be accompanied with a minor version bump.
+//!
+//! # Using Ed25519 generically over algorithm implementations/providers
+//!
+//! By using the `ed25519` crate, you can write code which signs and verifies
+//! messages using the Ed25519 signature algorithm generically over any
+//! supported underlying Ed25519 implementation (see the next section for
+//! available providers).
+//!
+//! This allows consumers of your code to plug in whatever implementation they
+//! want to use without having to add all potential Ed25519 libraries you'd
+//! like to support as optional dependencies.
+//!
+//! Below is a usage example of how to use this crate to do so:
+//!
+//! ```
+//! use ed25519::signature::{Signer, Verifier};
+//!
+//! pub struct HelloSigner<S> {
+//!     pub signer: S
+//! }
+//!
+//! impl<S> HelloSigner<S>
+//! where
+//!     S: Signer<ed25519::Signature>
+//! {
+//!     pub fn sign(&self, person: &str) -> ed25519::Signature {
+//!         // NOTE: use `try_sign` if you'd like to be able to handle
+//!         // errors from external signing services/devices (e.g. HSM/KMS)
+//!         // <https://docs.rs/signature/latest/signature/trait.Signer.html#tymethod.try_sign>
+//!         self.signer.sign(format_message(person).as_bytes())
+//!     }
+//! }
+//!
+//! pub struct HelloVerifier<V> {
+//!     pub verifier: V
+//! }
+//!
+//! impl<V> HelloVerifier<V>
+//! where
+//!     V: Verifier<ed25519::Signature>
+//! {
+//!     pub fn verify(
+//!         &self,
+//!         person: &str,
+//!         signature: &ed25519::Signature
+//!     ) -> Result<(), ed25519::Error> {
+//!         self.verifier.verify(format_message(person).as_bytes(), signature)
+//!     }
+//! }
+//!
+//! fn format_message(person: &str) -> String {
+//!     format!("Hello, {}!", person)
+//! }
+//! ```
+//!
+//! A hypothetical consumer of the above code can then instantiate
+//! `HelloSigner` using [`ed25519-dalek`] (via the [`signatory-dalek`] crate) as:
+//!
+//! ```ignore
+//! use signatory_dalek::Ed25519Signer;
+//! use hello_signer::HelloSigner; // i.e. `HelloSigner` defined in the above example
+//!
+//! /// `HelloSigner` instantiated with an `ed25519-dalek` signature provider
+//! pub type DalekHelloSigner = HelloSigner<Ed25519Signer>;
+//! ```
+//!
+//! # Available Ed25519 providers
+//!
+//! The following libraries natively support the types and traits from the
+//! `ed25519` crate:
+//!
+//! - [`yubihsm`] - host-side client library for YubiHSM2 devices from Yubico
+//!
+//! The [Signatory] project provides wrappers for several notable crates which
+//! produce or verify Ed25519 signatures:
+//!
+//! - [`signatory-dalek`] - wrapper for [`ed25519-dalek`]
+//! - [`signatory-ring`] - wrapper for [*ring*]
+//! - [`signatory-sodiumoxide`] - wrapper for [`sodiumoxide`]
+//!
+//! [`ed25519-dalek`]: https://github.com/dalek-cryptography/ed25519-dalek
+//! [*ring*]: https://github.com/briansmith/ring
+//! [Signatory]: https://github.com/iqlusioninc/signatory/blob/develop/README.md
+//! [`signatory-dalek`]: https://docs.rs/signatory-dalek/
+//! [`signatory-ring`]: https://docs.rs/signatory-ring/
+//! [`signatory-sodiumoxide`]: https://docs.rs/signatory-sodiumoxide/
+//! [`sodiumoxide`]: https://github.com/sodiumoxide/sodiumoxide
+//! [`yubihsm`]: https://github.com/iqlusioninc/yubihsm.rs/blob/develop/README.md
 
 #![no_std]
-#![forbid(unsafe_code)]
-#![warn(missing_docs, rust_2018_idioms, unused_qualifications)]
 #![doc(
     html_logo_url = "https://raw.githubusercontent.com/RustCrypto/meta/master/logo_small.png",
     html_root_url = "https://docs.rs/ed25519/1.0.0"
+)]
+#![forbid(unsafe_code)]
+#![warn(
+    missing_docs,
+    rust_2018_idioms,
+    unused_qualifications,
+    intra_doc_link_resolution_failure
 )]
 
 #[cfg(feature = "serde")]
