@@ -1,6 +1,6 @@
 [package]
 name          = "ed25519"
-version       = "1.0.0"
+version       = "1.0.1"
 authors       = ["RustCrypto Developers"]
 license       = "Apache-2.0 OR MIT"
 description   = "Edwards Digital Signature Algorithm (EdDSA) over Curve25519 (as specified in RFC 8032)"
