@@ -111,7 +111,7 @@
 #![no_std]
 #![doc(
     html_logo_url = "https://raw.githubusercontent.com/RustCrypto/meta/master/logo_small.png",
-    html_root_url = "https://docs.rs/ed25519/1.0.0"
+    html_root_url = "https://docs.rs/ed25519/1.0.1"
 )]
 #![forbid(unsafe_code)]
 #![warn(
