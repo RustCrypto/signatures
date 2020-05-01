@@ -120,9 +120,9 @@ dependencies = [
 
 [[package]]
 name = "k256"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4407bc616f76afb6bccd8a813b86fe622752b15b43c5e60fec94d21af2393a72"
+checksum = "f8a010224d825405c12a840fc269094683abe1282222f46c368318a02fa8876b"
 dependencies = [
  "elliptic-curve",
 ]
@@ -141,9 +141,9 @@ checksum = "2839e79665f131bdb5782e51f2c6c9599c133c6098982a54c794358bf432529c"
 
 [[package]]
 name = "p256"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "812a058a5afc96a52a8ab6e250325d025254ff030ff737dc5b62576e4e604c42"
+checksum = "86640e33ca638ec215c74de317696bbca5daa7d52cf55b905bd20a6bd2cfd133"
 dependencies = [
  "elliptic-curve",
 ]

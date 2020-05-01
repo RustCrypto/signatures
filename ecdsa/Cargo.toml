@@ -24,12 +24,12 @@ version = "0.12"
 default-features = false
 
 [dependencies.k256]
-version = "0.1"
+version = "0.2"
 optional = true
 default-features = false
 
 [dependencies.p256]
-version = "0.1"
+version = "0.2"
 optional = true
 default-features = false
 
