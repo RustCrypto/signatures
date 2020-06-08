@@ -1,12 +1,12 @@
 //! ASN.1 DER-encoded ECDSA signatures
 
+use crate::generic_array::{typenum::Unsigned, ArrayLength, GenericArray};
 use crate::{convert::ScalarPair, curve::Curve};
 use core::{
     convert::{TryFrom, TryInto},
     fmt::{self, Debug},
     ops::Add,
 };
-use generic_array::{typenum::Unsigned, ArrayLength, GenericArray};
 use signature::Error;
 
 /// Maximum overhead of an ASN.1 DER-encoded ECDSA signature for a given curve:
@@ -23,7 +23,7 @@ use signature::Error;
 /// - 1-byte: ASN.1 `INTEGER` tag (0x02)
 /// - 1-byte: length
 /// - 1-byte: zero to indicate value is positive (`INTEGER` is signed)
-pub type MaxOverhead = generic_array::typenum::U9;
+pub type MaxOverhead = crate::generic_array::typenum::U9;
 
 /// Maximum size of an ASN.1 DER encoded signature for the given elliptic curve.
 pub type MaxSize<ScalarSize> = <<ScalarSize as Add>::Output as Add<MaxOverhead>>::Output;

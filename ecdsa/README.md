@@ -22,9 +22,9 @@ ECDSA implementations, including HSMs or Cloud KMS services.
 
 [Documentation][docs-link]
 
-## Requirements
+## Minimum Supported Rust Version
 
-- Rust **1.40+**
+- Rust **1.41+**
 
 ## License
 
@@ -48,7 +48,7 @@ dual licensed as above, without any additional terms or conditions.
 [docs-image]: https://docs.rs/ecdsa/badge.svg
 [docs-link]: https://docs.rs/ecdsa/
 [license-image]: https://img.shields.io/badge/license-Apache2.0/MIT-blue.svg
-[rustc-image]: https://img.shields.io/badge/rustc-1.40+-blue.svg
+[rustc-image]: https://img.shields.io/badge/rustc-1.41+-blue.svg
 [build-image]: https://github.com/RustCrypto/signatures/workflows/ecdsa/badge.svg?branch=master&event=push
 [build-link]: https://github.com/RustCrypto/signatures/actions?query=workflow%3Aecdsa
 

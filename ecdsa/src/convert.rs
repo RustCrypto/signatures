@@ -8,12 +8,12 @@
 //! <https://www.bearssl.org/gitweb/?p=BearSSL;a=blob;f=src/ec/ecdsa_atr.c>
 //! <https://www.bearssl.org/gitweb/?p=BearSSL;a=blob;f=src/ec/ecdsa_rta.c>
 
+use crate::generic_array::{typenum::Unsigned, ArrayLength, GenericArray};
 use crate::{
     asn1_signature::{self, Asn1Signature},
     Curve, FixedSignature,
 };
 use core::{marker::PhantomData, ops::Add};
-use generic_array::{typenum::Unsigned, ArrayLength, GenericArray};
 use signature::Signature;
 
 /// ASN.1 tags

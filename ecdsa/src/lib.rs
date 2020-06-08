@@ -39,12 +39,6 @@
     html_root_url = "https://docs.rs/ecdsa/0.5.0"
 )]
 
-// Re-export the `generic-array` crate
-pub use generic_array;
-
-// Re-export the `signature` crate
-pub use signature;
-
 pub mod asn1_signature;
 mod convert;
 pub mod curve;
@@ -52,8 +46,12 @@ pub mod fixed_signature;
 #[cfg(feature = "test-vectors")]
 pub mod test_vectors;
 
+// Re-export the `signature` crate
+pub use signature;
+
 pub use self::{asn1_signature::Asn1Signature, fixed_signature::FixedSignature};
 pub use elliptic_curve::{
+    self, generic_array,
     weierstrass::{Curve, PublicKey},
     SecretKey,
 };

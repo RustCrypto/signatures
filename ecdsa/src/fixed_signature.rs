@@ -1,12 +1,12 @@
 //! Fixed-sized (a.k.a. "raw") ECDSA signatures
 
 use crate::curve::Curve;
+use crate::generic_array::{typenum::Unsigned, ArrayLength, GenericArray};
 use core::{
     convert::{TryFrom, TryInto},
     fmt::{self, Debug},
     ops::Add,
 };
-use generic_array::{typenum::Unsigned, ArrayLength, GenericArray};
 use signature::Error;
 
 /// Size of a fixed sized signature for the given elliptic curve.

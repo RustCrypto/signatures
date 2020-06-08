@@ -18,7 +18,7 @@ and can be easily used for bare-metal or lightweight WebAssembly programming.
 
 ## Minimum Supported Rust Version
 
-All crates in this repository support Rust **1.40** or higher. In future minimum
+All crates in this repository support Rust **1.41** or higher. In future minimum
 supported Rust version can be changed, but it will be done with the minor
 version bump.
 
@@ -44,7 +44,7 @@ dual licensed as above, without any additional terms or conditions.
 
 [//]: # (badges)
 
-[rustc-image]: https://img.shields.io/badge/rustc-1.40+-blue.svg
+[rustc-image]: https://img.shields.io/badge/rustc-1.41+-blue.svg
 
 [//]: # (crates)
 
