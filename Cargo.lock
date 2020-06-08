@@ -19,7 +19,7 @@ dependencies = [
  "block-padding",
  "byte-tools",
  "byteorder",
- "generic-array",
+ "generic-array 0.12.3",
 ]
 
 [[package]]
@@ -55,7 +55,7 @@ version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f3d0c8c8752312f9713efd397ff63acb9f85585afbf179282e720e7704954dd5"
 dependencies = [
- "generic-array",
+ "generic-array 0.12.3",
 ]
 
 [[package]]
@@ -63,7 +63,6 @@ name = "ecdsa"
 version = "0.5.0"
 dependencies = [
  "elliptic-curve",
- "generic-array",
  "k256",
  "p256",
  "p384",
@@ -82,11 +81,11 @@ dependencies = [
 
 [[package]]
 name = "elliptic-curve"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "01f69be7d1feb7a7a04f158aaf32c7deaa7604e9bd58145525e536438c4e5096"
+checksum = "2298f66754d859f4c099b0e645cfd258d2dfdfd1bac9496fd514d603ff6a5c6b"
 dependencies = [
- "generic-array",
+ "generic-array 0.14.1",
  "getrandom",
  "subtle",
  "zeroize",
@@ -108,6 +107,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "generic-array"
+version = "0.14.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d2664c2cf08049036f31015b04c6ac3671379a1d86f52ed2416893f16022deb"
+dependencies = [
+ "typenum",
+]
+
+[[package]]
 name = "getrandom"
 version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -120,9 +128,9 @@ dependencies = [
 
 [[package]]
 name = "k256"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f8a010224d825405c12a840fc269094683abe1282222f46c368318a02fa8876b"
+checksum = "c34f5cb67f9625a99c159fc0776e75d2e37f988cdf31c115e9c25225e61d858c"
 dependencies = [
  "elliptic-curve",
 ]
@@ -141,18 +149,18 @@ checksum = "2839e79665f131bdb5782e51f2c6c9599c133c6098982a54c794358bf432529c"
 
 [[package]]
 name = "p256"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86640e33ca638ec215c74de317696bbca5daa7d52cf55b905bd20a6bd2cfd133"
+checksum = "a425ecb71515663b2735fd1e65bb638fd134c5ad23857eb197c2f157784476cf"
 dependencies = [
  "elliptic-curve",
 ]
 
 [[package]]
 name = "p384"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3aee0d9bdeedaea6cdd47f9281a9f8e1037d3037088b70e2af13c64ce65608ec"
+checksum = "9ae962014118ae1621d13f011e14902223013b1b4151922c3a682a233a967ddb"
 dependencies = [
  "elliptic-curve",
 ]
