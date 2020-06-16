@@ -1,4 +1,4 @@
-# `ed25519` crate
+# RustCrypto: Ed25519
 
 [![crate][crate-image]][crate-link]
 [![Docs][docs-image]][docs-link]
@@ -6,12 +6,12 @@
 ![Rust Version][rustc-image]
 [![Build Status][build-image]][build-link]
 
-Edwards Digital Signature Algorithm (EdDSA) over Curve25519 as specified in
-[RFC 8032][1].
+[Edwards Digital Signature Algorithm (EdDSA)][1] over Curve25519 as specified
+in [RFC 8032][2].
 
 This crate doesn't contain an implementation of Ed25519, but instead
-contains an [`ed25519::Signature`][2] type which other crates can use in
-conjunction with the [`signature::Signer`][3] and [`signature::Verifier`][4]
+contains an [`ed25519::Signature`][3] type which other crates can use in
+conjunction with the [`signature::Signer`][4] and [`signature::Verifier`][5]
 traits.
 
 These traits allow crates which produce and consume Ed25519 signatures
@@ -53,7 +53,8 @@ dual licensed as above, without any additional terms or conditions.
 
 [//]: # (general links)
 
-[1]: https://tools.ietf.org/html/rfc8032
-[2]: https://docs.rs/ed25519/latest/ed25519/struct.Signature.html
-[3]: https://docs.rs/signature/latest/signature/trait.Signer.html
-[4]: https://docs.rs/signature/latest/signature/trait.Verifier.html
+[1]: https://en.wikipedia.org/wiki/EdDSA
+[2]: https://tools.ietf.org/html/rfc8032
+[3]: https://docs.rs/ed25519/latest/ed25519/struct.Signature.html
+[4]: https://docs.rs/signature/latest/signature/trait.Signer.html
+[5]: https://docs.rs/signature/latest/signature/trait.Verifier.html
