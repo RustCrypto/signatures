@@ -1,4 +1,4 @@
-# `ecdsa` crate
+# RustCrypto: ECDSA
 
 [![crate][crate-image]][crate-link]
 [![Docs][docs-image]][docs-link]
@@ -6,13 +6,13 @@
 ![MSRV][rustc-image]
 [![Build Status][build-image]][build-link]
 
-Elliptic Curve Digital Signature Algorithm (ECDSA) as specified in
-[FIPS 186-4][1] (Digital Signature Standard).
+[Elliptic Curve Digital Signature Algorithm (ECDSA)][1] as specified in
+[FIPS 186-4][2] (Digital Signature Standard).
 
 This crate doesn't contain an implementation of ECDSA itself, but instead
-contains [`ecdsa::Asn1Signature`][2] and [`ecdsa::FixedSignature`][3] types
-generic over an [`ecdsa::Curve`][4] type which other crates can use in
-conjunction with the [`signature::Signer`][5] and [`signature::Verifier`][6]
+contains [`ecdsa::Asn1Signature`][3] and [`ecdsa::FixedSignature`][4] types
+generic over an [`ecdsa::Curve`][5] type which other crates can use in
+conjunction with the [`signature::Signer`][6] and [`signature::Verifier`][7]
 traits.
 
 These traits allow crates which produce and consume ECDSA signatures
@@ -52,11 +52,12 @@ dual licensed as above, without any additional terms or conditions.
 [build-image]: https://github.com/RustCrypto/signatures/workflows/ecdsa/badge.svg?branch=master&event=push
 [build-link]: https://github.com/RustCrypto/signatures/actions?query=workflow%3Aecdsa
 
-[//]: # (general links)
+[//]: # (footnotes)
 
-[1]: https://csrc.nist.gov/publications/detail/fips/186/4/final
-[2]: https://docs.rs/ecdsa/latest/ecdsa/asn1_signature/struct.Asn1Signature.html
-[3]: https://docs.rs/ecdsa/latest/ecdsa/fixed_signature/struct.FixedSignature.html
-[4]: https://docs.rs/ecdsa/latest/ecdsa/curve/trait.Curve.html
-[5]: https://docs.rs/signature/latest/signature/trait.Signer.html
-[6]: https://docs.rs/signature/latest/signature/trait.Verifier.html
+[1]: https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm
+[2]: https://csrc.nist.gov/publications/detail/fips/186/4/final
+[3]: https://docs.rs/ecdsa/latest/ecdsa/asn1_signature/struct.Asn1Signature.html
+[4]: https://docs.rs/ecdsa/latest/ecdsa/fixed_signature/struct.FixedSignature.html
+[5]: https://docs.rs/ecdsa/latest/ecdsa/curve/trait.Curve.html
+[6]: https://docs.rs/signature/latest/signature/trait.Signer.html
+[7]: https://docs.rs/signature/latest/signature/trait.Verifier.html
