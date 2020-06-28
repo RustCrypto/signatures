@@ -46,12 +46,14 @@ pub mod fixed_signature;
 #[cfg(feature = "test-vectors")]
 pub mod test_vectors;
 
-// Re-export the `signature` crate
-pub use signature;
-
 pub use self::{asn1_signature::Asn1Signature, fixed_signature::FixedSignature};
+
+// Re-export the `elliptic-curve` crate (and select types)
 pub use elliptic_curve::{
     self, generic_array,
     weierstrass::{Curve, PublicKey},
     SecretKey,
 };
+
+// Re-export the `signature` crate (and select types)
+pub use signature::{self, Error};

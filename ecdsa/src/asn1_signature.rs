@@ -1,13 +1,16 @@
 //! ASN.1 DER-encoded ECDSA signatures
 
-use crate::generic_array::{typenum::Unsigned, ArrayLength, GenericArray};
-use crate::{convert::ScalarPair, curve::Curve};
+use crate::{
+    convert::ScalarPair,
+    curve::Curve,
+    generic_array::{typenum::Unsigned, ArrayLength, GenericArray},
+    Error,
+};
 use core::{
     convert::{TryFrom, TryInto},
     fmt::{self, Debug},
     ops::Add,
 };
-use signature::Error;
 
 /// Maximum overhead of an ASN.1 DER-encoded ECDSA signature for a given curve:
 /// 9-bytes.
@@ -76,14 +79,14 @@ where
     }
 }
 
-impl<'a, C: Curve> TryFrom<&'a [u8]> for Asn1Signature<C>
+impl<C: Curve> TryFrom<&[u8]> for Asn1Signature<C>
 where
     MaxSize<C::ScalarSize>: ArrayLength<u8>,
     <C::ScalarSize as Add>::Output: ArrayLength<u8> + Add<MaxOverhead>,
 {
     type Error = Error;
 
-    fn try_from(slice: &'a [u8]) -> Result<Self, Error> {
+    fn try_from(slice: &[u8]) -> Result<Self, Error> {
         let length = slice.len();
 
         if <MaxSize<C::ScalarSize>>::to_usize() < length {
