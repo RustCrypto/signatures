@@ -10,17 +10,20 @@ use core::{
     fmt::{self, Debug},
 };
 
+#[cfg(docsrs)]
+use super::PublicKey;
+
 /// Size of an Ethereum-style recoverable signature in bytes
 pub const SIZE: usize = 65;
 
 /// Ethereum-style "recoverable signatures" which allow for the recovery of
 /// the signer's [`PublicKey`] from the signature itself.
 ///
-/// These consist of [`FixedSignature`] followed by a 1-byte [`RecoveryId`]
-/// (65-bytes total):
+/// This format consists of [`FixedSignature`] followed by a 1-byte
+/// [`RecoveryId`] (65-bytes total):
 ///
-/// - `r`: 32-bytes, big endian
-/// - `s`: 32-bytes, big endian
+/// - `r`: 32-byte integer, big endian
+/// - `s`: 32-byte integer, big endian
 /// - `v`: 1-byte [`RecoveryId`]
 #[derive(Copy, Clone)]
 pub struct RecoverableSignature {
