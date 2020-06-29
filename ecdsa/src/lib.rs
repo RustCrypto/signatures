@@ -22,16 +22,11 @@
 //! providers can be plugged in, enabling support for using different
 //! ECDSA implementations, including HSMs or Cloud KMS services.
 //!
-//! ## TODO
-//!
-//! - NIST P-521
-//! - Brainpool
-//! - Const generics(!)
-//!
 //! [1]: https://csrc.nist.gov/publications/detail/fips/186/4/final
 //! [2]: http://docs.rs/elliptic-curve
 
 #![no_std]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![forbid(unsafe_code)]
 #![warn(missing_docs, rust_2018_idioms, intra_doc_link_resolution_failure)]
 #![doc(
@@ -44,6 +39,7 @@ mod convert;
 pub mod curve;
 pub mod fixed_signature;
 #[cfg(feature = "test-vectors")]
+#[cfg_attr(docsrs, doc(cfg(feature = "test-vectors")))]
 pub mod test_vectors;
 
 pub use self::{asn1_signature::Asn1Signature, fixed_signature::FixedSignature};
