@@ -1,13 +1,15 @@
 //! Fixed-sized (a.k.a. "raw") ECDSA signatures
 
-use crate::curve::Curve;
-use crate::generic_array::{typenum::Unsigned, ArrayLength, GenericArray};
+use crate::{
+    curve::Curve,
+    generic_array::{typenum::Unsigned, ArrayLength, GenericArray},
+    Error,
+};
 use core::{
     convert::{TryFrom, TryInto},
     fmt::{self, Debug},
     ops::Add,
 };
-use signature::Error;
 
 /// Size of a fixed sized signature for the given elliptic curve.
 pub type Size<ScalarSize> = <ScalarSize as Add>::Output;
@@ -15,7 +17,14 @@ pub type Size<ScalarSize> = <ScalarSize as Add>::Output;
 /// Fixed-sized (a.k.a. "raw") ECDSA signatures generic over elliptic curves.
 ///
 /// These signatures are serialized as fixed-sized big endian scalar values
-/// with no additional framing.
+/// with no additional framing:
+///
+/// - `r`: field element size for the given curve, big-endian
+/// - `s`: field element size for the given curve, big-endian
+///
+/// For example, in a curve with a 256-bit modulus like NIST P-256 or
+/// secp256k1, `r` and `s` will both be 32-bytes, resulting in a signature
+/// with a total of 64-bytes.
 #[derive(Clone, Eq, PartialEq)]
 pub struct FixedSignature<C: Curve>
 where
@@ -56,13 +65,13 @@ where
     }
 }
 
-impl<'a, C: Curve> TryFrom<&'a [u8]> for FixedSignature<C>
+impl<C: Curve> TryFrom<&[u8]> for FixedSignature<C>
 where
     Size<C::ScalarSize>: ArrayLength<u8>,
 {
     type Error = Error;
 
-    fn try_from(bytes: &'a [u8]) -> Result<Self, Error> {
+    fn try_from(bytes: &[u8]) -> Result<Self, Error> {
         if bytes.len() == <Size<C::ScalarSize>>::to_usize() {
             Ok(Self {
                 bytes: GenericArray::clone_from_slice(bytes),
