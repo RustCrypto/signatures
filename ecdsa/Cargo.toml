@@ -46,7 +46,7 @@ default-features = false
 [features]
 default = ["digest", "std", "zeroize"]
 digest = ["signature/digest-preview", "sha2"]
-std = ["elliptic-curve/getrandom", "elliptic-curve/std", "signature/std"]
+std = ["elliptic-curve/std", "signature/std"]
 zeroize = ["elliptic-curve/zeroize"]
 test-vectors = []
 
