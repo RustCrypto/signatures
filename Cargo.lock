@@ -44,12 +44,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "08c48aae112d48ed9f069b33538ea9e3e90aa263cfa3d1c24309612b1f7472de"
 
 [[package]]
-name = "cfg-if"
-version = "0.1.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
-
-[[package]]
 name = "digest"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -82,11 +76,9 @@ dependencies = [
 [[package]]
 name = "elliptic-curve"
 version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2298f66754d859f4c099b0e645cfd258d2dfdfd1bac9496fd514d603ff6a5c6b"
+source = "git+https://github.com/RustCrypto/elliptic-curves#d1a8376b5520646fcb536e1094289bc65391b48d"
 dependencies = [
  "generic-array",
- "getrandom",
  "subtle",
  "zeroize",
 ]
@@ -107,30 +99,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "getrandom"
-version = "0.1.14"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7abc8dd8451921606d809ba32e95b6111925cd2906060d2dcc29c070220503eb"
-dependencies = [
- "cfg-if",
- "libc",
- "wasi",
-]
-
-[[package]]
 name = "k256"
 version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c34f5cb67f9625a99c159fc0776e75d2e37f988cdf31c115e9c25225e61d858c"
+source = "git+https://github.com/RustCrypto/elliptic-curves#d1a8376b5520646fcb536e1094289bc65391b48d"
 dependencies = [
  "elliptic-curve",
 ]
-
-[[package]]
-name = "libc"
-version = "0.2.67"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eb147597cdf94ed43ab7a9038716637d2d1bf2bc571da995d0028dec06bd3018"
 
 [[package]]
 name = "opaque-debug"
@@ -141,8 +115,7 @@ checksum = "2839e79665f131bdb5782e51f2c6c9599c133c6098982a54c794358bf432529c"
 [[package]]
 name = "p256"
 version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a425ecb71515663b2735fd1e65bb638fd134c5ad23857eb197c2f157784476cf"
+source = "git+https://github.com/RustCrypto/elliptic-curves#d1a8376b5520646fcb536e1094289bc65391b48d"
 dependencies = [
  "elliptic-curve",
 ]
@@ -150,8 +123,7 @@ dependencies = [
 [[package]]
 name = "p384"
 version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9ae962014118ae1621d13f011e14902223013b1b4151922c3a682a233a967ddb"
+source = "git+https://github.com/RustCrypto/elliptic-curves#d1a8376b5520646fcb536e1094289bc65391b48d"
 dependencies = [
  "elliptic-curve",
 ]
@@ -194,12 +166,6 @@ name = "typenum"
 version = "1.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6d2783fe2d6b8c1101136184eb41be8b1ad379e4657050b8aaff0c79ee7575f9"
-
-[[package]]
-name = "wasi"
-version = "0.9.0+wasi-snapshot-preview1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cccddf32554fecc6acb585f82a32a72e28b48f8c4c1883ddfeeeaa96f7d8e519"
 
 [[package]]
 name = "zeroize"
