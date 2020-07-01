@@ -38,10 +38,10 @@ pub(crate) enum Asn1Tag {
 /// formats, i.e. all of the serialization code is in this module.
 pub struct ScalarPair<'a, C: Curve + 'a> {
     /// `r` scalar value
-    r: &'a [u8],
+    pub(crate) r: &'a [u8],
 
     /// `s` scalar value
-    s: &'a [u8],
+    pub(crate) s: &'a [u8],
 
     /// Placeholder for elliptic curve type
     curve: PhantomData<C>,
@@ -189,15 +189,34 @@ where
         }
     }
 
+    /// Write the `r` component of this scalar pair to the provided buffer,
+    /// which must be `C::ScalarSize` bytes (assumed to be initialized to zero)
+    pub(crate) fn write_r(&self, buffer: &mut [u8]) {
+        let scalar_size = C::ScalarSize::to_usize();
+        debug_assert_eq!(buffer.len(), scalar_size);
+
+        let r_begin = scalar_size.checked_sub(self.r.len()).unwrap();
+        buffer[r_begin..].copy_from_slice(self.r);
+    }
+
+    /// Write the `s` component of this scalar pair to the provided buffer,
+    /// which must be `C::ScalarSize` bytes (assumed to be initialized to zero)
+    pub(crate) fn write_s(&self, buffer: &mut [u8]) {
+        let scalar_size = C::ScalarSize::to_usize();
+        debug_assert_eq!(buffer.len(), scalar_size);
+
+        let s_begin = scalar_size.checked_sub(self.s.len()).unwrap();
+        buffer[s_begin..].copy_from_slice(self.s);
+    }
+
+    /// Serialize this ECDSA signature's `r` and `s` scalar pair as a
+    /// fixed-sized signature
     pub(crate) fn to_fixed_signature(&self) -> FixedSignature<C> {
         let mut bytes = GenericArray::default();
-
         let scalar_size = C::ScalarSize::to_usize();
-        let rbegin = scalar_size.checked_sub(self.r.len()).unwrap();
-        bytes.as_mut_slice()[rbegin..scalar_size].copy_from_slice(self.r);
 
-        let sbegin = bytes.len().checked_sub(self.s.len()).unwrap();
-        bytes.as_mut_slice()[sbegin..].copy_from_slice(self.s);
+        self.write_r(&mut bytes[..scalar_size]);
+        self.write_s(&mut bytes[scalar_size..]);
 
         FixedSignature::from(bytes)
     }
@@ -263,7 +282,7 @@ where
     fn from(asn1_signature: &Asn1Signature<C>) -> FixedSignature<C> {
         // We always ensure `Asn1Signature`s parse successfully, so this should always work
         ScalarPair::from_asn1_signature(asn1_signature)
-            .unwrap()
+            .expect("invalid ASN.1 signature")
             .to_fixed_signature()
     }
 }
