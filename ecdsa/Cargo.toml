@@ -46,6 +46,7 @@ default-features = false
 [features]
 default = ["digest", "std", "zeroize"]
 digest = ["signature/digest-preview", "sha2"]
+k256-arithmetic = ["k256/arithmetic"]
 std = ["elliptic-curve/std", "signature/std"]
 zeroize = ["elliptic-curve/zeroize"]
 test-vectors = []

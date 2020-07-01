@@ -76,7 +76,7 @@ dependencies = [
 [[package]]
 name = "elliptic-curve"
 version = "0.4.0"
-source = "git+https://github.com/RustCrypto/elliptic-curves#d1a8376b5520646fcb536e1094289bc65391b48d"
+source = "git+https://github.com/RustCrypto/elliptic-curves#fd3516fde64d5d9ef160f1c4392d807ca7ede6ea"
 dependencies = [
  "generic-array",
  "subtle",
@@ -101,7 +101,7 @@ dependencies = [
 [[package]]
 name = "k256"
 version = "0.3.0"
-source = "git+https://github.com/RustCrypto/elliptic-curves#d1a8376b5520646fcb536e1094289bc65391b48d"
+source = "git+https://github.com/RustCrypto/elliptic-curves#fd3516fde64d5d9ef160f1c4392d807ca7ede6ea"
 dependencies = [
  "elliptic-curve",
 ]
@@ -115,7 +115,7 @@ checksum = "2839e79665f131bdb5782e51f2c6c9599c133c6098982a54c794358bf432529c"
 [[package]]
 name = "p256"
 version = "0.3.0"
-source = "git+https://github.com/RustCrypto/elliptic-curves#d1a8376b5520646fcb536e1094289bc65391b48d"
+source = "git+https://github.com/RustCrypto/elliptic-curves#fd3516fde64d5d9ef160f1c4392d807ca7ede6ea"
 dependencies = [
  "elliptic-curve",
 ]
@@ -123,7 +123,7 @@ dependencies = [
 [[package]]
 name = "p384"
 version = "0.2.0"
-source = "git+https://github.com/RustCrypto/elliptic-curves#d1a8376b5520646fcb536e1094289bc65391b48d"
+source = "git+https://github.com/RustCrypto/elliptic-curves#fd3516fde64d5d9ef160f1c4392d807ca7ede6ea"
 dependencies = [
  "elliptic-curve",
 ]
