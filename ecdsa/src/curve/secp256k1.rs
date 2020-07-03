@@ -1,13 +1,13 @@
 //! secp256k1 elliptic curve
 
-#[cfg(feature = "k256-arithmetic")]
+#[cfg(feature = "secp256k1-arithmetic")]
 mod normalize_s;
 pub mod recoverable_signature;
 
 pub use k256::{PublicKey, Secp256k1, SecretKey};
 pub use recoverable_signature::{RecoverableSignature, RecoveryId};
 
-#[cfg(feature = "k256-arithmetic")]
+#[cfg(feature = "secp256k1-arithmetic")]
 use normalize_s::ScalarPair;
 
 /// ASN.1 DER encoded secp256k1 ECDSA signature.
@@ -26,7 +26,8 @@ impl signature::PrehashSignature for FixedSignature {
     type Digest = sha2::Sha256;
 }
 
-#[cfg(feature = "k256-arithmetic")]
+#[cfg(feature = "secp256k1-arithmetic")]
+#[cfg_attr(docsrs, doc(cfg(feature = "secp256k1-arithmetic")))]
 impl Asn1Signature {
     /// Normalize signature into "low S" form as described in
     /// [BIP 0062: Dealing with Malleability][1].
@@ -39,7 +40,8 @@ impl Asn1Signature {
     }
 }
 
-#[cfg(feature = "k256-arithmetic")]
+#[cfg(feature = "secp256k1-arithmetic")]
+#[cfg_attr(docsrs, doc(cfg(feature = "secp256k1-arithmetic")))]
 impl FixedSignature {
     /// Normalize signature into "low S" form as described in
     /// [BIP 0062: Dealing with Malleability][1].

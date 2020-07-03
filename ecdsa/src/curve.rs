@@ -24,10 +24,10 @@ pub use self::nistp384::NistP384;
 
 // secp256k1 (K-256)
 
-#[cfg(feature = "k256")]
-#[cfg_attr(docsrs, doc(cfg(feature = "k256")))]
+#[cfg(feature = "secp256k1")]
+#[cfg_attr(docsrs, doc(cfg(feature = "secp256k1")))]
 pub mod secp256k1;
 
 #[cfg(feature = "k256")]
-#[cfg_attr(docsrs, doc(cfg(feature = "k256")))]
+#[cfg_attr(docsrs, doc(cfg(feature = "secp256k1")))]
 pub use self::secp256k1::Secp256k1;
