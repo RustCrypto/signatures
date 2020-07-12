@@ -19,21 +19,6 @@ version = "0.4"
 default-features = false
 features = ["weierstrass"]
 
-[dependencies.k256]
-version = "0.3"
-optional = true
-default-features = false
-
-[dependencies.p256]
-version = "0.3"
-optional = true
-default-features = false
-
-[dependencies.p384]
-version = "0.2"
-optional = true
-default-features = false
-
 [dependencies.sha2]
 version = "0.9"
 optional = true
@@ -44,14 +29,10 @@ version = ">= 1.1.0, < 1.2.0"
 default-features = false
 
 [features]
-default = ["digest", "std", "zeroize"]
+default = ["digest", "std"]
 digest = ["signature/digest-preview", "sha2"]
-secp256k1 = ["k256"]
-secp256k1-arithmetic = ["k256/arithmetic", "secp256k1"]
+hazmat = []
 std = ["elliptic-curve/std", "signature/std"]
-zeroize = ["elliptic-curve/zeroize"]
-test-vectors = []
 
 [package.metadata.docs.rs]
-all-features = true
 rustdoc-args = ["--cfg", "docsrs"]

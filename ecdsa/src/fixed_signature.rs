@@ -1,7 +1,6 @@
 //! Fixed-sized (a.k.a. "raw") ECDSA signatures
 
 use crate::{
-    curve::Curve,
     generic_array::{typenum::Unsigned, ArrayLength, GenericArray},
     Error,
 };
@@ -10,6 +9,7 @@ use core::{
     fmt::{self, Debug},
     ops::Add,
 };
+use elliptic_curve::weierstrass::Curve;
 
 /// Size of a fixed sized signature for the given elliptic curve.
 pub type Size<ScalarSize> = <ScalarSize as Add>::Output;

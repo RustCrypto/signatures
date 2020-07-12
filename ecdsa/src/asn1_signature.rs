@@ -2,7 +2,6 @@
 
 use crate::{
     convert::ScalarPair,
-    curve::Curve,
     generic_array::{typenum::Unsigned, ArrayLength, GenericArray},
     Error,
 };
@@ -11,6 +10,7 @@ use core::{
     fmt::{self, Debug},
     ops::Add,
 };
+use elliptic_curve::weierstrass::Curve;
 
 /// Maximum overhead of an ASN.1 DER-encoded ECDSA signature for a given curve:
 /// 9-bytes.

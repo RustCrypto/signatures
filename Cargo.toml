@@ -2,7 +2,4 @@
 members = ["ecdsa", "ed25519"]
 
 [patch.crates-io]
-elliptic-curve = { git = "https://github.com/RustCrypto/elliptic-curves" }
-k256 = { git = "https://github.com/RustCrypto/elliptic-curves" }
-p256 = { git = "https://github.com/RustCrypto/elliptic-curves" }
-p384 = { git = "https://github.com/RustCrypto/elliptic-curves" }
+elliptic-curve = { git = "https://github.com/RustCrypto/traits" }

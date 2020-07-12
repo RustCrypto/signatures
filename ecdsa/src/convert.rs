@@ -301,22 +301,35 @@ where
 
 #[cfg(all(test, feature = "test-vectors"))]
 mod tests {
-    use crate::{
-        curve::nistp256::{Asn1Signature, FixedSignature},
-        test_vectors::nistp256::SHA256_FIXED_SIZE_TEST_VECTORS,
-    };
+    use elliptic_curve::{consts::U32, weierstrass::Curve};
     use signature::Signature;
+
+    #[derive(Clone, Debug, Default, Eq, PartialEq, PartialOrd, Ord)]
+    pub struct ExampleCurve;
+
+    impl Curve for ExampleCurve {
+        type ScalarSize = U32;
+    }
+
+    type Asn1Signature = crate::Asn1Signature<ExampleCurve>;
+    type FixedSignature = crate::FixedSignature<ExampleCurve>;
+
+    const EXAMPLE_SIGNATURE: [u8; 64] = [
+        0xf3, 0xac, 0x80, 0x61, 0xb5, 0x14, 0x79, 0x5b, 0x88, 0x43, 0xe3, 0xd6, 0x62, 0x95, 0x27,
+        0xed, 0x2a, 0xfd, 0x6b, 0x1f, 0x6a, 0x55, 0x5a, 0x7a, 0xca, 0xbb, 0x5e, 0x6f, 0x79, 0xc8,
+        0xc2, 0xac, 0x8b, 0xf7, 0x78, 0x19, 0xca, 0x5, 0xa6, 0xb2, 0x78, 0x6c, 0x76, 0x26, 0x2b,
+        0xf7, 0x37, 0x1c, 0xef, 0x97, 0xb2, 0x18, 0xe9, 0x6f, 0x17, 0x5a, 0x3c, 0xcd, 0xda, 0x2a,
+        0xcc, 0x5, 0x89, 0x3,
+    ];
 
     #[test]
     fn test_fixed_to_asn1_signature_roundtrip() {
-        for vector in SHA256_FIXED_SIZE_TEST_VECTORS {
-            let fixed_signature = FixedSignature::from_bytes(&vector.sig).unwrap();
+        let fixed_signature = FixedSignature::from_bytes(&EXAMPLE_SIGNATURE).unwrap();
 
-            // Convert to DER and back
-            let asn1_signature = Asn1Signature::from(&fixed_signature);
-            let fixed_signature2 = FixedSignature::from(&asn1_signature);
+        // Convert to DER and back
+        let asn1_signature = Asn1Signature::from(&fixed_signature);
+        let fixed_signature2 = FixedSignature::from(&asn1_signature);
 
-            assert_eq!(fixed_signature, fixed_signature2);
-        }
+        assert_eq!(fixed_signature, fixed_signature2);
     }
 }

@@ -57,9 +57,6 @@ name = "ecdsa"
 version = "0.6.1"
 dependencies = [
  "elliptic-curve",
- "k256",
- "p256",
- "p384",
  "sha2",
  "signature",
 ]
@@ -76,11 +73,10 @@ dependencies = [
 [[package]]
 name = "elliptic-curve"
 version = "0.4.0"
-source = "git+https://github.com/RustCrypto/elliptic-curves#fd3516fde64d5d9ef160f1c4392d807ca7ede6ea"
+source = "git+https://github.com/RustCrypto/traits#cbe0f2ae5902ef5f0750b48ce526febc05dcb20d"
 dependencies = [
  "generic-array",
  "subtle",
- "zeroize",
 ]
 
 [[package]]
@@ -99,34 +95,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "k256"
-version = "0.3.0"
-source = "git+https://github.com/RustCrypto/elliptic-curves#fd3516fde64d5d9ef160f1c4392d807ca7ede6ea"
-dependencies = [
- "elliptic-curve",
-]
-
-[[package]]
 name = "opaque-debug"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2839e79665f131bdb5782e51f2c6c9599c133c6098982a54c794358bf432529c"
-
-[[package]]
-name = "p256"
-version = "0.3.0"
-source = "git+https://github.com/RustCrypto/elliptic-curves#fd3516fde64d5d9ef160f1c4392d807ca7ede6ea"
-dependencies = [
- "elliptic-curve",
-]
-
-[[package]]
-name = "p384"
-version = "0.2.0"
-source = "git+https://github.com/RustCrypto/elliptic-curves#fd3516fde64d5d9ef160f1c4392d807ca7ede6ea"
-dependencies = [
- "elliptic-curve",
-]
 
 [[package]]
 name = "serde"
@@ -166,9 +138,3 @@ name = "typenum"
 version = "1.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6d2783fe2d6b8c1101136184eb41be8b1ad379e4657050b8aaff0c79ee7575f9"
-
-[[package]]
-name = "zeroize"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3cbac2ed2ba24cc90f5e06485ac8c7c1e5449fe8911aef4d8877218af021a5b8"
