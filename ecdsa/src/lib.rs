@@ -36,11 +36,10 @@
 
 pub mod asn1_signature;
 mod convert;
-pub mod curve;
 pub mod fixed_signature;
-#[cfg(feature = "test-vectors")]
-#[cfg_attr(docsrs, doc(cfg(feature = "test-vectors")))]
-pub mod test_vectors;
+
+#[cfg(feature = "hazmat")]
+pub mod hazmat;
 
 pub use self::{asn1_signature::Asn1Signature, fixed_signature::FixedSignature};
 
