@@ -14,6 +14,9 @@
 use crate::{Signature, SignatureSize};
 use elliptic_curve::{generic_array::ArrayLength, weierstrass::Curve, Error, ScalarBytes};
 
+#[cfg(feature = "digest")]
+use signature::{digest::Digest, PrehashSignature};
+
 /// Try to sign the given prehashed message using ECDSA.
 ///
 /// This trait is intended to be implemented on a type with access
@@ -65,4 +68,29 @@ where
         hashed_msg: &ScalarBytes<C::ScalarSize>,
         signature: &Signature<C>,
     ) -> Result<(), Error>;
+}
+
+/// Bind a preferred [`Digest`] algorithm to an elliptic curve type.
+///
+/// Generally there is a preferred variety of the SHA-2 family used with ECDSA
+/// for a particular elliptic curve.
+///
+/// This trait can be used to specify it, and with it receive a blanket impl of
+/// [`PrehashSignature`], used by [`signature_derive`][1]) for the [`Signature`]
+/// type for a particular elliptic curve.
+///
+/// [1]: https://github.com/RustCrypto/traits/tree/master/signature/derive
+#[cfg(feature = "digest")]
+#[cfg_attr(docsrs, doc(cfg(feature = "digest")))]
+pub trait DigestPrimitive: Curve {
+    /// Preferred digest to use when computing ECDSA signatures for this
+    /// elliptic curve. This should be a member of the SHA-2 family.
+    type Digest: Digest;
+}
+
+impl<C: DigestPrimitive> PrehashSignature for Signature<C>
+where
+    <C::ScalarSize as core::ops::Add>::Output: ArrayLength<u8>,
+{
+    type Digest = C::Digest;
 }

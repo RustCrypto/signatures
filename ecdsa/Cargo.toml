@@ -30,4 +30,5 @@ hazmat = []
 std = ["elliptic-curve/std", "signature/std"]
 
 [package.metadata.docs.rs]
+features = ["digest", "std"]
 rustdoc-args = ["--cfg", "docsrs"]
