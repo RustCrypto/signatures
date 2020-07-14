@@ -26,6 +26,7 @@
 pub mod asn1;
 
 #[cfg(feature = "hazmat")]
+#[cfg_attr(docsrs, doc(cfg(feature = "hazmat")))]
 pub mod hazmat;
 
 // Re-export the `elliptic-curve` crate (and select types)
