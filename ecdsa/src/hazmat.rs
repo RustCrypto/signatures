@@ -1,4 +1,4 @@
-//! Low-level ECDSA primitives
+//! Low-level ECDSA primitives.
 //!
 //! # ⚠️ Warning: Hazmat!
 //!
@@ -11,7 +11,7 @@
 //! Failure to use them correctly can lead to catastrophic failures including
 //! FULL PRIVATE KEY RECOVERY!
 
-use crate::fixed_signature::{FixedSignature, Size as FixedSignatureSize};
+use crate::{Signature, SignatureSize};
 use elliptic_curve::{generic_array::ArrayLength, weierstrass::Curve, Error, ScalarBytes};
 
 /// Try to sign the given prehashed message using ECDSA.
@@ -22,7 +22,7 @@ use elliptic_curve::{generic_array::ArrayLength, weierstrass::Curve, Error, Scal
 pub trait SignPrimitive<C>
 where
     C: Curve,
-    FixedSignatureSize<C::ScalarSize>: ArrayLength<u8>,
+    SignatureSize<C>: ArrayLength<u8>,
 {
     /// Scalar type
     // TODO(tarcieri): add bounds that support generation/conversion from bytes
@@ -40,7 +40,7 @@ where
         ephemeral_scalar: Self::Scalar,
         masking_scalar: Option<Self::Scalar>,
         hashed_msg: &ScalarBytes<C::ScalarSize>,
-    ) -> Result<FixedSignature<C>, Error>;
+    ) -> Result<Signature<C>, Error>;
 }
 
 /// Verify the given prehashed message using ECDSA.
@@ -51,7 +51,7 @@ where
 pub trait VerifyPrimitive<C>
 where
     C: Curve,
-    FixedSignatureSize<C::ScalarSize>: ArrayLength<u8>,
+    SignatureSize<C>: ArrayLength<u8>,
 {
     /// Verify the prehashed message against the provided signature
     ///
@@ -63,6 +63,6 @@ where
     fn verify_prehashed(
         &self,
         hashed_msg: &ScalarBytes<C::ScalarSize>,
-        signature: &FixedSignature<C>,
+        signature: &Signature<C>,
     ) -> Result<(), Error>;
 }
