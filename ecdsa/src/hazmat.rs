@@ -12,7 +12,8 @@
 //! FULL PRIVATE KEY RECOVERY!
 
 use crate::{Signature, SignatureSize};
-use elliptic_curve::{generic_array::ArrayLength, weierstrass::Curve, Error, ScalarBytes};
+use elliptic_curve::{generic_array::ArrayLength, weierstrass::Curve, ScalarBytes};
+use signature::Error;
 
 #[cfg(feature = "digest")]
 use signature::{digest::Digest, PrehashSignature};
