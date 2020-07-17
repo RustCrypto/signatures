@@ -41,8 +41,8 @@ where
     /// - `hashed_msg`: prehashed message to be signed
     fn try_sign_prehashed(
         &self,
-        ephemeral_scalar: Self::Scalar,
-        masking_scalar: Option<Self::Scalar>,
+        ephemeral_scalar: &Self::Scalar,
+        masking_scalar: Option<&Self::Scalar>,
         hashed_msg: &ScalarBytes<C::ScalarSize>,
     ) -> Result<Signature<C>, Error>;
 }
