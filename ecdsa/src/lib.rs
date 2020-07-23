@@ -97,17 +97,17 @@ where
         asn1::MaxSize<C::ScalarSize>: ArrayLength<u8>,
         <C::ScalarSize as Add>::Output: Add<asn1::MaxOverhead> + ArrayLength<u8>,
     {
-        asn1::Document::<C::ScalarSize>::from_bytes(bytes).map(Into::into)
+        asn1::Signature::<C::ScalarSize>::try_from(bytes).map(Into::into)
     }
 
     /// Serialize this signature as ASN.1 DER
-    pub fn to_asn1(&self) -> asn1::Document<C::ScalarSize>
+    pub fn to_asn1(&self) -> asn1::Signature<C::ScalarSize>
     where
         C::ScalarSize: Add + ArrayLength<u8>,
         asn1::MaxSize<C::ScalarSize>: ArrayLength<u8>,
         <C::ScalarSize as Add>::Output: Add<asn1::MaxOverhead> + ArrayLength<u8>,
     {
-        asn1::Document::from_scalars(self.r(), self.s())
+        asn1::Signature::from_scalars(self.r(), self.s())
     }
 
     /// Get the `r` component of this signature
@@ -170,14 +170,14 @@ where
     }
 }
 
-impl<C> From<asn1::Document<C::ScalarSize>> for Signature<C>
+impl<C> From<asn1::Signature<C::ScalarSize>> for Signature<C>
 where
     C: Curve,
     C::ScalarSize: Add + ArrayLength<u8>,
     asn1::MaxSize<C::ScalarSize>: ArrayLength<u8>,
     <C::ScalarSize as Add>::Output: Add<asn1::MaxOverhead> + ArrayLength<u8>,
 {
-    fn from(doc: asn1::Document<C::ScalarSize>) -> Signature<C> {
+    fn from(doc: asn1::Signature<C::ScalarSize>) -> Signature<C> {
         let mut bytes = SignatureBytes::<C>::default();
         let scalar_size = C::ScalarSize::to_usize();
         let r_begin = scalar_size.checked_sub(doc.r().len()).unwrap();
