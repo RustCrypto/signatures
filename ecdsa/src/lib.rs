@@ -25,6 +25,10 @@
 
 pub mod asn1;
 
+#[cfg(feature = "dev")]
+#[cfg_attr(docsrs, doc(cfg(feature = "dev")))]
+pub mod dev;
+
 #[cfg(feature = "hazmat")]
 #[cfg_attr(docsrs, doc(cfg(feature = "hazmat")))]
 pub mod hazmat;
