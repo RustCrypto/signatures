@@ -11,7 +11,8 @@ use crate::{
     Error,
 };
 use core::{
-    convert::TryFrom,
+    convert::{TryFrom, TryInto},
+    fmt,
     ops::{Add, Range},
 };
 use elliptic_curve::{consts::U9, ScalarBytes};
@@ -35,7 +36,7 @@ pub type MaxOverhead = U9;
 /// Maximum size of an ASN.1 DER encoded signature for the given elliptic curve.
 pub type MaxSize<ScalarSize> = <<ScalarSize as Add>::Output as Add<MaxOverhead>>::Output;
 
-/// Byte array containing a serialized ASN.1 document
+/// Byte array containing a serialized ASN.1 signature
 type DocumentBytes<ScalarSize> = GenericArray<u8, MaxSize<ScalarSize>>;
 
 /// ASN.1 `INTEGER` tag
@@ -44,10 +45,10 @@ const INTEGER_TAG: u8 = 0x02;
 /// ASN.1 `SEQUENCE` tag
 const SEQUENCE_TAG: u8 = 0x30;
 
-/// Document containing an ASN.1 DER-encoded signature.
+/// ASN.1 DER-encoded signature.
 ///
 /// Generic over the scalar size of the elliptic curve.
-pub struct Document<ScalarSize>
+pub struct Signature<ScalarSize>
 where
     ScalarSize: Add + ArrayLength<u8>,
     MaxSize<ScalarSize>: ArrayLength<u8>,
@@ -56,86 +57,33 @@ where
     /// ASN.1 DER-encoded signature data
     bytes: DocumentBytes<ScalarSize>,
 
-    /// Range of the `r` value within the document
+    /// Range of the `r` value within the signature
     r_range: Range<usize>,
 
-    /// Range of the `s` value within the document
+    /// Range of the `s` value within the signature
     s_range: Range<usize>,
 }
 
-#[allow(clippy::len_without_is_empty)]
-impl<ScalarSize> Document<ScalarSize>
+impl<ScalarSize> signature::Signature for Signature<ScalarSize>
 where
     ScalarSize: Add + ArrayLength<u8>,
     MaxSize<ScalarSize>: ArrayLength<u8>,
     <ScalarSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
     /// Parse an ASN.1 DER-encoded ECDSA signature from a byte slice
-    pub fn from_bytes(bytes: impl AsRef<[u8]>) -> Result<Self, Error> {
-        let input = bytes.as_ref();
-
-        // Signature format is a SEQUENCE of two INTEGER values. We
-        // support only integers of less than 127 bytes each (signed
-        // encoding) so the resulting raw signature will have length
-        // at most 254 bytes.
-        //
-        // First byte is SEQUENCE tag.
-        if input[0] != SEQUENCE_TAG as u8 {
-            return Err(Error::new());
-        }
-
-        // The SEQUENCE length will be encoded over one or two bytes. We
-        // limit the total SEQUENCE contents to 255 bytes, because it
-        // makes things simpler; this is enough for subgroup orders up
-        // to 999 bits.
-        let mut zlen = input[1] as usize;
-
-        let offset = if zlen > 0x80 {
-            if zlen != 0x81 {
-                return Err(Error::new());
-            }
-
-            zlen = input[2] as usize;
-            3
-        } else {
-            2
-        };
-
-        if zlen != input.len().checked_sub(offset).unwrap() {
-            return Err(Error::new());
-        }
-
-        // First INTEGER (r)
-        let r_range = parse_int(&input[offset..], ScalarSize::to_usize())?;
-        let r_start = offset.checked_add(r_range.start).unwrap();
-        let r_end = offset.checked_add(r_range.end).unwrap();
-
-        // Second INTEGER (s)
-        let s_range = parse_int(&input[r_end..], ScalarSize::to_usize())?;
-        let s_start = r_end.checked_add(s_range.start).unwrap();
-        let s_end = r_end.checked_add(s_range.end).unwrap();
-
-        if s_end != bytes.as_ref().len() {
-            return Err(Error::new());
-        }
-
-        let mut byte_arr = DocumentBytes::<ScalarSize>::default();
-        byte_arr[..s_end].copy_from_slice(bytes.as_ref());
-
-        Ok(Document {
-            bytes: byte_arr,
-            r_range: Range {
-                start: r_start,
-                end: r_end,
-            },
-            s_range: Range {
-                start: s_start,
-                end: s_end,
-            },
-        })
+    fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
+        bytes.try_into()
     }
+}
 
-    /// Get the length of the document
+#[allow(clippy::len_without_is_empty)]
+impl<ScalarSize> Signature<ScalarSize>
+where
+    ScalarSize: Add + ArrayLength<u8>,
+    MaxSize<ScalarSize>: ArrayLength<u8>,
+    <ScalarSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+{
+    /// Get the length of the signature in bytes
     pub fn len(&self) -> usize {
         self.s_range.end
     }
@@ -168,7 +116,9 @@ where
         serialize_int(s.as_slice(), &mut bytes[r_end..], s_len, scalar_size);
         let s_end = r_end.checked_add(2).unwrap().checked_add(s_len).unwrap();
 
-        Self::from_bytes(&bytes[..s_end]).expect("generated invalid ASN.1 DER")
+        bytes[..s_end]
+            .try_into()
+            .expect("generated invalid ASN.1 DER")
     }
 
     /// Get the `r` component of the signature (leading zeros removed)
@@ -182,7 +132,7 @@ where
     }
 }
 
-impl<ScalarSize> AsRef<[u8]> for Document<ScalarSize>
+impl<ScalarSize> AsRef<[u8]> for Signature<ScalarSize>
 where
     ScalarSize: Add + ArrayLength<u8>,
     MaxSize<ScalarSize>: ArrayLength<u8>,
@@ -193,7 +143,21 @@ where
     }
 }
 
-impl<ScalarSize> TryFrom<&[u8]> for Document<ScalarSize>
+impl<ScalarSize> fmt::Debug for Signature<ScalarSize>
+where
+    ScalarSize: Add + ArrayLength<u8>,
+    MaxSize<ScalarSize>: ArrayLength<u8>,
+    <ScalarSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("asn1::Signature")
+            .field("r", &self.r())
+            .field("s", &self.s())
+            .finish()
+    }
+}
+
+impl<ScalarSize> TryFrom<&[u8]> for Signature<ScalarSize>
 where
     ScalarSize: Add + ArrayLength<u8>,
     MaxSize<ScalarSize>: ArrayLength<u8>,
@@ -202,7 +166,65 @@ where
     type Error = Error;
 
     fn try_from(bytes: &[u8]) -> Result<Self, Error> {
-        Self::from_bytes(bytes)
+        // Signature format is a SEQUENCE of two INTEGER values. We
+        // support only integers of less than 127 bytes each (signed
+        // encoding) so the resulting raw signature will have length
+        // at most 254 bytes.
+        //
+        // First byte is SEQUENCE tag.
+        if bytes[0] != SEQUENCE_TAG as u8 {
+            return Err(Error::new());
+        }
+
+        // The SEQUENCE length will be encoded over one or two bytes. We
+        // limit the total SEQUENCE contents to 255 bytes, because it
+        // makes things simpler; this is enough for subgroup orders up
+        // to 999 bits.
+        let mut zlen = bytes[1] as usize;
+
+        let offset = if zlen > 0x80 {
+            if zlen != 0x81 {
+                return Err(Error::new());
+            }
+
+            zlen = bytes[2] as usize;
+            3
+        } else {
+            2
+        };
+
+        if zlen != bytes.len().checked_sub(offset).unwrap() {
+            return Err(Error::new());
+        }
+
+        // First INTEGER (r)
+        let r_range = parse_int(&bytes[offset..], ScalarSize::to_usize())?;
+        let r_start = offset.checked_add(r_range.start).unwrap();
+        let r_end = offset.checked_add(r_range.end).unwrap();
+
+        // Second INTEGER (s)
+        let s_range = parse_int(&bytes[r_end..], ScalarSize::to_usize())?;
+        let s_start = r_end.checked_add(s_range.start).unwrap();
+        let s_end = r_end.checked_add(s_range.end).unwrap();
+
+        if s_end != bytes.as_ref().len() {
+            return Err(Error::new());
+        }
+
+        let mut byte_arr = DocumentBytes::<ScalarSize>::default();
+        byte_arr[..s_end].copy_from_slice(bytes.as_ref());
+
+        Ok(Signature {
+            bytes: byte_arr,
+            r_range: Range {
+                start: r_start,
+                end: r_end,
+            },
+            s_range: Range {
+                start: s_start,
+                end: s_end,
+            },
+        })
     }
 }
 
