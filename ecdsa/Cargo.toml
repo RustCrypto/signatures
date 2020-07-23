@@ -25,6 +25,7 @@ default-features = false
 
 [features]
 default = ["digest", "std"]
+dev = []
 digest = ["signature/digest-preview"]
 hazmat = []
 std = ["elliptic-curve/std", "signature/std"]
