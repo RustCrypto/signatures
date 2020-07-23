@@ -89,6 +89,7 @@ pub trait DigestPrimitive: Curve {
     type Digest: Digest;
 }
 
+#[cfg(feature = "digest")]
 impl<C: DigestPrimitive> PrehashSignature for Signature<C>
 where
     <C::ScalarSize as core::ops::Add>::Output: ArrayLength<u8>,
