@@ -43,7 +43,7 @@ where
         &self,
         ephemeral_scalar: &Self::Scalar,
         masking_scalar: Option<&Self::Scalar>,
-        hashed_msg: &ScalarBytes<C::ScalarSize>,
+        hashed_msg: &ScalarBytes<C>,
     ) -> Result<Signature<C>, Error>;
 }
 
@@ -66,7 +66,7 @@ where
     /// - `signature`: signature to be verified against the key and message
     fn verify_prehashed(
         &self,
-        hashed_msg: &ScalarBytes<C::ScalarSize>,
+        hashed_msg: &ScalarBytes<C>,
         signature: &Signature<C>,
     ) -> Result<(), Error>;
 }
@@ -92,7 +92,7 @@ pub trait DigestPrimitive: Curve {
 #[cfg(feature = "digest")]
 impl<C: DigestPrimitive> PrehashSignature for Signature<C>
 where
-    <C::ScalarSize as core::ops::Add>::Output: ArrayLength<u8>,
+    <C::ElementSize as core::ops::Add>::Output: ArrayLength<u8>,
 {
     type Digest = C::Digest;
 }

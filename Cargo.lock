@@ -45,7 +45,7 @@ dependencies = [
 [[package]]
 name = "elliptic-curve"
 version = "0.5.0-pre"
-source = "git+https://github.com/RustCrypto/traits#3e7b861581185d7350db3315cd1a99b4c6d382e4"
+source = "git+https://github.com/RustCrypto/traits#3fd8ac7fa787cfbea275306fab011a592206b1b2"
 dependencies = [
  "generic-array",
  "subtle",
