@@ -7,7 +7,7 @@
 // <https://www.bearssl.org/gitweb/?p=BearSSL;a=blob;f=src/ec/ecdsa_rta.c>
 
 use crate::{
-    generic_array::{ArrayLength, GenericArray},
+    generic_array::{typenum::Unsigned, ArrayLength, GenericArray},
     Error,
 };
 use core::{
@@ -15,7 +15,7 @@ use core::{
     fmt,
     ops::{Add, Range},
 };
-use elliptic_curve::{consts::U9, ScalarBytes};
+use elliptic_curve::{consts::U9, weierstrass::Curve, ScalarBytes};
 
 /// Maximum overhead of an ASN.1 DER-encoded ECDSA signature for a given curve:
 /// 9-bytes.
@@ -34,10 +34,11 @@ use elliptic_curve::{consts::U9, ScalarBytes};
 pub type MaxOverhead = U9;
 
 /// Maximum size of an ASN.1 DER encoded signature for the given elliptic curve.
-pub type MaxSize<ScalarSize> = <<ScalarSize as Add>::Output as Add<MaxOverhead>>::Output;
+pub type MaxSize<C> =
+    <<<C as elliptic_curve::Curve>::ElementSize as Add>::Output as Add<MaxOverhead>>::Output;
 
 /// Byte array containing a serialized ASN.1 signature
-type DocumentBytes<ScalarSize> = GenericArray<u8, MaxSize<ScalarSize>>;
+type DocumentBytes<C> = GenericArray<u8, MaxSize<C>>;
 
 /// ASN.1 `INTEGER` tag
 const INTEGER_TAG: u8 = 0x02;
@@ -48,14 +49,15 @@ const SEQUENCE_TAG: u8 = 0x30;
 /// ASN.1 DER-encoded signature.
 ///
 /// Generic over the scalar size of the elliptic curve.
-pub struct Signature<ScalarSize>
+pub struct Signature<C>
 where
-    ScalarSize: Add + ArrayLength<u8>,
-    MaxSize<ScalarSize>: ArrayLength<u8>,
-    <ScalarSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+    C: Curve,
+    C::ElementSize: Add + ArrayLength<u8>,
+    MaxSize<C>: ArrayLength<u8>,
+    <C::ElementSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
     /// ASN.1 DER-encoded signature data
-    bytes: DocumentBytes<ScalarSize>,
+    bytes: DocumentBytes<C>,
 
     /// Range of the `r` value within the signature
     r_range: Range<usize>,
@@ -64,11 +66,12 @@ where
     s_range: Range<usize>,
 }
 
-impl<ScalarSize> signature::Signature for Signature<ScalarSize>
+impl<C> signature::Signature for Signature<C>
 where
-    ScalarSize: Add + ArrayLength<u8>,
-    MaxSize<ScalarSize>: ArrayLength<u8>,
-    <ScalarSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+    C: Curve,
+    C::ElementSize: Add + ArrayLength<u8>,
+    MaxSize<C>: ArrayLength<u8>,
+    <C::ElementSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
     /// Parse an ASN.1 DER-encoded ECDSA signature from a byte slice
     fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
@@ -77,11 +80,12 @@ where
 }
 
 #[allow(clippy::len_without_is_empty)]
-impl<ScalarSize> Signature<ScalarSize>
+impl<C> Signature<C>
 where
-    ScalarSize: Add + ArrayLength<u8>,
-    MaxSize<ScalarSize>: ArrayLength<u8>,
-    <ScalarSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+    C: Curve,
+    C::ElementSize: Add + ArrayLength<u8>,
+    MaxSize<C>: ArrayLength<u8>,
+    <C::ElementSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
     /// Get the length of the signature in bytes
     pub fn len(&self) -> usize {
@@ -89,11 +93,11 @@ where
     }
 
     /// Create an ASN.1 DER encoded signature from the `r` and `s` scalars
-    pub(crate) fn from_scalars(r: &ScalarBytes<ScalarSize>, s: &ScalarBytes<ScalarSize>) -> Self {
+    pub(crate) fn from_scalars(r: &ScalarBytes<C>, s: &ScalarBytes<C>) -> Self {
         let r_len = int_length(r);
         let s_len = int_length(s);
-        let scalar_size = ScalarSize::to_usize();
-        let mut bytes = DocumentBytes::<ScalarSize>::default();
+        let scalar_size = C::ElementSize::to_usize();
+        let mut bytes = DocumentBytes::<C>::default();
 
         // SEQUENCE header
         bytes[0] = SEQUENCE_TAG as u8;
@@ -132,22 +136,24 @@ where
     }
 }
 
-impl<ScalarSize> AsRef<[u8]> for Signature<ScalarSize>
+impl<C> AsRef<[u8]> for Signature<C>
 where
-    ScalarSize: Add + ArrayLength<u8>,
-    MaxSize<ScalarSize>: ArrayLength<u8>,
-    <ScalarSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+    C: Curve,
+    C::ElementSize: Add + ArrayLength<u8>,
+    MaxSize<C>: ArrayLength<u8>,
+    <C::ElementSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
     fn as_ref(&self) -> &[u8] {
         &self.bytes.as_slice()[..self.len()]
     }
 }
 
-impl<ScalarSize> fmt::Debug for Signature<ScalarSize>
+impl<C> fmt::Debug for Signature<C>
 where
-    ScalarSize: Add + ArrayLength<u8>,
-    MaxSize<ScalarSize>: ArrayLength<u8>,
-    <ScalarSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+    C: Curve,
+    C::ElementSize: Add + ArrayLength<u8>,
+    MaxSize<C>: ArrayLength<u8>,
+    <C::ElementSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("asn1::Signature")
@@ -157,11 +163,12 @@ where
     }
 }
 
-impl<ScalarSize> TryFrom<&[u8]> for Signature<ScalarSize>
+impl<C> TryFrom<&[u8]> for Signature<C>
 where
-    ScalarSize: Add + ArrayLength<u8>,
-    MaxSize<ScalarSize>: ArrayLength<u8>,
-    <ScalarSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+    C: Curve,
+    C::ElementSize: Add + ArrayLength<u8>,
+    MaxSize<C>: ArrayLength<u8>,
+    <C::ElementSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
     type Error = Error;
 
@@ -198,12 +205,12 @@ where
         }
 
         // First INTEGER (r)
-        let r_range = parse_int(&bytes[offset..], ScalarSize::to_usize())?;
+        let r_range = parse_int(&bytes[offset..], C::ElementSize::to_usize())?;
         let r_start = offset.checked_add(r_range.start).unwrap();
         let r_end = offset.checked_add(r_range.end).unwrap();
 
         // Second INTEGER (s)
-        let s_range = parse_int(&bytes[r_end..], ScalarSize::to_usize())?;
+        let s_range = parse_int(&bytes[r_end..], C::ElementSize::to_usize())?;
         let s_start = r_end.checked_add(s_range.start).unwrap();
         let s_end = r_end.checked_add(s_range.end).unwrap();
 
@@ -211,7 +218,7 @@ where
             return Err(Error::new());
         }
 
-        let mut byte_arr = DocumentBytes::<ScalarSize>::default();
+        let mut byte_arr = DocumentBytes::<C>::default();
         byte_arr[..s_end].copy_from_slice(bytes.as_ref());
 
         Ok(Signature {
@@ -311,15 +318,17 @@ fn trim_zeroes(mut bytes: &[u8], scalar_size: usize) -> Result<usize, Error> {
 
 #[cfg(test)]
 mod tests {
-    use elliptic_curve::{consts::U32, weierstrass::Curve};
+    use elliptic_curve::consts::U32;
     use signature::Signature as _;
 
     #[derive(Clone, Debug, Default, Eq, PartialEq, PartialOrd, Ord)]
     pub struct ExampleCurve;
 
-    impl Curve for ExampleCurve {
-        type ScalarSize = U32;
+    impl elliptic_curve::Curve for ExampleCurve {
+        type ElementSize = U32;
     }
+
+    impl elliptic_curve::weierstrass::Curve for ExampleCurve {}
 
     type Signature = crate::Signature<ExampleCurve>;
 
