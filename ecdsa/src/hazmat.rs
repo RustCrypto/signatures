@@ -36,7 +36,7 @@ where
     ///
     /// - `ephemeral_scalar`: ECDSA `k` value (MUST BE UNIFORMLY RANDOM!!!)
     /// - `hashed_msg`: prehashed message to be signed
-    fn try_sign_prehashed<K: Into<C::Scalar> + Invert<Output = C::Scalar>>(
+    fn try_sign_prehashed<K: AsRef<C::Scalar> + Invert<Output = C::Scalar>>(
         &self,
         ephemeral_scalar: &K,
         hashed_msg: &ScalarBytes<C>,

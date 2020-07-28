@@ -41,7 +41,7 @@ macro_rules! new_signing_test {
                 let d = Scalar::from_bytes(vector.d.try_into().unwrap()).unwrap();
                 let k = Scalar::from_bytes(vector.k.try_into().unwrap()).unwrap();
                 let sig = d
-                    .try_sign_prehashed(&k, None, GenericArray::from_slice(vector.m))
+                    .try_sign_prehashed(&k, GenericArray::from_slice(vector.m))
                     .unwrap();
 
                 assert_eq!(vector.r, sig.r().as_slice());
@@ -72,7 +72,6 @@ macro_rules! new_verification_test {
                 );
 
                 let result = q.verify_prehashed(GenericArray::from_slice(vector.m), &sig);
-
                 assert!(result.is_ok());
             }
         }
@@ -94,11 +93,10 @@ macro_rules! new_verification_test {
                 let sig = Signature::from_scalars(GenericArray::from_slice(vector.r), &s_tweaked);
 
                 let result = q.verify_prehashed(GenericArray::from_slice(vector.m), &sig);
-
                 assert!(result.is_err());
             }
         }
 
-        // TODO(tarcieri): test invalid q, invalid r, invalid m
+        // TODO(tarcieri): test invalid Q, invalid r, invalid m
     };
 }
