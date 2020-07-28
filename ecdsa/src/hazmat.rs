@@ -12,7 +12,9 @@
 //! FULL PRIVATE KEY RECOVERY!
 
 use crate::{Signature, SignatureSize};
-use elliptic_curve::{generic_array::ArrayLength, weierstrass::Curve, Arithmetic, ScalarBytes};
+use elliptic_curve::{
+    generic_array::ArrayLength, ops::Invert, weierstrass::Curve, Arithmetic, ScalarBytes,
+};
 use signature::Error;
 
 #[cfg(feature = "digest")]
@@ -33,12 +35,10 @@ where
     /// Accepts the following arguments:
     ///
     /// - `ephemeral_scalar`: ECDSA `k` value (MUST BE UNIFORMLY RANDOM!!!)
-    /// - `masking_scalar`: optional blinding factor for sidechannel resistance
     /// - `hashed_msg`: prehashed message to be signed
-    fn try_sign_prehashed(
+    fn try_sign_prehashed<K: Into<C::Scalar> + Invert<Output = C::Scalar>>(
         &self,
-        ephemeral_scalar: &C::Scalar,
-        masking_scalar: Option<&C::Scalar>,
+        ephemeral_scalar: &K,
         hashed_msg: &ScalarBytes<C>,
     ) -> Result<Signature<C>, Error>;
 }
