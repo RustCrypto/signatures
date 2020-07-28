@@ -12,7 +12,7 @@
 //! FULL PRIVATE KEY RECOVERY!
 
 use crate::{Signature, SignatureSize};
-use elliptic_curve::{generic_array::ArrayLength, weierstrass::Curve, ScalarBytes};
+use elliptic_curve::{generic_array::ArrayLength, weierstrass::Curve, Arithmetic, ScalarBytes};
 use signature::Error;
 
 #[cfg(feature = "digest")]
@@ -25,13 +25,9 @@ use signature::{digest::Digest, PrehashSignature};
 /// or potentially a key handle to a hardware device.
 pub trait SignPrimitive<C>
 where
-    C: Curve,
+    C: Curve + Arithmetic,
     SignatureSize<C>: ArrayLength<u8>,
 {
-    /// Scalar type
-    // TODO(tarcieri): add bounds that support generation/conversion from bytes
-    type Scalar;
-
     /// Try to sign the prehashed message.
     ///
     /// Accepts the following arguments:
@@ -41,8 +37,8 @@ where
     /// - `hashed_msg`: prehashed message to be signed
     fn try_sign_prehashed(
         &self,
-        ephemeral_scalar: &Self::Scalar,
-        masking_scalar: Option<&Self::Scalar>,
+        ephemeral_scalar: &C::Scalar,
+        masking_scalar: Option<&C::Scalar>,
         hashed_msg: &ScalarBytes<C>,
     ) -> Result<Signature<C>, Error>;
 }
