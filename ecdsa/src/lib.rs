@@ -33,6 +33,10 @@ pub mod dev;
 #[cfg_attr(docsrs, doc(cfg(feature = "hazmat")))]
 pub mod hazmat;
 
+#[cfg(feature = "signer")]
+#[cfg_attr(docsrs, doc(cfg(feature = "signer")))]
+pub mod signer;
+
 // Re-export the `elliptic-curve` crate (and select types)
 pub use elliptic_curve::{
     self, generic_array,
@@ -42,6 +46,9 @@ pub use elliptic_curve::{
 
 // Re-export the `signature` crate (and select types)
 pub use signature::{self, Error};
+
+#[cfg(feature = "signer")]
+pub use signer::Signer;
 
 use core::{
     convert::TryFrom,

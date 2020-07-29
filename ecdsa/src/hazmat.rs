@@ -12,6 +12,7 @@
 //! FULL PRIVATE KEY RECOVERY!
 
 use crate::{Signature, SignatureSize};
+use core::borrow::Borrow;
 use elliptic_curve::{
     generic_array::ArrayLength, ops::Invert, weierstrass::Curve, Arithmetic, ScalarBytes,
 };
@@ -34,9 +35,10 @@ where
     ///
     /// Accepts the following arguments:
     ///
-    /// - `ephemeral_scalar`: ECDSA `k` value (MUST BE UNIFORMLY RANDOM!!!)
-    /// - `hashed_msg`: prehashed message to be signed
-    fn try_sign_prehashed<K: AsRef<C::Scalar> + Invert<Output = C::Scalar>>(
+    /// - `ephemeral_scalar`: ECDSA `k` value. MUST BE UNIFORMLY RANDOM!!!
+    /// - `hashed_msg`: hashed message digest to be signed.
+    ///   MUST BE OUTPUT OF A CRYPTOGRAPHICALLY SECURE DIGEST ALGORITHM!!!
+    fn try_sign_prehashed<K: Borrow<C::Scalar> + Invert<Output = C::Scalar>>(
         &self,
         ephemeral_scalar: &K,
         hashed_msg: &ScalarBytes<C>,
