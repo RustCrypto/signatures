@@ -20,7 +20,7 @@ default-features = false
 features = ["weierstrass"]
 
 [dependencies.signature]
-version = ">= 1.1.0, < 1.2.0"
+version = ">= 1.2.2, < 1.3.0"
 default-features = false
 
 [features]
@@ -28,7 +28,10 @@ default = ["digest", "std"]
 dev = []
 digest = ["signature/digest-preview"]
 hazmat = []
+rand = ["elliptic-curve/rand_core", "signature/rand-preview"]
+signer = ["digest", "hazmat", "rand", "zeroize"] # TODO(tarcieri): deterministic signing
 std = ["elliptic-curve/std", "signature/std"]
+zeroize = ["elliptic-curve/zeroize"]
 
 [package.metadata.docs.rs]
 features = ["digest", "std"]

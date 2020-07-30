@@ -23,82 +23,34 @@ jobs:
         target:
           - thumbv7em-none-eabi
           - wasm32-unknown-unknown
-        toolchain:
+        rust:
           - 1.41.0 # MSRV
           - stable
     steps:
-      - name: Checkout sources
-        uses: actions/checkout@v1
-
-      - name: Cache cargo registry
-        uses: actions/cache@v1
+      - uses: actions/checkout@v1
+      - uses: actions-rs/toolchain@v1
         with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('Cargo.lock') }}
-
-      - name: Cache cargo index
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('Cargo.lock') }}
-
-      - name: Cache cargo build
-        uses: actions/cache@v1
-        with:
-          path: target
-          key: ${{ runner.os }}-rust-${{ matrix.toolchain }}-${{ matrix.target }}-cargo-build-target-${{ hashFiles('Cargo.lock') }}
-
-      - name: Install toolchain
-        uses: actions-rs/toolchain@v1
-        with:
+          profile: minimal
+          toolchain: ${{ matrix.rust }}
           target: ${{ matrix.target }}
-          toolchain: ${{ matrix.toolchain }}
           override: true
-
-      - name: Run cargo build --no-default-features
-        run: cargo build --no-default-features --release --target ${{ matrix.target }}
+      - run: cargo build --no-default-features --release --target ${{ matrix.target }}
+      - run: cargo build --no-default-features --features signer --release --target ${{ matrix.target }}
 
   test:
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        platform:
-          - ubuntu-latest
-          - macos-latest
-          - windows-latest
-        toolchain:
+        rust:
           - 1.41.0 # MSRV
           - stable
-    runs-on: ${{ matrix.platform }}
     steps:
-      - name: Checkout sources
-        uses: actions/checkout@v1
-
-      - name: Cache cargo registry
-        uses: actions/cache@v1
+      - uses: actions/checkout@v1
+      - uses: actions-rs/toolchain@v1
         with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('Cargo.lock') }}
-
-      - name: Cache cargo index
-        uses: actions/cache@v1
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('Cargo.lock') }}
-
-      - name: Cache cargo build
-        uses: actions/cache@v1
-        with:
-          path: target
-          key: ${{ runner.os }}-rust-${{ matrix.toolchain }}-cargo-build-target-${{ hashFiles('Cargo.lock') }}
-
-      - name: Install toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ matrix.toolchain }}
-          override: true
-
-      - name: Run cargo test --lib
-        run: cargo test --lib --release
-
-      - name: Run cargo test --all-features
-        run: cargo test --all-features --release
+          profile: minimal
+          toolchain: ${{ matrix.rust }}
+      - run: cargo check --all-features
+      - run: cargo test --no-default-features
+      - run: cargo test
+      - run: cargo test --all-features
