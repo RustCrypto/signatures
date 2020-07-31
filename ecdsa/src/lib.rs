@@ -37,6 +37,10 @@ pub mod hazmat;
 #[cfg_attr(docsrs, doc(cfg(feature = "signer")))]
 pub mod signer;
 
+#[cfg(feature = "verifier")]
+#[cfg_attr(docsrs, doc(cfg(feature = "verifier")))]
+pub mod verifier;
+
 // Re-export the `elliptic-curve` crate (and select types)
 pub use elliptic_curve::{
     self, generic_array,
@@ -49,6 +53,9 @@ pub use signature::{self, Error};
 
 #[cfg(feature = "signer")]
 pub use signer::Signer;
+
+#[cfg(feature = "verifier")]
+pub use verifier::Verifier;
 
 use core::{
     convert::TryFrom,
