@@ -36,6 +36,7 @@ jobs:
           override: true
       - run: cargo build --no-default-features --release --target ${{ matrix.target }}
       - run: cargo build --no-default-features --features signer --release --target ${{ matrix.target }}
+      - run: cargo build --no-default-features --features verifier --release --target ${{ matrix.target }}
 
   test:
     runs-on: ubuntu-latest

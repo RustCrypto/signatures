@@ -31,6 +31,7 @@ hazmat = []
 rand = ["elliptic-curve/rand_core", "signature/rand-preview"]
 signer = ["digest", "hazmat", "rand", "zeroize"] # TODO(tarcieri): deterministic signing
 std = ["elliptic-curve/std", "signature/std"]
+verifier = ["digest", "hazmat"]
 zeroize = ["elliptic-curve/zeroize"]
 
 [package.metadata.docs.rs]
