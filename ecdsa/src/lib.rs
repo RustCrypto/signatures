@@ -62,7 +62,7 @@ use core::{
     fmt::{self, Debug},
     ops::Add,
 };
-use elliptic_curve::ScalarBytes;
+use elliptic_curve::ElementBytes;
 use generic_array::{typenum::Unsigned, ArrayLength, GenericArray};
 
 /// Size of a fixed sized signature for the given elliptic curve.
@@ -100,7 +100,7 @@ where
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Create a [`Signature`] from the serialized `r` and `s` components
-    pub fn from_scalars(r: &ScalarBytes<C>, s: &ScalarBytes<C>) -> Self {
+    pub fn from_scalars(r: &ElementBytes<C>, s: &ElementBytes<C>) -> Self {
         let mut bytes = SignatureBytes::<C>::default();
         let scalar_size = C::ElementSize::to_usize();
         bytes[..scalar_size].copy_from_slice(r.as_slice());
@@ -129,13 +129,13 @@ where
     }
 
     /// Get the `r` component of this signature
-    pub fn r(&self) -> &ScalarBytes<C> {
-        ScalarBytes::<C>::from_slice(&self.bytes[..C::ElementSize::to_usize()])
+    pub fn r(&self) -> &ElementBytes<C> {
+        ElementBytes::<C>::from_slice(&self.bytes[..C::ElementSize::to_usize()])
     }
 
     /// Get the `s` component of this signature
-    pub fn s(&self) -> &ScalarBytes<C> {
-        ScalarBytes::<C>::from_slice(&self.bytes[C::ElementSize::to_usize()..])
+    pub fn s(&self) -> &ElementBytes<C> {
+        ElementBytes::<C>::from_slice(&self.bytes[C::ElementSize::to_usize()..])
     }
 }
 
