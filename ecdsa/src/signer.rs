@@ -10,12 +10,11 @@ use crate::{
     Error, Signature, SignatureSize,
 };
 use elliptic_curve::{
-    encoding::FromBytes,
     generic_array::ArrayLength,
     ops::Invert,
     weierstrass::Curve,
     zeroize::{Zeroize, Zeroizing},
-    Arithmetic, SecretKey,
+    Arithmetic, FromBytes, SecretKey,
 };
 
 #[cfg(feature = "rand")]
