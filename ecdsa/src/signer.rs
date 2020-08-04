@@ -10,12 +10,12 @@ use crate::{
     Error, Signature, SignatureSize,
 };
 use elliptic_curve::{
+    encoding::FromBytes,
     generic_array::ArrayLength,
     ops::Invert,
-    secret_key::{FromSecretKey, SecretKey},
     weierstrass::Curve,
     zeroize::{Zeroize, Zeroizing},
-    Arithmetic,
+    Arithmetic, SecretKey,
 };
 
 #[cfg(feature = "rand")]
@@ -46,7 +46,7 @@ where
 {
     /// Create a new signer
     pub fn new(secret_key: &SecretKey<C>) -> Result<Self, Error> {
-        let scalar = C::Scalar::from_secret_key(secret_key);
+        let scalar = C::Scalar::from_bytes(secret_key.as_bytes());
 
         if scalar.is_some().into() {
             Ok(Self {

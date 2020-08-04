@@ -11,7 +11,11 @@ use core::ops::Add;
 use elliptic_curve::{
     consts::U1,
     generic_array::ArrayLength,
-    weierstrass::{CompressedPointSize, Curve, FromPublicKey, PublicKey, UncompressedPointSize},
+    weierstrass::{
+        point::{CompressedPointSize, UncompressedPointSize},
+        public_key::{FromPublicKey, PublicKey},
+        Curve,
+    },
     Arithmetic,
 };
 use signature::{digest::Digest, DigestVerifier};
