@@ -14,7 +14,7 @@
 use crate::{Signature, SignatureSize};
 use core::borrow::Borrow;
 use elliptic_curve::{
-    generic_array::ArrayLength, ops::Invert, weierstrass::Curve, Arithmetic, ScalarBytes,
+    generic_array::ArrayLength, ops::Invert, weierstrass::Curve, Arithmetic, ElementBytes,
 };
 use signature::Error;
 
@@ -41,7 +41,7 @@ where
     fn try_sign_prehashed<K: Borrow<C::Scalar> + Invert<Output = C::Scalar>>(
         &self,
         ephemeral_scalar: &K,
-        hashed_msg: &ScalarBytes<C>,
+        hashed_msg: &ElementBytes<C>,
     ) -> Result<Signature<C>, Error>;
 }
 
@@ -61,7 +61,7 @@ where
     fn try_sign_recoverable_prehashed<K: Borrow<C::Scalar> + Invert<Output = C::Scalar>>(
         &self,
         ephemeral_scalar: &K,
-        hashed_msg: &ScalarBytes<C>,
+        hashed_msg: &ElementBytes<C>,
     ) -> Result<(Signature<C>, bool), Error>;
 }
 
@@ -74,7 +74,7 @@ where
     fn try_sign_prehashed<K: Borrow<C::Scalar> + Invert<Output = C::Scalar>>(
         &self,
         ephemeral_scalar: &K,
-        hashed_msg: &ScalarBytes<C>,
+        hashed_msg: &ElementBytes<C>,
     ) -> Result<Signature<C>, Error> {
         let (sig, _) = self.try_sign_recoverable_prehashed(ephemeral_scalar, hashed_msg)?;
         Ok(sig)
@@ -100,7 +100,7 @@ where
     /// - `signature`: signature to be verified against the key and message
     fn verify_prehashed(
         &self,
-        hashed_msg: &ScalarBytes<C>,
+        hashed_msg: &ElementBytes<C>,
         signature: &Signature<C>,
     ) -> Result<(), Error>;
 }
