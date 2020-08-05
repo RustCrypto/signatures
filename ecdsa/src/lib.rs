@@ -142,7 +142,7 @@ where
 impl<C> Signature<C>
 where
     C: Curve + Arithmetic,
-    C::Scalar: NormalizeLow<C>,
+    C::Scalar: NormalizeLow,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Normalize signature into "low S" form as described in
@@ -237,7 +237,7 @@ where
 /// in [BIP 0062: Dealing with Malleability][1].
 ///
 /// [1]: https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki
-pub trait NormalizeLow<C: Curve> {
+pub trait NormalizeLow {
     /// Normalize scalar to the lower half of the field (i.e. negate it if it's
     /// larger than half the curve's order)
     fn normalize_low(&mut self);
