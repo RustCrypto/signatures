@@ -183,6 +183,13 @@ where
     }
 }
 
+impl<C: Curve> Copy for Signature<C>
+where
+    SignatureSize<C>: ArrayLength<u8>,
+    <SignatureSize<C> as ArrayLength<u8>>::ArrayType: Copy,
+{
+}
+
 impl<C: Curve> Debug for Signature<C>
 where
     SignatureSize<C>: ArrayLength<u8>,
