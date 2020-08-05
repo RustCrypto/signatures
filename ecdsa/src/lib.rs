@@ -149,16 +149,20 @@ where
     /// [BIP 0062: Dealing with Malleability][1].
     ///
     /// [1]: https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki
-    pub fn normalize_s(&mut self) -> Result<(), Error> {
+    pub fn normalize_s(&mut self) -> Result<bool, Error> {
         let s_bytes = GenericArray::from_mut_slice(&mut self.bytes[C::ElementSize::to_usize()..]);
         let s_option = C::Scalar::from_bytes(s_bytes);
 
         // Not constant time, but we're operating on public values
         if s_option.is_some().into() {
             let mut s = s_option.unwrap();
-            s.normalize_low();
-            s_bytes.copy_from_slice(&s.into());
-            Ok(())
+
+            if s.normalize_low() {
+                s_bytes.copy_from_slice(&s.into());
+                Ok(true)
+            } else {
+                Ok(false)
+            }
         } else {
             Err(Error::new())
         }
@@ -247,5 +251,5 @@ where
 pub trait NormalizeLow {
     /// Normalize scalar to the lower half of the field (i.e. negate it if it's
     /// larger than half the curve's order)
-    fn normalize_low(&mut self);
+    fn normalize_low(&mut self) -> bool;
 }
