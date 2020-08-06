@@ -155,10 +155,10 @@ where
 
         // Not constant time, but we're operating on public values
         if s_option.is_some().into() {
-            let mut s = s_option.unwrap();
+            let (s_low, was_high) = s_option.unwrap().normalize_low();
 
-            if s.normalize_low() {
-                s_bytes.copy_from_slice(&s.into());
+            if was_high {
+                s_bytes.copy_from_slice(&s_low.into());
                 Ok(true)
             } else {
                 Ok(false)
@@ -248,8 +248,12 @@ where
 /// in [BIP 0062: Dealing with Malleability][1].
 ///
 /// [1]: https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki
-pub trait NormalizeLow {
+pub trait NormalizeLow: Sized {
     /// Normalize scalar to the lower half of the field (i.e. negate it if it's
-    /// larger than half the curve's order)
-    fn normalize_low(&mut self) -> bool;
+    /// larger than half the curve's order).
+    /// Returns a tuple with the new scalar and a boolean indicating whether the given scalar
+    /// was in the higher half.
+    ///
+    /// May be implemented to work in variable time.
+    fn normalize_low(&self) -> (Self, bool);
 }
