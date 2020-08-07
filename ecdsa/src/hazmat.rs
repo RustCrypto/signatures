@@ -52,6 +52,9 @@ where
     C: Curve + Arithmetic,
     SignatureSize<C>: ArrayLength<u8>,
 {
+    /// Type for recoverable signatures
+    type RecoverableSignature: signature::Signature + Into<Signature<C>>;
+
     /// Try to sign the prehashed message.
     ///
     /// Accepts the same arguments as [`SignPrimitive::try_sign_prehashed`]
@@ -62,7 +65,7 @@ where
         &self,
         ephemeral_scalar: &K,
         hashed_msg: &ElementBytes<C>,
-    ) -> Result<(Signature<C>, bool), Error>;
+    ) -> Result<Self::RecoverableSignature, Error>;
 }
 
 impl<C, T> SignPrimitive<C> for T
@@ -76,8 +79,8 @@ where
         ephemeral_scalar: &K,
         hashed_msg: &ElementBytes<C>,
     ) -> Result<Signature<C>, Error> {
-        let (sig, _) = self.try_sign_recoverable_prehashed(ephemeral_scalar, hashed_msg)?;
-        Ok(sig)
+        self.try_sign_recoverable_prehashed(ephemeral_scalar, hashed_msg)
+            .map(Into::into)
     }
 }
 
