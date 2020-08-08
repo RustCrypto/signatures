@@ -9,18 +9,18 @@
 [Elliptic Curve Digital Signature Algorithm (ECDSA)][1] as specified in
 [FIPS 186-4][2] (Digital Signature Standard).
 
-This crate doesn't contain an implementation of ECDSA itself, but instead
-contains [`ecdsa::Asn1Signature`][3] and [`ecdsa::FixedSignature`][4] types
-generic over an [`ecdsa::Curve`][5] type which other crates can use in
-conjunction with the [`signature::Signer`][6] and [`signature::Verifier`][7]
-traits.
-
-These traits allow crates which produce and consume ECDSA signatures
-to be written abstractly in such a way that different signer/verifier
-providers can be plugged in, enabling support for using different
-ECDSA implementations, including HSMs or Cloud KMS services.
-
 [Documentation][docs-link]
+
+## About
+
+This crate provides generic ECDSA support which can be used in two ways:
+
+- As a dependency of either the [`k256`] (secp256k1) or [`p256`] (NIST P-256)
+  crates, this crate provides a generic implementation of ECDSA.
+- Other crates which provide their own complete implementations of ECDSA can
+  also leverage the types from this crate to export ECDSA functionality in a
+  generic, interoperable way by leveraging [`ecdsa::Signature`] with the
+  [`signature::Signer`] and [`signature::Verifier`] traits.
 
 ## Minimum Supported Rust Version
 
@@ -56,8 +56,11 @@ dual licensed as above, without any additional terms or conditions.
 
 [1]: https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm
 [2]: https://csrc.nist.gov/publications/detail/fips/186/4/final
-[3]: https://docs.rs/ecdsa/latest/ecdsa/asn1_signature/struct.Asn1Signature.html
-[4]: https://docs.rs/ecdsa/latest/ecdsa/fixed_signature/struct.FixedSignature.html
-[5]: https://docs.rs/ecdsa/latest/ecdsa/curve/trait.Curve.html
-[6]: https://docs.rs/signature/latest/signature/trait.Signer.html
-[7]: https://docs.rs/signature/latest/signature/trait.Verifier.html
+
+[//]: # (docs.rs definitions)
+
+[`ecdsa::Signature`]: https://docs.rs/ecdsa/latest/ecdsa/struct.Signature.html
+[`k256`]: https://docs.rs/k256
+[`p256`]: https://docs.rs/p256
+[`signature::Signer`]: https://docs.rs/signature/latest/signature/trait.Signer.html
+[`signature::Verifier`]: https://docs.rs/signature/latest/signature/trait.Verifier.html
