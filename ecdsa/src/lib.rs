@@ -1,18 +1,20 @@
 //! Elliptic Curve Digital Signature Algorithm (ECDSA) as specified in
 //! [FIPS 186-4][1] (Digital Signature Standard)
 //!
-//! This crate doesn't contain an implementation of ECDSA itself, but instead
-//! contains [`Signature`] type which is generic over elliptic [`Curve`] types.
-//! It's designed to be used in conjunction with the [`signature::Signer`] and
-//! [`signature::Verifier`] traits to provide signature types which are
-//! reusable across multiple signing and verification provider crates.
+//! ## About
 //!
-//! These traits allow crates which produce and consume ECDSA signatures
-//! to be written abstractly in such a way that different signer/verifier
-//! providers can be plugged in, enabling support for using different
-//! ECDSA implementations, including HSMs or Cloud KMS services.
+//! This crate provides generic ECDSA support which can be used in two ways:
+//!
+//! - As a dependency of either the [`k256`] (secp256k1) or [`p256`] (NIST P-256)
+//!   crates, this crate provides a generic implementation of ECDSA.
+//! - Other crates which provide their own complete implementations of ECDSA can
+//!   also leverage the types from this crate to export ECDSA functionality in a
+//!   generic, interoperable way by leveraging the [`Signature`] type with the
+//!   [`signature::Signer`] and [`signature::Verifier`] traits.
 //!
 //! [1]: https://csrc.nist.gov/publications/detail/fips/186/4/final
+//! [`k256`]: https://docs.rs/k256
+//! [`p256`]: https://docs.rs/p256
 
 #![no_std]
 #![cfg_attr(docsrs, feature(doc_cfg))]
