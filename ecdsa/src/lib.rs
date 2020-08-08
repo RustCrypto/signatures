@@ -3,10 +3,12 @@
 //!
 //! ## About
 //!
-//! This crate provides generic ECDSA support which can be used in two ways:
+//! This crate provides generic ECDSA support which can be used in the
+//! following ways:
 //!
-//! - As a dependency of either the [`k256`] (secp256k1) or [`p256`] (NIST P-256)
-//!   crates, this crate provides a generic implementation of ECDSA.
+//! - Generic implementation of ECDSA usable with the following crates:
+//!   - [`k256`] (secp256k1)
+//!   - [`p256`] (NIST P-256)
 //! - Other crates which provide their own complete implementations of ECDSA can
 //!   also leverage the types from this crate to export ECDSA functionality in a
 //!   generic, interoperable way by leveraging the [`Signature`] type with the
