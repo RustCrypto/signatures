@@ -44,8 +44,9 @@ dependencies = [
 
 [[package]]
 name = "elliptic-curve"
-version = "0.5.0-pre"
-source = "git+https://github.com/RustCrypto/traits#048fb8f85a9b4cbbb29a2302a9a3fc596526fdcf"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9abe4578ed343c7a2c9d617cd2b1895ba0a87a6a4dee97bde156d65f608c7b2d"
 dependencies = [
  "generic-array",
  "rand_core",
@@ -55,9 +56,9 @@ dependencies = [
 
 [[package]]
 name = "generic-array"
-version = "0.14.3"
+version = "0.14.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "60fb4bb6bba52f78a471264d9a3b7d026cc0af47b22cd2cffbc0b787ca003e63"
+checksum = "501466ecc8a30d1d3b7fc9229b122b2ce8ed6e9d9223f1138d4babb253e51817"
 dependencies = [
  "typenum",
  "version_check",
