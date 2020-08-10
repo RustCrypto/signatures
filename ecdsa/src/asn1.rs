@@ -328,7 +328,9 @@ mod tests {
         type ElementSize = U32;
     }
 
-    impl elliptic_curve::weierstrass::Curve for ExampleCurve {}
+    impl elliptic_curve::weierstrass::Curve for ExampleCurve {
+        const COMPRESS_POINTS: bool = false;
+    }
 
     type Signature = crate::Signature<ExampleCurve>;
 
