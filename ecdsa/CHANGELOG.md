@@ -4,6 +4,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.7.0 (2020-08-10)
+### Added
+- `hazmat` traits: `SignPrimitive`, `RecoverableSignPrimitive`,
+  `VerifyPrimitive`, `DigestPrimitive` ([#96], [#99], [#107], [#111])
+- `dev` module ([#103])
+- `NormalizeLow` trait ([#115], [#118], [#119])
+- `Copy` impl on `Signature` ([#117])
+- `RecoverableSignPrimitive` ([#120])
+
+### Changed
+- Bumped `elliptic-curve` crate to v0.5 release ([#123])
+- Renamed `FixedSignature` to `ecdsa::Signature` ([#98])
+- Renamed `Asn1Signature` to `ecdsa::asn1::Signature` ([#98], [#102])
+
+### Removed
+- Curve-specific types - migrated to `k256`, `p256`, `p384` crates ([#96])
+
+[#96]: https://github.com/RustCrypto/signatures/pull/96
+[#98]: https://github.com/RustCrypto/signatures/pull/98
+[#99]: https://github.com/RustCrypto/signatures/pull/99
+[#102]: https://github.com/RustCrypto/signatures/pull/102
+[#103]: https://github.com/RustCrypto/signatures/pull/103
+[#107]: https://github.com/RustCrypto/signatures/pull/107
+[#111]: https://github.com/RustCrypto/signatures/pull/111
+[#115]: https://github.com/RustCrypto/signatures/pull/115
+[#117]: https://github.com/RustCrypto/signatures/pull/117
+[#118]: https://github.com/RustCrypto/signatures/pull/118
+[#119]: https://github.com/RustCrypto/signatures/pull/119
+[#120]: https://github.com/RustCrypto/signatures/pull/120
+[#123]: https://github.com/RustCrypto/signatures/pull/123
+
 ## 0.6.1 (2020-06-29)
 ### Added
 - `doc_cfg` attributes for https://docs.rs ([#91])
