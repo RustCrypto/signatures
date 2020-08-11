@@ -34,5 +34,5 @@ verifier = ["digest", "hazmat"]
 zeroize = ["elliptic-curve/zeroize"]
 
 [package.metadata.docs.rs]
-features = ["digest", "std"]
+all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
