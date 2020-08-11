@@ -27,7 +27,7 @@ dependencies = [
 
 [[package]]
 name = "ecdsa"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "elliptic-curve",
  "signature",
