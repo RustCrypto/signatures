@@ -24,7 +24,7 @@
 #![warn(missing_docs, rust_2018_idioms, intra_doc_link_resolution_failure)]
 #![doc(
     html_logo_url = "https://raw.githubusercontent.com/RustCrypto/meta/master/logo_small.png",
-    html_root_url = "https://docs.rs/ecdsa/0.7.1"
+    html_root_url = "https://docs.rs/ecdsa/0.7.2"
 )]
 
 pub mod asn1;
