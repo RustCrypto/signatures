@@ -235,6 +235,17 @@ where
     }
 }
 
+#[cfg(all(feature = "digest", feature = "hazmat"))]
+impl<C> signature::PrehashSignature for Signature<C>
+where
+    C: Curve + crate::hazmat::DigestPrimitive,
+    C::ElementSize: Add + ArrayLength<u8>,
+    MaxSize<C>: ArrayLength<u8>,
+    <C::ElementSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+{
+    type Digest = C::Digest;
+}
+
 /// Parse an integer from its ASN.1 DER serialization
 fn parse_int(bytes: &[u8], scalar_size: usize) -> Result<Range<usize>, Error> {
     if bytes.len() < 3 {
