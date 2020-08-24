@@ -46,11 +46,7 @@ pub mod signer;
 pub mod verifier;
 
 // Re-export the `elliptic-curve` crate (and select types)
-pub use elliptic_curve::{
-    self, generic_array,
-    weierstrass::{Curve, PublicKey},
-    SecretKey,
-};
+pub use elliptic_curve::{self, generic_array, sec1::EncodedPoint, weierstrass::Curve, SecretKey};
 
 // Re-export the `signature` crate (and select types)
 pub use signature::{self, Error};
