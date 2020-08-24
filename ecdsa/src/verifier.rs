@@ -11,11 +11,8 @@ use core::ops::Add;
 use elliptic_curve::{
     consts::U1,
     generic_array::ArrayLength,
-    weierstrass::{
-        point::{CompressedPointSize, UncompressedPointSize},
-        public_key::{FromPublicKey, PublicKey},
-        Curve,
-    },
+    sec1::{EncodedPoint, FromEncodedPoint, UncompressedPointSize, UntaggedPointSize},
+    weierstrass::Curve,
     Arithmetic,
 };
 use signature::{digest::Digest, DigestVerifier};
@@ -28,16 +25,14 @@ pub struct Verifier<C: Curve + Arithmetic> {
 impl<C> Verifier<C>
 where
     C: Curve + Arithmetic,
-    C::AffinePoint: VerifyPrimitive<C> + FromPublicKey<C>,
-    C::ElementSize: Add<U1>,
-    <C::ElementSize as Add>::Output: Add<U1>,
-    CompressedPointSize<C>: ArrayLength<u8>,
+    C::AffinePoint: VerifyPrimitive<C> + FromEncodedPoint<C>,
+    UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
     UncompressedPointSize<C>: ArrayLength<u8>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Create a new verifier
-    pub fn new(public_key: &PublicKey<C>) -> Result<Self, Error> {
-        let affine_point = C::AffinePoint::from_public_key(public_key);
+    pub fn new(public_key: &EncodedPoint<C>) -> Result<Self, Error> {
+        let affine_point = C::AffinePoint::from_encoded_point(public_key);
 
         if affine_point.is_some().into() {
             Ok(Self {
