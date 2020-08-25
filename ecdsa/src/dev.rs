@@ -33,7 +33,7 @@ pub struct TestVector {
 macro_rules! new_signing_test {
     ($vectors:expr) => {
         use core::convert::TryInto;
-        use $crate::{elliptic_curve::weierstrass::UncompressedPoint, generic_array::GenericArray};
+        use $crate::generic_array::GenericArray;
 
         #[test]
         fn ecdsa_signing() {
@@ -56,15 +56,18 @@ macro_rules! new_signing_test {
 #[cfg_attr(docsrs, doc(cfg(feature = "dev")))]
 macro_rules! new_verification_test {
     ($vectors:expr) => {
+        use $crate::elliptic_curve::sec1::EncodedPoint;
+
         #[test]
         fn ecdsa_verify_success() {
             for vector in $vectors {
-                let q_raw = UncompressedPoint::from_affine_coords(
+                let q_encoded = EncodedPoint::from_affine_coords(
                     GenericArray::from_slice(vector.q_x),
                     GenericArray::from_slice(vector.q_y),
+                    false,
                 );
 
-                let q = AffinePoint::from_uncompressed_point(&q_raw).unwrap();
+                let q: AffinePoint = q_encoded.decode().unwrap();
 
                 let sig = Signature::from_scalars(
                     GenericArray::from_slice(vector.r),
@@ -79,12 +82,13 @@ macro_rules! new_verification_test {
         #[test]
         fn ecdsa_verify_invalid_s() {
             for vector in $vectors {
-                let q_raw = UncompressedPoint::from_affine_coords(
+                let q_encoded = EncodedPoint::from_affine_coords(
                     GenericArray::from_slice(vector.q_x),
                     GenericArray::from_slice(vector.q_y),
+                    false,
                 );
 
-                let q = AffinePoint::from_uncompressed_point(&q_raw).unwrap();
+                let q: AffinePoint = q_encoded.decode().unwrap();
 
                 // Flip a bit in `s`
                 let mut s_tweaked = GenericArray::clone_from_slice(vector.s);
