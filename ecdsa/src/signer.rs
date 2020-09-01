@@ -5,7 +5,7 @@
 
 // TODO(tarcieri): support for hardware crypto accelerators
 
-mod rfc6979;
+pub mod rfc6979;
 
 use crate::{
     hazmat::{DigestPrimitive, SignPrimitive},
@@ -13,7 +13,7 @@ use crate::{
 };
 use elliptic_curve::{
     generic_array::ArrayLength, ops::Invert, scalar::NonZeroScalar, weierstrass::Curve,
-    zeroize::Zeroize, Arithmetic, ElementBytes, FromBytes, FromDigest, SecretKey,
+    zeroize::Zeroize, Arithmetic, FromBytes, FromDigest, SecretKey,
 };
 use signature::{
     digest::{BlockInput, Digest, FixedOutput, Reset, Update},
@@ -21,16 +21,19 @@ use signature::{
 };
 
 #[cfg(feature = "rand")]
-use signature::{
-    rand_core::{CryptoRng, RngCore},
-    RandomizedDigestSigner, RandomizedSigner,
+use {
+    elliptic_curve::ElementBytes,
+    signature::{
+        rand_core::{CryptoRng, RngCore},
+        RandomizedDigestSigner, RandomizedSigner,
+    },
 };
 
 /// ECDSA signer
 pub struct Signer<C>
 where
     C: Curve + Arithmetic,
-    C::Scalar: Invert<Output = C::Scalar> + SignPrimitive<C> + Zeroize,
+    C::Scalar: FromDigest<C> + Invert<Output = C::Scalar> + SignPrimitive<C> + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
 {
     secret_scalar: NonZeroScalar<C>,
@@ -39,7 +42,7 @@ where
 impl<C> Signer<C>
 where
     C: Curve + Arithmetic,
-    C::Scalar: Invert<Output = C::Scalar> + SignPrimitive<C> + Zeroize,
+    C::Scalar: FromDigest<C> + Invert<Output = C::Scalar> + SignPrimitive<C> + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Create a new signer
@@ -48,9 +51,7 @@ where
 
         // TODO(tarcieri): replace with into conversion when available (see subtle#73)
         if scalar.is_some().into() {
-            Ok(Self {
-                secret_scalar: scalar.unwrap(),
-            })
+            Ok(Self::from(scalar.unwrap()))
         } else {
             Err(Error::new())
         }
@@ -61,13 +62,7 @@ impl<C, D> DigestSigner<D, Signature<C>> for Signer<C>
 where
     C: Curve + Arithmetic,
     C::Scalar: FromDigest<C> + Invert<Output = C::Scalar> + SignPrimitive<C> + Zeroize,
-    D: BlockInput<BlockSize = C::ElementSize>
-        + FixedOutput<OutputSize = C::ElementSize>
-        + Clone
-        + Default
-        + Reset
-        + Update,
-    ElementBytes<C>: Zeroize,
+    D: FixedOutput<OutputSize = C::ElementSize> + BlockInput + Clone + Default + Reset + Update,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Sign message prehash using a deterministic ephemeral scalar (`k`)
@@ -75,17 +70,17 @@ where
     /// <https://tools.ietf.org/html/rfc6979#section-3>
     fn try_sign_digest(&self, digest: D) -> Result<Signature<C>, Error> {
         let ephemeral_scalar = rfc6979::generate_k(&self.secret_scalar, digest.clone(), &[]);
+        let msg_scalar = C::Scalar::from_digest(digest);
 
         self.secret_scalar
-            .as_ref()
-            .try_sign_prehashed(ephemeral_scalar.as_ref(), &digest.finalize())
+            .try_sign_prehashed(ephemeral_scalar.as_ref(), &msg_scalar)
     }
 }
 
 impl<C> signature::Signer<Signature<C>> for Signer<C>
 where
     C: Curve + Arithmetic + DigestPrimitive,
-    C::Scalar: Invert<Output = C::Scalar> + SignPrimitive<C> + Zeroize,
+    C::Scalar: FromDigest<C> + Invert<Output = C::Scalar> + SignPrimitive<C> + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
     Self: DigestSigner<C::Digest, Signature<C>>,
 {
@@ -100,13 +95,7 @@ impl<C, D> RandomizedDigestSigner<D, Signature<C>> for Signer<C>
 where
     C: Curve + Arithmetic,
     C::Scalar: FromDigest<C> + Invert<Output = C::Scalar> + SignPrimitive<C> + Zeroize,
-    D: BlockInput<BlockSize = C::ElementSize>
-        + FixedOutput<OutputSize = C::ElementSize>
-        + Clone
-        + Default
-        + Reset
-        + Update,
-    ElementBytes<C>: Zeroize,
+    D: FixedOutput<OutputSize = C::ElementSize> + BlockInput + Clone + Default + Reset + Update,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Sign message prehash using an ephemeral scalar (`k`) derived according
@@ -123,9 +112,10 @@ where
         let ephemeral_scalar =
             rfc6979::generate_k(&self.secret_scalar, digest.clone(), &added_entropy);
 
+        let msg_scalar = C::Scalar::from_digest(digest);
+
         self.secret_scalar
-            .as_ref()
-            .try_sign_prehashed(ephemeral_scalar.as_ref(), &digest.finalize())
+            .try_sign_prehashed(ephemeral_scalar.as_ref(), &msg_scalar)
     }
 }
 
@@ -134,7 +124,7 @@ where
 impl<C> RandomizedSigner<Signature<C>> for Signer<C>
 where
     C: Curve + Arithmetic + DigestPrimitive,
-    C::Scalar: Invert<Output = C::Scalar> + SignPrimitive<C> + Zeroize,
+    C::Scalar: FromDigest<C> + Invert<Output = C::Scalar> + SignPrimitive<C> + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
     Self: RandomizedDigestSigner<C::Digest, Signature<C>>,
 {
@@ -147,11 +137,21 @@ where
     }
 }
 
+impl<C> From<NonZeroScalar<C>> for Signer<C>
+where
+    C: Curve + Arithmetic,
+    C::Scalar: FromDigest<C> + Invert<Output = C::Scalar> + SignPrimitive<C> + Zeroize,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn from(secret_scalar: NonZeroScalar<C>) -> Self {
+        Self { secret_scalar }
+    }
+}
+
 impl<C> Zeroize for Signer<C>
 where
     C: Curve + Arithmetic,
-    C::Scalar: Invert<Output = C::Scalar> + SignPrimitive<C> + Zeroize,
-
+    C::Scalar: FromDigest<C> + Invert<Output = C::Scalar> + SignPrimitive<C> + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn zeroize(&mut self) {
@@ -162,8 +162,7 @@ where
 impl<C> Drop for Signer<C>
 where
     C: Curve + Arithmetic,
-    C::Scalar: Invert<Output = C::Scalar> + SignPrimitive<C> + Zeroize,
-
+    C::Scalar: FromDigest<C> + Invert<Output = C::Scalar> + SignPrimitive<C> + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn drop(&mut self) {

@@ -13,7 +13,7 @@ use elliptic_curve::{
     generic_array::ArrayLength,
     sec1::{EncodedPoint, FromEncodedPoint, UncompressedPointSize, UntaggedPointSize},
     weierstrass::Curve,
-    Arithmetic,
+    Arithmetic, FromDigest,
 };
 use signature::{digest::Digest, DigestVerifier};
 
@@ -26,6 +26,7 @@ impl<C> Verifier<C>
 where
     C: Curve + Arithmetic,
     C::AffinePoint: VerifyPrimitive<C> + FromEncodedPoint<C>,
+    C::Scalar: FromDigest<C>,
     UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
     UncompressedPointSize<C>: ArrayLength<u8>,
     SignatureSize<C>: ArrayLength<u8>,
@@ -49,11 +50,12 @@ where
     C: Curve + Arithmetic,
     D: Digest<OutputSize = C::ElementSize>,
     C::AffinePoint: VerifyPrimitive<C>,
+    C::Scalar: FromDigest<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn verify_digest(&self, digest: D, signature: &Signature<C>) -> Result<(), Error> {
         self.public_key
-            .verify_prehashed(&digest.finalize(), signature)
+            .verify_prehashed(&C::Scalar::from_digest(digest), signature)
     }
 }
 
@@ -62,6 +64,7 @@ where
     C: Curve + Arithmetic + DigestPrimitive,
     C::AffinePoint: VerifyPrimitive<C>,
     C::Digest: Digest<OutputSize = C::ElementSize>,
+    C::Scalar: FromDigest<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn verify(&self, msg: &[u8], signature: &Signature<C>) -> Result<(), Error> {

@@ -21,7 +21,7 @@
 #![no_std]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![forbid(unsafe_code)]
-#![warn(missing_docs, rust_2018_idioms, intra_doc_link_resolution_failure)]
+#![warn(missing_docs, rust_2018_idioms)]
 #![doc(
     html_logo_url = "https://raw.githubusercontent.com/RustCrypto/meta/master/logo_small.png",
     html_root_url = "https://docs.rs/ecdsa/0.7.2"

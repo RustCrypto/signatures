@@ -14,7 +14,7 @@ use hmac::{Hmac, Mac, NewMac};
 
 /// Generate ephemeral scalar `k` from the secret scalar and a digest of the
 /// input message.
-pub(super) fn generate_k<C, D>(
+pub fn generate_k<C, D>(
     secret_scalar: &NonZeroScalar<C>,
     msg_digest: D,
     additional_data: &[u8],
@@ -22,17 +22,12 @@ pub(super) fn generate_k<C, D>(
 where
     C: Arithmetic,
     C::Scalar: FromDigest<C> + Invert<Output = C::Scalar> + Zeroize,
-    D: BlockInput<BlockSize = C::ElementSize>
-        + FixedOutput<OutputSize = C::ElementSize>
-        + Clone
-        + Default
-        + Reset
-        + Update,
-    ElementBytes<C>: Zeroize,
+    D: FixedOutput<OutputSize = C::ElementSize> + BlockInput + Clone + Default + Reset + Update,
 {
-    let x = Zeroizing::new(secret_scalar.to_bytes());
+    let mut x = secret_scalar.to_bytes();
     let h1: ElementBytes<C> = C::Scalar::from_digest(msg_digest).into();
-    let mut hmac_drbg = HmacDrbg::<D>::new(&*x, &h1, additional_data);
+    let mut hmac_drbg = HmacDrbg::<D>::new(&x, &h1, additional_data);
+    x.zeroize();
 
     loop {
         let k = NonZeroScalar::from_bytes(&hmac_drbg.next());
@@ -51,12 +46,7 @@ where
 // TODO(tarcieri): use `hmac-drbg` crate when sorpaas/rust-hmac-drbg#3 is merged
 struct HmacDrbg<D>
 where
-    D: BlockInput<BlockSize = <D as FixedOutput>::OutputSize>
-        + FixedOutput
-        + Clone
-        + Default
-        + Reset
-        + Update,
+    D: BlockInput + FixedOutput + Clone + Default + Reset + Update,
 {
     /// HMAC key `K` (see RFC 6979 Section 3.2.c)
     k: Hmac<D>,
@@ -67,12 +57,7 @@ where
 
 impl<D> HmacDrbg<D>
 where
-    D: BlockInput<BlockSize = <D as FixedOutput>::OutputSize>
-        + FixedOutput
-        + Clone
-        + Default
-        + Reset
-        + Update,
+    D: BlockInput + FixedOutput + Clone + Default + Reset + Update,
 {
     /// Initialize `HMAC_DRBG`
     pub fn new(entropy_input: &[u8], nonce: &[u8], additional_data: &[u8]) -> Self {
@@ -89,7 +74,7 @@ where
             k.update(entropy_input);
             k.update(nonce);
             k.update(additional_data);
-            k = Hmac::new(&k.finalize().into_bytes());
+            k = Hmac::new_varkey(&k.finalize().into_bytes()).unwrap();
 
             // Steps 3.2.e,g: v = HMAC_k(v)
             k.update(&v);
@@ -106,7 +91,7 @@ where
 
         self.k.update(&t);
         self.k.update(&[0x00]);
-        self.k = Hmac::new(&self.k.finalize_reset().into_bytes());
+        self.k = Hmac::new_varkey(&self.k.finalize_reset().into_bytes()).unwrap();
         self.k.update(&t);
         self.v = self.k.finalize_reset().into_bytes();
 
