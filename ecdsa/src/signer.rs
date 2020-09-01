@@ -11,6 +11,7 @@ use crate::{
     hazmat::{DigestPrimitive, SignPrimitive},
     Error, Signature, SignatureSize,
 };
+use core::convert::TryInto;
 use elliptic_curve::{
     generic_array::ArrayLength, ops::Invert, scalar::NonZeroScalar, weierstrass::Curve,
     zeroize::Zeroize, Arithmetic, FromBytes, FromDigest, SecretKey,
@@ -45,9 +46,13 @@ where
     C::Scalar: FromDigest<C> + Invert<Output = C::Scalar> + SignPrimitive<C> + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
 {
-    /// Create a new signer
-    pub fn new(secret_key: &SecretKey<C>) -> Result<Self, Error> {
-        let scalar = NonZeroScalar::from_bytes(secret_key.as_bytes());
+    /// Initialize signer from a raw scalar serialized as a byte slice
+    // TODO(tarcieri): PKCS#8 support
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
+        let scalar = bytes
+            .try_into()
+            .map(NonZeroScalar::from_bytes)
+            .map_err(|_| Error::new())?;
 
         // TODO(tarcieri): replace with into conversion when available (see subtle#73)
         if scalar.is_some().into() {
@@ -55,6 +60,12 @@ where
         } else {
             Err(Error::new())
         }
+    }
+
+    /// Create a new signer
+    // TODO(tarcieri): infallible conversion from a secret key
+    pub fn new(secret_key: &SecretKey<C>) -> Result<Self, Error> {
+        Self::from_bytes(secret_key.as_bytes())
     }
 }
 
