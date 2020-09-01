@@ -13,9 +13,7 @@
 
 use crate::{Signature, SignatureSize};
 use core::borrow::Borrow;
-use elliptic_curve::{
-    generic_array::ArrayLength, ops::Invert, weierstrass::Curve, Arithmetic, ElementBytes,
-};
+use elliptic_curve::{generic_array::ArrayLength, ops::Invert, weierstrass::Curve, Arithmetic};
 use signature::Error;
 
 #[cfg(feature = "digest")]
@@ -36,12 +34,12 @@ where
     /// Accepts the following arguments:
     ///
     /// - `ephemeral_scalar`: ECDSA `k` value. MUST BE UNIFORMLY RANDOM!!!
-    /// - `hashed_msg`: hashed message digest to be signed.
+    /// - `hashed_msg`: scalar computed from a hashed message digest to be signed.
     ///   MUST BE OUTPUT OF A CRYPTOGRAPHICALLY SECURE DIGEST ALGORITHM!!!
     fn try_sign_prehashed<K: Borrow<C::Scalar> + Invert<Output = C::Scalar>>(
         &self,
         ephemeral_scalar: &K,
-        hashed_msg: &ElementBytes<C>,
+        hashed_msg: &C::Scalar,
     ) -> Result<Signature<C>, Error>;
 }
 
@@ -64,7 +62,7 @@ where
     fn try_sign_recoverable_prehashed<K: Borrow<C::Scalar> + Invert<Output = C::Scalar>>(
         &self,
         ephemeral_scalar: &K,
-        hashed_msg: &ElementBytes<C>,
+        hashed_msg: &C::Scalar,
     ) -> Result<Self::RecoverableSignature, Error>;
 }
 
@@ -77,7 +75,7 @@ where
     fn try_sign_prehashed<K: Borrow<C::Scalar> + Invert<Output = C::Scalar>>(
         &self,
         ephemeral_scalar: &K,
-        hashed_msg: &ElementBytes<C>,
+        hashed_msg: &C::Scalar,
     ) -> Result<Signature<C>, Error> {
         self.try_sign_recoverable_prehashed(ephemeral_scalar, hashed_msg)
             .map(Into::into)
@@ -91,7 +89,7 @@ where
 /// particular curve's `AffinePoint` type.
 pub trait VerifyPrimitive<C>
 where
-    C: Curve,
+    C: Curve + Arithmetic,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Verify the prehashed message against the provided signature
@@ -103,7 +101,7 @@ where
     /// - `signature`: signature to be verified against the key and message
     fn verify_prehashed(
         &self,
-        hashed_msg: &ElementBytes<C>,
+        hashed_msg: &C::Scalar,
         signature: &Signature<C>,
     ) -> Result<(), Error>;
 }

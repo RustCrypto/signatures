@@ -31,18 +31,27 @@ pub struct TestVector {
 #[macro_export]
 #[cfg_attr(docsrs, doc(cfg(feature = "dev")))]
 macro_rules! new_signing_test {
-    ($vectors:expr) => {
+    ($curve:path, $vectors:expr) => {
         use core::convert::TryInto;
-        use $crate::generic_array::GenericArray;
+        use $crate::{
+            elliptic_curve::{Arithmetic, FromBytes},
+            generic_array::GenericArray,
+            hazmat::SignPrimitive,
+        };
 
         #[test]
         fn ecdsa_signing() {
             for vector in $vectors {
-                let d = Scalar::from_bytes(vector.d.try_into().unwrap()).unwrap();
-                let k = Scalar::from_bytes(vector.k.try_into().unwrap()).unwrap();
-                let sig = d
-                    .try_sign_prehashed(&k, GenericArray::from_slice(vector.m))
+                let d = <$curve as Arithmetic>::Scalar::from_bytes(vector.d.try_into().unwrap())
                     .unwrap();
+
+                let k = <$curve as Arithmetic>::Scalar::from_bytes(vector.k.try_into().unwrap())
+                    .unwrap();
+
+                let z = <$curve as Arithmetic>::Scalar::from_bytes(vector.m.try_into().unwrap())
+                    .unwrap();
+
+                let sig = d.try_sign_prehashed(&k, &z).unwrap();
 
                 assert_eq!(vector.r, sig.r().as_slice());
                 assert_eq!(vector.s, sig.s().as_slice());
@@ -55,8 +64,14 @@ macro_rules! new_signing_test {
 #[macro_export]
 #[cfg_attr(docsrs, doc(cfg(feature = "dev")))]
 macro_rules! new_verification_test {
-    ($vectors:expr) => {
-        use $crate::elliptic_curve::sec1::EncodedPoint;
+    ($curve:path, $vectors:expr) => {
+        use core::convert::TryInto;
+        use $crate::{
+            elliptic_curve::{sec1::EncodedPoint, Arithmetic, FromBytes},
+            generic_array::GenericArray,
+            hazmat::VerifyPrimitive,
+            Signature,
+        };
 
         #[test]
         fn ecdsa_verify_success() {
@@ -67,14 +82,17 @@ macro_rules! new_verification_test {
                     false,
                 );
 
-                let q: AffinePoint = q_encoded.decode().unwrap();
+                let q: <$curve as Arithmetic>::AffinePoint = q_encoded.decode().unwrap();
+
+                let z = <$curve as Arithmetic>::Scalar::from_bytes(vector.m.try_into().unwrap())
+                    .unwrap();
 
                 let sig = Signature::from_scalars(
                     GenericArray::from_slice(vector.r),
                     GenericArray::from_slice(vector.s),
                 );
 
-                let result = q.verify_prehashed(GenericArray::from_slice(vector.m), &sig);
+                let result = q.verify_prehashed(&z, &sig);
                 assert!(result.is_ok());
             }
         }
@@ -88,7 +106,10 @@ macro_rules! new_verification_test {
                     false,
                 );
 
-                let q: AffinePoint = q_encoded.decode().unwrap();
+                let q: <$curve as Arithmetic>::AffinePoint = q_encoded.decode().unwrap();
+
+                let z = <$curve as Arithmetic>::Scalar::from_bytes(vector.m.try_into().unwrap())
+                    .unwrap();
 
                 // Flip a bit in `s`
                 let mut s_tweaked = GenericArray::clone_from_slice(vector.s);
@@ -96,7 +117,7 @@ macro_rules! new_verification_test {
 
                 let sig = Signature::from_scalars(GenericArray::from_slice(vector.r), &s_tweaked);
 
-                let result = q.verify_prehashed(GenericArray::from_slice(vector.m), &sig);
+                let result = q.verify_prehashed(&z, &sig);
                 assert!(result.is_err());
             }
         }
