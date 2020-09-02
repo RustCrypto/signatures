@@ -1,5 +1,7 @@
 //! Development-related functionality
 
+pub mod curve;
+
 // TODO(tarcieri): implement full set of tests from ECDSA2VS
 // <https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/dss2/ecdsa2vs.pdf>
 

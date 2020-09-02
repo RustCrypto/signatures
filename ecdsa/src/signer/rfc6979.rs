@@ -98,3 +98,30 @@ where
         t
     }
 }
+
+#[cfg(all(feature = "dev", test))]
+mod tests {
+    use super::generate_k;
+    use crate::dev::curve::NonZeroScalar;
+    use elliptic_curve::FromBytes;
+    use hex_literal::hex;
+    use sha2::{Digest, Sha256};
+
+    /// Test vector from RFC 6979 Appendix 2.5 (NIST P-256 + SHA-256)
+    /// <https://tools.ietf.org/html/rfc6979#appendix-A.2.5>
+    #[test]
+    fn appendix_2_5_test_vector() {
+        let x = NonZeroScalar::from_bytes(
+            &hex!("c9afa9d845ba75166b5c215767b1d6934e50c3db36e89b127b8a622b120f6721").into(),
+        )
+        .unwrap();
+
+        let digest = Sha256::new().chain("sample");
+        let k = generate_k(&x, digest, &[]);
+
+        assert_eq!(
+            k.to_bytes().as_slice(),
+            &hex!("a6e3c57dd01abe90086538398355dd4c3b17aa873382b0f24d6129493d8aad60")[..]
+        );
+    }
+}
