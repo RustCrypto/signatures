@@ -11,8 +11,8 @@ use crate::{
 };
 use core::convert::TryInto;
 use elliptic_curve::{
-    generic_array::ArrayLength, ops::Invert, point::Generator, scalar::NonZeroScalar,
-    weierstrass::Curve, zeroize::Zeroize, Arithmetic, FromBytes, FromDigest, SecretKey,
+    generic_array::ArrayLength, ops::Invert, scalar::NonZeroScalar, weierstrass::Curve,
+    zeroize::Zeroize, Arithmetic, FromBytes, FromDigest, SecretKey,
 };
 use signature::{
     digest::{BlockInput, Digest, FixedOutput, Reset, Update},
@@ -29,7 +29,7 @@ use {
 };
 
 #[cfg(feature = "verify")]
-use crate::verify::VerifyKey;
+use crate::{elliptic_curve::point::Generator, verify::VerifyKey};
 
 /// ECDSA signing key
 pub struct SigningKey<C>
