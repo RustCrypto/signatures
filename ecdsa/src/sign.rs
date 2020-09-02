@@ -12,7 +12,7 @@ use crate::{
 use core::convert::TryInto;
 use elliptic_curve::{
     generic_array::ArrayLength, ops::Invert, scalar::NonZeroScalar, weierstrass::Curve,
-    zeroize::Zeroize, Arithmetic, FromBytes, FromDigest, SecretKey,
+    zeroize::Zeroize, Arithmetic, ElementBytes, FromBytes, FromDigest, SecretKey,
 };
 use signature::{
     digest::{BlockInput, Digest, FixedOutput, Reset, Update},
@@ -20,12 +20,9 @@ use signature::{
 };
 
 #[cfg(feature = "rand")]
-use {
-    elliptic_curve::ElementBytes,
-    signature::{
-        rand_core::{CryptoRng, RngCore},
-        RandomizedDigestSigner, RandomizedSigner,
-    },
+use signature::{
+    rand_core::{CryptoRng, RngCore},
+    RandomizedDigestSigner, RandomizedSigner,
 };
 
 #[cfg(feature = "verify")]
@@ -76,6 +73,11 @@ where
         VerifyKey {
             public_key: C::AffinePoint::generator() * self.secret_scalar,
         }
+    }
+
+    /// Serialize this [`SigningKey`] as bytes
+    pub fn to_bytes(&self) -> ElementBytes<C> {
+        self.secret_scalar.to_bytes()
     }
 }
 

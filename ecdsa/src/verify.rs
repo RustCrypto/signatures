@@ -11,7 +11,9 @@ use core::ops::Add;
 use elliptic_curve::{
     consts::U1,
     generic_array::ArrayLength,
-    sec1::{EncodedPoint, FromEncodedPoint, UncompressedPointSize, UntaggedPointSize},
+    sec1::{
+        EncodedPoint, FromEncodedPoint, ToEncodedPoint, UncompressedPointSize, UntaggedPointSize,
+    },
     weierstrass::Curve,
     Arithmetic, FromDigest,
 };
@@ -49,6 +51,15 @@ where
         } else {
             Err(Error::new())
         }
+    }
+
+    /// Serialize this [`VerifyKey`] as a SEC1 [`EncodedPoint`], optionally
+    /// applying point compression.
+    pub fn to_encoded_point(&self, compress: bool) -> EncodedPoint<C>
+    where
+        C::AffinePoint: ToEncodedPoint<C>,
+    {
+        self.public_key.to_encoded_point(compress)
     }
 }
 
