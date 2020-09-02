@@ -22,7 +22,7 @@ pub fn generate_k<C, D>(
 where
     C: Arithmetic,
     C::Scalar: FromDigest<C> + Invert<Output = C::Scalar> + Zeroize,
-    D: FixedOutput<OutputSize = C::ElementSize> + BlockInput + Clone + Default + Reset + Update,
+    D: FixedOutput<OutputSize = C::FieldSize> + BlockInput + Clone + Default + Reset + Update,
 {
     let mut x = secret_scalar.to_bytes();
     let h1: ElementBytes<C> = C::Scalar::from_digest(msg_digest).into();

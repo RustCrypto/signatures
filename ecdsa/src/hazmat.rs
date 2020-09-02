@@ -127,7 +127,7 @@ pub trait DigestPrimitive: Curve {
 #[cfg(feature = "digest")]
 impl<C: DigestPrimitive> PrehashSignature for Signature<C>
 where
-    <C::ElementSize as core::ops::Add>::Output: ArrayLength<u8>,
+    <C::FieldSize as core::ops::Add>::Output: ArrayLength<u8>,
 {
     type Digest = C::Digest;
 }

@@ -35,7 +35,7 @@ pub type MaxOverhead = U9;
 
 /// Maximum size of an ASN.1 DER encoded signature for the given elliptic curve.
 pub type MaxSize<C> =
-    <<<C as elliptic_curve::Curve>::ElementSize as Add>::Output as Add<MaxOverhead>>::Output;
+    <<<C as elliptic_curve::Curve>::FieldSize as Add>::Output as Add<MaxOverhead>>::Output;
 
 /// Byte array containing a serialized ASN.1 signature
 type DocumentBytes<C> = GenericArray<u8, MaxSize<C>>;
@@ -52,9 +52,9 @@ const SEQUENCE_TAG: u8 = 0x30;
 pub struct Signature<C>
 where
     C: Curve,
-    C::ElementSize: Add + ArrayLength<u8>,
+    C::FieldSize: Add + ArrayLength<u8>,
     MaxSize<C>: ArrayLength<u8>,
-    <C::ElementSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+    <C::FieldSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
     /// ASN.1 DER-encoded signature data
     bytes: DocumentBytes<C>,
@@ -69,9 +69,9 @@ where
 impl<C> signature::Signature for Signature<C>
 where
     C: Curve,
-    C::ElementSize: Add + ArrayLength<u8>,
+    C::FieldSize: Add + ArrayLength<u8>,
     MaxSize<C>: ArrayLength<u8>,
-    <C::ElementSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+    <C::FieldSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
     /// Parse an ASN.1 DER-encoded ECDSA signature from a byte slice
     fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
@@ -83,9 +83,9 @@ where
 impl<C> Signature<C>
 where
     C: Curve,
-    C::ElementSize: Add + ArrayLength<u8>,
+    C::FieldSize: Add + ArrayLength<u8>,
     MaxSize<C>: ArrayLength<u8>,
-    <C::ElementSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+    <C::FieldSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
     /// Get the length of the signature in bytes
     pub fn len(&self) -> usize {
@@ -96,7 +96,7 @@ where
     pub(crate) fn from_scalars(r: &ElementBytes<C>, s: &ElementBytes<C>) -> Self {
         let r_len = int_length(r);
         let s_len = int_length(s);
-        let scalar_size = C::ElementSize::to_usize();
+        let scalar_size = C::FieldSize::to_usize();
         let mut bytes = DocumentBytes::<C>::default();
 
         // SEQUENCE header
@@ -139,9 +139,9 @@ where
 impl<C> AsRef<[u8]> for Signature<C>
 where
     C: Curve,
-    C::ElementSize: Add + ArrayLength<u8>,
+    C::FieldSize: Add + ArrayLength<u8>,
     MaxSize<C>: ArrayLength<u8>,
-    <C::ElementSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+    <C::FieldSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
     fn as_ref(&self) -> &[u8] {
         &self.bytes.as_slice()[..self.len()]
@@ -151,9 +151,9 @@ where
 impl<C> fmt::Debug for Signature<C>
 where
     C: Curve,
-    C::ElementSize: Add + ArrayLength<u8>,
+    C::FieldSize: Add + ArrayLength<u8>,
     MaxSize<C>: ArrayLength<u8>,
-    <C::ElementSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+    <C::FieldSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("asn1::Signature")
@@ -166,9 +166,9 @@ where
 impl<C> TryFrom<&[u8]> for Signature<C>
 where
     C: Curve,
-    C::ElementSize: Add + ArrayLength<u8>,
+    C::FieldSize: Add + ArrayLength<u8>,
     MaxSize<C>: ArrayLength<u8>,
-    <C::ElementSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+    <C::FieldSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
     type Error = Error;
 
@@ -205,12 +205,12 @@ where
         }
 
         // First INTEGER (r)
-        let r_range = parse_int(&bytes[offset..], C::ElementSize::to_usize())?;
+        let r_range = parse_int(&bytes[offset..], C::FieldSize::to_usize())?;
         let r_start = offset.checked_add(r_range.start).unwrap();
         let r_end = offset.checked_add(r_range.end).unwrap();
 
         // Second INTEGER (s)
-        let s_range = parse_int(&bytes[r_end..], C::ElementSize::to_usize())?;
+        let s_range = parse_int(&bytes[r_end..], C::FieldSize::to_usize())?;
         let s_start = r_end.checked_add(s_range.start).unwrap();
         let s_end = r_end.checked_add(s_range.end).unwrap();
 
@@ -239,9 +239,9 @@ where
 impl<C> signature::PrehashSignature for Signature<C>
 where
     C: Curve + crate::hazmat::DigestPrimitive,
-    C::ElementSize: Add + ArrayLength<u8>,
+    C::FieldSize: Add + ArrayLength<u8>,
     MaxSize<C>: ArrayLength<u8>,
-    <C::ElementSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+    <C::FieldSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
     type Digest = C::Digest;
 }
@@ -336,7 +336,7 @@ mod tests {
     pub struct ExampleCurve;
 
     impl elliptic_curve::Curve for ExampleCurve {
-        type ElementSize = U32;
+        type FieldSize = U32;
     }
 
     impl elliptic_curve::weierstrass::Curve for ExampleCurve {

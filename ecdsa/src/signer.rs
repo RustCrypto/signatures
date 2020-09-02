@@ -73,7 +73,7 @@ impl<C, D> DigestSigner<D, Signature<C>> for Signer<C>
 where
     C: Curve + Arithmetic,
     C::Scalar: FromDigest<C> + Invert<Output = C::Scalar> + SignPrimitive<C> + Zeroize,
-    D: FixedOutput<OutputSize = C::ElementSize> + BlockInput + Clone + Default + Reset + Update,
+    D: FixedOutput<OutputSize = C::FieldSize> + BlockInput + Clone + Default + Reset + Update,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Sign message prehash using a deterministic ephemeral scalar (`k`)
@@ -106,7 +106,7 @@ impl<C, D> RandomizedDigestSigner<D, Signature<C>> for Signer<C>
 where
     C: Curve + Arithmetic,
     C::Scalar: FromDigest<C> + Invert<Output = C::Scalar> + SignPrimitive<C> + Zeroize,
-    D: FixedOutput<OutputSize = C::ElementSize> + BlockInput + Clone + Default + Reset + Update,
+    D: FixedOutput<OutputSize = C::FieldSize> + BlockInput + Clone + Default + Reset + Update,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Sign message prehash using an ephemeral scalar (`k`) derived according

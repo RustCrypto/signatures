@@ -48,7 +48,7 @@ where
 impl<C, D> DigestVerifier<D, Signature<C>> for Verifier<C>
 where
     C: Curve + Arithmetic,
-    D: Digest<OutputSize = C::ElementSize>,
+    D: Digest<OutputSize = C::FieldSize>,
     C::AffinePoint: VerifyPrimitive<C>,
     C::Scalar: FromDigest<C>,
     SignatureSize<C>: ArrayLength<u8>,
@@ -63,7 +63,7 @@ impl<C> signature::Verifier<Signature<C>> for Verifier<C>
 where
     C: Curve + Arithmetic + DigestPrimitive,
     C::AffinePoint: VerifyPrimitive<C>,
-    C::Digest: Digest<OutputSize = C::ElementSize>,
+    C::Digest: Digest<OutputSize = C::FieldSize>,
     C::Scalar: FromDigest<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
