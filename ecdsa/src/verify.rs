@@ -19,7 +19,7 @@ use signature::{digest::Digest, DigestVerifier};
 
 /// ECDSA verify key
 pub struct VerifyKey<C: Curve + Arithmetic> {
-    public_key: C::AffinePoint,
+    pub(crate) public_key: C::AffinePoint,
 }
 
 impl<C> VerifyKey<C>
