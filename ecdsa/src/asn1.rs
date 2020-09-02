@@ -327,23 +327,10 @@ fn trim_zeroes(mut bytes: &[u8], scalar_size: usize) -> Result<usize, Error> {
     Ok(offset)
 }
 
-#[cfg(test)]
+#[cfg(all(feature = "dev", test))]
 mod tests {
-    use elliptic_curve::consts::U32;
+    use crate::dev::curve::Signature;
     use signature::Signature as _;
-
-    #[derive(Clone, Debug, Default, Eq, PartialEq, PartialOrd, Ord)]
-    pub struct ExampleCurve;
-
-    impl elliptic_curve::Curve for ExampleCurve {
-        type FieldSize = U32;
-    }
-
-    impl elliptic_curve::weierstrass::Curve for ExampleCurve {
-        const COMPRESS_POINTS: bool = false;
-    }
-
-    type Signature = crate::Signature<ExampleCurve>;
 
     const EXAMPLE_SIGNATURE: [u8; 64] = [
         0xf3, 0xac, 0x80, 0x61, 0xb5, 0x14, 0x79, 0x5b, 0x88, 0x43, 0xe3, 0xd6, 0x62, 0x95, 0x27,

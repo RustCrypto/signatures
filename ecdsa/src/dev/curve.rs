@@ -23,14 +23,21 @@ impl elliptic_curve::Curve for ExampleCurve {
     type FieldSize = U32;
 }
 
-impl elliptic_curve::weierstrass::Curve for ExampleCurve {
-    const COMPRESS_POINTS: bool = false;
-}
+impl elliptic_curve::weierstrass::Curve for ExampleCurve {}
 
 impl elliptic_curve::Arithmetic for ExampleCurve {
     type Scalar = Scalar;
     type AffinePoint = AffinePoint;
 }
+
+/// Field element bytes.
+pub type ElementBytes = elliptic_curve::ElementBytes<ExampleCurve>;
+
+/// Non-zero scalar value.
+pub type NonZeroScalar = elliptic_curve::scalar::NonZeroScalar<ExampleCurve>;
+
+/// ECDSA signature.
+pub type Signature = crate::Signature<ExampleCurve>;
 
 const LIMBS: usize = 4;
 
@@ -166,12 +173,6 @@ impl Scalar {
         Scalar([w0, w1, w2, w3])
     }
 }
-
-/// Field element bytes;
-pub type ElementBytes = elliptic_curve::ElementBytes<ExampleCurve>;
-
-/// Non-zero scalar value.
-pub type NonZeroScalar = elliptic_curve::scalar::NonZeroScalar<ExampleCurve>;
 
 /// Example affine point type
 #[derive(Clone, Copy, Debug)]
