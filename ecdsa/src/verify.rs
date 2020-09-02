@@ -1,4 +1,4 @@
-//! ECDSA verifier. Generic over elliptic curves.
+//! ECDSA verify key. Generic over elliptic curves.
 //!
 //! Requires an [`elliptic_curve::Arithmetic`] impl on the curve, and a
 //! [`VerifyPrimitive`] impl on its associated `AffinePoint` type.
@@ -17,12 +17,12 @@ use elliptic_curve::{
 };
 use signature::{digest::Digest, DigestVerifier};
 
-/// ECDSA verifier
-pub struct Verifier<C: Curve + Arithmetic> {
+/// ECDSA verify key
+pub struct VerifyKey<C: Curve + Arithmetic> {
     public_key: C::AffinePoint,
 }
 
-impl<C> Verifier<C>
+impl<C> VerifyKey<C>
 where
     C: Curve + Arithmetic,
     C::AffinePoint: VerifyPrimitive<C> + FromEncodedPoint<C>,
@@ -31,8 +31,15 @@ where
     UncompressedPointSize<C>: ArrayLength<u8>,
     SignatureSize<C>: ArrayLength<u8>,
 {
-    /// Create a new verifier
-    pub fn new(public_key: &EncodedPoint<C>) -> Result<Self, Error> {
+    /// Initialize [`VerifyKey`] from a SEC1-encoded public key.
+    pub fn new(bytes: &[u8]) -> Result<Self, Error> {
+        EncodedPoint::from_bytes(bytes)
+            .map_err(|_| Error::new())
+            .and_then(|point| Self::from_encoded_point(&point))
+    }
+
+    /// Initialize [`VerifyKey`] from an [`EncodedPoint`].
+    pub fn from_encoded_point(public_key: &EncodedPoint<C>) -> Result<Self, Error> {
         let affine_point = C::AffinePoint::from_encoded_point(public_key);
 
         if affine_point.is_some().into() {
@@ -45,7 +52,7 @@ where
     }
 }
 
-impl<C, D> DigestVerifier<D, Signature<C>> for Verifier<C>
+impl<C, D> DigestVerifier<D, Signature<C>> for VerifyKey<C>
 where
     C: Curve + Arithmetic,
     D: Digest<OutputSize = C::FieldSize>,
@@ -59,7 +66,7 @@ where
     }
 }
 
-impl<C> signature::Verifier<Signature<C>> for Verifier<C>
+impl<C> signature::Verifier<Signature<C>> for VerifyKey<C>
 where
     C: Curve + Arithmetic + DigestPrimitive,
     C::AffinePoint: VerifyPrimitive<C>,
