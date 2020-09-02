@@ -37,13 +37,17 @@ pub mod dev;
 #[cfg_attr(docsrs, doc(cfg(feature = "hazmat")))]
 pub mod hazmat;
 
-#[cfg(feature = "signer")]
-#[cfg_attr(docsrs, doc(cfg(feature = "signer")))]
-pub mod signer;
+#[cfg(feature = "sign")]
+#[cfg_attr(docsrs, doc(cfg(feature = "sign")))]
+pub mod rfc6979;
 
-#[cfg(feature = "verifier")]
-#[cfg_attr(docsrs, doc(cfg(feature = "verifier")))]
-pub mod verifier;
+#[cfg(feature = "sign")]
+#[cfg_attr(docsrs, doc(cfg(feature = "sign")))]
+pub mod sign;
+
+#[cfg(feature = "verify")]
+#[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
+pub mod verify;
 
 // Re-export the `elliptic-curve` crate (and select types)
 pub use elliptic_curve::{self, generic_array, sec1::EncodedPoint, weierstrass::Curve, SecretKey};
@@ -51,11 +55,11 @@ pub use elliptic_curve::{self, generic_array, sec1::EncodedPoint, weierstrass::C
 // Re-export the `signature` crate (and select types)
 pub use signature::{self, Error};
 
-#[cfg(feature = "signer")]
-pub use signer::Signer;
+#[cfg(feature = "sign")]
+pub use sign::SigningKey;
 
-#[cfg(feature = "verifier")]
-pub use verifier::Verifier;
+#[cfg(feature = "verify")]
+pub use verify::VerifyKey;
 
 use core::{
     convert::TryFrom,

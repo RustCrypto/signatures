@@ -9,7 +9,7 @@
 //! [`signature::Verifier`] traits defined in the [`signature`] crate.
 //!
 //! These traits allow crates which produce and consume Ed25519 signatures
-//! to be written abstractly in such a way that different signer/verifier
+//! to be written abstractly in such a way that different signing_key/verifier
 //! providers can be plugged in, enabling support for using different
 //! Ed25519 implementations, including HSMs or Cloud KMS services.
 //!
@@ -37,7 +37,7 @@
 //! use ed25519::signature::{Signer, Verifier};
 //!
 //! pub struct HelloSigner<S> {
-//!     pub signer: S
+//!     pub signing_key: S
 //! }
 //!
 //! impl<S> HelloSigner<S>
@@ -48,7 +48,7 @@
 //!         // NOTE: use `try_sign` if you'd like to be able to handle
 //!         // errors from external signing services/devices (e.g. HSM/KMS)
 //!         // <https://docs.rs/signature/latest/signature/trait.Signer.html#tymethod.try_sign>
-//!         self.signer.sign(format_message(person).as_bytes())
+//!         self.signing_key.sign(format_message(person).as_bytes())
 //!     }
 //! }
 //!

@@ -1,15 +1,13 @@
-//! ECDSA signer. Generic over elliptic curves.
+//! ECDSA signing key. Generic over elliptic curves.
 //!
 //! Requires an [`elliptic_curve::Arithmetic`] impl on the curve, and a
 //! [`SignPrimitive`] impl on its associated `Scalar` type.
 
 // TODO(tarcieri): support for hardware crypto accelerators
 
-pub mod rfc6979;
-
 use crate::{
     hazmat::{DigestPrimitive, SignPrimitive},
-    Error, Signature, SignatureSize,
+    rfc6979, Error, Signature, SignatureSize,
 };
 use core::convert::TryInto;
 use elliptic_curve::{
@@ -30,8 +28,8 @@ use {
     },
 };
 
-/// ECDSA signer
-pub struct Signer<C>
+/// ECDSA signing key
+pub struct SigningKey<C>
 where
     C: Curve + Arithmetic,
     C::Scalar: FromDigest<C> + Invert<Output = C::Scalar> + SignPrimitive<C> + Zeroize,
@@ -40,15 +38,15 @@ where
     secret_scalar: NonZeroScalar<C>,
 }
 
-impl<C> Signer<C>
+impl<C> SigningKey<C>
 where
     C: Curve + Arithmetic,
     C::Scalar: FromDigest<C> + Invert<Output = C::Scalar> + SignPrimitive<C> + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
 {
-    /// Initialize signer from a raw scalar serialized as a byte slice
+    /// Initialize signing key from a raw scalar serialized as a byte slice.
     // TODO(tarcieri): PKCS#8 support
-    pub fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
+    pub fn new(bytes: &[u8]) -> Result<Self, Error> {
         let scalar = bytes
             .try_into()
             .map(NonZeroScalar::from_bytes)
@@ -62,14 +60,14 @@ where
         }
     }
 
-    /// Create a new signer
-    // TODO(tarcieri): infallible conversion from a secret key
-    pub fn new(secret_key: &SecretKey<C>) -> Result<Self, Error> {
-        Self::from_bytes(secret_key.as_bytes())
+    /// Create a new signing key from a [`SecretKey`].
+    // TODO(tarcieri): infallible `From` conversion from a secret key
+    pub fn from_secret_key(secret_key: &SecretKey<C>) -> Result<Self, Error> {
+        Self::new(secret_key.as_bytes())
     }
 }
 
-impl<C, D> DigestSigner<D, Signature<C>> for Signer<C>
+impl<C, D> DigestSigner<D, Signature<C>> for SigningKey<C>
 where
     C: Curve + Arithmetic,
     C::Scalar: FromDigest<C> + Invert<Output = C::Scalar> + SignPrimitive<C> + Zeroize,
@@ -88,7 +86,7 @@ where
     }
 }
 
-impl<C> signature::Signer<Signature<C>> for Signer<C>
+impl<C> signature::Signer<Signature<C>> for SigningKey<C>
 where
     C: Curve + Arithmetic + DigestPrimitive,
     C::Scalar: FromDigest<C> + Invert<Output = C::Scalar> + SignPrimitive<C> + Zeroize,
@@ -102,7 +100,7 @@ where
 
 #[cfg(feature = "rand")]
 #[cfg_attr(docsrs, doc(cfg(feature = "rand")))]
-impl<C, D> RandomizedDigestSigner<D, Signature<C>> for Signer<C>
+impl<C, D> RandomizedDigestSigner<D, Signature<C>> for SigningKey<C>
 where
     C: Curve + Arithmetic,
     C::Scalar: FromDigest<C> + Invert<Output = C::Scalar> + SignPrimitive<C> + Zeroize,
@@ -132,7 +130,7 @@ where
 
 #[cfg(feature = "rand")]
 #[cfg_attr(docsrs, doc(cfg(feature = "rand")))]
-impl<C> RandomizedSigner<Signature<C>> for Signer<C>
+impl<C> RandomizedSigner<Signature<C>> for SigningKey<C>
 where
     C: Curve + Arithmetic + DigestPrimitive,
     C::Scalar: FromDigest<C> + Invert<Output = C::Scalar> + SignPrimitive<C> + Zeroize,
@@ -148,7 +146,7 @@ where
     }
 }
 
-impl<C> From<NonZeroScalar<C>> for Signer<C>
+impl<C> From<NonZeroScalar<C>> for SigningKey<C>
 where
     C: Curve + Arithmetic,
     C::Scalar: FromDigest<C> + Invert<Output = C::Scalar> + SignPrimitive<C> + Zeroize,
@@ -159,7 +157,7 @@ where
     }
 }
 
-impl<C> Zeroize for Signer<C>
+impl<C> Zeroize for SigningKey<C>
 where
     C: Curve + Arithmetic,
     C::Scalar: FromDigest<C> + Invert<Output = C::Scalar> + SignPrimitive<C> + Zeroize,
@@ -170,7 +168,7 @@ where
     }
 }
 
-impl<C> Drop for Signer<C>
+impl<C> Drop for SigningKey<C>
 where
     C: Curve + Arithmetic,
     C::Scalar: FromDigest<C> + Invert<Output = C::Scalar> + SignPrimitive<C> + Zeroize,
