@@ -1,4 +1,4 @@
-//! ECDSA verify key. Generic over elliptic curves.
+//! ECDSA verification key (i.e. public key). Generic over elliptic curves.
 //!
 //! Requires an [`elliptic_curve::Arithmetic`] impl on the curve, and a
 //! [`VerifyPrimitive`] impl on its associated `AffinePoint` type.
@@ -11,6 +11,7 @@ use core::ops::Add;
 use elliptic_curve::{
     consts::U1,
     generic_array::ArrayLength,
+    point,
     sec1::{
         EncodedPoint, FromEncodedPoint, ToEncodedPoint, UncompressedPointSize, UntaggedPointSize,
     },
@@ -87,5 +88,19 @@ where
 {
     fn verify(&self, msg: &[u8], signature: &Signature<C>) -> Result<(), Error> {
         self.verify_digest(C::Digest::new().chain(msg), signature)
+    }
+}
+
+impl<C> From<&VerifyKey<C>> for EncodedPoint<C>
+where
+    C: Curve + Arithmetic + point::Compression,
+    C::AffinePoint: VerifyPrimitive<C> + FromEncodedPoint<C> + ToEncodedPoint<C>,
+    C::Scalar: FromDigest<C>,
+    UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
+    UncompressedPointSize<C>: ArrayLength<u8>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn from(verify_key: &VerifyKey<C>) -> EncodedPoint<C> {
+        verify_key.to_encoded_point(C::COMPRESS_POINTS)
     }
 }
