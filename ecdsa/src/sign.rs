@@ -20,9 +20,12 @@ use signature::{
 };
 
 #[cfg(feature = "rand")]
-use signature::{
-    rand_core::{CryptoRng, RngCore},
-    RandomizedDigestSigner, RandomizedSigner,
+use {
+    elliptic_curve::Generate,
+    signature::{
+        rand_core::{CryptoRng, RngCore},
+        RandomizedDigestSigner, RandomizedSigner,
+    },
 };
 
 #[cfg(feature = "verify")]
@@ -78,6 +81,21 @@ where
     /// Serialize this [`SigningKey`] as bytes
     pub fn to_bytes(&self) -> ElementBytes<C> {
         self.secret_scalar.to_bytes()
+    }
+}
+
+#[cfg(feature = "rand")]
+impl<C> Generate for SigningKey<C>
+where
+    C: Curve + Arithmetic,
+    C::Scalar: FromDigest<C> + Invert<Output = C::Scalar> + SignPrimitive<C> + Zeroize,
+    NonZeroScalar<C>: Generate,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn generate(rng: impl CryptoRng + RngCore) -> Self {
+        Self {
+            secret_scalar: NonZeroScalar::generate(rng),
+        }
     }
 }
 
