@@ -43,45 +43,6 @@ where
     ) -> Result<Signature<C>, Error>;
 }
 
-/// [`SignPrimitive`] for signature implementations that can provide public key
-/// recovery implementation.
-pub trait RecoverableSignPrimitive<C>
-where
-    C: Curve + Arithmetic,
-    SignatureSize<C>: ArrayLength<u8>,
-{
-    /// Type for recoverable signatures
-    type RecoverableSignature: signature::Signature + Into<Signature<C>>;
-
-    /// Try to sign the prehashed message.
-    ///
-    /// Accepts the same arguments as [`SignPrimitive::try_sign_prehashed`]
-    /// but returns a boolean flag which indicates whether or not the
-    /// y-coordinate of the computed 𝐑 = 𝑘×𝑮 point is odd, which can be
-    /// incorporated into recoverable signatures.
-    fn try_sign_recoverable_prehashed<K: Borrow<C::Scalar> + Invert<Output = C::Scalar>>(
-        &self,
-        ephemeral_scalar: &K,
-        hashed_msg: &C::Scalar,
-    ) -> Result<Self::RecoverableSignature, Error>;
-}
-
-impl<C, T> SignPrimitive<C> for T
-where
-    C: Curve + Arithmetic,
-    T: RecoverableSignPrimitive<C>,
-    SignatureSize<C>: ArrayLength<u8>,
-{
-    fn try_sign_prehashed<K: Borrow<C::Scalar> + Invert<Output = C::Scalar>>(
-        &self,
-        ephemeral_scalar: &K,
-        hashed_msg: &C::Scalar,
-    ) -> Result<Signature<C>, Error> {
-        self.try_sign_recoverable_prehashed(ephemeral_scalar, hashed_msg)
-            .map(Into::into)
-    }
-}
-
 /// Verify the given prehashed message using ECDSA.
 ///
 /// This trait is intended to be implemented on type which can access
