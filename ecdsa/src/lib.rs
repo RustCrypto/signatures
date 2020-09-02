@@ -66,7 +66,7 @@ use elliptic_curve::{Arithmetic, ElementBytes, FromBytes};
 use generic_array::{typenum::Unsigned, ArrayLength, GenericArray};
 
 /// Size of a fixed sized signature for the given elliptic curve.
-pub type SignatureSize<C> = <<C as elliptic_curve::Curve>::ElementSize as Add>::Output;
+pub type SignatureSize<C> = <<C as elliptic_curve::Curve>::FieldSize as Add>::Output;
 
 /// Fixed-size byte array containing an ECDSA signature
 pub type SignatureBytes<C> = GenericArray<u8, SignatureSize<C>>;
@@ -102,7 +102,7 @@ where
     /// Create a [`Signature`] from the serialized `r` and `s` components
     pub fn from_scalars(r: &ElementBytes<C>, s: &ElementBytes<C>) -> Self {
         let mut bytes = SignatureBytes::<C>::default();
-        let scalar_size = C::ElementSize::to_usize();
+        let scalar_size = C::FieldSize::to_usize();
         bytes[..scalar_size].copy_from_slice(r.as_slice());
         bytes[scalar_size..].copy_from_slice(s.as_slice());
         Signature { bytes }
@@ -111,9 +111,9 @@ where
     /// Parse a signature from ASN.1 DER
     pub fn from_asn1(bytes: &[u8]) -> Result<Self, Error>
     where
-        C::ElementSize: Add + ArrayLength<u8>,
+        C::FieldSize: Add + ArrayLength<u8>,
         asn1::MaxSize<C>: ArrayLength<u8>,
-        <C::ElementSize as Add>::Output: Add<asn1::MaxOverhead> + ArrayLength<u8>,
+        <C::FieldSize as Add>::Output: Add<asn1::MaxOverhead> + ArrayLength<u8>,
     {
         asn1::Signature::<C>::try_from(bytes).map(Into::into)
     }
@@ -121,21 +121,21 @@ where
     /// Serialize this signature as ASN.1 DER
     pub fn to_asn1(&self) -> asn1::Signature<C>
     where
-        C::ElementSize: Add + ArrayLength<u8>,
+        C::FieldSize: Add + ArrayLength<u8>,
         asn1::MaxSize<C>: ArrayLength<u8>,
-        <C::ElementSize as Add>::Output: Add<asn1::MaxOverhead> + ArrayLength<u8>,
+        <C::FieldSize as Add>::Output: Add<asn1::MaxOverhead> + ArrayLength<u8>,
     {
         asn1::Signature::from_scalars(self.r(), self.s())
     }
 
     /// Get the `r` component of this signature
     pub fn r(&self) -> &ElementBytes<C> {
-        ElementBytes::<C>::from_slice(&self.bytes[..C::ElementSize::to_usize()])
+        ElementBytes::<C>::from_slice(&self.bytes[..C::FieldSize::to_usize()])
     }
 
     /// Get the `s` component of this signature
     pub fn s(&self) -> &ElementBytes<C> {
-        ElementBytes::<C>::from_slice(&self.bytes[C::ElementSize::to_usize()..])
+        ElementBytes::<C>::from_slice(&self.bytes[C::FieldSize::to_usize()..])
     }
 }
 
@@ -150,7 +150,7 @@ where
     ///
     /// [1]: https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki
     pub fn normalize_s(&mut self) -> Result<bool, Error> {
-        let s_bytes = GenericArray::from_mut_slice(&mut self.bytes[C::ElementSize::to_usize()..]);
+        let s_bytes = GenericArray::from_mut_slice(&mut self.bytes[C::FieldSize::to_usize()..]);
         let s_option = C::Scalar::from_bytes(s_bytes);
 
         // Not constant time, but we're operating on public values
@@ -228,13 +228,13 @@ where
 impl<C> From<asn1::Signature<C>> for Signature<C>
 where
     C: Curve,
-    C::ElementSize: Add + ArrayLength<u8>,
+    C::FieldSize: Add + ArrayLength<u8>,
     asn1::MaxSize<C>: ArrayLength<u8>,
-    <C::ElementSize as Add>::Output: Add<asn1::MaxOverhead> + ArrayLength<u8>,
+    <C::FieldSize as Add>::Output: Add<asn1::MaxOverhead> + ArrayLength<u8>,
 {
     fn from(doc: asn1::Signature<C>) -> Signature<C> {
         let mut bytes = SignatureBytes::<C>::default();
-        let scalar_size = C::ElementSize::to_usize();
+        let scalar_size = C::FieldSize::to_usize();
         let r_begin = scalar_size.checked_sub(doc.r().len()).unwrap();
         let s_begin = bytes.len().checked_sub(doc.s().len()).unwrap();
 

@@ -20,7 +20,7 @@ use elliptic_curve::{
 pub struct ExampleCurve;
 
 impl elliptic_curve::Curve for ExampleCurve {
-    type ElementSize = U32;
+    type FieldSize = U32;
 }
 
 impl elliptic_curve::weierstrass::Curve for ExampleCurve {
