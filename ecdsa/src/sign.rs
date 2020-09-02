@@ -11,8 +11,8 @@ use crate::{
 };
 use core::convert::TryInto;
 use elliptic_curve::{
-    generic_array::ArrayLength, ops::Invert, scalar::NonZeroScalar, weierstrass::Curve,
-    zeroize::Zeroize, Arithmetic, FromBytes, FromDigest, SecretKey,
+    generic_array::ArrayLength, ops::Invert, point::Generator, scalar::NonZeroScalar,
+    weierstrass::Curve, zeroize::Zeroize, Arithmetic, FromBytes, FromDigest, SecretKey,
 };
 use signature::{
     digest::{BlockInput, Digest, FixedOutput, Reset, Update},
@@ -27,6 +27,9 @@ use {
         RandomizedDigestSigner, RandomizedSigner,
     },
 };
+
+#[cfg(feature = "verify")]
+use crate::verify::VerifyKey;
 
 /// ECDSA signing key
 pub struct SigningKey<C>
@@ -64,6 +67,15 @@ where
     // TODO(tarcieri): infallible `From` conversion from a secret key
     pub fn from_secret_key(secret_key: &SecretKey<C>) -> Result<Self, Error> {
         Self::new(secret_key.as_bytes())
+    }
+
+    /// Get the [`VerifyKey`] which corresponds to this [`SigningKey`]
+    #[cfg(feature = "verify")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
+    pub fn verify_key(&self) -> VerifyKey<C> {
+        VerifyKey {
+            public_key: C::AffinePoint::generator() * self.secret_scalar,
+        }
     }
 }
 
@@ -176,5 +188,17 @@ where
 {
     fn drop(&mut self) {
         self.zeroize();
+    }
+}
+
+#[cfg(feature = "verify")]
+impl<C> From<&SigningKey<C>> for VerifyKey<C>
+where
+    C: Curve + Arithmetic,
+    C::Scalar: FromDigest<C> + Invert<Output = C::Scalar> + SignPrimitive<C> + Zeroize,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn from(signing_key: &SigningKey<C>) -> VerifyKey<C> {
+        signing_key.verify_key()
     }
 }
