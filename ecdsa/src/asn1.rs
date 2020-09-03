@@ -15,7 +15,7 @@ use core::{
     fmt,
     ops::{Add, Range},
 };
-use elliptic_curve::{consts::U9, weierstrass::Curve, ElementBytes};
+use elliptic_curve::{consts::U9, weierstrass::Curve};
 
 #[cfg(feature = "alloc")]
 use alloc::boxed::Box;
@@ -106,8 +106,8 @@ where
         self.as_bytes().to_vec().into_boxed_slice()
     }
 
-    /// Create an ASN.1 DER encoded signature from the `r` and `s` scalars
-    pub(crate) fn from_scalars(r: &ElementBytes<C>, s: &ElementBytes<C>) -> Self {
+    /// Create an ASN.1 DER encoded signature from big endian `r` and `s` scalars
+    pub(crate) fn from_scalar_bytes(r: &[u8], s: &[u8]) -> Self {
         let r_len = int_length(r);
         let s_len = int_length(s);
         let scalar_size = C::FieldSize::to_usize();
@@ -127,11 +127,11 @@ where
         };
 
         // First INTEGER (r)
-        serialize_int(r.as_slice(), &mut bytes[offset..], r_len, scalar_size);
+        serialize_int(r, &mut bytes[offset..], r_len, scalar_size);
         let r_end = offset.checked_add(2).unwrap().checked_add(r_len).unwrap();
 
         // Second INTEGER (s)
-        serialize_int(s.as_slice(), &mut bytes[r_end..], s_len, scalar_size);
+        serialize_int(s, &mut bytes[r_end..], s_len, scalar_size);
         let s_end = r_end.checked_add(2).unwrap().checked_add(s_len).unwrap();
 
         bytes[..s_end]
