@@ -24,12 +24,13 @@ sha2 = { version = "0.9", default-features = false }
 
 [features]
 default = ["digest"]
+alloc = []
 dev = ["digest", "zeroize"]
 digest = ["elliptic-curve/digest", "signature/digest-preview"]
 hazmat = []
 rand = ["elliptic-curve/rand", "signature/rand-preview"]
 sign = ["digest", "hazmat", "hmac", "zeroize"]
-std = ["elliptic-curve/std", "signature/std"]
+std = ["alloc", "elliptic-curve/std", "signature/std"]
 verify = ["digest", "hazmat"]
 zeroize = ["elliptic-curve/zeroize"]
 

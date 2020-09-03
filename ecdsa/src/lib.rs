@@ -27,6 +27,9 @@
     html_root_url = "https://docs.rs/ecdsa/0.7.2"
 )]
 
+#[cfg(feature = "alloc")]
+extern crate alloc;
+
 pub mod asn1;
 
 #[cfg(feature = "dev")]
