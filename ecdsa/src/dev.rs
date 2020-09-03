@@ -78,7 +78,7 @@ macro_rules! new_verification_test {
         #[test]
         fn ecdsa_verify_success() {
             for vector in $vectors {
-                let q_encoded = EncodedPoint::from_affine_coords(
+                let q_encoded = EncodedPoint::from_affine_coordinates(
                     GenericArray::from_slice(vector.q_x),
                     GenericArray::from_slice(vector.q_y),
                     false,
@@ -102,7 +102,7 @@ macro_rules! new_verification_test {
         #[test]
         fn ecdsa_verify_invalid_s() {
             for vector in $vectors {
-                let q_encoded = EncodedPoint::from_affine_coords(
+                let q_encoded = EncodedPoint::from_affine_coordinates(
                     GenericArray::from_slice(vector.q_x),
                     GenericArray::from_slice(vector.q_y),
                     false,
