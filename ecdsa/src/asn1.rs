@@ -17,6 +17,9 @@ use core::{
 };
 use elliptic_curve::{consts::U9, weierstrass::Curve, ElementBytes};
 
+#[cfg(feature = "alloc")]
+use alloc::boxed::Box;
+
 /// Maximum overhead of an ASN.1 DER-encoded ECDSA signature for a given curve:
 /// 9-bytes.
 ///
@@ -92,6 +95,17 @@ where
         self.s_range.end
     }
 
+    /// Borrow this signature as a byte slice
+    pub fn as_bytes(&self) -> &[u8] {
+        &self.bytes.as_slice()[..self.len()]
+    }
+
+    /// Serialize this signature as a boxed byte slice
+    #[cfg(feature = "alloc")]
+    pub fn to_bytes(&self) -> Box<[u8]> {
+        self.as_bytes().to_vec().into_boxed_slice()
+    }
+
     /// Create an ASN.1 DER encoded signature from the `r` and `s` scalars
     pub(crate) fn from_scalars(r: &ElementBytes<C>, s: &ElementBytes<C>) -> Self {
         let r_len = int_length(r);
@@ -144,7 +158,7 @@ where
     <C::FieldSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
     fn as_ref(&self) -> &[u8] {
-        &self.bytes.as_slice()[..self.len()]
+        self.as_bytes()
     }
 }
 
