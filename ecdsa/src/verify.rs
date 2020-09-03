@@ -21,6 +21,7 @@ use elliptic_curve::{
 use signature::{digest::Digest, DigestVerifier};
 
 /// ECDSA verify key
+#[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
 pub struct VerifyKey<C: Curve + Arithmetic> {
     pub(crate) public_key: C::AffinePoint,
 }
