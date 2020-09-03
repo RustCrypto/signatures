@@ -67,7 +67,7 @@ use core::{
     ops::Add,
 };
 use elliptic_curve::{Arithmetic, ElementBytes, FromBytes};
-use generic_array::{typenum::Unsigned, ArrayLength, GenericArray};
+use generic_array::{sequence::Concat, typenum::Unsigned, ArrayLength, GenericArray};
 
 /// Size of a fixed sized signature for the given elliptic curve.
 pub type SignatureSize<C> = <<C as elliptic_curve::Curve>::FieldSize as Add>::Output;
@@ -103,13 +103,12 @@ impl<C: Curve> Signature<C>
 where
     SignatureSize<C>: ArrayLength<u8>,
 {
-    /// Create a [`Signature`] from the serialized `r` and `s` components
-    pub fn from_scalars(r: &ElementBytes<C>, s: &ElementBytes<C>) -> Self {
-        let mut bytes = SignatureBytes::<C>::default();
-        let scalar_size = C::FieldSize::to_usize();
-        bytes[..scalar_size].copy_from_slice(r.as_slice());
-        bytes[scalar_size..].copy_from_slice(s.as_slice());
-        Signature { bytes }
+    /// Create a [`Signature`] from the serialized `r` and `s` scalar values
+    /// which comprise the signature.
+    pub fn from_scalars(r: impl Into<ElementBytes<C>>, s: impl Into<ElementBytes<C>>) -> Self {
+        Signature {
+            bytes: r.into().concat(s.into()),
+        }
     }
 
     /// Parse a signature from ASN.1 DER
