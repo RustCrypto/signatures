@@ -14,9 +14,9 @@ categories    = ["cryptography", "no-std"]
 keywords      = ["crypto", "ecc", "nist", "secp256k1", "signature"]
 
 [dependencies]
-elliptic-curve = { version = "0.5", default-features = false, features = ["weierstrass"] }
+elliptic-curve = { version = "0.5", default-features = false }
 hmac = { version = "0.9", optional = true, default-features = false }
-signature = { version = ">= 1.2.2, < 1.3.0", default-features = false }
+signature = { version = ">= 1.2.2, < 1.3.0", default-features = false, features = ["rand-preview"] }
 
 [dev-dependencies]
 hex-literal = "0.3"
@@ -28,7 +28,6 @@ alloc = []
 dev = ["digest", "zeroize"]
 digest = ["elliptic-curve/digest", "signature/digest-preview"]
 hazmat = []
-rand = ["elliptic-curve/rand", "signature/rand-preview"]
 sign = ["digest", "hazmat", "hmac", "zeroize"]
 std = ["alloc", "elliptic-curve/std", "signature/std"]
 verify = ["digest", "hazmat"]
