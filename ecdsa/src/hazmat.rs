@@ -11,7 +11,7 @@
 //! Failure to use them correctly can lead to catastrophic failures including
 //! FULL PRIVATE KEY RECOVERY!
 
-use crate::{Signature, SignatureSize};
+use crate::{CheckSignatureBytes, Signature, SignatureSize};
 use core::borrow::Borrow;
 use elliptic_curve::{generic_array::ArrayLength, ops::Invert, weierstrass::Curve, Arithmetic};
 use signature::Error;
@@ -86,8 +86,9 @@ pub trait DigestPrimitive: Curve {
 }
 
 #[cfg(feature = "digest")]
-impl<C: DigestPrimitive> PrehashSignature for Signature<C>
+impl<C> PrehashSignature for Signature<C>
 where
+    C: DigestPrimitive + CheckSignatureBytes,
     <C::FieldSize as core::ops::Add>::Output: ArrayLength<u8>,
 {
     type Digest = C::Digest;

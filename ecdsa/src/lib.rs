@@ -65,11 +65,11 @@ pub use sign::SigningKey;
 pub use verify::VerifyKey;
 
 use core::{
-    convert::TryFrom,
+    convert::{TryFrom, TryInto},
     fmt::{self, Debug},
     ops::Add,
 };
-use elliptic_curve::{Arithmetic, ElementBytes, FromBytes};
+use elliptic_curve::{scalar::NonZeroScalar, Arithmetic, ElementBytes, FromBytes};
 use generic_array::{sequence::Concat, typenum::Unsigned, ArrayLength, GenericArray};
 
 /// Size of a fixed sized signature for the given elliptic curve.
@@ -95,23 +95,25 @@ pub type SignatureBytes<C> = GenericArray<u8, SignatureSize<C>>;
 /// ASN.1 is also supported via the [`Signature::from_asn1`] and
 /// [`Signature::to_asn1`] methods.
 #[derive(Clone, Eq, PartialEq)]
-pub struct Signature<C: Curve>
+pub struct Signature<C: Curve + CheckSignatureBytes>
 where
     SignatureSize<C>: ArrayLength<u8>,
 {
     bytes: SignatureBytes<C>,
 }
 
-impl<C: Curve> Signature<C>
+impl<C> Signature<C>
 where
+    C: Curve + CheckSignatureBytes,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Create a [`Signature`] from the serialized `r` and `s` scalar values
     /// which comprise the signature.
-    pub fn from_scalars(r: impl Into<ElementBytes<C>>, s: impl Into<ElementBytes<C>>) -> Self {
-        Signature {
-            bytes: r.into().concat(s.into()),
-        }
+    pub fn from_scalars(
+        r: impl Into<ElementBytes<C>>,
+        s: impl Into<ElementBytes<C>>,
+    ) -> Result<Self, Error> {
+        Self::try_from(r.into().concat(s.into()).as_slice())
     }
 
     /// Parse a signature from ASN.1 DER
@@ -121,7 +123,7 @@ where
         asn1::MaxSize<C>: ArrayLength<u8>,
         <C::FieldSize as Add>::Output: Add<asn1::MaxOverhead> + ArrayLength<u8>,
     {
-        asn1::Signature::<C>::try_from(bytes).map(Into::into)
+        asn1::Signature::<C>::try_from(bytes).and_then(TryInto::try_into)
     }
 
     /// Serialize this signature as ASN.1 DER
@@ -131,17 +133,26 @@ where
         asn1::MaxSize<C>: ArrayLength<u8>,
         <C::FieldSize as Add>::Output: Add<asn1::MaxOverhead> + ArrayLength<u8>,
     {
-        asn1::Signature::from_scalars(self.r(), self.s())
+        let (r, s) = self.bytes.split_at(C::FieldSize::to_usize());
+        asn1::Signature::from_scalar_bytes(r, s)
     }
 
     /// Get the `r` component of this signature
-    pub fn r(&self) -> &ElementBytes<C> {
-        ElementBytes::<C>::from_slice(&self.bytes[..C::FieldSize::to_usize()])
+    pub fn r(&self) -> NonZeroScalar<C>
+    where
+        C: Arithmetic,
+    {
+        let r_bytes = ElementBytes::<C>::from_slice(&self.bytes[..C::FieldSize::to_usize()]);
+        NonZeroScalar::from_bytes(&r_bytes).unwrap()
     }
 
     /// Get the `s` component of this signature
-    pub fn s(&self) -> &ElementBytes<C> {
-        ElementBytes::<C>::from_slice(&self.bytes[C::FieldSize::to_usize()..])
+    pub fn s(&self) -> NonZeroScalar<C>
+    where
+        C: Arithmetic,
+    {
+        let s_bytes = ElementBytes::<C>::from_slice(&self.bytes[C::FieldSize::to_usize()..]);
+        NonZeroScalar::from_bytes(&s_bytes).unwrap()
     }
 }
 
@@ -175,8 +186,9 @@ where
     }
 }
 
-impl<C: Curve> signature::Signature for Signature<C>
+impl<C> signature::Signature for Signature<C>
 where
+    C: Curve + CheckSignatureBytes,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
@@ -184,8 +196,9 @@ where
     }
 }
 
-impl<C: Curve> AsRef<[u8]> for Signature<C>
+impl<C> AsRef<[u8]> for Signature<C>
 where
+    C: Curve + CheckSignatureBytes,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn as_ref(&self) -> &[u8] {
@@ -193,15 +206,17 @@ where
     }
 }
 
-impl<C: Curve> Copy for Signature<C>
+impl<C> Copy for Signature<C>
 where
+    C: Curve + CheckSignatureBytes,
     SignatureSize<C>: ArrayLength<u8>,
     <SignatureSize<C> as ArrayLength<u8>>::ArrayType: Copy,
 {
 }
 
-impl<C: Curve> Debug for Signature<C>
+impl<C> Debug for Signature<C>
 where
+    C: Curve + CheckSignatureBytes,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -214,39 +229,92 @@ where
     }
 }
 
-impl<C: Curve> TryFrom<&[u8]> for Signature<C>
+impl<C> TryFrom<&[u8]> for Signature<C>
 where
+    C: Curve + CheckSignatureBytes,
     SignatureSize<C>: ArrayLength<u8>,
 {
     type Error = Error;
 
     fn try_from(bytes: &[u8]) -> Result<Self, Error> {
-        if bytes.len() == <SignatureSize<C>>::to_usize() {
-            Ok(Self {
-                bytes: GenericArray::clone_from_slice(bytes),
-            })
-        } else {
-            Err(Error::new())
+        if bytes.len() != <SignatureSize<C>>::to_usize() {
+            return Err(Error::new());
         }
+
+        let bytes = GenericArray::clone_from_slice(bytes);
+        C::check_signature_bytes(&bytes)?;
+
+        Ok(Self { bytes })
     }
 }
 
-impl<C> From<asn1::Signature<C>> for Signature<C>
+impl<C> TryFrom<asn1::Signature<C>> for Signature<C>
 where
-    C: Curve,
+    C: Curve + CheckSignatureBytes,
     C::FieldSize: Add + ArrayLength<u8>,
     asn1::MaxSize<C>: ArrayLength<u8>,
     <C::FieldSize as Add>::Output: Add<asn1::MaxOverhead> + ArrayLength<u8>,
 {
-    fn from(doc: asn1::Signature<C>) -> Signature<C> {
-        let mut bytes = SignatureBytes::<C>::default();
+    type Error = Error;
+
+    fn try_from(doc: asn1::Signature<C>) -> Result<Signature<C>, Error> {
+        let mut bytes = GenericArray::default();
         let scalar_size = C::FieldSize::to_usize();
         let r_begin = scalar_size.checked_sub(doc.r().len()).unwrap();
         let s_begin = bytes.len().checked_sub(doc.s().len()).unwrap();
 
         bytes[r_begin..scalar_size].copy_from_slice(doc.r());
         bytes[s_begin..].copy_from_slice(doc.s());
-        Signature { bytes }
+
+        C::check_signature_bytes(&bytes)?;
+        Ok(Signature { bytes })
+    }
+}
+
+/// Ensure a signature is well-formed.
+pub trait CheckSignatureBytes: Curve
+where
+    SignatureSize<Self>: ArrayLength<u8>,
+{
+    /// Validate that the given signature is well-formed.
+    ///
+    /// This trait is auto-impl'd for curves which impl the
+    /// `elliptic_curve::Arithmetic` trait, which validates that the
+    /// `r` and `s` components of the signature are in range of the
+    /// scalar field.
+    ///
+    /// Note that this trait is not for verifying a signature, but allows for
+    /// asserting properties of it which allow infallible conversions
+    /// (e.g. accessors for the `r` and `s` components)
+    fn check_signature_bytes(bytes: &SignatureBytes<Self>) -> Result<(), Error> {
+        // Ensure `r` and `s` are both non-zero
+        for scalar_bytes in bytes.chunks(Self::FieldSize::to_usize()) {
+            if scalar_bytes.iter().all(|&b| b != 0) {
+                return Err(Error::new());
+            }
+        }
+
+        Ok(())
+    }
+}
+
+impl<C> CheckSignatureBytes for C
+where
+    C: Curve + Arithmetic,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    /// When curve arithmetic is available, check that the scalar components
+    /// of the signature are in range.
+    fn check_signature_bytes(bytes: &SignatureBytes<C>) -> Result<(), Error> {
+        let (r, s) = bytes.split_at(C::FieldSize::to_usize());
+        let r_ok = NonZeroScalar::<C>::from_bytes(r.try_into().unwrap()).is_some();
+        let s_ok = NonZeroScalar::<C>::from_bytes(s.try_into().unwrap()).is_some();
+
+        if r_ok.into() && s_ok.into() {
+            Ok(())
+        } else {
+            Err(Error::new())
+        }
     }
 }
 
