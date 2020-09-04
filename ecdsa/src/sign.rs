@@ -12,20 +12,12 @@ use crate::{
 use core::convert::TryInto;
 use elliptic_curve::{
     generic_array::ArrayLength, ops::Invert, scalar::NonZeroScalar, weierstrass::Curve,
-    zeroize::Zeroize, Arithmetic, ElementBytes, FromBytes, FromDigest, SecretKey,
+    zeroize::Zeroize, Arithmetic, ElementBytes, FromBytes, FromDigest, Generate, SecretKey,
 };
 use signature::{
     digest::{BlockInput, Digest, FixedOutput, Reset, Update},
-    DigestSigner,
-};
-
-#[cfg(feature = "rand")]
-use {
-    elliptic_curve::Generate,
-    signature::{
-        rand_core::{CryptoRng, RngCore},
-        RandomizedDigestSigner, RandomizedSigner,
-    },
+    rand_core::{CryptoRng, RngCore},
+    DigestSigner, RandomizedDigestSigner, RandomizedSigner,
 };
 
 #[cfg(feature = "verify")]
@@ -84,7 +76,6 @@ where
     }
 }
 
-#[cfg(feature = "rand")]
 impl<C> Generate for SigningKey<C>
 where
     C: Curve + Arithmetic,
@@ -130,8 +121,6 @@ where
     }
 }
 
-#[cfg(feature = "rand")]
-#[cfg_attr(docsrs, doc(cfg(feature = "rand")))]
 impl<C, D> RandomizedDigestSigner<D, Signature<C>> for SigningKey<C>
 where
     C: Curve + Arithmetic,
@@ -160,8 +149,6 @@ where
     }
 }
 
-#[cfg(feature = "rand")]
-#[cfg_attr(docsrs, doc(cfg(feature = "rand")))]
 impl<C> RandomizedSigner<Signature<C>> for SigningKey<C>
 where
     C: Curve + Arithmetic + DigestPrimitive,
