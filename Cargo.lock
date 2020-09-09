@@ -90,7 +90,7 @@ dependencies = [
 [[package]]
 name = "elliptic-curve"
 version = "0.5.0"
-source = "git+https://github.com/RustCrypto/traits#548e11779ea85d411daa39214afcd7cc6c72c2b8"
+source = "git+https://github.com/RustCrypto/traits#a866a23ab066bc89d000f0931dec9f915d6a8986"
 dependencies = [
  "bitvec",
  "digest",

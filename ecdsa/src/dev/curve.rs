@@ -12,7 +12,6 @@ use elliptic_curve::{
     digest::Digest,
     ff::{Field, PrimeField},
     group,
-    ops::Invert,
     point::Generator,
     rand_core::RngCore,
     scalar::ScalarBits,
@@ -314,14 +313,6 @@ impl FromDigest<ExampleCurve> for Scalar {
             MODULUS[3],
             0,
         )
-    }
-}
-
-impl Invert for Scalar {
-    type Output = Self;
-
-    fn invert(&self) -> CtOption<Self> {
-        unimplemented!();
     }
 }
 
