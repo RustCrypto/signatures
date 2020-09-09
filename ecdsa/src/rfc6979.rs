@@ -8,7 +8,7 @@ use elliptic_curve::{
     ops::Invert,
     scalar::NonZeroScalar,
     zeroize::{Zeroize, Zeroizing},
-    Arithmetic, ElementBytes, FromBytes, FromDigest,
+    Arithmetic, FieldBytes, FromBytes, FromDigest,
 };
 use hmac::{Hmac, Mac, NewMac};
 
@@ -25,7 +25,7 @@ where
     D: FixedOutput<OutputSize = C::FieldSize> + BlockInput + Clone + Default + Reset + Update,
 {
     let mut x = secret_scalar.to_bytes();
-    let h1: ElementBytes<C> = C::Scalar::from_digest(msg_digest).into();
+    let h1: FieldBytes<C> = C::Scalar::from_digest(msg_digest).into();
     let mut hmac_drbg = HmacDrbg::<D>::new(&x, &h1, additional_data);
     x.zeroize();
 
