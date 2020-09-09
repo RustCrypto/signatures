@@ -100,7 +100,7 @@ impl Field for Scalar {
 
 impl PrimeField for Scalar {
     type Repr = ElementBytes;
-    type ReprBits = usize;
+    type ReprBits = [u64; 4];
 
     const NUM_BITS: u32 = 256;
     const CAPACITY: u32 = 255;
