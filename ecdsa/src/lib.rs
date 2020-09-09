@@ -69,7 +69,7 @@ use core::{
     fmt::{self, Debug},
     ops::Add,
 };
-use elliptic_curve::ElementBytes;
+use elliptic_curve::FieldBytes;
 use generic_array::{sequence::Concat, typenum::Unsigned, ArrayLength, GenericArray};
 
 #[cfg(feature = "arithmetic")]
@@ -113,8 +113,8 @@ where
     /// Create a [`Signature`] from the serialized `r` and `s` scalar values
     /// which comprise the signature.
     pub fn from_scalars(
-        r: impl Into<ElementBytes<C>>,
-        s: impl Into<ElementBytes<C>>,
+        r: impl Into<FieldBytes<C>>,
+        s: impl Into<FieldBytes<C>>,
     ) -> Result<Self, Error> {
         Self::try_from(r.into().concat(s.into()).as_slice())
     }
@@ -150,13 +150,13 @@ where
 {
     /// Get the `r` component of this signature
     pub fn r(&self) -> NonZeroScalar<C> {
-        let r_bytes = ElementBytes::<C>::from_slice(&self.bytes[..C::FieldSize::to_usize()]);
+        let r_bytes = FieldBytes::<C>::from_slice(&self.bytes[..C::FieldSize::to_usize()]);
         NonZeroScalar::from_bytes(&r_bytes).unwrap()
     }
 
     /// Get the `s` component of this signature
     pub fn s(&self) -> NonZeroScalar<C> {
-        let s_bytes = ElementBytes::<C>::from_slice(&self.bytes[C::FieldSize::to_usize()..]);
+        let s_bytes = FieldBytes::<C>::from_slice(&self.bytes[C::FieldSize::to_usize()..]);
         NonZeroScalar::from_bytes(&s_bytes).unwrap()
     }
 

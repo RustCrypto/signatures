@@ -39,7 +39,7 @@ impl elliptic_curve::Arithmetic for ExampleCurve {
 }
 
 /// Field element bytes.
-pub type ElementBytes = elliptic_curve::ElementBytes<ExampleCurve>;
+pub type FieldBytes = elliptic_curve::FieldBytes<ExampleCurve>;
 
 /// Non-zero scalar value.
 pub type NonZeroScalar = elliptic_curve::scalar::NonZeroScalar<ExampleCurve>;
@@ -99,18 +99,18 @@ impl Field for Scalar {
 }
 
 impl PrimeField for Scalar {
-    type Repr = ElementBytes;
+    type Repr = FieldBytes;
     type ReprBits = [u64; 4];
 
     const NUM_BITS: u32 = 256;
     const CAPACITY: u32 = 255;
     const S: u32 = 4;
 
-    fn from_repr(_repr: ElementBytes) -> Option<Self> {
+    fn from_repr(_repr: FieldBytes) -> Option<Self> {
         unimplemented!();
     }
 
-    fn to_repr(&self) -> ElementBytes {
+    fn to_repr(&self) -> FieldBytes {
         unimplemented!();
     }
 
@@ -256,7 +256,7 @@ impl From<u64> for Scalar {
 impl FromBytes for Scalar {
     type Size = U32;
 
-    fn from_bytes(bytes: &ElementBytes) -> CtOption<Self> {
+    fn from_bytes(bytes: &FieldBytes) -> CtOption<Self> {
         let mut w = [0u64; LIMBS];
 
         // Interpret the bytes as a big-endian integer w.
@@ -277,15 +277,15 @@ impl FromBytes for Scalar {
     }
 }
 
-impl From<Scalar> for ElementBytes {
+impl From<Scalar> for FieldBytes {
     fn from(scalar: Scalar) -> Self {
         Self::from(&scalar)
     }
 }
 
-impl From<&Scalar> for ElementBytes {
+impl From<&Scalar> for FieldBytes {
     fn from(scalar: &Scalar) -> Self {
-        let mut ret = ElementBytes::default();
+        let mut ret = FieldBytes::default();
         ret[0..8].copy_from_slice(&scalar.0[3].to_be_bytes());
         ret[8..16].copy_from_slice(&scalar.0[2].to_be_bytes());
         ret[16..24].copy_from_slice(&scalar.0[1].to_be_bytes());

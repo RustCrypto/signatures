@@ -12,7 +12,7 @@ use crate::{
 use core::convert::TryInto;
 use elliptic_curve::{
     generic_array::ArrayLength, ops::Invert, scalar::NonZeroScalar, weierstrass::Curve,
-    zeroize::Zeroize, Arithmetic, ElementBytes, FromBytes, FromDigest, SecretKey,
+    zeroize::Zeroize, Arithmetic, FieldBytes, FromBytes, FromDigest, SecretKey,
 };
 use signature::{
     digest::{BlockInput, Digest, FixedOutput, Reset, Update},
@@ -73,7 +73,7 @@ where
     }
 
     /// Serialize this [`SigningKey`] as bytes
-    pub fn to_bytes(&self) -> ElementBytes<C> {
+    pub fn to_bytes(&self) -> FieldBytes<C> {
         self.secret_scalar.to_bytes()
     }
 }
@@ -124,7 +124,7 @@ where
         mut rng: impl CryptoRng + RngCore,
         digest: D,
     ) -> Result<Signature<C>, Error> {
-        let mut added_entropy = ElementBytes::<C>::default();
+        let mut added_entropy = FieldBytes::<C>::default();
         rng.fill_bytes(&mut added_entropy);
 
         let ephemeral_scalar =
