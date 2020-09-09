@@ -24,7 +24,7 @@ jobs:
           - thumbv7em-none-eabi
           - wasm32-unknown-unknown
         rust:
-          - 1.41.0 # MSRV
+          - 1.44.0 # MSRV
           - stable
     steps:
       - uses: actions/checkout@v1
@@ -35,15 +35,20 @@ jobs:
           target: ${{ matrix.target }}
           override: true
       - run: cargo build --no-default-features --release --target ${{ matrix.target }}
-      - run: cargo build --no-default-features --features sign --release --target ${{ matrix.target }}
-      - run: cargo build --no-default-features --features verify --release --target ${{ matrix.target }}
+      - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features arithmetic
+      - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features digest
+      - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features hazmat
+      - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features sign
+      - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features verify
+      - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features zeroize
+      - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features arithmetic,digest,hazmat,sign,verify,zeroize
 
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         rust:
-          - 1.41.0 # MSRV
+          - 1.44.0 # MSRV
           - stable
     steps:
       - uses: actions/checkout@v1

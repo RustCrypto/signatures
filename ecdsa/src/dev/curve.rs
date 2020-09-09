@@ -2,16 +2,23 @@
 //!
 //! Modeled after NIST P-256.
 
-use core::{convert::TryInto, ops::Mul};
+use core::{
+    convert::TryInto,
+    iter::Sum,
+    ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign},
+};
 use elliptic_curve::{
     consts::U32,
     digest::Digest,
+    ff::{Field, PrimeField},
+    group,
     ops::Invert,
     point::Generator,
+    rand_core::RngCore,
     subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption},
     util::{adc64, sbb64},
     zeroize::Zeroize,
-    FromBytes, FromDigest,
+    FieldBits, FromBytes, FromDigest,
 };
 
 /// Example NIST P-256-like elliptic curve.
@@ -28,6 +35,7 @@ impl elliptic_curve::weierstrass::Curve for ExampleCurve {}
 impl elliptic_curve::Arithmetic for ExampleCurve {
     type Scalar = Scalar;
     type AffinePoint = AffinePoint;
+    type ProjectivePoint = ProjectivePoint;
 }
 
 /// Field element bytes.
@@ -51,8 +59,81 @@ const MODULUS: U256 = [
 ];
 
 /// Example scalar type
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct Scalar([u64; LIMBS]);
+
+impl Field for Scalar {
+    fn random(_rng: impl RngCore) -> Self {
+        unimplemented!();
+    }
+
+    fn zero() -> Self {
+        unimplemented!();
+    }
+
+    fn one() -> Self {
+        unimplemented!();
+    }
+
+    fn is_zero(&self) -> bool {
+        unimplemented!();
+    }
+
+    #[must_use]
+    fn square(&self) -> Self {
+        unimplemented!();
+    }
+
+    #[must_use]
+    fn double(&self) -> Self {
+        unimplemented!();
+    }
+
+    fn invert(&self) -> CtOption<Self> {
+        unimplemented!();
+    }
+
+    fn sqrt(&self) -> CtOption<Self> {
+        unimplemented!();
+    }
+}
+
+impl PrimeField for Scalar {
+    type Repr = ElementBytes;
+    type ReprBits = usize;
+
+    const NUM_BITS: u32 = 256;
+    const CAPACITY: u32 = 255;
+    const S: u32 = 4;
+
+    fn from_repr(_repr: ElementBytes) -> Option<Self> {
+        unimplemented!();
+    }
+
+    fn to_repr(&self) -> ElementBytes {
+        unimplemented!();
+    }
+
+    fn to_le_bits(&self) -> FieldBits<ExampleCurve> {
+        unimplemented!();
+    }
+
+    fn is_odd(&self) -> bool {
+        unimplemented!();
+    }
+
+    fn char_le_bits() -> FieldBits<ExampleCurve> {
+        unimplemented!();
+    }
+
+    fn multiplicative_generator() -> Self {
+        unimplemented!();
+    }
+
+    fn root_of_unity() -> Self {
+        unimplemented!();
+    }
+}
 
 impl ConditionallySelectable for Scalar {
     fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
@@ -71,6 +152,104 @@ impl ConstantTimeEq for Scalar {
             & self.0[1].ct_eq(&other.0[1])
             & self.0[2].ct_eq(&other.0[2])
             & self.0[3].ct_eq(&other.0[3])
+    }
+}
+
+impl Add<Scalar> for Scalar {
+    type Output = Scalar;
+
+    fn add(self, _other: Scalar) -> Scalar {
+        unimplemented!();
+    }
+}
+
+impl Add<&Scalar> for Scalar {
+    type Output = Scalar;
+
+    fn add(self, _other: &Scalar) -> Scalar {
+        unimplemented!();
+    }
+}
+
+impl AddAssign<Scalar> for Scalar {
+    fn add_assign(&mut self, _rhs: Scalar) {
+        unimplemented!();
+    }
+}
+
+impl AddAssign<&Scalar> for Scalar {
+    fn add_assign(&mut self, _rhs: &Scalar) {
+        unimplemented!();
+    }
+}
+
+impl Sub<Scalar> for Scalar {
+    type Output = Scalar;
+
+    fn sub(self, _other: Scalar) -> Scalar {
+        unimplemented!();
+    }
+}
+
+impl Sub<&Scalar> for Scalar {
+    type Output = Scalar;
+
+    fn sub(self, _other: &Scalar) -> Scalar {
+        unimplemented!();
+    }
+}
+
+impl SubAssign<Scalar> for Scalar {
+    fn sub_assign(&mut self, _rhs: Scalar) {
+        unimplemented!();
+    }
+}
+
+impl SubAssign<&Scalar> for Scalar {
+    fn sub_assign(&mut self, _rhs: &Scalar) {
+        unimplemented!();
+    }
+}
+
+impl Mul<Scalar> for Scalar {
+    type Output = Scalar;
+
+    fn mul(self, _other: Scalar) -> Scalar {
+        unimplemented!();
+    }
+}
+
+impl Mul<&Scalar> for Scalar {
+    type Output = Scalar;
+
+    fn mul(self, _other: &Scalar) -> Scalar {
+        unimplemented!();
+    }
+}
+
+impl MulAssign<Scalar> for Scalar {
+    fn mul_assign(&mut self, _rhs: Scalar) {
+        unimplemented!();
+    }
+}
+
+impl MulAssign<&Scalar> for Scalar {
+    fn mul_assign(&mut self, _rhs: &Scalar) {
+        unimplemented!();
+    }
+}
+
+impl Neg for Scalar {
+    type Output = Scalar;
+
+    fn neg(self) -> Scalar {
+        unimplemented!();
+    }
+}
+
+impl From<u64> for Scalar {
+    fn from(_: u64) -> Scalar {
+        unimplemented!();
     }
 }
 
@@ -100,6 +279,12 @@ impl FromBytes for Scalar {
 
 impl From<Scalar> for ElementBytes {
     fn from(scalar: Scalar) -> Self {
+        Self::from(&scalar)
+    }
+}
+
+impl From<&Scalar> for ElementBytes {
+    fn from(scalar: &Scalar) -> Self {
         let mut ret = ElementBytes::default();
         ret[0..8].copy_from_slice(&scalar.0[3].to_be_bytes());
         ret[8..16].copy_from_slice(&scalar.0[2].to_be_bytes());
@@ -194,6 +379,203 @@ impl Mul<NonZeroScalar> for AffinePoint {
 
 impl Generator for AffinePoint {
     fn generator() -> AffinePoint {
+        unimplemented!();
+    }
+}
+
+/// Example projective point type
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ProjectivePoint {}
+
+impl group::Group for ProjectivePoint {
+    type Scalar = Scalar;
+
+    fn random(_rng: impl RngCore) -> Self {
+        unimplemented!();
+    }
+
+    fn identity() -> Self {
+        unimplemented!();
+    }
+
+    fn generator() -> Self {
+        unimplemented!();
+    }
+
+    fn is_identity(&self) -> Choice {
+        unimplemented!();
+    }
+
+    #[must_use]
+    fn double(&self) -> Self {
+        unimplemented!();
+    }
+}
+
+impl group::Curve for ProjectivePoint {
+    type AffineRepr = AffinePoint;
+
+    fn to_affine(&self) -> AffinePoint {
+        unimplemented!();
+    }
+}
+
+impl Add<ProjectivePoint> for ProjectivePoint {
+    type Output = ProjectivePoint;
+
+    fn add(self, _other: ProjectivePoint) -> ProjectivePoint {
+        unimplemented!();
+    }
+}
+
+impl Add<&ProjectivePoint> for ProjectivePoint {
+    type Output = ProjectivePoint;
+
+    fn add(self, _other: &ProjectivePoint) -> ProjectivePoint {
+        unimplemented!();
+    }
+}
+
+impl AddAssign<ProjectivePoint> for ProjectivePoint {
+    fn add_assign(&mut self, _rhs: ProjectivePoint) {
+        unimplemented!();
+    }
+}
+
+impl AddAssign<&ProjectivePoint> for ProjectivePoint {
+    fn add_assign(&mut self, _rhs: &ProjectivePoint) {
+        unimplemented!();
+    }
+}
+
+impl Sub<ProjectivePoint> for ProjectivePoint {
+    type Output = ProjectivePoint;
+
+    fn sub(self, _other: ProjectivePoint) -> ProjectivePoint {
+        unimplemented!();
+    }
+}
+
+impl Sub<&ProjectivePoint> for ProjectivePoint {
+    type Output = ProjectivePoint;
+
+    fn sub(self, _other: &ProjectivePoint) -> ProjectivePoint {
+        unimplemented!();
+    }
+}
+
+impl SubAssign<ProjectivePoint> for ProjectivePoint {
+    fn sub_assign(&mut self, _rhs: ProjectivePoint) {
+        unimplemented!();
+    }
+}
+
+impl SubAssign<&ProjectivePoint> for ProjectivePoint {
+    fn sub_assign(&mut self, _rhs: &ProjectivePoint) {
+        unimplemented!();
+    }
+}
+
+impl Add<AffinePoint> for ProjectivePoint {
+    type Output = ProjectivePoint;
+
+    fn add(self, _other: AffinePoint) -> ProjectivePoint {
+        unimplemented!();
+    }
+}
+
+impl Add<&AffinePoint> for ProjectivePoint {
+    type Output = ProjectivePoint;
+
+    fn add(self, _other: &AffinePoint) -> ProjectivePoint {
+        unimplemented!();
+    }
+}
+
+impl AddAssign<AffinePoint> for ProjectivePoint {
+    fn add_assign(&mut self, _rhs: AffinePoint) {
+        unimplemented!();
+    }
+}
+
+impl AddAssign<&AffinePoint> for ProjectivePoint {
+    fn add_assign(&mut self, _rhs: &AffinePoint) {
+        unimplemented!();
+    }
+}
+
+impl Sum for ProjectivePoint {
+    fn sum<I: Iterator<Item = Self>>(_iter: I) -> Self {
+        unimplemented!();
+    }
+}
+
+impl<'a> Sum<&'a ProjectivePoint> for ProjectivePoint {
+    fn sum<I: Iterator<Item = &'a ProjectivePoint>>(_iter: I) -> Self {
+        unimplemented!();
+    }
+}
+
+impl Sub<AffinePoint> for ProjectivePoint {
+    type Output = ProjectivePoint;
+
+    fn sub(self, _other: AffinePoint) -> ProjectivePoint {
+        unimplemented!();
+    }
+}
+
+impl Sub<&AffinePoint> for ProjectivePoint {
+    type Output = ProjectivePoint;
+
+    fn sub(self, _other: &AffinePoint) -> ProjectivePoint {
+        unimplemented!();
+    }
+}
+
+impl SubAssign<AffinePoint> for ProjectivePoint {
+    fn sub_assign(&mut self, _rhs: AffinePoint) {
+        unimplemented!();
+    }
+}
+
+impl SubAssign<&AffinePoint> for ProjectivePoint {
+    fn sub_assign(&mut self, _rhs: &AffinePoint) {
+        unimplemented!();
+    }
+}
+
+impl Mul<Scalar> for ProjectivePoint {
+    type Output = ProjectivePoint;
+
+    fn mul(self, _other: Scalar) -> ProjectivePoint {
+        unimplemented!();
+    }
+}
+
+impl Mul<&Scalar> for ProjectivePoint {
+    type Output = ProjectivePoint;
+
+    fn mul(self, _other: &Scalar) -> ProjectivePoint {
+        unimplemented!();
+    }
+}
+
+impl MulAssign<Scalar> for ProjectivePoint {
+    fn mul_assign(&mut self, _rhs: Scalar) {
+        unimplemented!();
+    }
+}
+
+impl MulAssign<&Scalar> for ProjectivePoint {
+    fn mul_assign(&mut self, _rhs: &Scalar) {
+        unimplemented!();
+    }
+}
+
+impl Neg for ProjectivePoint {
+    type Output = ProjectivePoint;
+
+    fn neg(self) -> ProjectivePoint {
         unimplemented!();
     }
 }

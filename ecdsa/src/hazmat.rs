@@ -11,19 +11,32 @@
 //! Failure to use them correctly can lead to catastrophic failures including
 //! FULL PRIVATE KEY RECOVERY!
 
-use crate::{CheckSignatureBytes, Signature, SignatureSize};
+#[cfg(feature = "arithmetic")]
+use crate::SignatureSize;
+#[cfg(feature = "arithmetic")]
 use core::borrow::Borrow;
-use elliptic_curve::{generic_array::ArrayLength, ops::Invert, weierstrass::Curve, Arithmetic};
+#[cfg(feature = "arithmetic")]
+use elliptic_curve::{ops::Invert, Arithmetic};
+#[cfg(feature = "arithmetic")]
 use signature::Error;
 
 #[cfg(feature = "digest")]
+use crate::CheckSignatureBytes;
+#[cfg(feature = "digest")]
 use signature::{digest::Digest, PrehashSignature};
+
+#[cfg(any(feature = "arithmetic", feature = "digest"))]
+use crate::Signature;
+#[cfg(any(feature = "arithmetic", feature = "digest"))]
+use elliptic_curve::{generic_array::ArrayLength, weierstrass::Curve};
 
 /// Try to sign the given prehashed message using ECDSA.
 ///
 /// This trait is intended to be implemented on a type with access
 /// to the secret scalar via `&self`, such as particular curve's `Scalar` type,
 /// or potentially a key handle to a hardware device.
+#[cfg(feature = "arithmetic")]
+#[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
 pub trait SignPrimitive<C>
 where
     C: Curve + Arithmetic,
@@ -48,6 +61,8 @@ where
 /// This trait is intended to be implemented on type which can access
 /// the affine point represeting the public key via `&self`, such as a
 /// particular curve's `AffinePoint` type.
+#[cfg(feature = "arithmetic")]
+#[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
 pub trait VerifyPrimitive<C>
 where
     C: Curve + Arithmetic,

@@ -38,7 +38,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
+          toolchain: 1.44.0 # Highest MSRV in repo
           components: clippy
       - run: cargo clippy --all-features -- -D warnings
 
