@@ -69,8 +69,11 @@ use core::{
     fmt::{self, Debug},
     ops::Add,
 };
-use elliptic_curve::{scalar::NonZeroScalar, Arithmetic, ElementBytes, FromBytes};
+use elliptic_curve::ElementBytes;
 use generic_array::{sequence::Concat, typenum::Unsigned, ArrayLength, GenericArray};
+
+#[cfg(feature = "arithmetic")]
+use elliptic_curve::{scalar::NonZeroScalar, Arithmetic, FromBytes};
 
 /// Size of a fixed sized signature for the given elliptic curve.
 pub type SignatureSize<C> = <<C as elliptic_curve::Curve>::FieldSize as Add>::Output;
@@ -136,37 +139,35 @@ where
         let (r, s) = self.bytes.split_at(C::FieldSize::to_usize());
         asn1::Signature::from_scalar_bytes(r, s)
     }
+}
 
+#[cfg(feature = "arithmetic")]
+#[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
+impl<C> Signature<C>
+where
+    C: Curve + Arithmetic,
+    SignatureSize<C>: ArrayLength<u8>,
+{
     /// Get the `r` component of this signature
-    pub fn r(&self) -> NonZeroScalar<C>
-    where
-        C: Arithmetic,
-    {
+    pub fn r(&self) -> NonZeroScalar<C> {
         let r_bytes = ElementBytes::<C>::from_slice(&self.bytes[..C::FieldSize::to_usize()]);
         NonZeroScalar::from_bytes(&r_bytes).unwrap()
     }
 
     /// Get the `s` component of this signature
-    pub fn s(&self) -> NonZeroScalar<C>
-    where
-        C: Arithmetic,
-    {
+    pub fn s(&self) -> NonZeroScalar<C> {
         let s_bytes = ElementBytes::<C>::from_slice(&self.bytes[C::FieldSize::to_usize()..]);
         NonZeroScalar::from_bytes(&s_bytes).unwrap()
     }
-}
 
-impl<C> Signature<C>
-where
-    C: Curve + Arithmetic,
-    C::Scalar: NormalizeLow,
-    SignatureSize<C>: ArrayLength<u8>,
-{
     /// Normalize signature into "low S" form as described in
     /// [BIP 0062: Dealing with Malleability][1].
     ///
     /// [1]: https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki
-    pub fn normalize_s(&mut self) -> Result<bool, Error> {
+    pub fn normalize_s(&mut self) -> Result<bool, Error>
+    where
+        C::Scalar: NormalizeLow,
+    {
         let s_bytes = GenericArray::from_mut_slice(&mut self.bytes[C::FieldSize::to_usize()..]);
         let s_option = C::Scalar::from_bytes(s_bytes);
 
@@ -298,6 +299,8 @@ where
     }
 }
 
+#[cfg(feature = "arithmetic")]
+#[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
 impl<C> CheckSignatureBytes for C
 where
     C: Curve + Arithmetic,
