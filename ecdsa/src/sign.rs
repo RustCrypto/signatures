@@ -12,7 +12,7 @@ use crate::{
 use core::convert::TryInto;
 use elliptic_curve::{
     generic_array::ArrayLength, ops::Invert, scalar::NonZeroScalar, weierstrass::Curve,
-    zeroize::Zeroize, Arithmetic, ElementBytes, FromBytes, FromDigest, Generate, SecretKey,
+    zeroize::Zeroize, Arithmetic, ElementBytes, FromBytes, FromDigest, SecretKey,
 };
 use signature::{
     digest::{BlockInput, Digest, FixedOutput, Reset, Update},
@@ -39,6 +39,13 @@ where
     C::Scalar: FromDigest<C> + Invert<Output = C::Scalar> + SignPrimitive<C> + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
 {
+    /// Generate a cryptographically random [`SigningKey`].
+    pub fn random(rng: impl CryptoRng + RngCore) -> Self {
+        Self {
+            secret_scalar: NonZeroScalar::random(rng),
+        }
+    }
+
     /// Initialize signing key from a raw scalar serialized as a byte slice.
     // TODO(tarcieri): PKCS#8 support
     pub fn new(bytes: &[u8]) -> Result<Self, Error> {
@@ -68,20 +75,6 @@ where
     /// Serialize this [`SigningKey`] as bytes
     pub fn to_bytes(&self) -> ElementBytes<C> {
         self.secret_scalar.to_bytes()
-    }
-}
-
-impl<C> Generate for SigningKey<C>
-where
-    C: Curve + Arithmetic,
-    C::Scalar: FromDigest<C> + Invert<Output = C::Scalar> + SignPrimitive<C> + Zeroize,
-    NonZeroScalar<C>: Generate,
-    SignatureSize<C>: ArrayLength<u8>,
-{
-    fn generate(rng: impl CryptoRng + RngCore) -> Self {
-        Self {
-            secret_scalar: NonZeroScalar::generate(rng),
-        }
     }
 }
 
