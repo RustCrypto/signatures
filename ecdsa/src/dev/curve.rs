@@ -15,10 +15,11 @@ use elliptic_curve::{
     ops::Invert,
     point::Generator,
     rand_core::RngCore,
+    scalar::ScalarBits,
     subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption},
     util::{adc64, sbb64},
     zeroize::Zeroize,
-    FieldBits, FromBytes, FromDigest,
+    FromBytes, FromDigest,
 };
 
 /// Example NIST P-256-like elliptic curve.
@@ -114,7 +115,7 @@ impl PrimeField for Scalar {
         unimplemented!();
     }
 
-    fn to_le_bits(&self) -> FieldBits<ExampleCurve> {
+    fn to_le_bits(&self) -> ScalarBits<ExampleCurve> {
         unimplemented!();
     }
 
@@ -122,7 +123,7 @@ impl PrimeField for Scalar {
         unimplemented!();
     }
 
-    fn char_le_bits() -> FieldBits<ExampleCurve> {
+    fn char_le_bits() -> ScalarBits<ExampleCurve> {
         unimplemented!();
     }
 
