@@ -18,7 +18,7 @@ use elliptic_curve::{
     subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption},
     util::{adc64, sbb64},
     zeroize::Zeroize,
-    FromBytes, FromDigest,
+    FromDigest, FromFieldBytes,
 };
 
 /// Example NIST P-256-like elliptic curve.
@@ -253,10 +253,8 @@ impl From<u64> for Scalar {
     }
 }
 
-impl FromBytes for Scalar {
-    type Size = U32;
-
-    fn from_bytes(bytes: &FieldBytes) -> CtOption<Self> {
+impl FromFieldBytes<ExampleCurve> for Scalar {
+    fn from_field_bytes(bytes: &FieldBytes) -> CtOption<Self> {
         let mut w = [0u64; LIMBS];
 
         // Interpret the bytes as a big-endian integer w.

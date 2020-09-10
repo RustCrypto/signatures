@@ -8,7 +8,7 @@ use elliptic_curve::{
     ops::Invert,
     scalar::NonZeroScalar,
     zeroize::{Zeroize, Zeroizing},
-    Arithmetic, FieldBytes, FromBytes, FromDigest,
+    Arithmetic, FieldBytes, FromDigest, FromFieldBytes,
 };
 use hmac::{Hmac, Mac, NewMac};
 
@@ -30,8 +30,7 @@ where
     x.zeroize();
 
     loop {
-        let k = NonZeroScalar::from_bytes(&hmac_drbg.next());
-
+        let k = NonZeroScalar::from_field_bytes(&hmac_drbg.next());
         if k.is_some().into() {
             return Zeroizing::new(k.unwrap());
         }
@@ -103,7 +102,7 @@ where
 mod tests {
     use super::generate_k;
     use crate::dev::curve::NonZeroScalar;
-    use elliptic_curve::FromBytes;
+    use elliptic_curve::FromFieldBytes;
     use hex_literal::hex;
     use sha2::{Digest, Sha256};
 
@@ -111,7 +110,7 @@ mod tests {
     /// <https://tools.ietf.org/html/rfc6979#appendix-A.2.5>
     #[test]
     fn appendix_2_5_test_vector() {
-        let x = NonZeroScalar::from_bytes(
+        let x = NonZeroScalar::from_field_bytes(
             &hex!("c9afa9d845ba75166b5c215767b1d6934e50c3db36e89b127b8a622b120f6721").into(),
         )
         .unwrap();

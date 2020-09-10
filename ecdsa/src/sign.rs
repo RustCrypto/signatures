@@ -12,7 +12,7 @@ use crate::{
 use core::convert::TryInto;
 use elliptic_curve::{
     generic_array::ArrayLength, ops::Invert, scalar::NonZeroScalar, weierstrass::Curve,
-    zeroize::Zeroize, Arithmetic, FieldBytes, FromBytes, FromDigest, SecretKey,
+    zeroize::Zeroize, Arithmetic, FieldBytes, FromDigest, FromFieldBytes, SecretKey,
 };
 use signature::{
     digest::{BlockInput, Digest, FixedOutput, Reset, Update},
@@ -52,7 +52,7 @@ where
         bytes
             .try_into()
             .ok()
-            .and_then(|b| NonZeroScalar::from_bytes(b).into())
+            .and_then(|b| NonZeroScalar::from_field_bytes(b).into())
             .map(|secret_scalar| Self { secret_scalar })
             .ok_or_else(Error::new)
     }

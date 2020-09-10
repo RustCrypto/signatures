@@ -36,7 +36,7 @@ macro_rules! new_signing_test {
     ($curve:path, $vectors:expr) => {
         use core::convert::TryInto;
         use $crate::{
-            elliptic_curve::{Arithmetic, FromBytes},
+            elliptic_curve::{Arithmetic, FromFieldBytes},
             generic_array::GenericArray,
             hazmat::SignPrimitive,
         };
@@ -69,7 +69,7 @@ macro_rules! new_verification_test {
     ($curve:path, $vectors:expr) => {
         use core::convert::TryInto;
         use $crate::{
-            elliptic_curve::{sec1::EncodedPoint, Arithmetic, FromBytes},
+            elliptic_curve::{sec1::EncodedPoint, Arithmetic, FromFieldBytes},
             generic_array::GenericArray,
             hazmat::VerifyPrimitive,
             Signature,
