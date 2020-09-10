@@ -79,7 +79,7 @@ use elliptic_curve::FieldBytes;
 use generic_array::{sequence::Concat, typenum::Unsigned, ArrayLength, GenericArray};
 
 #[cfg(feature = "arithmetic")]
-use elliptic_curve::{scalar::NonZeroScalar, Arithmetic, FromBytes};
+use elliptic_curve::{scalar::NonZeroScalar, Arithmetic, FromFieldBytes};
 
 /// Size of a fixed sized signature for the given elliptic curve.
 pub type SignatureSize<C> = <<C as elliptic_curve::Curve>::FieldSize as Add>::Output;
@@ -157,13 +157,13 @@ where
     /// Get the `r` component of this signature
     pub fn r(&self) -> NonZeroScalar<C> {
         let r_bytes = FieldBytes::<C>::from_slice(&self.bytes[..C::FieldSize::to_usize()]);
-        NonZeroScalar::from_bytes(&r_bytes).unwrap()
+        NonZeroScalar::from_field_bytes(&r_bytes).unwrap()
     }
 
     /// Get the `s` component of this signature
     pub fn s(&self) -> NonZeroScalar<C> {
         let s_bytes = FieldBytes::<C>::from_slice(&self.bytes[C::FieldSize::to_usize()..]);
-        NonZeroScalar::from_bytes(&s_bytes).unwrap()
+        NonZeroScalar::from_field_bytes(&s_bytes).unwrap()
     }
 
     /// Normalize signature into "low S" form as described in
@@ -175,7 +175,7 @@ where
         C::Scalar: NormalizeLow,
     {
         let s_bytes = GenericArray::from_mut_slice(&mut self.bytes[C::FieldSize::to_usize()..]);
-        let s_option = C::Scalar::from_bytes(s_bytes);
+        let s_option = C::Scalar::from_field_bytes(s_bytes);
 
         // Not constant time, but we're operating on public values
         if s_option.is_some().into() {
@@ -183,10 +183,9 @@ where
 
             if was_high {
                 s_bytes.copy_from_slice(&s_low.into());
-                Ok(true)
-            } else {
-                Ok(false)
             }
+
+            Ok(was_high)
         } else {
             Err(Error::new())
         }
@@ -316,8 +315,8 @@ where
     /// of the signature are in range.
     fn check_signature_bytes(bytes: &SignatureBytes<C>) -> Result<(), Error> {
         let (r, s) = bytes.split_at(C::FieldSize::to_usize());
-        let r_ok = NonZeroScalar::<C>::from_bytes(r.try_into().unwrap()).is_some();
-        let s_ok = NonZeroScalar::<C>::from_bytes(s.try_into().unwrap()).is_some();
+        let r_ok = NonZeroScalar::<C>::from_field_bytes(r.try_into().unwrap()).is_some();
+        let s_ok = NonZeroScalar::<C>::from_field_bytes(s.try_into().unwrap()).is_some();
 
         if r_ok.into() && s_ok.into() {
             Ok(())
