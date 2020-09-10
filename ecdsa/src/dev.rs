@@ -44,14 +44,17 @@ macro_rules! new_signing_test {
         #[test]
         fn ecdsa_signing() {
             for vector in $vectors {
-                let d = <$curve as Arithmetic>::Scalar::from_bytes(vector.d.try_into().unwrap())
-                    .unwrap();
+                let d =
+                    <$curve as Arithmetic>::Scalar::from_field_bytes(vector.d.try_into().unwrap())
+                        .unwrap();
 
-                let k = <$curve as Arithmetic>::Scalar::from_bytes(vector.k.try_into().unwrap())
-                    .unwrap();
+                let k =
+                    <$curve as Arithmetic>::Scalar::from_field_bytes(vector.k.try_into().unwrap())
+                        .unwrap();
 
-                let z = <$curve as Arithmetic>::Scalar::from_bytes(vector.m.try_into().unwrap())
-                    .unwrap();
+                let z =
+                    <$curve as Arithmetic>::Scalar::from_field_bytes(vector.m.try_into().unwrap())
+                        .unwrap();
 
                 let sig = d.try_sign_prehashed(&k, &z).unwrap();
 
@@ -86,8 +89,9 @@ macro_rules! new_verification_test {
 
                 let q: <$curve as Arithmetic>::AffinePoint = q_encoded.decode().unwrap();
 
-                let z = <$curve as Arithmetic>::Scalar::from_bytes(vector.m.try_into().unwrap())
-                    .unwrap();
+                let z =
+                    <$curve as Arithmetic>::Scalar::from_field_bytes(vector.m.try_into().unwrap())
+                        .unwrap();
 
                 let sig = Signature::from_scalars(
                     GenericArray::clone_from_slice(vector.r),
@@ -111,8 +115,9 @@ macro_rules! new_verification_test {
 
                 let q: <$curve as Arithmetic>::AffinePoint = q_encoded.decode().unwrap();
 
-                let z = <$curve as Arithmetic>::Scalar::from_bytes(vector.m.try_into().unwrap())
-                    .unwrap();
+                let z =
+                    <$curve as Arithmetic>::Scalar::from_field_bytes(vector.m.try_into().unwrap())
+                        .unwrap();
 
                 // Flip a bit in `s`
                 let mut s_tweaked = GenericArray::clone_from_slice(vector.s);
