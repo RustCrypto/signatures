@@ -156,14 +156,14 @@ where
 {
     /// Get the `r` component of this signature
     pub fn r(&self) -> NonZeroScalar<C> {
-        let r_bytes = FieldBytes::<C>::from_slice(&self.bytes[..C::FieldSize::to_usize()]);
-        NonZeroScalar::from_field_bytes(&r_bytes).unwrap()
+        NonZeroScalar::from_field_bytes(self.bytes[..C::FieldSize::to_usize()].try_into().unwrap())
+            .unwrap()
     }
 
     /// Get the `s` component of this signature
     pub fn s(&self) -> NonZeroScalar<C> {
-        let s_bytes = FieldBytes::<C>::from_slice(&self.bytes[C::FieldSize::to_usize()..]);
-        NonZeroScalar::from_field_bytes(&s_bytes).unwrap()
+        NonZeroScalar::from_field_bytes(self.bytes[C::FieldSize::to_usize()..].try_into().unwrap())
+            .unwrap()
     }
 
     /// Normalize signature into "low S" form as described in
