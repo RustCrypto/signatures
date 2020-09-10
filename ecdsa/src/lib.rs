@@ -53,16 +53,22 @@ pub mod sign;
 pub mod verify;
 
 // Re-export the `elliptic-curve` crate (and select types)
-pub use elliptic_curve::{self, generic_array, sec1::EncodedPoint, weierstrass::Curve, SecretKey};
+pub use elliptic_curve::{self, generic_array, sec1::EncodedPoint, weierstrass::Curve};
 
 // Re-export the `signature` crate (and select types)
 pub use signature::{self, Error};
 
 #[cfg(feature = "sign")]
+#[cfg_attr(docsrs, doc(cfg(feature = "sign")))]
 pub use sign::SigningKey;
 
 #[cfg(feature = "verify")]
+#[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
 pub use verify::VerifyKey;
+
+#[cfg(feature = "zeroize")]
+#[cfg_attr(docsrs, doc(cfg(feature = "zeroize")))]
+pub use elliptic_curve::SecretKey;
 
 use core::{
     convert::{TryFrom, TryInto},

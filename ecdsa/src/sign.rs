@@ -57,12 +57,6 @@ where
             .ok_or_else(Error::new)
     }
 
-    /// Create a new signing key from a [`SecretKey`].
-    // TODO(tarcieri): infallible `From` conversion from a secret key
-    pub fn from_secret_key(secret_key: &SecretKey<C>) -> Result<Self, Error> {
-        Self::new(secret_key.as_bytes())
-    }
-
     /// Get the [`VerifyKey`] which corresponds to this [`SigningKey`]
     #[cfg(feature = "verify")]
     #[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
@@ -75,6 +69,19 @@ where
     /// Serialize this [`SigningKey`] as bytes
     pub fn to_bytes(&self) -> FieldBytes<C> {
         self.secret_scalar.to_bytes()
+    }
+}
+
+impl<C> From<&SecretKey<C>> for SigningKey<C>
+where
+    C: Curve + Arithmetic,
+    C::Scalar: FromDigest<C> + Invert<Output = C::Scalar> + SignPrimitive<C> + Zeroize,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn from(secret_key: &SecretKey<C>) -> Self {
+        Self {
+            secret_scalar: *secret_key.secret_scalar(),
+        }
     }
 }
 
