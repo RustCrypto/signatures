@@ -79,7 +79,11 @@ use elliptic_curve::FieldBytes;
 use generic_array::{sequence::Concat, typenum::Unsigned, ArrayLength, GenericArray};
 
 #[cfg(feature = "arithmetic")]
-use elliptic_curve::{scalar::NonZeroScalar, Arithmetic, FromFieldBytes};
+use elliptic_curve::{
+    ff::PrimeField,
+    scalar::{NonZeroScalar, Scalar},
+    ProjectiveArithmetic,
+};
 
 /// Size of a fixed sized signature for the given elliptic curve.
 pub type SignatureSize<C> = <<C as elliptic_curve::Curve>::FieldSize as Add>::Output;
@@ -151,19 +155,23 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
 impl<C> Signature<C>
 where
-    C: Curve + Arithmetic,
+    C: Curve + ProjectiveArithmetic,
+    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
+    <Scalar<C> as PrimeField>::Repr: From<Scalar<C>> + for<'a> From<&'a Scalar<C>>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Get the `r` component of this signature
     pub fn r(&self) -> NonZeroScalar<C> {
-        NonZeroScalar::from_field_bytes(self.bytes[..C::FieldSize::to_usize()].try_into().unwrap())
-            .unwrap()
+        let r_bytes = GenericArray::clone_from_slice(&self.bytes[..C::FieldSize::to_usize()]);
+        NonZeroScalar::from_repr(r_bytes)
+            .unwrap_or_else(|| unreachable!("r-component ensured valid in constructor"))
     }
 
     /// Get the `s` component of this signature
     pub fn s(&self) -> NonZeroScalar<C> {
-        NonZeroScalar::from_field_bytes(self.bytes[C::FieldSize::to_usize()..].try_into().unwrap())
-            .unwrap()
+        let s_bytes = GenericArray::clone_from_slice(&self.bytes[C::FieldSize::to_usize()..]);
+        NonZeroScalar::from_repr(s_bytes)
+            .unwrap_or_else(|| unreachable!("r-component ensured valid in constructor"))
     }
 
     /// Normalize signature into "low S" form as described in
@@ -172,23 +180,20 @@ where
     /// [1]: https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki
     pub fn normalize_s(&mut self) -> Result<bool, Error>
     where
-        C::Scalar: NormalizeLow,
+        Scalar<C>: NormalizeLow,
     {
         let s_bytes = GenericArray::from_mut_slice(&mut self.bytes[C::FieldSize::to_usize()..]);
-        let s_option = C::Scalar::from_field_bytes(s_bytes);
+        Scalar::<C>::from_repr(s_bytes.clone())
+            .map(|s| {
+                let (s_low, was_high) = s.normalize_low();
 
-        // Not constant time, but we're operating on public values
-        if s_option.is_some().into() {
-            let (s_low, was_high) = s_option.unwrap().normalize_low();
+                if was_high {
+                    s_bytes.copy_from_slice(&s_low.to_repr());
+                }
 
-            if was_high {
-                s_bytes.copy_from_slice(&s_low.into());
-            }
-
-            Ok(was_high)
-        } else {
-            Err(Error::new())
-        }
+                was_high
+            })
+            .ok_or_else(Error::new)
     }
 }
 
@@ -285,7 +290,7 @@ where
     /// Validate that the given signature is well-formed.
     ///
     /// This trait is auto-impl'd for curves which impl the
-    /// `elliptic_curve::Arithmetic` trait, which validates that the
+    /// `elliptic_curve::ProjectiveArithmetic` trait, which validates that the
     /// `r` and `s` components of the signature are in range of the
     /// scalar field.
     ///
@@ -308,17 +313,19 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
 impl<C> CheckSignatureBytes for C
 where
-    C: Curve + Arithmetic,
+    C: Curve + ProjectiveArithmetic,
+    FieldBytes<C>: From<Scalar<C>> + for<'a> From<&'a Scalar<C>>,
+    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// When curve arithmetic is available, check that the scalar components
     /// of the signature are in range.
     fn check_signature_bytes(bytes: &SignatureBytes<C>) -> Result<(), Error> {
         let (r, s) = bytes.split_at(C::FieldSize::to_usize());
-        let r_ok = NonZeroScalar::<C>::from_field_bytes(r.try_into().unwrap()).is_some();
-        let s_ok = NonZeroScalar::<C>::from_field_bytes(s.try_into().unwrap()).is_some();
+        let r_ok = NonZeroScalar::<C>::from_repr(GenericArray::clone_from_slice(r)).is_some();
+        let s_ok = NonZeroScalar::<C>::from_repr(GenericArray::clone_from_slice(s)).is_some();
 
-        if r_ok.into() && s_ok.into() {
+        if r_ok && s_ok {
             Ok(())
         } else {
             Err(Error::new())

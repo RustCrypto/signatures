@@ -4,11 +4,12 @@
 
 use elliptic_curve::{
     digest::{BlockInput, FixedOutput, Reset, Update},
+    ff::PrimeField,
     generic_array::GenericArray,
     ops::Invert,
-    scalar::NonZeroScalar,
+    scalar::{NonZeroScalar, Scalar},
     zeroize::{Zeroize, Zeroizing},
-    Arithmetic, FieldBytes, FromDigest, FromFieldBytes,
+    FieldBytes, FromDigest, ProjectiveArithmetic,
 };
 use hmac::{Hmac, Mac, NewMac};
 
@@ -20,19 +21,20 @@ pub fn generate_k<C, D>(
     additional_data: &[u8],
 ) -> Zeroizing<NonZeroScalar<C>>
 where
-    C: Arithmetic,
-    C::Scalar: FromDigest<C> + Invert<Output = C::Scalar> + Zeroize,
+    C: ProjectiveArithmetic,
     D: FixedOutput<OutputSize = C::FieldSize> + BlockInput + Clone + Default + Reset + Update,
+    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
+    Scalar<C>:
+        PrimeField<Repr = FieldBytes<C>> + FromDigest<C> + Invert<Output = Scalar<C>> + Zeroize,
 {
-    let mut x = secret_scalar.to_bytes();
-    let h1: FieldBytes<C> = C::Scalar::from_digest(msg_digest).into();
+    let mut x = secret_scalar.to_repr();
+    let h1 = Scalar::<C>::from_digest(msg_digest).to_repr();
     let mut hmac_drbg = HmacDrbg::<D>::new(&x, &h1, additional_data);
     x.zeroize();
 
     loop {
-        let k = NonZeroScalar::from_field_bytes(&hmac_drbg.next());
-        if k.is_some().into() {
-            return Zeroizing::new(k.unwrap());
+        if let Some(k) = NonZeroScalar::from_repr(hmac_drbg.next()) {
+            return Zeroizing::new(k);
         }
     }
 }
@@ -102,7 +104,7 @@ where
 mod tests {
     use super::generate_k;
     use crate::dev::curve::NonZeroScalar;
-    use elliptic_curve::FromFieldBytes;
+    use elliptic_curve::ff::PrimeField;
     use hex_literal::hex;
     use sha2::{Digest, Sha256};
 
@@ -110,8 +112,8 @@ mod tests {
     /// <https://tools.ietf.org/html/rfc6979#appendix-A.2.5>
     #[test]
     fn appendix_2_5_test_vector() {
-        let x = NonZeroScalar::from_field_bytes(
-            &hex!("c9afa9d845ba75166b5c215767b1d6934e50c3db36e89b127b8a622b120f6721").into(),
+        let x = NonZeroScalar::from_repr(
+            hex!("c9afa9d845ba75166b5c215767b1d6934e50c3db36e89b127b8a622b120f6721").into(),
         )
         .unwrap();
 
@@ -119,7 +121,7 @@ mod tests {
         let k = generate_k(&x, digest, &[]);
 
         assert_eq!(
-            k.to_bytes().as_slice(),
+            k.to_repr().as_slice(),
             &hex!("a6e3c57dd01abe90086538398355dd4c3b17aa873382b0f24d6129493d8aad60")[..]
         );
     }
