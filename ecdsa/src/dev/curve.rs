@@ -12,13 +12,12 @@ use elliptic_curve::{
     digest::Digest,
     ff::{Field, PrimeField},
     group,
-    point::Generator,
     rand_core::RngCore,
     scalar::ScalarBits,
     subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption},
     util::{adc64, sbb64},
     zeroize::Zeroize,
-    FromDigest, FromFieldBytes,
+    FromDigest,
 };
 
 /// Example NIST P-256-like elliptic curve.
@@ -32,9 +31,7 @@ impl elliptic_curve::Curve for ExampleCurve {
 
 impl elliptic_curve::weierstrass::Curve for ExampleCurve {}
 
-impl elliptic_curve::Arithmetic for ExampleCurve {
-    type Scalar = Scalar;
-    type AffinePoint = AffinePoint;
+impl elliptic_curve::ProjectiveArithmetic for ExampleCurve {
     type ProjectivePoint = ProjectivePoint;
 }
 
@@ -68,7 +65,7 @@ impl Field for Scalar {
     }
 
     fn zero() -> Self {
-        unimplemented!();
+        Self(Default::default())
     }
 
     fn one() -> Self {
@@ -76,7 +73,7 @@ impl Field for Scalar {
     }
 
     fn is_zero(&self) -> bool {
-        unimplemented!();
+        self.ct_eq(&Self::zero()).into()
     }
 
     #[must_use]
@@ -106,12 +103,36 @@ impl PrimeField for Scalar {
     const CAPACITY: u32 = 255;
     const S: u32 = 4;
 
-    fn from_repr(_repr: FieldBytes) -> Option<Self> {
-        unimplemented!();
+    fn from_repr(bytes: FieldBytes) -> Option<Self> {
+        let mut w = [0u64; LIMBS];
+
+        // Interpret the bytes as a big-endian integer w.
+        w[3] = u64::from_be_bytes(bytes[0..8].try_into().unwrap());
+        w[2] = u64::from_be_bytes(bytes[8..16].try_into().unwrap());
+        w[1] = u64::from_be_bytes(bytes[16..24].try_into().unwrap());
+        w[0] = u64::from_be_bytes(bytes[24..32].try_into().unwrap());
+
+        // If w is in the range [0, n) then w - n will overflow, resulting in a borrow
+        // value of 2^64 - 1.
+        let (_, borrow) = sbb64(w[0], MODULUS[0], 0);
+        let (_, borrow) = sbb64(w[1], MODULUS[1], borrow);
+        let (_, borrow) = sbb64(w[2], MODULUS[2], borrow);
+        let (_, borrow) = sbb64(w[3], MODULUS[3], borrow);
+
+        if (borrow as u8) & 1 == 1 {
+            Some(Scalar(w))
+        } else {
+            None
+        }
     }
 
     fn to_repr(&self) -> FieldBytes {
-        unimplemented!();
+        let mut ret = FieldBytes::default();
+        ret[0..8].copy_from_slice(&self.0[3].to_be_bytes());
+        ret[8..16].copy_from_slice(&self.0[2].to_be_bytes());
+        ret[16..24].copy_from_slice(&self.0[1].to_be_bytes());
+        ret[24..32].copy_from_slice(&self.0[0].to_be_bytes());
+        ret
     }
 
     fn to_le_bits(&self) -> ScalarBits<ExampleCurve> {
@@ -253,28 +274,6 @@ impl From<u64> for Scalar {
     }
 }
 
-impl FromFieldBytes<ExampleCurve> for Scalar {
-    fn from_field_bytes(bytes: &FieldBytes) -> CtOption<Self> {
-        let mut w = [0u64; LIMBS];
-
-        // Interpret the bytes as a big-endian integer w.
-        w[3] = u64::from_be_bytes(bytes[0..8].try_into().unwrap());
-        w[2] = u64::from_be_bytes(bytes[8..16].try_into().unwrap());
-        w[1] = u64::from_be_bytes(bytes[16..24].try_into().unwrap());
-        w[0] = u64::from_be_bytes(bytes[24..32].try_into().unwrap());
-
-        // If w is in the range [0, n) then w - n will overflow, resulting in a borrow
-        // value of 2^64 - 1.
-        let (_, borrow) = sbb64(w[0], MODULUS[0], 0);
-        let (_, borrow) = sbb64(w[1], MODULUS[1], borrow);
-        let (_, borrow) = sbb64(w[2], MODULUS[2], borrow);
-        let (_, borrow) = sbb64(w[3], MODULUS[3], borrow);
-        let is_some = (borrow as u8) & 1;
-
-        CtOption::new(Scalar(w), Choice::from(is_some))
-    }
-}
-
 impl From<Scalar> for FieldBytes {
     fn from(scalar: Scalar) -> Self {
         Self::from(&scalar)
@@ -363,12 +362,6 @@ impl Mul<NonZeroScalar> for AffinePoint {
     type Output = AffinePoint;
 
     fn mul(self, _scalar: NonZeroScalar) -> Self {
-        unimplemented!();
-    }
-}
-
-impl Generator for AffinePoint {
-    fn generator() -> AffinePoint {
         unimplemented!();
     }
 }

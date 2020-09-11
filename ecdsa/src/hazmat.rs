@@ -16,7 +16,7 @@ use crate::SignatureSize;
 #[cfg(feature = "arithmetic")]
 use core::borrow::Borrow;
 #[cfg(feature = "arithmetic")]
-use elliptic_curve::{ops::Invert, Arithmetic};
+use elliptic_curve::{ff::PrimeField, ops::Invert, FieldBytes, ProjectiveArithmetic, Scalar};
 #[cfg(feature = "arithmetic")]
 use signature::Error;
 
@@ -39,7 +39,9 @@ use elliptic_curve::{generic_array::ArrayLength, weierstrass::Curve};
 #[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
 pub trait SignPrimitive<C>
 where
-    C: Curve + Arithmetic,
+    C: Curve + ProjectiveArithmetic,
+    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
+    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Try to sign the prehashed message.
@@ -49,10 +51,10 @@ where
     /// - `ephemeral_scalar`: ECDSA `k` value. MUST BE UNIFORMLY RANDOM!!!
     /// - `hashed_msg`: scalar computed from a hashed message digest to be signed.
     ///   MUST BE OUTPUT OF A CRYPTOGRAPHICALLY SECURE DIGEST ALGORITHM!!!
-    fn try_sign_prehashed<K: Borrow<C::Scalar> + Invert<Output = C::Scalar>>(
+    fn try_sign_prehashed<K: Borrow<Scalar<C>> + Invert<Output = Scalar<C>>>(
         &self,
         ephemeral_scalar: &K,
-        hashed_msg: &C::Scalar,
+        hashed_msg: &Scalar<C>,
     ) -> Result<Signature<C>, Error>;
 }
 
@@ -65,7 +67,9 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
 pub trait VerifyPrimitive<C>
 where
-    C: Curve + Arithmetic,
+    C: Curve + ProjectiveArithmetic,
+    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
+    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Verify the prehashed message against the provided signature
@@ -77,7 +81,7 @@ where
     /// - `signature`: signature to be verified against the key and message
     fn verify_prehashed(
         &self,
-        hashed_msg: &C::Scalar,
+        hashed_msg: &Scalar<C>,
         signature: &Signature<C>,
     ) -> Result<(), Error>;
 }
