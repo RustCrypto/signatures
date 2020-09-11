@@ -4,6 +4,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.8.0 (2020-09-11)
+### Added
+- `CheckSignatureBytes` trait ([#151])
+- Add `Signature::r`/`::s` methods which return `NonZeroScalar`values ([#151])
+- `alloc` feature ([#150])
+- Impl `From<&VerifyKey<C>>` for `EncodedPoint<C>` ([#144])
+- Serialization methods for `SigningKey`/`VerifyKey` ([#143])
+- RFC6979-based deterministic signatures ([#133], [#134], [#136])
+
+### Changed
+- Bump `elliptic-curve` crate dependency to v0.6 ([#165])
+- Use `ProjectiveArithmetic` trait ([#164])
+- Rename `ElementBytes` to `FieldBytes` ([#160])
+- Use `ff` and `group` crates to v0.8 ([#156])
+- MSRV 1.44+ ([#156])
+- Remove `rand` feature; make `rand_core` a hard dependency ([#154])
+- Use `impl Into<ElementBytes>` bounds on `Signature::from_scalars` ([#149])
+- Derive `Clone`, `Debug`, `Eq`, and `Ord` on `VerifyKey` ([#148])
+- Renamed `{Signer, Verifier}` => `{SigningKey, VerifyKey}` ([#140])
+- Use newly refactored `sec1::EncodedPoint` ([#131])
+
+### Removed
+- `Generate` trait ([#159])
+- `RecoverableSignPrimitive` ([#146])
+
+[#165]: https://github.com/RustCrypto/signatures/pull/165
+[#164]: https://github.com/RustCrypto/signatures/pull/164
+[#160]: https://github.com/RustCrypto/signatures/pull/160
+[#159]: https://github.com/RustCrypto/signatures/pull/159
+[#156]: https://github.com/RustCrypto/signatures/pull/156
+[#154]: https://github.com/RustCrypto/signatures/pull/154
+[#151]: https://github.com/RustCrypto/signatures/pull/151
+[#150]: https://github.com/RustCrypto/signatures/pull/150
+[#149]: https://github.com/RustCrypto/signatures/pull/149
+[#148]: https://github.com/RustCrypto/signatures/pull/148
+[#146]: https://github.com/RustCrypto/signatures/pull/146
+[#144]: https://github.com/RustCrypto/signatures/pull/144
+[#143]: https://github.com/RustCrypto/signatures/pull/143
+[#140]: https://github.com/RustCrypto/signatures/pull/140
+[#136]: https://github.com/RustCrypto/signatures/pull/136
+[#134]: https://github.com/RustCrypto/signatures/pull/134
+[#133]: https://github.com/RustCrypto/signatures/pull/133
+[#131]: https://github.com/RustCrypto/signatures/pull/131
+
 ## 0.7.2 (2020-08-11)
 ### Added
 - Conditional `PrehashSignature` impl for `asn1::Signature` ([#128])
