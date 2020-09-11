@@ -89,8 +89,9 @@ dependencies = [
 
 [[package]]
 name = "elliptic-curve"
-version = "0.5.0"
-source = "git+https://github.com/RustCrypto/traits#bba389743c8156036ccd4bbb73755d8bb22fb796"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d9cc9ec2c11b93118b4f8dc0665a3741bc90121d44dc0410f899274c5745454c"
 dependencies = [
  "bitvec",
  "digest",
