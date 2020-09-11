@@ -24,19 +24,22 @@
 //!
 //! By using the `ed25519` crate, you can write code which signs and verifies
 //! messages using the Ed25519 signature algorithm generically over any
-//! supported underlying Ed25519 implementation (see the next section for
-//! available providers).
+//! supported Ed25519 implementation (see the next section for available
+//! providers).
 //!
 //! This allows consumers of your code to plug in whatever implementation they
 //! want to use without having to add all potential Ed25519 libraries you'd
 //! like to support as optional dependencies.
 //!
-//! Below is a usage example of how to use this crate to do so:
+//! ## Example
 //!
 //! ```
 //! use ed25519::signature::{Signer, Verifier};
 //!
-//! pub struct HelloSigner<S> {
+//! pub struct HelloSigner<S>
+//! where
+//!     S: Signer<ed25519::Signature>
+//! {
 //!     pub signing_key: S
 //! }
 //!
@@ -74,15 +77,76 @@
 //! }
 //! ```
 //!
-//! A hypothetical consumer of the above code can then instantiate
-//! `HelloSigner` using [`ed25519-dalek`] (via the [`signatory-dalek`] crate) as:
+//! ## Using above example with `ed25519-dalek`
 //!
-//! ```ignore
-//! use signatory_dalek::Ed25519Signer;
-//! use hello_signer::HelloSigner; // i.e. `HelloSigner` defined in the above example
+//! The [`ed25519-dalek`] crate natively supports the [`ed25519::Signature`][`Signature`]
+//! type defined in this crate along with the the [`signature::Signer`] and
+//! [`signature::Verifier`] traits.
 //!
-//! /// `HelloSigner` instantiated with an `ed25519-dalek` signature provider
-//! pub type DalekHelloSigner = HelloSigner<Ed25519Signer>;
+//! Below is an example of how a hypothetical consumer of the code above can
+//! instantiate and use the previously defined `HelloSigner` and `HelloVerifier`
+//! types with [`ed25519-dalek`] as the signing/verification provider:
+//!
+//! ```
+//! use ed25519_dalek::{Signer, Verifier, Signature};
+//! #
+//! # pub struct HelloSigner<S>
+//! # where
+//! #     S: Signer<Signature>
+//! # {
+//! #     pub signing_key: S
+//! # }
+//! #
+//! # impl<S> HelloSigner<S>
+//! # where
+//! #     S: Signer<Signature>
+//! # {
+//! #     pub fn sign(&self, person: &str) -> Signature {
+//! #         // NOTE: use `try_sign` if you'd like to be able to handle
+//! #         // errors from external signing services/devices (e.g. HSM/KMS)
+//! #         // <https://docs.rs/signature/latest/signature/trait.Signer.html#tymethod.try_sign>
+//! #         self.signing_key.sign(format_message(person).as_bytes())
+//! #     }
+//! # }
+//! #
+//! # pub struct HelloVerifier<V> {
+//! #     pub verify_key: V
+//! # }
+//! #
+//! # impl<V> HelloVerifier<V>
+//! # where
+//! #     V: Verifier<Signature>
+//! # {
+//! #     pub fn verify(
+//! #         &self,
+//! #         person: &str,
+//! #         signature: &Signature
+//! #     ) -> Result<(), ed25519::Error> {
+//! #         self.verify_key.verify(format_message(person).as_bytes(), signature)
+//! #     }
+//! # }
+//! #
+//! # fn format_message(person: &str) -> String {
+//! #     format!("Hello, {}!", person)
+//! # }
+//! use rand_core::OsRng; // Requires the `std` feature of `rand_core`
+//!
+//! /// `HelloSigner` defined above instantiated with `ed25519-dalek` as
+//! /// the signing provider.
+//! pub type DalekHelloSigner = HelloSigner<ed25519_dalek::Keypair>;
+//!
+//! let signing_key = ed25519_dalek::Keypair::generate(&mut OsRng);
+//! let signer = DalekHelloSigner { signing_key };
+//! let person = "Joe"; // Message to sign
+//! let signature = signer.sign(person);
+//!
+//! /// `HelloVerifier` defined above instantiated with `ed25519-dalek`
+//! /// as the signature verification provider.
+//! pub type DalekHelloVerifier = HelloVerifier<ed25519_dalek::PublicKey>;
+//!
+//! let verify_key: ed25519_dalek::PublicKey = signer.signing_key.public;
+//! let verifier = DalekHelloVerifier { verify_key };
+//! assert!(verifier.verify(person, &signature).is_ok());
 //! ```
 //!
 //! # Available Ed25519 providers
@@ -90,19 +154,18 @@
 //! The following libraries natively support the types and traits from the
 //! `ed25519` crate:
 //!
+//! - [`ed25519-dalek`] - mature pure Rust implementation of Ed25519
 //! - [`yubihsm`] - host-side client library for YubiHSM2 devices from Yubico
 //!
 //! The [Signatory] project provides wrappers for several notable crates which
-//! produce or verify Ed25519 signatures:
+//! produce/verify Ed25519 signatures:
 //!
-//! - [`signatory-dalek`] - wrapper for [`ed25519-dalek`]
 //! - [`signatory-ring`] - wrapper for [*ring*]
 //! - [`signatory-sodiumoxide`] - wrapper for [`sodiumoxide`]
 //!
-//! [`ed25519-dalek`]: https://github.com/dalek-cryptography/ed25519-dalek
+//! [`ed25519-dalek`]: https://docs.rs/ed25519-dalek
 //! [*ring*]: https://github.com/briansmith/ring
 //! [Signatory]: https://github.com/iqlusioninc/signatory/blob/develop/README.md
-//! [`signatory-dalek`]: https://docs.rs/signatory-dalek/
 //! [`signatory-ring`]: https://docs.rs/signatory-ring/
 //! [`signatory-sodiumoxide`]: https://docs.rs/signatory-sodiumoxide/
 //! [`sodiumoxide`]: https://github.com/sodiumoxide/sodiumoxide
