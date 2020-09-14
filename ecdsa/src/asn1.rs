@@ -214,6 +214,10 @@ where
             }
 
             zlen = bytes[2] as usize;
+            if zlen <= 127 {
+                // SEQUENCE length should have been the 1-byte encoding to be DER.
+                return Err(Error::new());
+            }
             3
         } else {
             2
