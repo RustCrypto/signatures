@@ -192,6 +192,11 @@ where
         // encoding) so the resulting raw signature will have length
         // at most 254 bytes.
         //
+        // A SEQUENCE + INTEGER + INTEGER imply a length >= 2 + 3 + 3.
+        if bytes.len() < 8 {
+            return Err(Error::new());
+        }
+
         // First byte is SEQUENCE tag.
         if bytes[0] != SEQUENCE_TAG as u8 {
             return Err(Error::new());
