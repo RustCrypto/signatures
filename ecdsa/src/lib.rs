@@ -11,7 +11,7 @@
 //!   - [`p256`] (NIST P-256)
 //! - ECDSA signature types alone which can be used to provide interoperability
 //!   between other crates that provide an ECDSA implementation:
-//!   - [`p384`] NIST P-384
+//!   - [`p384`] (NIST P-384)
 //! - Other crates which provide their own complete implementations of ECDSA can
 //!   also leverage the types from this crate to export ECDSA functionality in a
 //!   generic, interoperable way by leveraging the [`Signature`] type with the
@@ -28,7 +28,7 @@
 #![warn(missing_docs, rust_2018_idioms)]
 #![doc(
     html_logo_url = "https://raw.githubusercontent.com/RustCrypto/meta/master/logo_small.png",
-    html_root_url = "https://docs.rs/ecdsa/0.8.0"
+    html_root_url = "https://docs.rs/ecdsa/0.8.1"
 )]
 
 #[cfg(feature = "alloc")]
