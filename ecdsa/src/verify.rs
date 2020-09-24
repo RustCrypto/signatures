@@ -129,6 +129,15 @@ where
     }
 }
 
+impl<C> Copy for VerifyKey<C>
+where
+    C: Curve + ProjectiveArithmetic,
+    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
+    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
+    AffinePoint<C>: Copy + Clone + Debug,
+{
+}
+
 impl<C> Eq for VerifyKey<C>
 where
     C: Curve + ProjectiveArithmetic,
