@@ -60,40 +60,44 @@ where
 
 /// [`SignPrimitive`] for signature implementations that can provide public key
 /// recovery implementation.
+#[cfg(feature = "arithmetic")]
+#[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
 pub trait RecoverableSignPrimitive<C>
 where
-    C: Curve + Arithmetic,
+    C: Curve + ProjectiveArithmetic,
+    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
+    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     SignatureSize<C>: ArrayLength<u8>,
 {
-    /// Type for recoverable signatures
-    type RecoverableSignature: signature::Signature + Into<Signature<C>>;
-
     /// Try to sign the prehashed message.
     ///
     /// Accepts the same arguments as [`SignPrimitive::try_sign_prehashed`]
     /// but returns a boolean flag which indicates whether or not the
     /// y-coordinate of the computed 𝐑 = 𝑘×𝑮 point is odd, which can be
     /// incorporated into recoverable signatures.
-    fn try_sign_recoverable_prehashed<K: Borrow<C::Scalar> + Invert<Output = C::Scalar>>(
+    fn try_sign_recoverable_prehashed<K: Borrow<Scalar<C>> + Invert<Output = Scalar<C>>>(
         &self,
         ephemeral_scalar: &K,
-        hashed_msg: &C::Scalar,
-    ) -> Result<Self::RecoverableSignature, Error>;
+        hashed_msg: &Scalar<C>,
+    ) -> Result<(Signature<C>, bool), Error>;
 }
 
+#[cfg(feature = "arithmetic")]
 impl<C, T> SignPrimitive<C> for T
 where
-    C: Curve + Arithmetic,
+    C: Curve + ProjectiveArithmetic,
     T: RecoverableSignPrimitive<C>,
+    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
+    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     SignatureSize<C>: ArrayLength<u8>,
 {
-    fn try_sign_prehashed<K: Borrow<C::Scalar> + Invert<Output = C::Scalar>>(
+    fn try_sign_prehashed<K: Borrow<Scalar<C>> + Invert<Output = Scalar<C>>>(
         &self,
         ephemeral_scalar: &K,
-        hashed_msg: &C::Scalar,
+        hashed_msg: &Scalar<C>,
     ) -> Result<Signature<C>, Error> {
         self.try_sign_recoverable_prehashed(ephemeral_scalar, hashed_msg)
-            .map(Into::into)
+            .map(|res| res.0)
     }
 }
 
