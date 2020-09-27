@@ -82,7 +82,7 @@ dependencies = [
 
 [[package]]
 name = "ecdsa"
-version = "0.8.1"
+version = "0.8.2"
 dependencies = [
  "elliptic-curve",
  "hex-literal",
