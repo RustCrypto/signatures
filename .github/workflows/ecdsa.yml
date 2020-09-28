@@ -36,12 +36,13 @@ jobs:
           override: true
       - run: cargo build --no-default-features --release --target ${{ matrix.target }}
       - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features arithmetic
+      - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features dev
       - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features digest
       - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features hazmat
       - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features sign
       - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features verify
       - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features zeroize
-      - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features arithmetic,digest,hazmat,sign,verify,zeroize
+      - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features arithmetic,dev,digest,hazmat,sign,verify,zeroize
 
   test:
     runs-on: ubuntu-latest
@@ -56,6 +57,7 @@ jobs:
         with:
           profile: minimal
           toolchain: ${{ matrix.rust }}
+          override: true
       - run: cargo check --all-features
       - run: cargo test --no-default-features
       - run: cargo test

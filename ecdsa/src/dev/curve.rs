@@ -97,6 +97,11 @@ impl Field for Scalar {
 
 impl PrimeField for Scalar {
     type Repr = FieldBytes;
+
+    #[cfg(target_pointer_width = "32")]
+    type ReprBits = [u32; 8];
+
+    #[cfg(target_pointer_width = "64")]
     type ReprBits = [u64; 4];
 
     const NUM_BITS: u32 = 256;
