@@ -177,12 +177,7 @@
     html_root_url = "https://docs.rs/ed25519/1.0.2"
 )]
 #![forbid(unsafe_code)]
-#![warn(
-    missing_docs,
-    rust_2018_idioms,
-    unused_qualifications,
-    intra_doc_link_resolution_failure
-)]
+#![warn(missing_docs, rust_2018_idioms, unused_qualifications)]
 
 #[cfg(feature = "serde")]
 use serde::{de, ser, Deserialize, Serialize};
