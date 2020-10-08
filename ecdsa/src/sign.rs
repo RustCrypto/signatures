@@ -86,9 +86,9 @@ where
     where
         AffinePoint<C>: Clone + Debug,
     {
-        VerifyKey {
-            public_key: (C::ProjectivePoint::generator() * &self.secret_scalar).to_affine(),
-        }
+        #[allow(clippy::op_ref)]
+        let public_key = (C::ProjectivePoint::generator() * &*self.secret_scalar).to_affine();
+        VerifyKey { public_key }
     }
 
     /// Serialize this [`SigningKey`] as bytes
