@@ -303,8 +303,9 @@ where
     /// (e.g. accessors for the `r` and `s` components)
     fn check_signature_bytes(bytes: &SignatureBytes<Self>) -> Result<(), Error> {
         // Ensure `r` and `s` are both non-zero
+        // TODO(tarcieri): check that `r` and `s` are in range of the curve's order
         for scalar_bytes in bytes.chunks(Self::FieldSize::to_usize()) {
-            if scalar_bytes.iter().all(|&b| b != 0) {
+            if scalar_bytes.iter().all(|&b| b == 0) {
                 return Err(Error::new());
             }
         }
