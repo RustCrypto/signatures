@@ -4,6 +4,7 @@
 [![Docs][docs-image]][docs-link]
 ![Apache2/MIT licensed][license-image]
 ![Rust Version][rustc-image]
+[![Project Chat][chat-image]][chat-link]
 [![Build Status][build-image]][build-link]
 
 [Edwards Digital Signature Algorithm (EdDSA)][1] over Curve25519 as specified
@@ -48,6 +49,8 @@ dual licensed as above, without any additional terms or conditions.
 [docs-link]: https://docs.rs/ed25519/
 [license-image]: https://img.shields.io/badge/license-Apache2.0/MIT-blue.svg
 [rustc-image]: https://img.shields.io/badge/rustc-1.41+-blue.svg
+[chat-image]: https://img.shields.io/badge/zulip-join_chat-blue.svg
+[chat-link]: https://rustcrypto.zulipchat.com/#narrow/stream/260048-signatures
 [build-image]: https://github.com/RustCrypto/signatures/workflows/ed25519/badge.svg?branch=master&event=push
 [build-link]: https://github.com/RustCrypto/signatures/actions?query=workflow%3Aed25519
 

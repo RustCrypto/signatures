@@ -1,4 +1,4 @@
-# RustCrypto: signatures ![Rust Version][rustc-image]
+# RustCrypto: signatures ![Rust Version][rustc-image] [![Project Chat][chat-image]][chat-link]
 
 Support for [digital signatures][1], which provide authentication of data using
 public-key cryptography.
@@ -45,6 +45,8 @@ dual licensed as above, without any additional terms or conditions.
 [//]: # (badges)
 
 [rustc-image]: https://img.shields.io/badge/rustc-1.41+-blue.svg
+[chat-image]: https://img.shields.io/badge/zulip-join_chat-blue.svg
+[chat-link]: https://rustcrypto.zulipchat.com/#narrow/stream/260048-signatures
 
 [//]: # (crates)
 
