@@ -80,7 +80,7 @@
 //! ## Using above example with `ed25519-dalek`
 //!
 //! The [`ed25519-dalek`] crate natively supports the [`ed25519::Signature`][`Signature`]
-//! type defined in this crate along with the the [`signature::Signer`] and
+//! type defined in this crate along with the [`signature::Signer`] and
 //! [`signature::Verifier`] traits.
 //!
 //! Below is an example of how a hypothetical consumer of the code above can
@@ -149,23 +149,98 @@
 //! assert!(verifier.verify(person, &signature).is_ok());
 //! ```
 //!
+//! ## Using above example with `ring-compat`
+//!
+//! The [`ring-compat`] crate provides wrappers for [*ring*] which implement
+//! the [`signature::Signer`] and [`signature::Verifier`] traits for
+//! [`ed25519::Signature`][`Signature`].
+//!
+//! Below is an example of how a hypothetical consumer of the code above can
+//! instantiate and use the previously defined `HelloSigner` and `HelloVerifier`
+//! types with [`ring-compat`] as the signing/verification provider:
+//!
+//! ```
+//! use ring_compat::signature::{
+//!     ed25519::{Signature, SigningKey, VerifyKey},
+//!     Signer, Verifier
+//! };
+//! #
+//! # pub struct HelloSigner<S>
+//! # where
+//! #     S: Signer<Signature>
+//! # {
+//! #     pub signing_key: S
+//! # }
+//! #
+//! # impl<S> HelloSigner<S>
+//! # where
+//! #     S: Signer<Signature>
+//! # {
+//! #     pub fn sign(&self, person: &str) -> Signature {
+//! #         // NOTE: use `try_sign` if you'd like to be able to handle
+//! #         // errors from external signing services/devices (e.g. HSM/KMS)
+//! #         // <https://docs.rs/signature/latest/signature/trait.Signer.html#tymethod.try_sign>
+//! #         self.signing_key.sign(format_message(person).as_bytes())
+//! #     }
+//! # }
+//! #
+//! # pub struct HelloVerifier<V> {
+//! #     pub verify_key: V
+//! # }
+//! #
+//! # impl<V> HelloVerifier<V>
+//! # where
+//! #     V: Verifier<Signature>
+//! # {
+//! #     pub fn verify(
+//! #         &self,
+//! #         person: &str,
+//! #         signature: &Signature
+//! #     ) -> Result<(), ed25519::Error> {
+//! #         self.verify_key.verify(format_message(person).as_bytes(), signature)
+//! #     }
+//! # }
+//! #
+//! # fn format_message(person: &str) -> String {
+//! #     format!("Hello, {}!", person)
+//! # }
+//! use rand_core::{OsRng, RngCore}; // Requires the `std` feature of `rand_core`
+//!
+//! /// `HelloSigner` defined above instantiated with *ring* as
+//! /// the signing provider.
+//! pub type RingHelloSigner = HelloSigner<SigningKey>;
+//!
+//! let mut ed25519_seed = [0u8; 32];
+//! OsRng.fill_bytes(&mut ed25519_seed);
+//!
+//! let signing_key = SigningKey::from_seed(&ed25519_seed).unwrap();
+//! let verify_key = signing_key.verify_key();
+//!
+//! let signer = RingHelloSigner { signing_key };
+//! let person = "Joe"; // Message to sign
+//! let signature = signer.sign(person);
+//!
+//! /// `HelloVerifier` defined above instantiated with *ring*
+//! /// as the signature verification provider.
+//! pub type RingHelloVerifier = HelloVerifier<VerifyKey>;
+//!
+//! let verifier = RingHelloVerifier { verify_key };
+//! assert!(verifier.verify(person, &signature).is_ok());
+//! ```
+//!
 //! # Available Ed25519 providers
 //!
-//! The following libraries natively support the types and traits from the
-//! `ed25519` crate:
+//! The following libraries support the types/traits from the `ed25519` crate:
 //!
 //! - [`ed25519-dalek`] - mature pure Rust implementation of Ed25519
+//! - [`ring-compat`] - compatibility wrapper for [*ring*]
+//! - [`signatory-sodiumoxide`] - compatibility wrapper for [`sodiumoxide`]
 //! - [`yubihsm`] - host-side client library for YubiHSM2 devices from Yubico
-//!
-//! The [Signatory] project provides wrappers for several notable crates which
-//! produce/verify Ed25519 signatures:
-//!
-//! - [`signatory-ring`] - wrapper for [*ring*]
-//! - [`signatory-sodiumoxide`] - wrapper for [`sodiumoxide`]
+
 //!
 //! [`ed25519-dalek`]: https://docs.rs/ed25519-dalek
+//! [`ring-compat`]: https://docs.rs/ring-compat
 //! [*ring*]: https://github.com/briansmith/ring
-//! [Signatory]: https://github.com/iqlusioninc/signatory/blob/develop/README.md
 //! [`signatory-ring`]: https://docs.rs/signatory-ring/
 //! [`signatory-sodiumoxide`]: https://docs.rs/signatory-sodiumoxide/
 //! [`sodiumoxide`]: https://github.com/sodiumoxide/sodiumoxide
