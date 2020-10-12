@@ -378,4 +378,36 @@ mod tests {
         assert!(Signature::from_asn1(&[SEQUENCE_TAG, 0x00]).is_err());
         assert!(Signature::from_asn1(&[SEQUENCE_TAG, 0x03, INTEGER_TAG, 0x01, 0x01]).is_err());
     }
+
+    #[test]
+    fn test_asn1_non_der_signature() {
+        // A minimal 8-byte ASN.1 signature parses OK.
+        assert!(Signature::from_asn1(&[
+            SEQUENCE_TAG,
+            0x06, // length of below
+            INTEGER_TAG,
+            0x01, // length of value
+            0x01, // value=1
+            INTEGER_TAG,
+            0x01, // length of value
+            0x01, // value=1
+        ])
+        .is_ok());
+
+        // But length fields that are not minimally encoded should be rejected, as they are not
+        // valid DER, cf.
+        // https://github.com/google/wycheproof/blob/2196000605e4/testvectors/ecdsa_secp256k1_sha256_test.json#L57-L66
+        assert!(Signature::from_asn1(&[
+            SEQUENCE_TAG,
+            0x81, // extended length: 1 length byte to come
+            0x06, // length of below
+            INTEGER_TAG,
+            0x01, // length of value
+            0x01, // value=1
+            INTEGER_TAG,
+            0x01, // length of value
+            0x01, // value=1
+        ])
+        .is_err());
+    }
 }
