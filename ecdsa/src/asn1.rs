@@ -343,6 +343,7 @@ fn trim_zeroes(mut bytes: &[u8], scalar_size: usize) -> Result<usize, Error> {
 
 #[cfg(all(feature = "dev", test))]
 mod tests {
+    use super::{INTEGER_TAG, SEQUENCE_TAG};
     use crate::dev::curve::Signature;
     use signature::Signature as _;
 
@@ -363,5 +364,13 @@ mod tests {
         let signature2 = Signature::from_asn1(asn1_signature.as_ref()).unwrap();
 
         assert_eq!(signature1, signature2);
+    }
+
+    #[test]
+    fn test_asn1_too_short_signature() {
+        assert!(Signature::from_asn1(&[]).is_err());
+        assert!(Signature::from_asn1(&[SEQUENCE_TAG]).is_err());
+        assert!(Signature::from_asn1(&[SEQUENCE_TAG, 0x00]).is_err());
+        assert!(Signature::from_asn1(&[SEQUENCE_TAG, 0x03, INTEGER_TAG, 0x01, 0x01]).is_err());
     }
 }
