@@ -12,15 +12,28 @@
 //! - ECDSA signature types alone which can be used to provide interoperability
 //!   between other crates that provide an ECDSA implementation:
 //!   - [`p384`] (NIST P-384)
-//! - Other crates which provide their own complete implementations of ECDSA can
-//!   also leverage the types from this crate to export ECDSA functionality in a
-//!   generic, interoperable way by leveraging the [`Signature`] type with the
-//!   [`signature::Signer`] and [`signature::Verifier`] traits.
+//!
+//! Any crates which provide an implementation of ECDSA for a particular
+//! elliptic curve can leverage the types from this crate, along with the
+//! [`k256`], [`p256`], and/or [`p384`] crates to expose ECDSA functionality in
+//! a generic, interoperable way by leveraging the [`Signature`] type with in
+//! conjunction with the [`signature::Signer`] and [`signature::Verifier`]
+//! traits.
+//!
+//! For example, the [`ring-compat`] crate implements the [`signature::Signer`]
+//! and [`signature::Verifier`] traits in conjunction with the
+//! [`p256::ecdsa::Signature`] and [`p384::ecdsa::Signature`] types to
+//! wrap the ECDSA implementations from [*ring*] in a generic, interoperable
+//! API.
 //!
 //! [1]: https://csrc.nist.gov/publications/detail/fips/186/4/final
 //! [`k256`]: https://docs.rs/k256
 //! [`p256`]: https://docs.rs/p256
+//! [`p256::ecdsa::Signature`]: https://docs.rs/p256/latest/p256/ecdsa/type.Signature.html
 //! [`p384`]: https://docs.rs/p384
+//! [`p384::ecdsa::Signature`]: https://docs.rs/p384/latest/p384/ecdsa/type.Signature.html
+//! [`ring-compat`]: https://docs.rs/ring-compat
+//! [*ring*]: https://docs.rs/ring
 
 #![no_std]
 #![cfg_attr(docsrs, feature(doc_cfg))]
