@@ -52,15 +52,9 @@ where
 
     /// Initialize [`VerifyKey`] from an [`EncodedPoint`].
     pub fn from_encoded_point(public_key: &EncodedPoint<C>) -> Result<Self, Error> {
-        let affine_point = AffinePoint::<C>::from_encoded_point(public_key);
-
-        if affine_point.is_some().into() {
-            Ok(Self {
-                public_key: affine_point.unwrap(),
-            })
-        } else {
-            Err(Error::new())
-        }
+        AffinePoint::<C>::from_encoded_point(public_key)
+            .map(|public_key| Self { public_key })
+            .ok_or_else(Error::new)
     }
 
     /// Serialize this [`VerifyKey`] as a SEC1 [`EncodedPoint`], optionally

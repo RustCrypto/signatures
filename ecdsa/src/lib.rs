@@ -26,6 +26,10 @@
 //! wrap the ECDSA implementations from [*ring*] in a generic, interoperable
 //! API.
 //!
+//! ## Minimum Supported Rust Version
+//!
+//! - Rust **1.46+**
+//!
 //! [1]: https://csrc.nist.gov/publications/detail/fips/186/4/final
 //! [`k256`]: https://docs.rs/k256
 //! [`p256`]: https://docs.rs/p256
@@ -41,7 +45,7 @@
 #![warn(missing_docs, rust_2018_idioms)]
 #![doc(
     html_logo_url = "https://raw.githubusercontent.com/RustCrypto/meta/master/logo_small.png",
-    html_root_url = "https://docs.rs/ecdsa/0.8.5"
+    html_root_url = "https://docs.rs/ecdsa/0.9.0-pre"
 )]
 
 #[cfg(feature = "alloc")]
