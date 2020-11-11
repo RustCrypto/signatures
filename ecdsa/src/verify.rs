@@ -12,12 +12,12 @@ use elliptic_curve::{
     consts::U1,
     ff::PrimeField,
     generic_array::ArrayLength,
-    point::AffinePoint,
+    point::{AffinePoint, ProjectivePoint},
     sec1::{
         EncodedPoint, FromEncodedPoint, ToEncodedPoint, UncompressedPointSize, UntaggedPointSize,
     },
     weierstrass::{point, Curve},
-    FieldBytes, FromDigest, ProjectiveArithmetic, Scalar,
+    FieldBytes, FromDigest, ProjectiveArithmetic, PublicKey, Scalar,
 };
 use signature::{digest::Digest, DigestVerifier};
 
@@ -105,6 +105,76 @@ where
 {
     fn from(verify_key: &VerifyKey<C>) -> EncodedPoint<C> {
         verify_key.to_encoded_point(C::COMPRESS_POINTS)
+    }
+}
+
+impl<C> From<PublicKey<C>> for VerifyKey<C>
+where
+    C: Curve + ProjectiveArithmetic + point::Compression,
+    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
+    Scalar<C>: PrimeField<Repr = FieldBytes<C>> + FromDigest<C>,
+    AffinePoint<C>:
+        Clone + Debug + Default + VerifyPrimitive<C> + FromEncodedPoint<C> + ToEncodedPoint<C>,
+    ProjectivePoint<C>: From<AffinePoint<C>>,
+    UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
+    UncompressedPointSize<C>: ArrayLength<u8>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn from(public_key: PublicKey<C>) -> VerifyKey<C> {
+        VerifyKey::from(&public_key)
+    }
+}
+
+impl<C> From<&PublicKey<C>> for VerifyKey<C>
+where
+    C: Curve + ProjectiveArithmetic + point::Compression,
+    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
+    Scalar<C>: PrimeField<Repr = FieldBytes<C>> + FromDigest<C>,
+    AffinePoint<C>:
+        Clone + Debug + Default + VerifyPrimitive<C> + FromEncodedPoint<C> + ToEncodedPoint<C>,
+    ProjectivePoint<C>: From<AffinePoint<C>>,
+    UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
+    UncompressedPointSize<C>: ArrayLength<u8>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn from(public_key: &PublicKey<C>) -> VerifyKey<C> {
+        VerifyKey {
+            public_key: public_key.as_ref().clone(),
+        }
+    }
+}
+
+impl<C> From<VerifyKey<C>> for PublicKey<C>
+where
+    C: Curve + ProjectiveArithmetic + point::Compression,
+    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
+    Scalar<C>: PrimeField<Repr = FieldBytes<C>> + FromDigest<C>,
+    AffinePoint<C>:
+        Clone + Debug + Default + VerifyPrimitive<C> + FromEncodedPoint<C> + ToEncodedPoint<C>,
+    ProjectivePoint<C>: From<AffinePoint<C>>,
+    UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
+    UncompressedPointSize<C>: ArrayLength<u8>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn from(verify_key: VerifyKey<C>) -> PublicKey<C> {
+        PublicKey::from_affine(verify_key.public_key)
+    }
+}
+
+impl<C> From<&VerifyKey<C>> for PublicKey<C>
+where
+    C: Curve + ProjectiveArithmetic + point::Compression,
+    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
+    Scalar<C>: PrimeField<Repr = FieldBytes<C>> + FromDigest<C>,
+    AffinePoint<C>:
+        Clone + Debug + Default + VerifyPrimitive<C> + FromEncodedPoint<C> + ToEncodedPoint<C>,
+    ProjectivePoint<C>: From<AffinePoint<C>>,
+    UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
+    UncompressedPointSize<C>: ArrayLength<u8>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn from(verify_key: &VerifyKey<C>) -> PublicKey<C> {
+        PublicKey::from_affine(verify_key.public_key.clone())
     }
 }
 
