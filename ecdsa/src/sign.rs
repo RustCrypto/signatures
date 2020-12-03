@@ -26,15 +26,7 @@ use signature::{
 };
 
 #[cfg(feature = "verify")]
-use {
-    crate::verify::VerifyKey,
-    core::{fmt::Debug, ops::Add},
-    elliptic_curve::{
-        consts::U1,
-        sec1::{FromEncodedPoint, ToEncodedPoint, UncompressedPointSize, UntaggedPointSize},
-        AffinePoint, ProjectivePoint,
-    },
-};
+use {crate::verify::VerifyKey, core::fmt::Debug, elliptic_curve::AffinePoint};
 
 /// ECDSA signing key
 pub struct SigningKey<C>
@@ -82,10 +74,7 @@ where
     #[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
     pub fn verify_key(&self) -> VerifyKey<C>
     where
-        AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
-        ProjectivePoint<C>: From<AffinePoint<C>>,
-        UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
-        UncompressedPointSize<C>: ArrayLength<u8>,
+        AffinePoint<C>: Copy + Clone + Debug + Default,
     {
         VerifyKey {
             inner: self.inner.public_key(),
@@ -238,10 +227,7 @@ where
         + Invert<Output = Scalar<C>>
         + SignPrimitive<C>
         + Zeroize,
-    AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
-    ProjectivePoint<C>: From<AffinePoint<C>>,
-    UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
-    UncompressedPointSize<C>: ArrayLength<u8>,
+    AffinePoint<C>: Copy + Clone + Debug + Default,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn from(signing_key: &SigningKey<C>) -> VerifyKey<C> {
