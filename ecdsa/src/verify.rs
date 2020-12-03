@@ -22,7 +22,7 @@ use elliptic_curve::{
 use signature::{digest::Digest, DigestVerifier};
 
 /// ECDSA verify key
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct VerifyingKey<C>
 where
     C: Curve + ProjectiveArithmetic,
@@ -155,16 +155,6 @@ where
     fn from(verify_key: &VerifyingKey<C>) -> PublicKey<C> {
         verify_key.clone().into()
     }
-}
-
-impl<C> Copy for VerifyingKey<C>
-where
-    C: Curve + ProjectiveArithmetic,
-    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
-    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
-    AffinePoint<C>: Copy + Clone + Debug,
-    PublicKey<C>: Copy,
-{
 }
 
 impl<C> Eq for VerifyingKey<C>
