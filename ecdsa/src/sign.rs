@@ -9,7 +9,6 @@ use crate::{
     hazmat::{DigestPrimitive, SignPrimitive},
     rfc6979, Error, Signature, SignatureSize,
 };
-use core::convert::TryInto;
 use elliptic_curve::{
     ff::PrimeField,
     generic_array::ArrayLength,
@@ -29,10 +28,11 @@ use signature::{
 #[cfg(feature = "verify")]
 use {
     crate::verify::VerifyKey,
-    core::fmt::Debug,
+    core::{fmt::Debug, ops::Add},
     elliptic_curve::{
-        group::{Curve as _, Group},
-        AffinePoint,
+        consts::U1,
+        sec1::{FromEncodedPoint, ToEncodedPoint, UncompressedPointSize, UntaggedPointSize},
+        AffinePoint, ProjectivePoint,
     },
 };
 
@@ -48,7 +48,7 @@ where
         + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
 {
-    secret_scalar: NonZeroScalar<C>,
+    inner: SecretKey<C>,
 }
 
 impl<C> SigningKey<C>
@@ -65,18 +65,16 @@ where
     /// Generate a cryptographically random [`SigningKey`].
     pub fn random(rng: impl CryptoRng + RngCore) -> Self {
         Self {
-            secret_scalar: NonZeroScalar::random(rng),
+            inner: SecretKey::random(rng),
         }
     }
 
     /// Initialize signing key from a raw scalar serialized as a byte slice.
     // TODO(tarcieri): PKCS#8 support
     pub fn new(bytes: &[u8]) -> Result<Self, Error> {
-        bytes
-            .try_into()
-            .ok()
-            .map(|secret_scalar| Self { secret_scalar })
-            .ok_or_else(Error::new)
+        SecretKey::from_bytes(bytes)
+            .map(|sk| Self { inner: sk })
+            .map_err(|_| Error::new())
     }
 
     /// Get the [`VerifyKey`] which corresponds to this [`SigningKey`]
@@ -84,20 +82,23 @@ where
     #[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
     pub fn verify_key(&self) -> VerifyKey<C>
     where
-        AffinePoint<C>: Clone + Debug,
+        AffinePoint<C>: Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
+        ProjectivePoint<C>: From<AffinePoint<C>>,
+        UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
+        UncompressedPointSize<C>: ArrayLength<u8>,
     {
-        #[allow(clippy::op_ref)]
-        let public_key = (C::ProjectivePoint::generator() * &*self.secret_scalar).to_affine();
-        VerifyKey { public_key }
+        VerifyKey {
+            public_key: self.inner.public_key().as_ref().clone(),
+        }
     }
 
     /// Serialize this [`SigningKey`] as bytes
     pub fn to_bytes(&self) -> FieldBytes<C> {
-        self.secret_scalar.to_repr()
+        self.inner.to_bytes()
     }
 }
 
-impl<C> From<&SecretKey<C>> for SigningKey<C>
+impl<C> From<SecretKey<C>> for SigningKey<C>
 where
     C: Curve + ProjectiveArithmetic,
     FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
@@ -109,9 +110,8 @@ where
         + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
 {
-    fn from(secret_key: &SecretKey<C>) -> Self {
-        // TODO(tarcieri): better conversion
-        Self::new(&secret_key.secret_scalar().to_repr()).expect("invalid secret scalar")
+    fn from(secret_key: SecretKey<C>) -> Self {
+        Self { inner: secret_key }
     }
 }
 
@@ -131,11 +131,12 @@ where
     /// computed using the algorithm described in RFC 6979 (Section 3.2):
     /// <https://tools.ietf.org/html/rfc6979#section-3>
     fn try_sign_digest(&self, digest: D) -> Result<Signature<C>, Error> {
-        let ephemeral_scalar = rfc6979::generate_k(&self.secret_scalar, digest.clone(), &[]);
+        let k = rfc6979::generate_k(self.inner.secret_value(), digest.clone(), &[]);
         let msg_scalar = Scalar::<C>::from_digest(digest);
 
-        self.secret_scalar
-            .try_sign_prehashed(ephemeral_scalar.as_ref(), &msg_scalar)
+        self.inner
+            .secret_scalar()
+            .try_sign_prehashed(&**k, &msg_scalar)
     }
 }
 
@@ -179,13 +180,12 @@ where
         let mut added_entropy = FieldBytes::<C>::default();
         rng.fill_bytes(&mut added_entropy);
 
-        let ephemeral_scalar =
-            rfc6979::generate_k(&self.secret_scalar, digest.clone(), &added_entropy);
-
+        let k = rfc6979::generate_k(self.inner.secret_value(), digest.clone(), &added_entropy);
         let msg_scalar = Scalar::<C>::from_digest(digest);
 
-        self.secret_scalar
-            .try_sign_prehashed(ephemeral_scalar.as_ref(), &msg_scalar)
+        self.inner
+            .secret_scalar()
+            .try_sign_prehashed(&**k, &msg_scalar)
     }
 }
 
@@ -222,39 +222,9 @@ where
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn from(secret_scalar: NonZeroScalar<C>) -> Self {
-        Self { secret_scalar }
-    }
-}
-
-impl<C> Zeroize for SigningKey<C>
-where
-    C: Curve + ProjectiveArithmetic,
-    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
-    Scalar<C>: PrimeField<Repr = FieldBytes<C>>
-        + FromDigest<C>
-        + Invert<Output = Scalar<C>>
-        + SignPrimitive<C>
-        + Zeroize,
-    SignatureSize<C>: ArrayLength<u8>,
-{
-    fn zeroize(&mut self) {
-        self.secret_scalar.zeroize();
-    }
-}
-
-impl<C> Drop for SigningKey<C>
-where
-    C: Curve + ProjectiveArithmetic,
-    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
-    Scalar<C>: PrimeField<Repr = FieldBytes<C>>
-        + FromDigest<C>
-        + Invert<Output = Scalar<C>>
-        + SignPrimitive<C>
-        + Zeroize,
-    SignatureSize<C>: ArrayLength<u8>,
-{
-    fn drop(&mut self) {
-        self.zeroize();
+        Self {
+            inner: SecretKey::new(secret_scalar),
+        }
     }
 }
 
@@ -268,7 +238,10 @@ where
         + Invert<Output = Scalar<C>>
         + SignPrimitive<C>
         + Zeroize,
-    AffinePoint<C>: Clone + Debug,
+    AffinePoint<C>: Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
+    ProjectivePoint<C>: From<AffinePoint<C>>,
+    UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
+    UncompressedPointSize<C>: ArrayLength<u8>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn from(signing_key: &SigningKey<C>) -> VerifyKey<C> {
