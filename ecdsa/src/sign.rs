@@ -26,7 +26,7 @@ use signature::{
 };
 
 #[cfg(feature = "verify")]
-use {crate::verify::VerifyKey, core::fmt::Debug, elliptic_curve::AffinePoint};
+use {crate::verify::VerifyingKey, core::fmt::Debug, elliptic_curve::AffinePoint};
 
 /// ECDSA signing key
 pub struct SigningKey<C>
@@ -69,14 +69,14 @@ where
             .map_err(|_| Error::new())
     }
 
-    /// Get the [`VerifyKey`] which corresponds to this [`SigningKey`]
+    /// Get the [`VerifyingKey`] which corresponds to this [`SigningKey`]
     #[cfg(feature = "verify")]
     #[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
-    pub fn verify_key(&self) -> VerifyKey<C>
+    pub fn verify_key(&self) -> VerifyingKey<C>
     where
         AffinePoint<C>: Copy + Clone + Debug + Default,
     {
-        VerifyKey {
+        VerifyingKey {
             inner: self.inner.public_key(),
         }
     }
@@ -218,7 +218,7 @@ where
 }
 
 #[cfg(feature = "verify")]
-impl<C> From<&SigningKey<C>> for VerifyKey<C>
+impl<C> From<&SigningKey<C>> for VerifyingKey<C>
 where
     C: Curve + ProjectiveArithmetic,
     FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
@@ -230,7 +230,7 @@ where
     AffinePoint<C>: Copy + Clone + Debug + Default,
     SignatureSize<C>: ArrayLength<u8>,
 {
-    fn from(signing_key: &SigningKey<C>) -> VerifyKey<C> {
+    fn from(signing_key: &SigningKey<C>) -> VerifyingKey<C> {
         signing_key.verify_key()
     }
 }
