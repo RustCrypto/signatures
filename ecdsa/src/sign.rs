@@ -82,13 +82,13 @@ where
     #[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
     pub fn verify_key(&self) -> VerifyKey<C>
     where
-        AffinePoint<C>: Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
+        AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
         ProjectivePoint<C>: From<AffinePoint<C>>,
         UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
         UncompressedPointSize<C>: ArrayLength<u8>,
     {
         VerifyKey {
-            public_key: self.inner.public_key().as_ref().clone(),
+            inner: self.inner.public_key(),
         }
     }
 
@@ -238,7 +238,7 @@ where
         + Invert<Output = Scalar<C>>
         + SignPrimitive<C>
         + Zeroize,
-    AffinePoint<C>: Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
+    AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
     ProjectivePoint<C>: From<AffinePoint<C>>,
     UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
     UncompressedPointSize<C>: ArrayLength<u8>,
