@@ -85,7 +85,7 @@ pub use sign::SigningKey;
 
 #[cfg(feature = "verify")]
 #[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
-pub use verify::VerifyKey;
+pub use verify::VerifyingKey;
 
 #[cfg(feature = "zeroize")]
 #[cfg_attr(docsrs, doc(cfg(feature = "zeroize")))]
