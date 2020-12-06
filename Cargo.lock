@@ -70,6 +70,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
+name = "const-oid"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9718eb58510ebba591b25cb8b2327050138fbbef581990944317097cf8a4198f"
+
+[[package]]
 name = "cpuid-bool"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -177,13 +183,14 @@ dependencies = [
 [[package]]
 name = "elliptic-curve"
 version = "0.7.0-pre"
-source = "git+https://github.com/RustCrypto/traits#fdff330484c9d03f67ba1eda533a24e757f3e204"
+source = "git+https://github.com/RustCrypto/traits#2221f59715a9594e807e0d51b99f04cf0c1454da"
 dependencies = [
  "bitvec",
  "digest",
  "ff",
  "generic-array",
  "group",
+ "pkcs8",
  "rand_core",
  "subtle",
  "zeroize",
@@ -321,6 +328,17 @@ checksum = "06de0548166c258c22bb6bdcff3074eac4b07125040aa74db3f61db87fe5f275"
 dependencies = [
  "ecdsa 0.8.5",
  "elliptic-curve 0.6.6",
+]
+
+[[package]]
+name = "pkcs8"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9a2298039b56d6be1d9bf341c9ba6aa0936bd508152c2829c8cab6d3f57675f4"
+dependencies = [
+ "const-oid",
+ "subtle-encoding",
+ "zeroize",
 ]
 
 [[package]]
@@ -472,6 +490,15 @@ name = "subtle"
 version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "343f3f510c2915908f155e94f17220b19ccfacf2a64a2a5d8004f2c3e311e7fd"
+
+[[package]]
+name = "subtle-encoding"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7dcb1ed7b8330c5eed5441052651dd7a12c75e2ed88f2ec024ae1fa3a5e59945"
+dependencies = [
+ "zeroize",
+]
 
 [[package]]
 name = "syn"

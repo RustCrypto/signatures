@@ -21,6 +21,15 @@ use elliptic_curve::{
 };
 use signature::{digest::Digest, DigestVerifier};
 
+#[cfg(feature = "pkcs8")]
+use crate::{
+    elliptic_curve::AlgorithmParameters,
+    pkcs8::{self, FromPublicKey},
+};
+
+#[cfg(feature = "pem")]
+use core::str::FromStr;
+
 /// ECDSA verify key
 #[derive(Copy, Clone, Debug)]
 pub struct VerifyingKey<C>
@@ -181,5 +190,41 @@ where
 {
     fn eq(&self, other: &Self) -> bool {
         self.inner.eq(&other.inner)
+    }
+}
+
+#[cfg(feature = "pkcs8")]
+#[cfg_attr(docsrs, doc(cfg(feature = "pkcs8")))]
+impl<C> FromPublicKey for VerifyingKey<C>
+where
+    C: Curve + AlgorithmParameters + ProjectiveArithmetic + point::Compression,
+    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
+    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
+    AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
+    ProjectivePoint<C>: From<AffinePoint<C>>,
+    UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
+    UncompressedPointSize<C>: ArrayLength<u8>,
+{
+    fn from_spki(spki: pkcs8::SubjectPublicKeyInfo<'_>) -> pkcs8::Result<Self> {
+        PublicKey::from_spki(spki).map(|inner| Self { inner })
+    }
+}
+
+#[cfg(feature = "pem")]
+#[cfg_attr(docsrs, doc(cfg(feature = "pem")))]
+impl<C> FromStr for VerifyingKey<C>
+where
+    C: Curve + AlgorithmParameters + ProjectiveArithmetic + point::Compression,
+    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
+    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
+    AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
+    ProjectivePoint<C>: From<AffinePoint<C>>,
+    UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
+    UncompressedPointSize<C>: ArrayLength<u8>,
+{
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Error> {
+        Self::from_public_key_pem(s).map_err(|_| Error::new())
     }
 }

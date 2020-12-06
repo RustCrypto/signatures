@@ -28,6 +28,15 @@ use signature::{
 #[cfg(feature = "verify")]
 use {crate::verify::VerifyingKey, core::fmt::Debug, elliptic_curve::AffinePoint};
 
+#[cfg(feature = "pkcs8")]
+use crate::{
+    elliptic_curve::AlgorithmParameters,
+    pkcs8::{self, FromPrivateKey},
+};
+
+#[cfg(feature = "pem")]
+use core::str::FromStr;
+
 /// ECDSA signing key
 pub struct SigningKey<C>
 where
@@ -232,5 +241,47 @@ where
 {
     fn from(signing_key: &SigningKey<C>) -> VerifyingKey<C> {
         signing_key.verify_key()
+    }
+}
+
+#[cfg(feature = "pkcs8")]
+#[cfg_attr(docsrs, doc(cfg(feature = "pkcs8")))]
+impl<C> FromPrivateKey for SigningKey<C>
+where
+    C: Curve + AlgorithmParameters + ProjectiveArithmetic,
+    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
+    Scalar<C>: PrimeField<Repr = FieldBytes<C>>
+        + FromDigest<C>
+        + Invert<Output = Scalar<C>>
+        + SignPrimitive<C>
+        + Zeroize,
+    AffinePoint<C>: Copy + Clone + Debug + Default,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn from_pkcs8_private_key_info(
+        private_key_info: pkcs8::PrivateKeyInfo<'_>,
+    ) -> pkcs8::Result<Self> {
+        SecretKey::from_pkcs8_private_key_info(private_key_info).map(|inner| Self { inner })
+    }
+}
+
+#[cfg(feature = "pem")]
+#[cfg_attr(docsrs, doc(cfg(feature = "pem")))]
+impl<C> FromStr for SigningKey<C>
+where
+    C: Curve + AlgorithmParameters + ProjectiveArithmetic,
+    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
+    Scalar<C>: PrimeField<Repr = FieldBytes<C>>
+        + FromDigest<C>
+        + Invert<Output = Scalar<C>>
+        + SignPrimitive<C>
+        + Zeroize,
+    AffinePoint<C>: Copy + Clone + Debug + Default,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Error> {
+        Self::from_pkcs8_pem(s).map_err(|_| Error::new())
     }
 }
