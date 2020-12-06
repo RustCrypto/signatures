@@ -1,5 +1,5 @@
 //! Elliptic Curve Digital Signature Algorithm (ECDSA) as specified in
-//! [FIPS 186-4][1] (Digital Signature Standard)
+//! [FIPS 186-4] (Digital Signature Standard)
 //!
 //! ## About
 //!
@@ -28,9 +28,12 @@
 //!
 //! ## Minimum Supported Rust Version
 //!
-//! - Rust **1.46+**
+//! Rust **1.46+** or higher.
 //!
-//! [1]: https://csrc.nist.gov/publications/detail/fips/186/4/final
+//! Minimum supported Rust version may be changed in the future, but it will be
+//! accompanied with a minor version bump.
+//!
+//! [FIPS 186-4]: https://csrc.nist.gov/publications/detail/fips/186/4/final
 //! [`k256`]: https://docs.rs/k256
 //! [`p256`]: https://docs.rs/p256
 //! [`p256::ecdsa::Signature`]: https://docs.rs/p256/latest/p256/ecdsa/type.Signature.html
