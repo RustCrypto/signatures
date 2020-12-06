@@ -1,5 +1,6 @@
-//! Support for computing deterministic ECDSA ephemeral scalar (`k`) using
-//! the method described in RFC 6979 rules (Section 3.2):
+//! Support for computing deterministic ECDSA ephemeral scalar (`k`).
+//!
+//! Implementation of the algorithm described in RFC 6979 (Section 3.2):
 //! <https://tools.ietf.org/html/rfc6979#section-3>
 
 use elliptic_curve::{

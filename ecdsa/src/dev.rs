@@ -1,4 +1,4 @@
-//! Development-related functionality
+//! Development-related functionality.
 
 pub mod curve;
 
@@ -29,7 +29,7 @@ pub struct TestVector {
     pub s: &'static [u8],
 }
 
-/// Define ECDSA signing test
+/// Define ECDSA signing test.
 #[macro_export]
 #[cfg_attr(docsrs, doc(cfg(feature = "dev")))]
 macro_rules! new_signing_test {
@@ -62,7 +62,7 @@ macro_rules! new_signing_test {
     };
 }
 
-/// Define ECDSA verification test
+/// Define ECDSA verification test.
 #[macro_export]
 #[cfg_attr(docsrs, doc(cfg(feature = "dev")))]
 macro_rules! new_verification_test {
