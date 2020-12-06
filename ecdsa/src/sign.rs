@@ -71,8 +71,7 @@ where
     }
 
     /// Initialize signing key from a raw scalar serialized as a byte slice.
-    // TODO(tarcieri): PKCS#8 support
-    pub fn new(bytes: &[u8]) -> Result<Self, Error> {
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
         SecretKey::from_bytes(bytes)
             .map(|sk| Self { inner: sk })
             .map_err(|_| Error::new())
