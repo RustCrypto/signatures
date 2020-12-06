@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.9.0 (2020-12-06)
+### Added
+- PKCS#8 support ([#203])
+
+### Changed
+- Bump `elliptic-curve` crate dependency to v0.7; MSRV 1.46+ ([#204])
+- Rename `VerifyKey` to `VerifyingKey` ([#200])
+- Rename `VerifyingKey::new()` to `::from_sec1_bytes()` ([#198])
+- Rename `SigningKey::new()` to `::from_bytes()` ([#205])
+
+### Fixed
+- Additional validity checks on ASN.1 DER-encoded signatures ([#192])
+
+[#205]: https://github.com/RustCrypto/signatures/pull/205
+[#204]: https://github.com/RustCrypto/signatures/pull/204
+[#203]: https://github.com/RustCrypto/signatures/pull/203
+[#200]: https://github.com/RustCrypto/signatures/pull/200
+[#198]: https://github.com/RustCrypto/signatures/pull/198
+[#192]: https://github.com/RustCrypto/signatures/pull/192
+
 ## 0.8.5 (2020-10-09)
 ### Fixed
 - Bug in default impl of CheckSignatureBytes ([#184])
