@@ -91,6 +91,9 @@ pub use verify::VerifyingKey;
 #[cfg_attr(docsrs, doc(cfg(feature = "zeroize")))]
 pub use elliptic_curve::SecretKey;
 
+#[cfg(feature = "pkcs8")]
+pub use elliptic_curve::pkcs8;
+
 use core::{
     convert::{TryFrom, TryInto},
     fmt::{self, Debug},
