@@ -26,7 +26,11 @@ use signature::{
 };
 
 #[cfg(feature = "verify")]
-use {crate::verify::VerifyingKey, core::fmt::Debug, elliptic_curve::AffinePoint};
+use {
+    crate::verify::VerifyingKey,
+    core::fmt::Debug,
+    elliptic_curve::{AffinePoint, ProjectivePoint},
+};
 
 #[cfg(feature = "pkcs8")]
 use crate::{
@@ -83,6 +87,7 @@ where
     pub fn verify_key(&self) -> VerifyingKey<C>
     where
         AffinePoint<C>: Copy + Clone + Debug + Default,
+        ProjectivePoint<C>: From<AffinePoint<C>>,
     {
         VerifyingKey {
             inner: self.inner.public_key(),
@@ -128,7 +133,7 @@ where
     /// computed using the algorithm described in RFC 6979 (Section 3.2):
     /// <https://tools.ietf.org/html/rfc6979#section-3>
     fn try_sign_digest(&self, digest: D) -> Result<Signature<C>, Error> {
-        let k = rfc6979::generate_k(self.inner.secret_value(), digest.clone(), &[]);
+        let k = rfc6979::generate_k(self.inner.secret_scalar(), digest.clone(), &[]);
         let msg_scalar = Scalar::<C>::from_digest(digest);
 
         self.inner
@@ -177,7 +182,7 @@ where
         let mut added_entropy = FieldBytes::<C>::default();
         rng.fill_bytes(&mut added_entropy);
 
-        let k = rfc6979::generate_k(self.inner.secret_value(), digest.clone(), &added_entropy);
+        let k = rfc6979::generate_k(self.inner.secret_scalar(), digest.clone(), &added_entropy);
         let msg_scalar = Scalar::<C>::from_digest(digest);
 
         self.inner
@@ -236,6 +241,7 @@ where
         + SignPrimitive<C>
         + Zeroize,
     AffinePoint<C>: Copy + Clone + Debug + Default,
+    ProjectivePoint<C>: From<AffinePoint<C>>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn from(signing_key: &SigningKey<C>) -> VerifyingKey<C> {

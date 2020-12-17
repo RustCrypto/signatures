@@ -71,9 +71,9 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "const-oid"
-version = "0.3.3"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9718eb58510ebba591b25cb8b2327050138fbbef581990944317097cf8a4198f"
+checksum = "069b46dab00267d018567b1154f38b706d6ed93c4915301a2fa73bc24a03a1e7"
 
 [[package]]
 name = "cpuid-bool"
@@ -127,7 +127,7 @@ dependencies = [
 name = "ecdsa"
 version = "0.9.0"
 dependencies = [
- "elliptic-curve 0.7.1",
+ "elliptic-curve 0.8.0-pre",
  "hex-literal",
  "hmac",
  "sha2",
@@ -182,9 +182,9 @@ dependencies = [
 
 [[package]]
 name = "elliptic-curve"
-version = "0.7.1"
+version = "0.8.0-pre"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2d02ac72d4e61713e291a2ae644c1bd82be82c21b9a0de2271e0aa6886b7e0b4"
+checksum = "0a2a632802ad67bc4add37bd464f597bd3dba143e414c0e750a8de399ae14226"
 dependencies = [
  "bitvec",
  "digest",
@@ -333,9 +333,9 @@ dependencies = [
 
 [[package]]
 name = "pkcs8"
-version = "0.1.0"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a2298039b56d6be1d9bf341c9ba6aa0936bd508152c2829c8cab6d3f57675f4"
+checksum = "9911ed9965aeee333588f226ad2baeabda478bf5ec151550735ed1760df759ba"
 dependencies = [
  "const-oid",
  "subtle-encoding",
