@@ -80,6 +80,7 @@ where
     FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>> + FromDigest<C>,
     AffinePoint<C>: Copy + Clone + Debug + VerifyPrimitive<C>,
+    ProjectivePoint<C>: From<AffinePoint<C>>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn verify_digest(&self, digest: D, signature: &Signature<C>) -> Result<(), Error> {
@@ -96,6 +97,7 @@ where
     FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>> + FromDigest<C>,
     AffinePoint<C>: Copy + Clone + Debug + VerifyPrimitive<C>,
+    ProjectivePoint<C>: From<AffinePoint<C>>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn verify(&self, msg: &[u8], signature: &Signature<C>) -> Result<(), Error> {
