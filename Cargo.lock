@@ -134,7 +134,7 @@ dependencies = [
 
 [[package]]
 name = "ecdsa"
-version = "0.10.1"
+version = "0.10.2"
 dependencies = [
  "elliptic-curve 0.8.3",
  "hex-literal",
