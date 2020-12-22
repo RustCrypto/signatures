@@ -4,13 +4,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.10.1 (2020-12-16)
+## 0.10.2 (2020-12-22)
+### Changed
+- Bump `elliptic-curve` crate to v0.8.3 ([#218])
+- Use the `dev` module from the `elliptic-curve` crate ([#218])
+
+[#218]: https://github.com/RustCrypto/signatures/pull/218
+
+## 0.10.1 (2020-12-16) [YANKED]
 ### Fixed
 - Trigger docs.rs rebuild with nightly bugfix ([RustCrypto/traits#412])
 
 [RustCrypto/traits#412]: https://github.com/RustCrypto/traits/pull/412
 
-## 0.10.0 (2020-12-16)
+## 0.10.0 (2020-12-16) [YANKED]
 ### Changed
 - Bump `elliptic-curve` dependency to v0.8 ([#215])
 
