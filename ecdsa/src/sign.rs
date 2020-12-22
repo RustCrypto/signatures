@@ -34,7 +34,12 @@ use {
 
 #[cfg(feature = "pkcs8")]
 use crate::{
-    elliptic_curve::AlgorithmParameters,
+    elliptic_curve::{
+        consts::U1,
+        ops::Add,
+        sec1::{UncompressedPointSize, UntaggedPointSize},
+        AlgorithmParameters,
+    },
     pkcs8::{self, FromPrivateKey},
 };
 
@@ -262,6 +267,8 @@ where
         + Zeroize,
     AffinePoint<C>: Copy + Clone + Debug + Default,
     SignatureSize<C>: ArrayLength<u8>,
+    UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
+    UncompressedPointSize<C>: ArrayLength<u8>,
 {
     fn from_pkcs8_private_key_info(
         private_key_info: pkcs8::PrivateKeyInfo<'_>,
@@ -283,6 +290,8 @@ where
         + Zeroize,
     AffinePoint<C>: Copy + Clone + Debug + Default,
     SignatureSize<C>: ArrayLength<u8>,
+    UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
+    UncompressedPointSize<C>: ArrayLength<u8>,
 {
     type Err = Error;
 

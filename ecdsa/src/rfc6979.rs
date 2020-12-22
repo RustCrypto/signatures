@@ -101,11 +101,10 @@ where
     }
 }
 
-#[cfg(all(feature = "dev", test))]
+#[cfg(test)]
 mod tests {
     use super::generate_k;
-    use crate::dev::curve::NonZeroScalar;
-    use elliptic_curve::ff::PrimeField;
+    use elliptic_curve::{dev::NonZeroScalar, ff::PrimeField};
     use hex_literal::hex;
     use sha2::{Digest, Sha256};
 
