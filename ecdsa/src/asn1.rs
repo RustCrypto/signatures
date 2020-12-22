@@ -350,11 +350,13 @@ fn trim_zeroes(mut bytes: &[u8], scalar_size: usize) -> Result<usize, Error> {
     Ok(offset)
 }
 
-#[cfg(all(feature = "dev", test))]
+#[cfg(all(test, features = "arithmetic"))]
 mod tests {
     use super::{INTEGER_TAG, SEQUENCE_TAG};
-    use crate::dev::curve::Signature;
+    use elliptic_curve::dev::MockCurve;
     use signature::Signature as _;
+
+    type Signature = crate::Signature<MockCurve>;
 
     const EXAMPLE_SIGNATURE: [u8; 64] = [
         0xf3, 0xac, 0x80, 0x61, 0xb5, 0x14, 0x79, 0x5b, 0x88, 0x43, 0xe3, 0xd6, 0x62, 0x95, 0x27,
