@@ -159,7 +159,8 @@
 //! instantiate and use the previously defined `HelloSigner` and `HelloVerifier`
 //! types with [`ring-compat`] as the signing/verification provider:
 //!
-//! ```
+//! ```ignore
+//! # TODO(tarcieri): update ring-compat and re-enable tests
 //! use ring_compat::signature::{
 //!     ed25519::{Signature, SigningKey, VerifyKey},
 //!     Signer, Verifier
