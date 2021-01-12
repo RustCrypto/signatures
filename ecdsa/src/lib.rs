@@ -54,7 +54,9 @@
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
-pub mod asn1;
+#[cfg(feature = "der")]
+#[cfg_attr(docsrs, doc(cfg(feature = "der")))]
+pub mod der;
 
 #[cfg(feature = "dev")]
 #[cfg_attr(docsrs, doc(cfg(feature = "dev")))]
@@ -98,7 +100,7 @@ pub use elliptic_curve::SecretKey;
 pub use elliptic_curve::pkcs8;
 
 use core::{
-    convert::{TryFrom, TryInto},
+    convert::TryFrom,
     fmt::{self, Debug},
     ops::Add,
 };
@@ -132,8 +134,8 @@ pub type SignatureBytes<C> = GenericArray<u8, SignatureSize<C>>;
 /// secp256k1, `r` and `s` will both be 32-bytes, resulting in a signature
 /// with a total of 64-bytes.
 ///
-/// ASN.1 is also supported via the [`Signature::from_asn1`] and
-/// [`Signature::to_asn1`] methods.
+/// ASN.1 DER-encoded signatures also supported via the
+/// [`Signature::from_der`] and [`Signature::to_der`] methods.
 #[derive(Clone, Eq, PartialEq)]
 pub struct Signature<C: Curve + CheckSignatureBytes>
 where
@@ -157,24 +159,28 @@ where
     }
 
     /// Parse a signature from ASN.1 DER
-    pub fn from_asn1(bytes: &[u8]) -> Result<Self, Error>
+    #[cfg(feature = "der")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "der")))]
+    pub fn from_der(bytes: &[u8]) -> Result<Self, Error>
     where
-        C::FieldSize: Add + ArrayLength<u8>,
-        asn1::MaxSize<C>: ArrayLength<u8>,
-        <C::FieldSize as Add>::Output: Add<asn1::MaxOverhead> + ArrayLength<u8>,
+        C::FieldSize: Add + ArrayLength<u8> + der::BigUIntSize,
+        der::MaxSize<C>: ArrayLength<u8>,
+        <C::FieldSize as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
     {
-        asn1::Signature::<C>::try_from(bytes).and_then(TryInto::try_into)
+        der::Signature::<C>::try_from(bytes).and_then(Self::try_from)
     }
 
     /// Serialize this signature as ASN.1 DER
-    pub fn to_asn1(&self) -> asn1::Signature<C>
+    #[cfg(feature = "der")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "der")))]
+    pub fn to_der(&self) -> der::Signature<C>
     where
-        C::FieldSize: Add + ArrayLength<u8>,
-        asn1::MaxSize<C>: ArrayLength<u8>,
-        <C::FieldSize as Add>::Output: Add<asn1::MaxOverhead> + ArrayLength<u8>,
+        C::FieldSize: Add + ArrayLength<u8> + der::BigUIntSize,
+        der::MaxSize<C>: ArrayLength<u8>,
+        <C::FieldSize as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
     {
         let (r, s) = self.bytes.split_at(C::FieldSize::to_usize());
-        asn1::Signature::from_scalar_bytes(r, s)
+        der::Signature::from_scalar_bytes(r, s)
     }
 }
 
@@ -286,16 +292,18 @@ where
     }
 }
 
-impl<C> TryFrom<asn1::Signature<C>> for Signature<C>
+#[cfg(feature = "der")]
+#[cfg_attr(docsrs, doc(cfg(feature = "der")))]
+impl<C> TryFrom<der::Signature<C>> for Signature<C>
 where
     C: Curve + CheckSignatureBytes,
-    C::FieldSize: Add + ArrayLength<u8>,
-    asn1::MaxSize<C>: ArrayLength<u8>,
-    <C::FieldSize as Add>::Output: Add<asn1::MaxOverhead> + ArrayLength<u8>,
+    C::FieldSize: Add + ArrayLength<u8> + der::BigUIntSize,
+    der::MaxSize<C>: ArrayLength<u8>,
+    <C::FieldSize as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
 {
     type Error = Error;
 
-    fn try_from(doc: asn1::Signature<C>) -> Result<Signature<C>, Error> {
+    fn try_from(doc: der::Signature<C>) -> Result<Signature<C>, Error> {
         let mut bytes = GenericArray::default();
         let scalar_size = C::FieldSize::to_usize();
         let r_begin = scalar_size.checked_sub(doc.r().len()).unwrap();

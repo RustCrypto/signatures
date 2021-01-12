@@ -52,7 +52,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 [[package]]
 name = "const-oid"
 version = "0.4.1"
-source = "git+https://github.com/RustCrypto/utils.git#21fe44f750178e027241e09d378e147428755f7a"
+source = "git+https://github.com/RustCrypto/utils.git#f2f49861a1edfb72523709af108a99feb6f18a67"
 
 [[package]]
 name = "cpuid-bool"
@@ -86,9 +86,10 @@ dependencies = [
 [[package]]
 name = "der"
 version = "0.2.0-pre"
-source = "git+https://github.com/RustCrypto/utils.git#21fe44f750178e027241e09d378e147428755f7a"
+source = "git+https://github.com/RustCrypto/utils.git#f2f49861a1edfb72523709af108a99feb6f18a67"
 dependencies = [
  "const-oid",
+ "typenum",
 ]
 
 [[package]]
@@ -104,6 +105,7 @@ dependencies = [
 name = "ecdsa"
 version = "0.11.0-pre"
 dependencies = [
+ "der",
  "elliptic-curve",
  "hex-literal",
  "hmac",
