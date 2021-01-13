@@ -35,9 +35,8 @@ use core::str::FromStr;
 pub struct VerifyingKey<C>
 where
     C: Curve + ProjectiveArithmetic,
-    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
-    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     AffinePoint<C>: Copy + Clone + Debug,
+    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
 {
     pub(crate) inner: PublicKey<C>,
 }
@@ -45,10 +44,9 @@ where
 impl<C> VerifyingKey<C>
 where
     C: Curve + ProjectiveArithmetic,
-    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
-    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
     ProjectivePoint<C>: From<AffinePoint<C>>,
+    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
     UncompressedPointSize<C>: ArrayLength<u8>,
 {
@@ -77,10 +75,9 @@ impl<C, D> DigestVerifier<D, Signature<C>> for VerifyingKey<C>
 where
     C: Curve + ProjectiveArithmetic,
     D: Digest<OutputSize = C::FieldSize>,
-    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
-    Scalar<C>: PrimeField<Repr = FieldBytes<C>> + FromDigest<C>,
     AffinePoint<C>: Copy + Clone + Debug + VerifyPrimitive<C>,
     ProjectivePoint<C>: From<AffinePoint<C>>,
+    Scalar<C>: PrimeField<Repr = FieldBytes<C>> + FromDigest<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn verify_digest(&self, digest: D, signature: &Signature<C>) -> Result<(), Error> {
@@ -94,10 +91,9 @@ impl<C> signature::Verifier<Signature<C>> for VerifyingKey<C>
 where
     C: Curve + ProjectiveArithmetic + DigestPrimitive,
     C::Digest: Digest<OutputSize = C::FieldSize>,
-    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
-    Scalar<C>: PrimeField<Repr = FieldBytes<C>> + FromDigest<C>,
     AffinePoint<C>: Copy + Clone + Debug + VerifyPrimitive<C>,
     ProjectivePoint<C>: From<AffinePoint<C>>,
+    Scalar<C>: PrimeField<Repr = FieldBytes<C>> + FromDigest<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn verify(&self, msg: &[u8], signature: &Signature<C>) -> Result<(), Error> {
@@ -108,10 +104,9 @@ where
 impl<C> From<&VerifyingKey<C>> for EncodedPoint<C>
 where
     C: Curve + ProjectiveArithmetic + point::Compression,
-    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
-    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
     ProjectivePoint<C>: From<AffinePoint<C>>,
+    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
     UncompressedPointSize<C>: ArrayLength<u8>,
 {
@@ -123,9 +118,8 @@ where
 impl<C> From<PublicKey<C>> for VerifyingKey<C>
 where
     C: Curve + ProjectiveArithmetic,
-    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
-    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     AffinePoint<C>: Copy + Clone + Debug,
+    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
 {
     fn from(public_key: PublicKey<C>) -> VerifyingKey<C> {
         VerifyingKey { inner: public_key }
@@ -135,9 +129,8 @@ where
 impl<C> From<&PublicKey<C>> for VerifyingKey<C>
 where
     C: Curve + ProjectiveArithmetic,
-    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
-    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     AffinePoint<C>: Copy + Clone + Debug,
+    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
 {
     fn from(public_key: &PublicKey<C>) -> VerifyingKey<C> {
         public_key.clone().into()
@@ -147,9 +140,8 @@ where
 impl<C> From<VerifyingKey<C>> for PublicKey<C>
 where
     C: Curve + ProjectiveArithmetic,
-    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
-    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     AffinePoint<C>: Copy + Clone + Debug,
+    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
 {
     fn from(verify_key: VerifyingKey<C>) -> PublicKey<C> {
         verify_key.inner
@@ -159,9 +151,8 @@ where
 impl<C> From<&VerifyingKey<C>> for PublicKey<C>
 where
     C: Curve + ProjectiveArithmetic,
-    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
-    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     AffinePoint<C>: Copy + Clone + Debug,
+    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
 {
     fn from(verify_key: &VerifyingKey<C>) -> PublicKey<C> {
         verify_key.clone().into()
@@ -171,10 +162,9 @@ where
 impl<C> Eq for VerifyingKey<C>
 where
     C: Curve + ProjectiveArithmetic,
-    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
-    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
     ProjectivePoint<C>: From<AffinePoint<C>>,
+    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
     UncompressedPointSize<C>: ArrayLength<u8>,
 {
@@ -183,10 +173,9 @@ where
 impl<C> PartialEq for VerifyingKey<C>
 where
     C: Curve + ProjectiveArithmetic,
-    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
-    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
     ProjectivePoint<C>: From<AffinePoint<C>>,
+    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
     UncompressedPointSize<C>: ArrayLength<u8>,
 {
@@ -200,10 +189,9 @@ where
 impl<C> FromPublicKey for VerifyingKey<C>
 where
     C: Curve + AlgorithmParameters + ProjectiveArithmetic + point::Compression,
-    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
-    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
     ProjectivePoint<C>: From<AffinePoint<C>>,
+    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
     UncompressedPointSize<C>: ArrayLength<u8>,
 {
@@ -217,10 +205,9 @@ where
 impl<C> FromStr for VerifyingKey<C>
 where
     C: Curve + AlgorithmParameters + ProjectiveArithmetic + point::Compression,
-    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
-    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
     ProjectivePoint<C>: From<AffinePoint<C>>,
+    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
     UncompressedPointSize<C>: ArrayLength<u8>,
 {

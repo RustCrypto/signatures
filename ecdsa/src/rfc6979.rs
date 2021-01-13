@@ -24,7 +24,6 @@ pub fn generate_k<C, D>(
 where
     C: ProjectiveArithmetic,
     D: FixedOutput<OutputSize = C::FieldSize> + BlockInput + Clone + Default + Reset + Update,
-    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
     Scalar<C>:
         PrimeField<Repr = FieldBytes<C>> + FromDigest<C> + Invert<Output = Scalar<C>> + Zeroize,
 {
