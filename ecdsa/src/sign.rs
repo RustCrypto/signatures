@@ -50,7 +50,6 @@ use core::str::FromStr;
 pub struct SigningKey<C>
 where
     C: Curve + ProjectiveArithmetic,
-    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>
         + FromDigest<C>
         + Invert<Output = Scalar<C>>
@@ -64,7 +63,6 @@ where
 impl<C> SigningKey<C>
 where
     C: Curve + ProjectiveArithmetic,
-    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>
         + FromDigest<C>
         + Invert<Output = Scalar<C>>
@@ -108,7 +106,6 @@ where
 impl<C> From<SecretKey<C>> for SigningKey<C>
 where
     C: Curve + ProjectiveArithmetic,
-    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>
         + ConstantTimeEq
         + FromDigest<C>
@@ -125,13 +122,12 @@ where
 impl<C, D> DigestSigner<D, Signature<C>> for SigningKey<C>
 where
     C: Curve + ProjectiveArithmetic,
-    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
+    D: FixedOutput<OutputSize = C::FieldSize> + BlockInput + Clone + Default + Reset + Update,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>
         + FromDigest<C>
         + Invert<Output = Scalar<C>>
         + SignPrimitive<C>
         + Zeroize,
-    D: FixedOutput<OutputSize = C::FieldSize> + BlockInput + Clone + Default + Reset + Update,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Sign message prehash using a deterministic ephemeral scalar (`k`)
@@ -149,15 +145,14 @@ where
 
 impl<C> signature::Signer<Signature<C>> for SigningKey<C>
 where
+    Self: DigestSigner<C::Digest, Signature<C>>,
     C: Curve + ProjectiveArithmetic + DigestPrimitive,
-    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>
         + FromDigest<C>
         + Invert<Output = Scalar<C>>
         + SignPrimitive<C>
         + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
-    Self: DigestSigner<C::Digest, Signature<C>>,
 {
     fn try_sign(&self, msg: &[u8]) -> Result<Signature<C>, signature::Error> {
         self.try_sign_digest(C::Digest::new().chain(msg))
@@ -167,13 +162,12 @@ where
 impl<C, D> RandomizedDigestSigner<D, Signature<C>> for SigningKey<C>
 where
     C: Curve + ProjectiveArithmetic,
-    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
+    D: FixedOutput<OutputSize = C::FieldSize> + BlockInput + Clone + Default + Reset + Update,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>
         + FromDigest<C>
         + Invert<Output = Scalar<C>>
         + SignPrimitive<C>
         + Zeroize,
-    D: FixedOutput<OutputSize = C::FieldSize> + BlockInput + Clone + Default + Reset + Update,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Sign message prehash using an ephemeral scalar (`k`) derived according
@@ -198,15 +192,14 @@ where
 
 impl<C> RandomizedSigner<Signature<C>> for SigningKey<C>
 where
+    Self: RandomizedDigestSigner<C::Digest, Signature<C>>,
     C: Curve + ProjectiveArithmetic + DigestPrimitive,
-    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>
         + FromDigest<C>
         + Invert<Output = Scalar<C>>
         + SignPrimitive<C>
         + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
-    Self: RandomizedDigestSigner<C::Digest, Signature<C>>,
 {
     fn try_sign_with_rng(
         &self,
@@ -220,7 +213,6 @@ where
 impl<C> From<NonZeroScalar<C>> for SigningKey<C>
 where
     C: Curve + ProjectiveArithmetic,
-    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>
         + FromDigest<C>
         + Invert<Output = Scalar<C>>
@@ -239,14 +231,13 @@ where
 impl<C> From<&SigningKey<C>> for VerifyingKey<C>
 where
     C: Curve + ProjectiveArithmetic,
-    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
+    AffinePoint<C>: Copy + Clone + Debug + Default,
+    ProjectivePoint<C>: From<AffinePoint<C>>,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>
         + FromDigest<C>
         + Invert<Output = Scalar<C>>
         + SignPrimitive<C>
         + Zeroize,
-    AffinePoint<C>: Copy + Clone + Debug + Default,
-    ProjectivePoint<C>: From<AffinePoint<C>>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn from(signing_key: &SigningKey<C>) -> VerifyingKey<C> {
@@ -259,13 +250,12 @@ where
 impl<C> FromPrivateKey for SigningKey<C>
 where
     C: Curve + AlgorithmParameters + ProjectiveArithmetic,
-    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
+    AffinePoint<C>: Copy + Clone + Debug + Default,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>
         + FromDigest<C>
         + Invert<Output = Scalar<C>>
         + SignPrimitive<C>
         + Zeroize,
-    AffinePoint<C>: Copy + Clone + Debug + Default,
     SignatureSize<C>: ArrayLength<u8>,
     UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
     UncompressedPointSize<C>: ArrayLength<u8>,
@@ -282,14 +272,13 @@ where
 impl<C> FromStr for SigningKey<C>
 where
     C: Curve + AlgorithmParameters + ProjectiveArithmetic,
-    FieldBytes<C>: From<Scalar<C>> + for<'r> From<&'r Scalar<C>>,
+    AffinePoint<C>: Copy + Clone + Debug + Default,
+    SignatureSize<C>: ArrayLength<u8>,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>
         + FromDigest<C>
         + Invert<Output = Scalar<C>>
         + SignPrimitive<C>
         + Zeroize,
-    AffinePoint<C>: Copy + Clone + Debug + Default,
-    SignatureSize<C>: ArrayLength<u8>,
     UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
     UncompressedPointSize<C>: ArrayLength<u8>,
 {

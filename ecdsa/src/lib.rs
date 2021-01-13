@@ -350,7 +350,6 @@ where
 impl<C> CheckSignatureBytes for C
 where
     C: Curve + ProjectiveArithmetic,
-    FieldBytes<C>: From<Scalar<C>> + for<'a> From<&'a Scalar<C>>,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     SignatureSize<C>: ArrayLength<u8>,
 {
