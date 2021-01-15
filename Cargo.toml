@@ -1,2 +1,2 @@
 [workspace]
-members = ["ecdsa", "ed25519"]
+members = ["ecdsa", "ed25519", "dsa"]
