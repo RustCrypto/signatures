@@ -37,7 +37,7 @@ use crate::{
     elliptic_curve::{
         consts::U1,
         ops::Add,
-        sec1::{UncompressedPointSize, UntaggedPointSize},
+        sec1::{FromEncodedPoint, ToEncodedPoint, UncompressedPointSize, UntaggedPointSize},
         AlgorithmParameters,
     },
     pkcs8::{self, FromPrivateKey},
@@ -250,7 +250,8 @@ where
 impl<C> FromPrivateKey for SigningKey<C>
 where
     C: Curve + AlgorithmParameters + ProjectiveArithmetic,
-    AffinePoint<C>: Copy + Clone + Debug + Default,
+    AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
+    ProjectivePoint<C>: From<AffinePoint<C>>,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>
         + FromDigest<C>
         + Invert<Output = Scalar<C>>
@@ -272,13 +273,14 @@ where
 impl<C> FromStr for SigningKey<C>
 where
     C: Curve + AlgorithmParameters + ProjectiveArithmetic,
-    AffinePoint<C>: Copy + Clone + Debug + Default,
-    SignatureSize<C>: ArrayLength<u8>,
+    AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
+    ProjectivePoint<C>: From<AffinePoint<C>>,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>
         + FromDigest<C>
         + Invert<Output = Scalar<C>>
         + SignPrimitive<C>
         + Zeroize,
+    SignatureSize<C>: ArrayLength<u8>,
     UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
     UncompressedPointSize<C>: ArrayLength<u8>,
 {
