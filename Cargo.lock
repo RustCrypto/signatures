@@ -46,7 +46,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 [[package]]
 name = "const-oid"
 version = "0.4.1"
-source = "git+https://github.com/RustCrypto/utils.git#39ef46c61f4658e9dc2a4cd91aa7cda0f8397adc"
+source = "git+https://github.com/RustCrypto/utils.git#b2b5fb554fad25071f4268bc6e8fb3d6def4bc7e"
 
 [[package]]
 name = "cpuid-bool"
@@ -80,7 +80,7 @@ dependencies = [
 [[package]]
 name = "der"
 version = "0.2.0-pre"
-source = "git+https://github.com/RustCrypto/utils.git#39ef46c61f4658e9dc2a4cd91aa7cda0f8397adc"
+source = "git+https://github.com/RustCrypto/utils.git#b2b5fb554fad25071f4268bc6e8fb3d6def4bc7e"
 dependencies = [
  "const-oid",
  "typenum",
@@ -144,7 +144,7 @@ dependencies = [
 [[package]]
 name = "elliptic-curve"
 version = "0.9.0-pre"
-source = "git+https://github.com/RustCrypto/traits.git#bb2c4f0b1baec38a03032f0d82239668ce393a6e"
+source = "git+https://github.com/RustCrypto/traits.git#79281260b3dd05b59ded7452a4788be5ab160e46"
 dependencies = [
  "digest",
  "ff",

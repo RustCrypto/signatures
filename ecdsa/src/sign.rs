@@ -10,14 +10,9 @@ use crate::{
     rfc6979, Error, Signature, SignatureSize,
 };
 use elliptic_curve::{
-    ff::PrimeField,
-    generic_array::ArrayLength,
-    ops::Invert,
-    scalar::{NonZeroScalar, Scalar},
-    subtle::ConstantTimeEq,
-    weierstrass::Curve,
-    zeroize::Zeroize,
-    FieldBytes, FromDigest, ProjectiveArithmetic, SecretKey,
+    ff::PrimeField, generic_array::ArrayLength, ops::Invert, subtle::ConstantTimeEq,
+    weierstrass::Curve, zeroize::Zeroize, FieldBytes, FromDigest, NonZeroScalar,
+    ProjectiveArithmetic, Scalar, SecretKey,
 };
 use signature::{
     digest::{BlockInput, Digest, FixedOutput, Reset, Update},

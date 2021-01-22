@@ -12,12 +12,11 @@ use elliptic_curve::{
     consts::U1,
     ff::PrimeField,
     generic_array::ArrayLength,
-    point::{AffinePoint, ProjectivePoint},
     sec1::{
         EncodedPoint, FromEncodedPoint, ToEncodedPoint, UncompressedPointSize, UntaggedPointSize,
     },
     weierstrass::{point, Curve},
-    FieldBytes, FromDigest, ProjectiveArithmetic, PublicKey, Scalar,
+    AffinePoint, FieldBytes, FromDigest, ProjectiveArithmetic, ProjectivePoint, PublicKey, Scalar,
 };
 use signature::{digest::Digest, DigestVerifier};
 
