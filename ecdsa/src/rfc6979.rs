@@ -8,9 +8,8 @@ use elliptic_curve::{
     ff::PrimeField,
     generic_array::GenericArray,
     ops::Invert,
-    scalar::{NonZeroScalar, Scalar},
     zeroize::{Zeroize, Zeroizing},
-    FieldBytes, FromDigest, ProjectiveArithmetic,
+    FieldBytes, FromDigest, NonZeroScalar, ProjectiveArithmetic, Scalar,
 };
 use hmac::{Hmac, Mac, NewMac};
 

@@ -108,11 +108,7 @@ use elliptic_curve::FieldBytes;
 use generic_array::{sequence::Concat, typenum::Unsigned, ArrayLength, GenericArray};
 
 #[cfg(feature = "arithmetic")]
-use elliptic_curve::{
-    ff::PrimeField,
-    scalar::{NonZeroScalar, Scalar},
-    ProjectiveArithmetic,
-};
+use elliptic_curve::{ff::PrimeField, NonZeroScalar, ProjectiveArithmetic, Scalar};
 
 /// Size of a fixed sized signature for the given elliptic curve.
 pub type SignatureSize<C> = <<C as elliptic_curve::Curve>::FieldSize as Add>::Output;
