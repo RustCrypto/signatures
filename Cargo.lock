@@ -2,8 +2,9 @@
 # It is not intended for manual editing.
 [[package]]
 name = "base64ct"
-version = "0.0.0"
-source = "git+https://github.com/RustCrypto/utils.git#0fe3e15b868778c92959f3fa03b62b47b6842f60"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c502cbac2e4ffc38047434d0c88b54da5e7c76829ff16f0a479f90116336d9f3"
 
 [[package]]
 name = "bincode"
@@ -51,7 +52,8 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 [[package]]
 name = "const-oid"
 version = "0.4.1"
-source = "git+https://github.com/RustCrypto/utils.git#0fe3e15b868778c92959f3fa03b62b47b6842f60"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c5d82796b70971fbb603900a5edc797a4d9be0f9ec1257f83a1dba0aa374e3e9"
 
 [[package]]
 name = "cpuid-bool"
@@ -88,15 +90,8 @@ version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "65ade418c7a9e4edd2dab3b4749ef6c56ee4b137bc1600215c158cff8e5d39b2"
 dependencies = [
- "typenum",
-]
-
-[[package]]
-name = "der"
-version = "0.2.0"
-source = "git+https://github.com/RustCrypto/utils.git#0fe3e15b868778c92959f3fa03b62b47b6842f60"
-dependencies = [
  "const-oid",
+ "typenum",
 ]
 
 [[package]]
@@ -112,7 +107,7 @@ dependencies = [
 name = "ecdsa"
 version = "0.11.0-pre"
 dependencies = [
- "der 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "der",
  "elliptic-curve",
  "hex-literal",
  "hmac",
@@ -157,7 +152,7 @@ dependencies = [
 [[package]]
 name = "elliptic-curve"
 version = "0.9.0-pre"
-source = "git+https://github.com/RustCrypto/traits.git#b03736b733bb22b77b1650346eaadbe6e71bfe32"
+source = "git+https://github.com/RustCrypto/traits.git#0da78eabf8edeca29ca6ee433274b05ec9356ad6"
 dependencies = [
  "digest",
  "ff",
@@ -249,11 +244,12 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
 name = "pkcs8"
-version = "0.4.0-pre"
-source = "git+https://github.com/RustCrypto/utils.git#0fe3e15b868778c92959f3fa03b62b47b6842f60"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c8f486f758a686804c80ab239829095260ecbe46e5226e00c0b1339e76a9babc"
 dependencies = [
  "base64ct",
- "der 0.2.0 (git+https://github.com/RustCrypto/utils.git)",
+ "der",
  "zeroize",
 ]
 
@@ -283,9 +279,9 @@ dependencies = [
 
 [[package]]
 name = "radium"
-version = "0.6.1"
+version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e9e006811e1fdd12672b0820a7f44c18dde429f367d50cec003d22aa9b3c8ddc"
+checksum = "643f8f41a8ebc4c5dc4515c82bb8abd397b527fc20fd681b7c011c2aee5d44fb"
 
 [[package]]
 name = "rand"
@@ -371,9 +367,9 @@ checksum = "1e81da0851ada1f3e9d4312c704aa4f8806f0f9d69faaf8df2f3464b4a9437c2"
 
 [[package]]
 name = "syn"
-version = "1.0.58"
+version = "1.0.60"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cc60a3d73ea6594cd712d830cc1f0390fd71542d8c8cd24e70cc54cdfd5e05d5"
+checksum = "c700597eca8a5a762beb35753ef6b94df201c81cca676604f547495a0d7f0081"
 dependencies = [
  "proc-macro2",
  "quote",
