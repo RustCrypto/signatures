@@ -143,6 +143,19 @@ pub trait DigestPrimitive: Curve {
     type Digest: Digest;
 }
 
+/// Instantiate this type from the output of a digest.
+///
+/// This can be used for implementing hash-to-scalar (e.g. as in ECDSA) or
+/// hash-to-curve algorithms.
+#[cfg(feature = "digest")]
+#[cfg_attr(docsrs, doc(cfg(feature = "digest")))]
+pub trait FromDigest<C: Curve> {
+    /// Instantiate this type from a [`Digest`] instance
+    fn from_digest<D>(digest: D) -> Self
+    where
+        D: Digest<OutputSize = C::FieldSize>;
+}
+
 #[cfg(feature = "digest")]
 impl<C> PrehashSignature for Signature<C>
 where

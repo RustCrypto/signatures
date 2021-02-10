@@ -1,5 +1,63 @@
 //! Development-related functionality.
 
+use crate::hazmat::FromDigest;
+use core::convert::{TryFrom, TryInto};
+use elliptic_curve::{
+    consts::U32,
+    dev::{MockCurve, Scalar, MODULUS},
+    util::{adc64, sbb64},
+};
+use signature::digest::Digest;
+
+impl FromDigest<MockCurve> for Scalar {
+    fn from_digest<D>(digest: D) -> Self
+    where
+        D: Digest<OutputSize = U32>,
+    {
+        let bytes = digest.finalize();
+
+        sub_inner(
+            u64::from_be_bytes(bytes[24..32].try_into().unwrap()),
+            u64::from_be_bytes(bytes[16..24].try_into().unwrap()),
+            u64::from_be_bytes(bytes[8..16].try_into().unwrap()),
+            u64::from_be_bytes(bytes[0..8].try_into().unwrap()),
+            0,
+            MODULUS[0],
+            MODULUS[1],
+            MODULUS[2],
+            MODULUS[3],
+            0,
+        )
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn sub_inner(
+    l0: u64,
+    l1: u64,
+    l2: u64,
+    l3: u64,
+    l4: u64,
+    r0: u64,
+    r1: u64,
+    r2: u64,
+    r3: u64,
+    r4: u64,
+) -> Scalar {
+    let (w0, borrow) = sbb64(l0, r0, 0);
+    let (w1, borrow) = sbb64(l1, r1, borrow);
+    let (w2, borrow) = sbb64(l2, r2, borrow);
+    let (w3, borrow) = sbb64(l3, r3, borrow);
+    let (_, borrow) = sbb64(l4, r4, borrow);
+
+    let (w0, carry) = adc64(w0, MODULUS[0] & borrow, 0);
+    let (w1, carry) = adc64(w1, MODULUS[1] & borrow, carry);
+    let (w2, carry) = adc64(w2, MODULUS[2] & borrow, carry);
+    let (w3, _) = adc64(w3, MODULUS[3] & borrow, carry);
+
+    Scalar::try_from([w0, w1, w2, w3]).unwrap()
+}
+
 // TODO(tarcieri): implement full set of tests from ECDSA2VS
 // <https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/dss2/ecdsa2vs.pdf>
 
