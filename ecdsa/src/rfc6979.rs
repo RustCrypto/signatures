@@ -3,15 +3,17 @@
 //! Implementation of the algorithm described in RFC 6979 (Section 3.2):
 //! <https://tools.ietf.org/html/rfc6979#section-3>
 
+use crate::hazmat::FromDigest;
 use elliptic_curve::{
-    digest::{BlockInput, FixedOutput, Reset, Update},
     ff::PrimeField,
     generic_array::GenericArray,
     ops::Invert,
+    weierstrass::Curve,
     zeroize::{Zeroize, Zeroizing},
-    FieldBytes, FromDigest, NonZeroScalar, ProjectiveArithmetic, Scalar,
+    FieldBytes, NonZeroScalar, ProjectiveArithmetic, Scalar,
 };
 use hmac::{Hmac, Mac, NewMac};
+use signature::digest::{BlockInput, FixedOutput, Reset, Update};
 
 /// Generate ephemeral scalar `k` from the secret scalar and a digest of the
 /// input message.
@@ -21,7 +23,7 @@ pub fn generate_k<C, D>(
     additional_data: &[u8],
 ) -> Zeroizing<NonZeroScalar<C>>
 where
-    C: ProjectiveArithmetic,
+    C: Curve + ProjectiveArithmetic,
     D: FixedOutput<OutputSize = C::FieldSize> + BlockInput + Clone + Default + Reset + Update,
     Scalar<C>:
         PrimeField<Repr = FieldBytes<C>> + FromDigest<C> + Invert<Output = Scalar<C>> + Zeroize,

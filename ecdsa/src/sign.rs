@@ -6,13 +6,13 @@
 // TODO(tarcieri): support for hardware crypto accelerators
 
 use crate::{
-    hazmat::{DigestPrimitive, SignPrimitive},
+    hazmat::{DigestPrimitive, FromDigest, SignPrimitive},
     rfc6979, Error, Signature, SignatureSize,
 };
 use elliptic_curve::{
     ff::PrimeField, generic_array::ArrayLength, ops::Invert, subtle::ConstantTimeEq,
-    weierstrass::Curve, zeroize::Zeroize, FieldBytes, FromDigest, NonZeroScalar,
-    ProjectiveArithmetic, Scalar, SecretKey,
+    weierstrass::Curve, zeroize::Zeroize, FieldBytes, NonZeroScalar, ProjectiveArithmetic, Scalar,
+    SecretKey,
 };
 use signature::{
     digest::{BlockInput, Digest, FixedOutput, Reset, Update},

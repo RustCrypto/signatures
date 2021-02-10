@@ -4,7 +4,7 @@
 //! [`VerifyPrimitive`] impl on its associated `AffinePoint` type.
 
 use crate::{
-    hazmat::{DigestPrimitive, VerifyPrimitive},
+    hazmat::{DigestPrimitive, FromDigest, VerifyPrimitive},
     Error, Signature, SignatureSize,
 };
 use core::{fmt::Debug, ops::Add};
@@ -16,7 +16,7 @@ use elliptic_curve::{
         EncodedPoint, FromEncodedPoint, ToEncodedPoint, UncompressedPointSize, UntaggedPointSize,
     },
     weierstrass::{point, Curve},
-    AffinePoint, FieldBytes, FromDigest, ProjectiveArithmetic, ProjectivePoint, PublicKey, Scalar,
+    AffinePoint, FieldBytes, ProjectiveArithmetic, ProjectivePoint, PublicKey, Scalar,
 };
 use signature::{digest::Digest, DigestVerifier};
 
