@@ -151,8 +151,9 @@ dependencies = [
 
 [[package]]
 name = "elliptic-curve"
-version = "0.9.0-pre"
-source = "git+https://github.com/RustCrypto/traits.git#c577e14f887a0f984c6f403617aa02e893536704"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c237c70e5a4013efd3e8f1e49e79b58d0bfd601c6783d82fb819d04a29b85297"
 dependencies = [
  "ff",
  "generic-array",
