@@ -2,9 +2,9 @@
 # It is not intended for manual editing.
 [[package]]
 name = "base64ct"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c502cbac2e4ffc38047434d0c88b54da5e7c76829ff16f0a479f90116336d9f3"
+checksum = "22fb38fd6e62e4ceec8543db40ceb714454ff173451a0f2a6c8952fdf39a2d6c"
 
 [[package]]
 name = "bincode"
@@ -151,9 +151,9 @@ dependencies = [
 
 [[package]]
 name = "elliptic-curve"
-version = "0.9.0"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c237c70e5a4013efd3e8f1e49e79b58d0bfd601c6783d82fb819d04a29b85297"
+checksum = "f570dd3a071d4965d83b349aab09c71b661e54f9e97091a9225ee4dc98d72f3d"
 dependencies = [
  "ff",
  "generic-array",
@@ -232,9 +232,9 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.82"
+version = "0.2.86"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "89203f3fba0a3795506acaad8ebce3c80c0af93f994d5a1d7a0b1eeb23271929"
+checksum = "b7282d924be3275cec7f6756ff4121987bc6481325397dde6ba3e7802b1a8b1c"
 
 [[package]]
 name = "opaque-debug"
@@ -244,9 +244,9 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
 name = "pkcs8"
-version = "0.4.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c8f486f758a686804c80ab239829095260ecbe46e5226e00c0b1339e76a9babc"
+checksum = "5cf818666b471f4219a11aaca36c612697807b216b91149ed4b799bf1a5b0fd0"
 dependencies = [
  "base64ct",
  "der",
