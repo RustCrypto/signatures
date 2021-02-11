@@ -15,7 +15,7 @@ use elliptic_curve::{
     sec1::{
         EncodedPoint, FromEncodedPoint, ToEncodedPoint, UncompressedPointSize, UntaggedPointSize,
     },
-    weierstrass::{point, Curve},
+    weierstrass::{Curve, PointCompression},
     AffinePoint, FieldBytes, ProjectiveArithmetic, ProjectivePoint, PublicKey, Scalar,
 };
 use signature::{digest::Digest, DigestVerifier};
@@ -102,7 +102,7 @@ where
 
 impl<C> From<&VerifyingKey<C>> for EncodedPoint<C>
 where
-    C: Curve + ProjectiveArithmetic + point::Compression,
+    C: Curve + ProjectiveArithmetic + PointCompression,
     AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
     ProjectivePoint<C>: From<AffinePoint<C>>,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
@@ -187,7 +187,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "pkcs8")))]
 impl<C> FromPublicKey for VerifyingKey<C>
 where
-    C: Curve + AlgorithmParameters + ProjectiveArithmetic + point::Compression,
+    C: Curve + AlgorithmParameters + ProjectiveArithmetic + PointCompression,
     AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
     ProjectivePoint<C>: From<AffinePoint<C>>,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
@@ -203,7 +203,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "pem")))]
 impl<C> FromStr for VerifyingKey<C>
 where
-    C: Curve + AlgorithmParameters + ProjectiveArithmetic + point::Compression,
+    C: Curve + AlgorithmParameters + ProjectiveArithmetic + PointCompression,
     AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
     ProjectivePoint<C>: From<AffinePoint<C>>,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
