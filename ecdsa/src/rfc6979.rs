@@ -34,7 +34,9 @@ where
     x.zeroize();
 
     loop {
-        if let Some(k) = NonZeroScalar::from_repr(hmac_drbg.next()) {
+        let mut tmp = FieldBytes::<C>::default();
+        hmac_drbg.generate_into(&mut tmp);
+        if let Some(k) = NonZeroScalar::from_repr(tmp) {
             return Zeroizing::new(k);
         }
     }
@@ -87,17 +89,18 @@ where
     }
 
     /// Get the next `HMAC_DRBG` output
-    pub fn next(&mut self) -> GenericArray<u8, D::OutputSize> {
-        self.k.update(&self.v);
-        let t = self.k.finalize_reset().into_bytes();
+    pub fn generate_into(&mut self, out: &mut [u8]) {
+        for out_chunk in out.chunks_mut(self.v.len()) {
+            self.k.update(&self.v);
+            self.v = self.k.finalize_reset().into_bytes();
+            out_chunk.copy_from_slice(&self.v[..out_chunk.len()]);
+        }
 
-        self.k.update(&t);
+        self.k.update(&self.v);
         self.k.update(&[0x00]);
         self.k = Hmac::new_varkey(&self.k.finalize_reset().into_bytes()).unwrap();
-        self.k.update(&t);
+        self.k.update(&self.v);
         self.v = self.k.finalize_reset().into_bytes();
-
-        t
     }
 }
 
