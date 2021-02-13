@@ -56,7 +56,7 @@
 //! }
 //!
 //! pub struct HelloVerifier<V> {
-//!     pub verifier: V
+//!     pub verify_key: V
 //! }
 //!
 //! impl<V> HelloVerifier<V>
@@ -68,7 +68,7 @@
 //!         person: &str,
 //!         signature: &ed25519::Signature
 //!     ) -> Result<(), ed25519::Error> {
-//!         self.verifier.verify(format_message(person).as_bytes(), signature)
+//!         self.verify_key.verify(format_message(person).as_bytes(), signature)
 //!     }
 //! }
 //!
