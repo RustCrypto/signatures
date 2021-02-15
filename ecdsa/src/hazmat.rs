@@ -145,8 +145,12 @@ pub trait DigestPrimitive: Curve {
 
 /// Instantiate this type from the output of a digest.
 ///
-/// This can be used for implementing hash-to-scalar (e.g. as in ECDSA) or
-/// hash-to-curve algorithms.
+/// This trait is intended for use in ECDSA and should perform a conversion
+/// which is compatible with the rules for calculating `h` from `H(M)` set out
+/// in RFC6979 section 2.4. This conversion cannot fail.
+///
+/// This trait may also be useful for other hash-to-scalar or hash-to-curve
+/// use cases.
 #[cfg(feature = "digest")]
 #[cfg_attr(docsrs, doc(cfg(feature = "digest")))]
 pub trait FromDigest<C: Curve> {
