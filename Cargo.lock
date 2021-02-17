@@ -151,11 +151,12 @@ dependencies = [
 
 [[package]]
 name = "elliptic-curve"
-version = "0.9.2"
+version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f3f5ababd466cd3fc23b934ce7e1854a27bba9c172a47026f682cf801268a249"
+checksum = "4df0e7de89c5c4e29c5c9a8576d1484603c16b8156765923e650cf99864ddc1f"
 dependencies = [
  "ff",
+ "funty",
  "generic-array",
  "group",
  "hex-literal",
@@ -244,12 +245,13 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
 name = "pkcs8"
-version = "0.4.1"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5cf818666b471f4219a11aaca36c612697807b216b91149ed4b799bf1a5b0fd0"
+checksum = "cef7f3bd1bd1bb7b347609085a8ef84e326de2e400bc2b53eba16f77a3dc5bfb"
 dependencies = [
  "base64ct",
  "der",
+ "spki",
  "zeroize",
 ]
 
@@ -357,6 +359,15 @@ checksum = "0f0242b8e50dd9accdd56170e94ca1ebd223b098eb9c83539a6e367d0f36ae68"
 dependencies = [
  "digest",
  "rand_core 0.6.1",
+]
+
+[[package]]
+name = "spki"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fc22de9c8a841f9508de9f6849b018d414199e4682cc094e5677286c81de80f8"
+dependencies = [
+ "der",
 ]
 
 [[package]]
