@@ -86,9 +86,9 @@ dependencies = [
 
 [[package]]
 name = "der"
-version = "0.2.4"
+version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b70f809fb1678da4d5ea334095cbe8d6c64fea35fc52836db6c241caee68e17e"
+checksum = "c59822d0b3c6c83d3419a6caa1b47cfefe3c494074bdc0ee95db7a52284d21e4"
 dependencies = [
  "const-oid",
  "typenum",
@@ -151,9 +151,9 @@ dependencies = [
 
 [[package]]
 name = "elliptic-curve"
-version = "0.9.3"
+version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4df0e7de89c5c4e29c5c9a8576d1484603c16b8156765923e650cf99864ddc1f"
+checksum = "203d2ca86d44931f12e9104dcf8f4735a632eb4dd8d8dfe583c87fe41bb8a862"
 dependencies = [
  "ff",
  "funty",
@@ -161,7 +161,7 @@ dependencies = [
  "group",
  "hex-literal",
  "pkcs8",
- "rand_core 0.6.1",
+ "rand_core 0.6.2",
  "subtle",
  "zeroize",
 ]
@@ -173,7 +173,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72a4d941a5b7c2a75222e2d44fcdf634a67133d9db31e177ae5ff6ecda852bfe"
 dependencies = [
  "bitvec",
- "rand_core 0.6.1",
+ "rand_core 0.6.2",
  "subtle",
 ]
 
@@ -211,7 +211,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "61b3c1e8b4f1ca07e6605ea1be903a5f6956aec5c8a67fd44d56076631675ed8"
 dependencies = [
  "ff",
- "rand_core 0.6.1",
+ "rand_core 0.6.2",
  "subtle",
 ]
 
@@ -245,9 +245,9 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
 name = "pkcs8"
-version = "0.5.0"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cef7f3bd1bd1bb7b347609085a8ef84e326de2e400bc2b53eba16f77a3dc5bfb"
+checksum = "7f3e7a05338645bdc206ac5b5883d9050ed3351776eebd577e5b15e7ca019811"
 dependencies = [
  "base64ct",
  "der",
@@ -272,9 +272,9 @@ dependencies = [
 
 [[package]]
 name = "quote"
-version = "1.0.8"
+version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "991431c3519a3f36861882da93630ce66b52918dcf1b8e2fd66b397fc96f28df"
+checksum = "c3d0b9745dc2debf507c8422de05d7226cc1f0644216dfdfead988f9b1ab32a7"
 dependencies = [
  "proc-macro2",
 ]
@@ -319,9 +319,9 @@ dependencies = [
 
 [[package]]
 name = "rand_core"
-version = "0.6.1"
+version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c026d7df8b298d90ccbbc5190bd04d85e159eaf5576caeacf8741da93ccbd2e5"
+checksum = "34cf66eb183df1c5876e2dcf6b13d57340741e8dc255b48e40a26de954d06ae7"
 
 [[package]]
 name = "rand_hc"
@@ -358,14 +358,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0f0242b8e50dd9accdd56170e94ca1ebd223b098eb9c83539a6e367d0f36ae68"
 dependencies = [
  "digest",
- "rand_core 0.6.1",
+ "rand_core 0.6.2",
 ]
 
 [[package]]
 name = "spki"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fc22de9c8a841f9508de9f6849b018d414199e4682cc094e5677286c81de80f8"
+checksum = "48250aa51181e87d253cfbef4f3652a90fa5fb9395970309c7afc01a6f860df0"
 dependencies = [
  "der",
 ]
@@ -401,9 +401,9 @@ dependencies = [
 
 [[package]]
 name = "tap"
-version = "1.0.0"
+version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "36474e732d1affd3a6ed582781b3683df3d0563714c59c39591e8ff707cf078e"
+checksum = "55937e1799185b12863d447f42597ed69d9928686b8d88a1df17376a097d8369"
 
 [[package]]
 name = "typenum"
