@@ -177,7 +177,6 @@ where
 
         let r_range = find_scalar_range(input, r.as_bytes())?;
         let s_range = find_scalar_range(input, s.as_bytes())?;
-        debug_assert_eq!(s_range.end, input.len());
 
         if s_range.end != input.len() {
             return Err(Error::new());
