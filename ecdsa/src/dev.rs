@@ -188,3 +188,91 @@ macro_rules! new_verification_test {
         // TODO(tarcieri): test invalid Q, invalid r, invalid m
     };
 }
+
+/// Define a Wycheproof verification test.
+#[macro_export]
+#[cfg_attr(docsrs, doc(cfg(feature = "dev")))]
+macro_rules! new_wycheproof_test {
+    ($name:ident, $test_name: expr, $curve:path) => {
+        use $crate::elliptic_curve::sec1::EncodedPoint;
+        use $crate::{signature::Verifier, Signature};
+
+        #[test]
+        fn $name() {
+            use blobby::Blob5Iterator;
+            use elliptic_curve::generic_array::typenum::Unsigned;
+
+            // Build a field element but allow for too-short input (left pad with zeros)
+            // or too-long input (check excess leftmost bytes are zeros).
+            fn element_from_padded_slice<C: elliptic_curve::Curve>(
+                data: &[u8],
+            ) -> elliptic_curve::FieldBytes<C> {
+                let point_len = C::FieldSize::to_usize();
+                if data.len() >= point_len {
+                    let offset = data.len() - point_len;
+                    for v in data.iter().take(offset) {
+                        assert_eq!(*v, 0, "EcdsaVerifier: point too large");
+                    }
+                    elliptic_curve::FieldBytes::<C>::clone_from_slice(&data[offset..])
+                } else {
+                    // Provided slice is too short and needs to be padded with zeros
+                    // on the left.  Build a combined exact iterator to do this.
+                    let iter = core::iter::repeat(0)
+                        .take(point_len - data.len())
+                        .chain(data.iter().cloned());
+                    elliptic_curve::FieldBytes::<C>::from_exact_iter(iter).unwrap()
+                }
+            }
+
+            fn run_test(
+                wx: &[u8],
+                wy: &[u8],
+                msg: &[u8],
+                sig: &[u8],
+                pass: bool,
+            ) -> Option<&'static str> {
+                let x = element_from_padded_slice::<$curve>(wx);
+                let y = element_from_padded_slice::<$curve>(wy);
+                let q_encoded: EncodedPoint<$curve> =
+                    EncodedPoint::from_affine_coordinates(&x, &y, /* compress= */ false);
+                let verify_key = ecdsa_core::VerifyingKey::from_encoded_point(&q_encoded).unwrap();
+
+                let sig = match Signature::from_der(sig) {
+                    Ok(s) => s,
+                    Err(_) if !pass => return None,
+                    Err(_) => return Some("failed to parse signature ASN.1"),
+                };
+
+                match verify_key.verify(msg, &sig) {
+                    Ok(_) if pass => None,
+                    Ok(_) => Some("signature verify failed"),
+                    Err(_) if !pass => None,
+                    Err(_) => Some("signature verify unexpectedly succeeded"),
+                }
+            }
+
+            let data = include_bytes!(concat!("test_vectors/data/", $test_name, ".blb"));
+
+            for (i, row) in Blob5Iterator::new(data).unwrap().enumerate() {
+                let [wx, wy, msg, sig, status] = row.unwrap();
+                let pass = match status[0] {
+                    0 => false,
+                    1 => true,
+                    _ => panic!("invalid value for pass flag"),
+                };
+                if let Some(desc) = run_test(wx, wy, msg, sig, pass) {
+                    panic!(
+                        "\n\
+                                 Failed test №{}: {}\n\
+                                 wx:\t{:?}\n\
+                                 wy:\t{:?}\n\
+                                 msg:\t{:?}\n\
+                                 sig:\t{:?}\n\
+                                 pass:\t{}\n",
+                        i, desc, wx, wy, msg, sig, pass,
+                    );
+                }
+            }
+        }
+    };
+}
