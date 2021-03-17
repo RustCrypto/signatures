@@ -2,9 +2,9 @@
 # It is not intended for manual editing.
 [[package]]
 name = "base64ct"
-version = "0.2.0"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "22fb38fd6e62e4ceec8543db40ceb714454ff173451a0f2a6c8952fdf39a2d6c"
+checksum = "d0d27fb6b6f1e43147af148af49d49329413ba781aa0d5e10979831c210173b5"
 
 [[package]]
 name = "bincode"
@@ -151,9 +151,9 @@ dependencies = [
 
 [[package]]
 name = "elliptic-curve"
-version = "0.9.4"
+version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "203d2ca86d44931f12e9104dcf8f4735a632eb4dd8d8dfe583c87fe41bb8a862"
+checksum = "e96675863dd09400876af3f9348ecfa1090ee8c2f0b1febf369fef01fe271658"
 dependencies = [
  "ff",
  "funty",
@@ -244,24 +244,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
-name = "pkcs5"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "321f456f11e455766fc424a5a1b86e6d2478a9ba40f12a06c6afc8cef33ec1d1"
-dependencies = [
- "der",
- "spki",
-]
-
-[[package]]
 name = "pkcs8"
-version = "0.5.2"
+version = "0.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fbe017f30ae5cc01d2d0e24d8d3bcfdd63bc719c6cdc2b97e974fd933d8c7e15"
+checksum = "a9c455331e3393451bdf8d49f022442a6f45870b0442820548e921de155e18a7"
 dependencies = [
  "base64ct",
  "der",
- "pkcs5",
  "spki",
  "zeroize",
 ]

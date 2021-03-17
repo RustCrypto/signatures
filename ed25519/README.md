@@ -24,7 +24,10 @@ Ed25519 implementations, including HSMs or Cloud KMS services.
 
 ## Minimum Supported Rust Version
 
-- Rust **1.41+**
+This crate requires **Rust 1.41** at a minimum.
+
+We may change the MSRV in the future, but it will be accompanied by a minor
+version bump.
 
 ## License
 

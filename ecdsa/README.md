@@ -27,7 +27,10 @@ ways:
 
 ## Minimum Supported Rust Version
 
-- Rust **1.46+**
+This crate requires **Rust 1.47** at a minimum.
+
+We may change the MSRV in the future, but it will be accompanied by a minor
+version bump.
 
 ## License
 
@@ -51,7 +54,7 @@ dual licensed as above, without any additional terms or conditions.
 [docs-image]: https://docs.rs/ecdsa/badge.svg
 [docs-link]: https://docs.rs/ecdsa/
 [license-image]: https://img.shields.io/badge/license-Apache2.0/MIT-blue.svg
-[rustc-image]: https://img.shields.io/badge/rustc-1.46+-blue.svg
+[rustc-image]: https://img.shields.io/badge/rustc-1.47+-blue.svg
 [chat-image]: https://img.shields.io/badge/zulip-join_chat-blue.svg
 [chat-link]: https://rustcrypto.zulipchat.com/#narrow/stream/260048-signatures
 [build-image]: https://github.com/RustCrypto/signatures/workflows/ecdsa/badge.svg?branch=master&event=push
