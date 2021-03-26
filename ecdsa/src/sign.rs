@@ -1,7 +1,4 @@
-//! ECDSA signing key. Generic over elliptic curves.
-//!
-//! Requires an [`elliptic_curve::ProjectiveArithmetic`] impl on the curve, and a
-//! [`SignPrimitive`] impl on its associated `Scalar` type.
+//! ECDSA signing key.
 
 // TODO(tarcieri): support for hardware crypto accelerators
 
@@ -28,20 +25,22 @@ use {
 };
 
 #[cfg(feature = "pkcs8")]
-use crate::{
-    elliptic_curve::{
-        consts::U1,
-        ops::Add,
-        sec1::{FromEncodedPoint, ToEncodedPoint, UncompressedPointSize, UntaggedPointSize},
-        AlgorithmParameters,
-    },
+use crate::elliptic_curve::{
+    consts::U1,
+    ops::Add,
     pkcs8::{self, FromPrivateKey},
+    sec1::{FromEncodedPoint, ToEncodedPoint, UncompressedPointSize, UntaggedPointSize},
+    AlgorithmParameters,
 };
 
 #[cfg(feature = "pem")]
 use core::str::FromStr;
 
-/// ECDSA signing key
+/// ECDSA signing key. Generic over elliptic curves.
+///
+/// Requires an [`elliptic_curve::ProjectiveArithmetic`] impl on the curve, and a
+/// [`SignPrimitive`] impl on its associated `Scalar` type.
+#[cfg_attr(docsrs, doc(cfg(feature = "sign")))]
 pub struct SigningKey<C>
 where
     C: Curve + ProjectiveArithmetic,

@@ -71,15 +71,13 @@ pub mod hazmat;
 pub mod rfc6979;
 
 #[cfg(feature = "sign")]
-#[cfg_attr(docsrs, doc(cfg(feature = "sign")))]
-pub mod sign;
+mod sign;
 
 #[cfg(feature = "verify")]
-#[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
-pub mod verify;
+mod verify;
 
 // Re-export the `elliptic-curve` crate (and select types)
-pub use elliptic_curve::{self, generic_array, sec1::EncodedPoint, weierstrass::Curve};
+pub use elliptic_curve::{self, sec1::EncodedPoint, weierstrass::Curve};
 
 // Re-export the `signature` crate (and select types)
 pub use signature::{self, Error};
@@ -92,26 +90,21 @@ pub use sign::SigningKey;
 #[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
 pub use verify::VerifyingKey;
 
-#[cfg(feature = "zeroize")]
-#[cfg_attr(docsrs, doc(cfg(feature = "zeroize")))]
-pub use elliptic_curve::SecretKey;
-
-#[cfg(feature = "pkcs8")]
-pub use elliptic_curve::pkcs8;
-
 use core::{
     convert::TryFrom,
     fmt::{self, Debug},
     ops::Add,
 };
-use elliptic_curve::FieldBytes;
-use generic_array::{sequence::Concat, typenum::Unsigned, ArrayLength, GenericArray};
+use elliptic_curve::{
+    generic_array::{sequence::Concat, typenum::Unsigned, ArrayLength, GenericArray},
+    FieldBytes,
+};
 
 #[cfg(feature = "arithmetic")]
 use elliptic_curve::{ff::PrimeField, NonZeroScalar, ProjectiveArithmetic, Scalar};
 
 #[cfg(feature = "der")]
-use generic_array::typenum::NonZero;
+use elliptic_curve::generic_array::typenum::NonZero;
 
 /// Size of a fixed sized signature for the given elliptic curve.
 pub type SignatureSize<C> = <<C as elliptic_curve::Curve>::FieldSize as Add>::Output;
@@ -119,12 +112,9 @@ pub type SignatureSize<C> = <<C as elliptic_curve::Curve>::FieldSize as Add>::Ou
 /// Fixed-size byte array containing an ECDSA signature
 pub type SignatureBytes<C> = GenericArray<u8, SignatureSize<C>>;
 
-/// ECDSA signatures (fixed-size).
+/// ECDSA signature (fixed-size). Generic over elliptic curve types.
 ///
-/// Generic over elliptic curve types.
-///
-/// These signatures are serialized as fixed-sized big endian scalar values
-/// with no additional framing:
+/// Serialized as fixed-sized big endian scalar values with no added framing:
 ///
 /// - `r`: field element size for the given curve, big-endian
 /// - `s`: field element size for the given curve, big-endian
