@@ -1,16 +1,17 @@
 //! Support for ECDSA signatures encoded as ASN.1 DER.
 
-use crate::{
-    generic_array::{typenum::NonZero, ArrayLength, GenericArray},
-    Error,
-};
+use crate::Error;
 use core::{
     convert::{TryFrom, TryInto},
     fmt,
     ops::{Add, Range},
 };
 use der::Decodable;
-use elliptic_curve::{consts::U9, weierstrass::Curve};
+use elliptic_curve::{
+    consts::U9,
+    generic_array::{typenum::NonZero, ArrayLength, GenericArray},
+    weierstrass::Curve,
+};
 
 #[cfg(feature = "alloc")]
 use alloc::boxed::Box;

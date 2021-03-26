@@ -1,7 +1,4 @@
-//! ECDSA verification key (i.e. public key). Generic over elliptic curves.
-//!
-//! Requires an [`elliptic_curve::ProjectiveArithmetic`] impl on the curve, and a
-//! [`VerifyPrimitive`] impl on its associated `AffinePoint` type.
+//! ECDSA verification key.
 
 use crate::{
     hazmat::{DigestPrimitive, FromDigest, VerifyPrimitive},
@@ -21,15 +18,19 @@ use elliptic_curve::{
 use signature::{digest::Digest, DigestVerifier};
 
 #[cfg(feature = "pkcs8")]
-use crate::{
-    elliptic_curve::AlgorithmParameters,
+use crate::elliptic_curve::{
     pkcs8::{self, FromPublicKey},
+    AlgorithmParameters,
 };
 
 #[cfg(feature = "pem")]
 use core::str::FromStr;
 
-/// ECDSA verify key
+/// ECDSA verification key (i.e. public key). Generic over elliptic curves.
+///
+/// Requires an [`elliptic_curve::ProjectiveArithmetic`] impl on the curve, and a
+/// [`VerifyPrimitive`] impl on its associated `AffinePoint` type.
+#[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
 #[derive(Copy, Clone, Debug)]
 pub struct VerifyingKey<C>
 where
