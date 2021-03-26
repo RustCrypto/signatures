@@ -110,6 +110,9 @@ use generic_array::{sequence::Concat, typenum::Unsigned, ArrayLength, GenericArr
 #[cfg(feature = "arithmetic")]
 use elliptic_curve::{ff::PrimeField, NonZeroScalar, ProjectiveArithmetic, Scalar};
 
+#[cfg(feature = "der")]
+use generic_array::typenum::NonZero;
+
 /// Size of a fixed sized signature for the given elliptic curve.
 pub type SignatureSize<C> = <<C as elliptic_curve::Curve>::FieldSize as Add>::Output;
 
@@ -159,7 +162,7 @@ where
     #[cfg_attr(docsrs, doc(cfg(feature = "der")))]
     pub fn from_der(bytes: &[u8]) -> Result<Self, Error>
     where
-        C::FieldSize: Add + ArrayLength<u8> + der::BigUIntSize,
+        C::FieldSize: Add + ArrayLength<u8> + NonZero,
         der::MaxSize<C>: ArrayLength<u8>,
         <C::FieldSize as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
     {
@@ -171,7 +174,7 @@ where
     #[cfg_attr(docsrs, doc(cfg(feature = "der")))]
     pub fn to_der(&self) -> der::Signature<C>
     where
-        C::FieldSize: Add + ArrayLength<u8> + der::BigUIntSize,
+        C::FieldSize: Add + ArrayLength<u8> + NonZero,
         der::MaxSize<C>: ArrayLength<u8>,
         <C::FieldSize as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
     {
@@ -293,7 +296,7 @@ where
 impl<C> TryFrom<der::Signature<C>> for Signature<C>
 where
     C: Curve + CheckSignatureBytes,
-    C::FieldSize: Add + ArrayLength<u8> + der::BigUIntSize,
+    C::FieldSize: Add + ArrayLength<u8> + NonZero,
     der::MaxSize<C>: ArrayLength<u8>,
     <C::FieldSize as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
 {

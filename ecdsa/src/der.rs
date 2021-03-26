@@ -1,9 +1,7 @@
 //! Support for ECDSA signatures encoded as ASN.1 DER.
 
-pub use der::BigUIntSize;
-
 use crate::{
-    generic_array::{ArrayLength, GenericArray},
+    generic_array::{typenum::NonZero, ArrayLength, GenericArray},
     Error,
 };
 use core::{
@@ -52,7 +50,7 @@ const ENCODING_ERR_MSG: &str = "DER encoding error";
 pub struct Signature<C>
 where
     C: Curve,
-    C::FieldSize: Add + ArrayLength<u8> + BigUIntSize,
+    C::FieldSize: Add + ArrayLength<u8> + NonZero,
     MaxSize<C>: ArrayLength<u8>,
     <C::FieldSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
@@ -69,7 +67,7 @@ where
 impl<C> signature::Signature for Signature<C>
 where
     C: Curve,
-    C::FieldSize: Add + ArrayLength<u8> + BigUIntSize,
+    C::FieldSize: Add + ArrayLength<u8> + NonZero,
     MaxSize<C>: ArrayLength<u8>,
     <C::FieldSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
@@ -83,7 +81,7 @@ where
 impl<C> Signature<C>
 where
     C: Curve,
-    C::FieldSize: Add + ArrayLength<u8> + BigUIntSize,
+    C::FieldSize: Add + ArrayLength<u8> + NonZero,
     MaxSize<C>: ArrayLength<u8>,
     <C::FieldSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
@@ -111,7 +109,8 @@ where
         let mut bytes = SignatureBytes::<C>::default();
         let mut encoder = der::Encoder::new(&mut bytes);
 
-        encoder.sequence(&[&r, &s]).expect(ENCODING_ERR_MSG);
+        encoder.message(&[&r, &s]).expect(ENCODING_ERR_MSG);
+
         encoder
             .finish()
             .expect(ENCODING_ERR_MSG)
@@ -133,7 +132,7 @@ where
 impl<C> AsRef<[u8]> for Signature<C>
 where
     C: Curve,
-    C::FieldSize: Add + ArrayLength<u8> + BigUIntSize,
+    C::FieldSize: Add + ArrayLength<u8> + NonZero,
     MaxSize<C>: ArrayLength<u8>,
     <C::FieldSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
@@ -145,7 +144,7 @@ where
 impl<C> fmt::Debug for Signature<C>
 where
     C: Curve,
-    C::FieldSize: Add + ArrayLength<u8> + BigUIntSize,
+    C::FieldSize: Add + ArrayLength<u8> + NonZero,
     MaxSize<C>: ArrayLength<u8>,
     <C::FieldSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
@@ -160,7 +159,7 @@ where
 impl<C> TryFrom<&[u8]> for Signature<C>
 where
     C: Curve,
-    C::FieldSize: Add + ArrayLength<u8> + BigUIntSize,
+    C::FieldSize: Add + ArrayLength<u8> + NonZero,
     MaxSize<C>: ArrayLength<u8>,
     <C::FieldSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
@@ -208,7 +207,7 @@ fn find_scalar_range(outer: &[u8], inner: &[u8]) -> Result<Range<usize>, Error> 
 impl<C> signature::PrehashSignature for Signature<C>
 where
     C: Curve + crate::hazmat::DigestPrimitive,
-    C::FieldSize: Add + ArrayLength<u8> + BigUIntSize,
+    C::FieldSize: Add + ArrayLength<u8> + NonZero,
     MaxSize<C>: ArrayLength<u8>,
     <C::FieldSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
