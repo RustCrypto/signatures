@@ -12,23 +12,24 @@
 //! FULL PRIVATE KEY RECOVERY!
 
 #[cfg(feature = "arithmetic")]
-use crate::SignatureSize;
-#[cfg(feature = "arithmetic")]
-use core::borrow::Borrow;
-#[cfg(feature = "arithmetic")]
-use elliptic_curve::{ff::PrimeField, ops::Invert, FieldBytes, ProjectiveArithmetic, Scalar};
-#[cfg(feature = "arithmetic")]
-use signature::Error;
+use {
+    crate::SignatureSize,
+    core::borrow::Borrow,
+    elliptic_curve::{ff::PrimeField, ops::Invert, FieldBytes, ProjectiveArithmetic, Scalar},
+    signature::Error,
+};
 
 #[cfg(feature = "digest")]
-use crate::CheckSignatureBytes;
-#[cfg(feature = "digest")]
-use signature::{digest::Digest, PrehashSignature};
+use crate::{
+    signature::{digest::Digest, PrehashSignature},
+    CheckSignatureBytes,
+};
 
 #[cfg(any(feature = "arithmetic", feature = "digest"))]
-use crate::Signature;
-#[cfg(any(feature = "arithmetic", feature = "digest"))]
-use elliptic_curve::{generic_array::ArrayLength, weierstrass::Curve};
+use crate::{
+    elliptic_curve::{generic_array::ArrayLength, weierstrass::Curve},
+    Signature,
+};
 
 /// Try to sign the given prehashed message using ECDSA.
 ///
@@ -115,7 +116,6 @@ where
     ///
     /// Accepts the following arguments:
     ///
-    /// - `verify_key`: public key to verify the signature against
     /// - `hashed_msg`: prehashed message to be verified
     /// - `signature`: signature to be verified against the key and message
     fn verify_prehashed(

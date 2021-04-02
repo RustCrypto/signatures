@@ -235,7 +235,7 @@ macro_rules! new_wycheproof_test {
                 let y = element_from_padded_slice::<$curve>(wy);
                 let q_encoded: EncodedPoint<$curve> =
                     EncodedPoint::from_affine_coordinates(&x, &y, /* compress= */ false);
-                let verify_key = ecdsa_core::VerifyingKey::from_encoded_point(&q_encoded).unwrap();
+                let verifying_key = $crate::VerifyingKey::from_encoded_point(&q_encoded).unwrap();
 
                 let sig = match Signature::from_der(sig) {
                     Ok(s) => s,
@@ -243,7 +243,7 @@ macro_rules! new_wycheproof_test {
                     Err(_) => return Some("failed to parse signature ASN.1"),
                 };
 
-                match verify_key.verify(msg, &sig) {
+                match verifying_key.verify(msg, &sig) {
                     Ok(_) if pass => None,
                     Ok(_) => Some("signature verify failed"),
                     Err(_) if !pass => None,
