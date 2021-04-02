@@ -81,7 +81,7 @@ where
     /// Get the [`VerifyingKey`] which corresponds to this [`SigningKey`]
     #[cfg(feature = "verify")]
     #[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
-    pub fn verify_key(&self) -> VerifyingKey<C>
+    pub fn verifying_key(&self) -> VerifyingKey<C>
     where
         AffinePoint<C>: Copy + Clone + Debug + Default,
         ProjectivePoint<C>: From<AffinePoint<C>>,
@@ -235,7 +235,7 @@ where
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn from(signing_key: &SigningKey<C>) -> VerifyingKey<C> {
-        signing_key.verify_key()
+        signing_key.verifying_key()
     }
 }
 

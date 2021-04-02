@@ -110,8 +110,8 @@ where
     UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
     UncompressedPointSize<C>: ArrayLength<u8>,
 {
-    fn from(verify_key: &VerifyingKey<C>) -> EncodedPoint<C> {
-        verify_key.to_encoded_point(C::COMPRESS_POINTS)
+    fn from(verifying_key: &VerifyingKey<C>) -> EncodedPoint<C> {
+        verifying_key.to_encoded_point(C::COMPRESS_POINTS)
     }
 }
 
@@ -143,8 +143,8 @@ where
     AffinePoint<C>: Copy + Clone + Debug,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
 {
-    fn from(verify_key: VerifyingKey<C>) -> PublicKey<C> {
-        verify_key.inner
+    fn from(verifying_key: VerifyingKey<C>) -> PublicKey<C> {
+        verifying_key.inner
     }
 }
 
@@ -154,8 +154,8 @@ where
     AffinePoint<C>: Copy + Clone + Debug,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
 {
-    fn from(verify_key: &VerifyingKey<C>) -> PublicKey<C> {
-        verify_key.clone().into()
+    fn from(verifying_key: &VerifyingKey<C>) -> PublicKey<C> {
+        verifying_key.clone().into()
     }
 }
 
