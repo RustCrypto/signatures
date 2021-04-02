@@ -92,8 +92,9 @@ macro_rules! new_signing_test {
     ($curve:path, $vectors:expr) => {
         use core::convert::TryInto;
         use $crate::{
-            elliptic_curve::{ff::PrimeField, ProjectiveArithmetic, Scalar},
-            generic_array::GenericArray,
+            elliptic_curve::{
+                ff::PrimeField, generic_array::GenericArray, ProjectiveArithmetic, Scalar,
+            },
             hazmat::SignPrimitive,
         };
 
@@ -126,9 +127,9 @@ macro_rules! new_verification_test {
         use core::convert::TryInto;
         use $crate::{
             elliptic_curve::{
-                ff::PrimeField, sec1::EncodedPoint, AffinePoint, ProjectiveArithmetic, Scalar,
+                ff::PrimeField, generic_array::GenericArray, sec1::EncodedPoint, AffinePoint,
+                ProjectiveArithmetic, Scalar,
             },
-            generic_array::GenericArray,
             hazmat::VerifyPrimitive,
             Signature,
         };
@@ -194,8 +195,7 @@ macro_rules! new_verification_test {
 #[cfg_attr(docsrs, doc(cfg(feature = "dev")))]
 macro_rules! new_wycheproof_test {
     ($name:ident, $test_name: expr, $curve:path) => {
-        use $crate::elliptic_curve::sec1::EncodedPoint;
-        use $crate::{signature::Verifier, Signature};
+        use $crate::{elliptic_curve::sec1::EncodedPoint, signature::Verifier, Signature};
 
         #[test]
         fn $name() {
