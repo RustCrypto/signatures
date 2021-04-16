@@ -52,9 +52,9 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "const-oid"
-version = "0.5.0"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "75b8aaf972a93eb4ce235ecea7825c68756361f7657407f4826cc2335ae9766d"
+checksum = "af497ba993c3f3c416a0e1e1d84b81c3e0b131c4c67105a391920ba4dfa24d2d"
 
 [[package]]
 name = "cpuid-bool"
@@ -87,9 +87,9 @@ dependencies = [
 
 [[package]]
 name = "der"
-version = "0.3.1"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "539105f43ae11e74cfcea6c1af9aabe66d2da0df05f4a368ecee12f02518c36b"
+checksum = "83dc83d0b59f92103d8e661e60526338ad3aeb0c15fa4a29a14b6a9b1ac8a43c"
 dependencies = [
  "const-oid",
  "typenum",
