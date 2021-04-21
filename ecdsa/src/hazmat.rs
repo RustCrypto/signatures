@@ -15,7 +15,9 @@
 use {
     crate::SignatureSize,
     core::borrow::Borrow,
-    elliptic_curve::{ff::PrimeField, ops::Invert, FieldBytes, ProjectiveArithmetic, Scalar},
+    elliptic_curve::{
+        ff::PrimeField, ops::Invert, FieldBytes, Order, ProjectiveArithmetic, Scalar,
+    },
     signature::Error,
 };
 
@@ -40,7 +42,7 @@ use crate::{
 #[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
 pub trait SignPrimitive<C>
 where
-    C: Curve + ProjectiveArithmetic,
+    C: Curve + Order + ProjectiveArithmetic,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -64,7 +66,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
 pub trait RecoverableSignPrimitive<C>
 where
-    C: Curve + ProjectiveArithmetic,
+    C: Curve + Order + ProjectiveArithmetic,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -84,7 +86,7 @@ where
 #[cfg(feature = "arithmetic")]
 impl<C, T> SignPrimitive<C> for T
 where
-    C: Curve + ProjectiveArithmetic,
+    C: Curve + Order + ProjectiveArithmetic,
     T: RecoverableSignPrimitive<C>,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     SignatureSize<C>: ArrayLength<u8>,
@@ -108,7 +110,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
 pub trait VerifyPrimitive<C>
 where
-    C: Curve + ProjectiveArithmetic,
+    C: Curve + Order + ProjectiveArithmetic,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -137,7 +139,7 @@ where
 /// [1]: https://github.com/RustCrypto/traits/tree/master/signature/derive
 #[cfg(feature = "digest")]
 #[cfg_attr(docsrs, doc(cfg(feature = "digest")))]
-pub trait DigestPrimitive: Curve {
+pub trait DigestPrimitive: Curve + Order {
     /// Preferred digest to use when computing ECDSA signatures for this
     /// elliptic curve. This should be a member of the SHA-2 family.
     type Digest: Digest;

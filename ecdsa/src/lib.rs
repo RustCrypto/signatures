@@ -97,7 +97,7 @@ use core::{
 };
 use elliptic_curve::{
     generic_array::{sequence::Concat, typenum::Unsigned, ArrayLength, GenericArray},
-    FieldBytes,
+    FieldBytes, Order,
 };
 
 #[cfg(feature = "arithmetic")]
@@ -126,7 +126,7 @@ pub type SignatureBytes<C> = GenericArray<u8, SignatureSize<C>>;
 /// ASN.1 DER-encoded signatures also supported via the
 /// [`Signature::from_der`] and [`Signature::to_der`] methods.
 #[derive(Clone, Eq, PartialEq)]
-pub struct Signature<C: Curve + CheckSignatureBytes>
+pub struct Signature<C: Curve + Order + CheckSignatureBytes>
 where
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -135,7 +135,7 @@ where
 
 impl<C> Signature<C>
 where
-    C: Curve + CheckSignatureBytes,
+    C: Curve + Order + CheckSignatureBytes,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Create a [`Signature`] from the serialized `r` and `s` scalar values
@@ -177,7 +177,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
 impl<C> Signature<C>
 where
-    C: Curve + ProjectiveArithmetic,
+    C: Curve + Order + ProjectiveArithmetic,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     <Scalar<C> as PrimeField>::Repr: From<Scalar<C>> + for<'a> From<&'a Scalar<C>>,
     SignatureSize<C>: ArrayLength<u8>,
@@ -221,7 +221,7 @@ where
 
 impl<C> signature::Signature for Signature<C>
 where
-    C: Curve + CheckSignatureBytes,
+    C: Curve + Order + CheckSignatureBytes,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
@@ -231,7 +231,7 @@ where
 
 impl<C> AsRef<[u8]> for Signature<C>
 where
-    C: Curve + CheckSignatureBytes,
+    C: Curve + Order + CheckSignatureBytes,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn as_ref(&self) -> &[u8] {
@@ -241,7 +241,7 @@ where
 
 impl<C> Copy for Signature<C>
 where
-    C: Curve + CheckSignatureBytes,
+    C: Curve + Order + CheckSignatureBytes,
     SignatureSize<C>: ArrayLength<u8>,
     <SignatureSize<C> as ArrayLength<u8>>::ArrayType: Copy,
 {
@@ -249,7 +249,7 @@ where
 
 impl<C> Debug for Signature<C>
 where
-    C: Curve + CheckSignatureBytes,
+    C: Curve + Order + CheckSignatureBytes,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -264,7 +264,7 @@ where
 
 impl<C> TryFrom<&[u8]> for Signature<C>
 where
-    C: Curve + CheckSignatureBytes,
+    C: Curve + Order + CheckSignatureBytes,
     SignatureSize<C>: ArrayLength<u8>,
 {
     type Error = Error;
@@ -285,7 +285,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "der")))]
 impl<C> TryFrom<der::Signature<C>> for Signature<C>
 where
-    C: Curve + CheckSignatureBytes,
+    C: Curve + Order + CheckSignatureBytes,
     C::FieldSize: Add + ArrayLength<u8> + NonZero,
     der::MaxSize<C>: ArrayLength<u8>,
     <C::FieldSize as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
