@@ -126,7 +126,7 @@ pub type SignatureBytes<C> = GenericArray<u8, SignatureSize<C>>;
 /// ASN.1 DER-encoded signatures also supported via the
 /// [`Signature::from_der`] and [`Signature::to_der`] methods.
 #[derive(Clone, Eq, PartialEq)]
-pub struct Signature<C: Curve + Order + CheckSignatureBytes>
+pub struct Signature<C: Curve + Order>
 where
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -135,7 +135,7 @@ where
 
 impl<C> Signature<C>
 where
-    C: Curve + Order + CheckSignatureBytes,
+    C: Curve + Order,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Create a [`Signature`] from the serialized `r` and `s` scalar values
@@ -221,7 +221,7 @@ where
 
 impl<C> signature::Signature for Signature<C>
 where
-    C: Curve + Order + CheckSignatureBytes,
+    C: Curve + Order,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
@@ -231,7 +231,7 @@ where
 
 impl<C> AsRef<[u8]> for Signature<C>
 where
-    C: Curve + Order + CheckSignatureBytes,
+    C: Curve + Order,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn as_ref(&self) -> &[u8] {
@@ -241,7 +241,7 @@ where
 
 impl<C> Copy for Signature<C>
 where
-    C: Curve + Order + CheckSignatureBytes,
+    C: Curve + Order,
     SignatureSize<C>: ArrayLength<u8>,
     <SignatureSize<C> as ArrayLength<u8>>::ArrayType: Copy,
 {
@@ -249,7 +249,7 @@ where
 
 impl<C> Debug for Signature<C>
 where
-    C: Curve + Order + CheckSignatureBytes,
+    C: Curve + Order,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -264,7 +264,7 @@ where
 
 impl<C> TryFrom<&[u8]> for Signature<C>
 where
-    C: Curve + Order + CheckSignatureBytes,
+    C: Curve + Order,
     SignatureSize<C>: ArrayLength<u8>,
 {
     type Error = Error;
@@ -274,10 +274,19 @@ where
             return Err(Error::new());
         }
 
-        let bytes = GenericArray::clone_from_slice(bytes);
-        C::check_signature_bytes(&bytes)?;
+        for scalar in bytes.chunks_exact(C::FieldSize::to_usize()) {
+            if scalar.iter().all(|&byte| byte == 0) {
+                return Err(Error::new());
+            }
 
-        Ok(Self { bytes })
+            if !bool::from(C::is_scalar_repr_in_range(GenericArray::from_slice(scalar))) {
+                return Err(Error::new());
+            }
+        }
+
+        Ok(Self {
+            bytes: GenericArray::clone_from_slice(bytes),
+        })
     }
 }
 
@@ -285,7 +294,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "der")))]
 impl<C> TryFrom<der::Signature<C>> for Signature<C>
 where
-    C: Curve + Order + CheckSignatureBytes,
+    C: Curve + Order,
     C::FieldSize: Add + ArrayLength<u8> + NonZero,
     der::MaxSize<C>: ArrayLength<u8>,
     <C::FieldSize as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
@@ -293,67 +302,14 @@ where
     type Error = Error;
 
     fn try_from(doc: der::Signature<C>) -> Result<Signature<C>, Error> {
-        let mut bytes = GenericArray::default();
+        let mut bytes = SignatureBytes::<C>::default();
         let scalar_size = C::FieldSize::to_usize();
         let r_begin = scalar_size.checked_sub(doc.r().len()).unwrap();
         let s_begin = bytes.len().checked_sub(doc.s().len()).unwrap();
 
         bytes[r_begin..scalar_size].copy_from_slice(doc.r());
         bytes[s_begin..].copy_from_slice(doc.s());
-
-        C::check_signature_bytes(&bytes)?;
-        Ok(Signature { bytes })
-    }
-}
-
-/// Ensure a signature is well-formed.
-pub trait CheckSignatureBytes: Curve
-where
-    SignatureSize<Self>: ArrayLength<u8>,
-{
-    /// Validate that the given signature is well-formed.
-    ///
-    /// This trait is auto-impl'd for curves which impl the
-    /// `elliptic_curve::ProjectiveArithmetic` trait, which validates that the
-    /// `r` and `s` components of the signature are in range of the
-    /// scalar field.
-    ///
-    /// Note that this trait is not for verifying a signature, but allows for
-    /// asserting properties of it which allow infallible conversions
-    /// (e.g. accessors for the `r` and `s` components)
-    fn check_signature_bytes(bytes: &SignatureBytes<Self>) -> Result<(), Error> {
-        // Ensure `r` and `s` are both non-zero
-        // TODO(tarcieri): check that `r` and `s` are in range of the curve's order
-        for scalar_bytes in bytes.chunks(Self::FieldSize::to_usize()) {
-            if scalar_bytes.iter().all(|&b| b == 0) {
-                return Err(Error::new());
-            }
-        }
-
-        Ok(())
-    }
-}
-
-#[cfg(feature = "arithmetic")]
-#[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
-impl<C> CheckSignatureBytes for C
-where
-    C: Curve + ProjectiveArithmetic,
-    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
-    SignatureSize<C>: ArrayLength<u8>,
-{
-    /// When curve arithmetic is available, check that the scalar components
-    /// of the signature are in range.
-    fn check_signature_bytes(bytes: &SignatureBytes<C>) -> Result<(), Error> {
-        let (r, s) = bytes.split_at(C::FieldSize::to_usize());
-        let r_ok = NonZeroScalar::<C>::from_repr(GenericArray::clone_from_slice(r)).is_some();
-        let s_ok = NonZeroScalar::<C>::from_repr(GenericArray::clone_from_slice(s)).is_some();
-
-        if r_ok && s_ok {
-            Ok(())
-        } else {
-            Err(Error::new())
-        }
+        Self::try_from(bytes.as_slice())
     }
 }
 
