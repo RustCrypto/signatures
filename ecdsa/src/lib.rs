@@ -97,7 +97,7 @@ use core::{
 };
 use elliptic_curve::{
     generic_array::{sequence::Concat, typenum::Unsigned, ArrayLength, GenericArray},
-    FieldBytes, Order,
+    FieldBytes, Order, ScalarBytes,
 };
 
 #[cfg(feature = "arithmetic")]
@@ -279,7 +279,10 @@ where
                 return Err(Error::new());
             }
 
-            if !bool::from(C::is_scalar_repr_in_range(GenericArray::from_slice(scalar))) {
+            if ScalarBytes::<C>::new(GenericArray::clone_from_slice(scalar))
+                .is_none()
+                .into()
+            {
                 return Err(Error::new());
             }
         }
