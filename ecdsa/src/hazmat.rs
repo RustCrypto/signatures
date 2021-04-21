@@ -22,10 +22,7 @@ use {
 };
 
 #[cfg(feature = "digest")]
-use crate::{
-    signature::{digest::Digest, PrehashSignature},
-    CheckSignatureBytes,
-};
+use crate::signature::{digest::Digest, PrehashSignature};
 
 #[cfg(any(feature = "arithmetic", feature = "digest"))]
 use crate::{
@@ -165,7 +162,7 @@ pub trait FromDigest<C: Curve> {
 #[cfg(feature = "digest")]
 impl<C> PrehashSignature for Signature<C>
 where
-    C: DigestPrimitive + CheckSignatureBytes,
+    C: DigestPrimitive,
     <C::FieldSize as core::ops::Add>::Output: ArrayLength<u8>,
 {
     type Digest = C::Digest;
