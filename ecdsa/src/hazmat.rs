@@ -15,9 +15,7 @@
 use {
     crate::SignatureSize,
     core::borrow::Borrow,
-    elliptic_curve::{
-        ff::PrimeField, ops::Invert, FieldBytes, Order, ProjectiveArithmetic, Scalar,
-    },
+    elliptic_curve::{ff::PrimeField, ops::Invert, FieldBytes, ProjectiveArithmetic, Scalar},
     signature::Error,
 };
 
@@ -27,7 +25,7 @@ use crate::signature::{digest::Digest, PrehashSignature};
 #[cfg(any(feature = "arithmetic", feature = "digest"))]
 use crate::{
     elliptic_curve::{generic_array::ArrayLength, weierstrass::Curve},
-    Signature,
+    Order, Signature,
 };
 
 /// Try to sign the given prehashed message using ECDSA.
