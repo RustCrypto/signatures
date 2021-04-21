@@ -36,8 +36,10 @@ jobs:
           override: true
       - run: cargo build --no-default-features --release --target ${{ matrix.target }}
       - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features arithmetic
+      - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features arithmetic,hazmat
       - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features dev
       - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features digest
+      - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features digest,hazmat
       - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features hazmat
       - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features pkcs8
       - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features pem
