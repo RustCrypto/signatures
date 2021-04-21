@@ -8,8 +8,8 @@ use crate::{
 };
 use elliptic_curve::{
     ff::PrimeField, generic_array::ArrayLength, ops::Invert, subtle::ConstantTimeEq,
-    weierstrass::Curve, zeroize::Zeroize, FieldBytes, NonZeroScalar, ProjectiveArithmetic, Scalar,
-    SecretKey,
+    weierstrass::Curve, zeroize::Zeroize, FieldBytes, NonZeroScalar, Order, ProjectiveArithmetic,
+    Scalar, SecretKey,
 };
 use signature::{
     digest::{BlockInput, Digest, FixedOutput, Reset, Update},
@@ -43,7 +43,7 @@ use core::str::FromStr;
 #[cfg_attr(docsrs, doc(cfg(feature = "sign")))]
 pub struct SigningKey<C>
 where
-    C: Curve + ProjectiveArithmetic,
+    C: Curve + Order + ProjectiveArithmetic,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>
         + FromDigest<C>
         + Invert<Output = Scalar<C>>
@@ -56,7 +56,7 @@ where
 
 impl<C> SigningKey<C>
 where
-    C: Curve + ProjectiveArithmetic,
+    C: Curve + Order + ProjectiveArithmetic,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>
         + FromDigest<C>
         + Invert<Output = Scalar<C>>
@@ -99,7 +99,7 @@ where
 
 impl<C> From<SecretKey<C>> for SigningKey<C>
 where
-    C: Curve + ProjectiveArithmetic,
+    C: Curve + Order + ProjectiveArithmetic,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>
         + ConstantTimeEq
         + FromDigest<C>
@@ -115,7 +115,7 @@ where
 
 impl<C, D> DigestSigner<D, Signature<C>> for SigningKey<C>
 where
-    C: Curve + ProjectiveArithmetic,
+    C: Curve + Order + ProjectiveArithmetic,
     D: FixedOutput<OutputSize = C::FieldSize> + BlockInput + Clone + Default + Reset + Update,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>
         + FromDigest<C>
@@ -140,7 +140,7 @@ where
 impl<C> signature::Signer<Signature<C>> for SigningKey<C>
 where
     Self: DigestSigner<C::Digest, Signature<C>>,
-    C: Curve + ProjectiveArithmetic + DigestPrimitive,
+    C: Curve + Order + ProjectiveArithmetic + DigestPrimitive,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>
         + FromDigest<C>
         + Invert<Output = Scalar<C>>
@@ -155,7 +155,7 @@ where
 
 impl<C, D> RandomizedDigestSigner<D, Signature<C>> for SigningKey<C>
 where
-    C: Curve + ProjectiveArithmetic,
+    C: Curve + Order + ProjectiveArithmetic,
     D: FixedOutput<OutputSize = C::FieldSize> + BlockInput + Clone + Default + Reset + Update,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>
         + FromDigest<C>
@@ -187,7 +187,7 @@ where
 impl<C> RandomizedSigner<Signature<C>> for SigningKey<C>
 where
     Self: RandomizedDigestSigner<C::Digest, Signature<C>>,
-    C: Curve + ProjectiveArithmetic + DigestPrimitive,
+    C: Curve + Order + ProjectiveArithmetic + DigestPrimitive,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>
         + FromDigest<C>
         + Invert<Output = Scalar<C>>
@@ -206,7 +206,7 @@ where
 
 impl<C> From<NonZeroScalar<C>> for SigningKey<C>
 where
-    C: Curve + ProjectiveArithmetic,
+    C: Curve + Order + ProjectiveArithmetic,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>
         + FromDigest<C>
         + Invert<Output = Scalar<C>>
@@ -224,7 +224,7 @@ where
 #[cfg(feature = "verify")]
 impl<C> From<&SigningKey<C>> for VerifyingKey<C>
 where
-    C: Curve + ProjectiveArithmetic,
+    C: Curve + Order + ProjectiveArithmetic,
     AffinePoint<C>: Copy + Clone + Debug + Default,
     ProjectivePoint<C>: From<AffinePoint<C>>,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>
@@ -243,7 +243,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "pkcs8")))]
 impl<C> FromPrivateKey for SigningKey<C>
 where
-    C: Curve + AlgorithmParameters + ProjectiveArithmetic,
+    C: Curve + AlgorithmParameters + Order + ProjectiveArithmetic,
     AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
     ProjectivePoint<C>: From<AffinePoint<C>>,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>
@@ -266,7 +266,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "pem")))]
 impl<C> FromStr for SigningKey<C>
 where
-    C: Curve + AlgorithmParameters + ProjectiveArithmetic,
+    C: Curve + AlgorithmParameters + Order + ProjectiveArithmetic,
     AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
     ProjectivePoint<C>: From<AffinePoint<C>>,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>

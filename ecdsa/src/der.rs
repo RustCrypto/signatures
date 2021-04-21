@@ -11,6 +11,7 @@ use elliptic_curve::{
     consts::U9,
     generic_array::{typenum::NonZero, ArrayLength, GenericArray},
     weierstrass::Curve,
+    Order,
 };
 
 #[cfg(feature = "alloc")]
@@ -50,7 +51,7 @@ const ENCODING_ERR_MSG: &str = "DER encoding error";
 /// Generic over the scalar size of the elliptic curve.
 pub struct Signature<C>
 where
-    C: Curve,
+    C: Curve + Order,
     C::FieldSize: Add + ArrayLength<u8> + NonZero,
     MaxSize<C>: ArrayLength<u8>,
     <C::FieldSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
@@ -67,7 +68,7 @@ where
 
 impl<C> signature::Signature for Signature<C>
 where
-    C: Curve,
+    C: Curve + Order,
     C::FieldSize: Add + ArrayLength<u8> + NonZero,
     MaxSize<C>: ArrayLength<u8>,
     <C::FieldSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
@@ -81,7 +82,7 @@ where
 #[allow(clippy::len_without_is_empty)]
 impl<C> Signature<C>
 where
-    C: Curve,
+    C: Curve + Order,
     C::FieldSize: Add + ArrayLength<u8> + NonZero,
     MaxSize<C>: ArrayLength<u8>,
     <C::FieldSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
@@ -132,7 +133,7 @@ where
 
 impl<C> AsRef<[u8]> for Signature<C>
 where
-    C: Curve,
+    C: Curve + Order,
     C::FieldSize: Add + ArrayLength<u8> + NonZero,
     MaxSize<C>: ArrayLength<u8>,
     <C::FieldSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
@@ -144,7 +145,7 @@ where
 
 impl<C> fmt::Debug for Signature<C>
 where
-    C: Curve,
+    C: Curve + Order,
     C::FieldSize: Add + ArrayLength<u8> + NonZero,
     MaxSize<C>: ArrayLength<u8>,
     <C::FieldSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
@@ -159,7 +160,7 @@ where
 
 impl<C> TryFrom<&[u8]> for Signature<C>
 where
-    C: Curve,
+    C: Curve + Order,
     C::FieldSize: Add + ArrayLength<u8> + NonZero,
     MaxSize<C>: ArrayLength<u8>,
     <C::FieldSize as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
