@@ -152,9 +152,9 @@ dependencies = [
 
 [[package]]
 name = "elliptic-curve"
-version = "0.9.10"
+version = "0.9.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9f3104713f3d121fc649fc3c462f77e0df75ae28421ac1c09be7449982e90940"
+checksum = "ee681bf25de1aad7cd02ccc7525d7b4bfab7be2493dbe3ee18d93f86eb3dcf3e"
 dependencies = [
  "bitvec",
  "ff",
