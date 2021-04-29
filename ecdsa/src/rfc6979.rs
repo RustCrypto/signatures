@@ -78,7 +78,7 @@ where
             k.update(entropy_input);
             k.update(nonce);
             k.update(additional_data);
-            k = Hmac::new_varkey(&k.finalize().into_bytes()).unwrap();
+            k = Hmac::new_from_slice(&k.finalize().into_bytes()).unwrap();
 
             // Steps 3.2.e,g: v = HMAC_k(v)
             k.update(&v);
@@ -98,7 +98,7 @@ where
 
         self.k.update(&self.v);
         self.k.update(&[0x00]);
-        self.k = Hmac::new_varkey(&self.k.finalize_reset().into_bytes()).unwrap();
+        self.k = Hmac::new_from_slice(&self.k.finalize_reset().into_bytes()).unwrap();
         self.k.update(&self.v);
         self.v = self.k.finalize_reset().into_bytes();
     }
