@@ -4,6 +4,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.11.0 (2021-04-29)
+### Added
+- `FromDigest` trait ([#238], [#244])
+- Wycheproof test vector support ([#260])
+
+### Changed
+- Use `der` crate for decoding/encoding signatures ([#226], [#267])
+- Support `HmacDrbg` with variable output size ([#243]) 
+- Bump `base64ct` and `pkcs8`; MSRV 1.47+ ([#262])
+- Flatten and simplify public API ([#268])
+- Use `verifying_key` name consistently ([#273])
+- Bound curve implementations on Order trait ([#280])
+- Bump `elliptic-curve` to v0.9.10+; use `ScalarBytes` ([#284])
+- Bump `hmac` crate dependency to v0.11 ([#287])
+
+### Removed
+- `FieldBytes` bounds ([#227])
+- `CheckSignatureBytes` trait ([#281])
+
+[#226]: https://github.com/RustCrypto/signatures/pull/226
+[#227]: https://github.com/RustCrypto/signatures/pull/227
+[#238]: https://github.com/RustCrypto/signatures/pull/238
+[#243]: https://github.com/RustCrypto/signatures/pull/243
+[#244]: https://github.com/RustCrypto/signatures/pull/244
+[#260]: https://github.com/RustCrypto/signatures/pull/260
+[#262]: https://github.com/RustCrypto/signatures/pull/262
+[#267]: https://github.com/RustCrypto/signatures/pull/267
+[#268]: https://github.com/RustCrypto/signatures/pull/268
+[#273]: https://github.com/RustCrypto/signatures/pull/273
+[#280]: https://github.com/RustCrypto/signatures/pull/280
+[#281]: https://github.com/RustCrypto/signatures/pull/281
+[#284]: https://github.com/RustCrypto/signatures/pull/284
+[#287]: https://github.com/RustCrypto/signatures/pull/287
+
 ## 0.10.2 (2020-12-22)
 ### Changed
 - Bump `elliptic-curve` crate to v0.8.3 ([#218])
