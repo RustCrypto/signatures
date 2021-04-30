@@ -15,7 +15,7 @@
 //!
 //! ## Minimum Supported Rust Version
 //!
-//! Rust **1.41** or higher.
+//! Rust **1.47** or higher.
 //!
 //! Minimum supported Rust version may be changed in the future, but such
 //! changes will be accompanied with a minor version bump.
@@ -159,8 +159,7 @@
 //! instantiate and use the previously defined `HelloSigner` and `HelloVerifier`
 //! types with [`ring-compat`] as the signing/verification provider:
 //!
-//! ```ignore
-//! # TODO(tarcieri): update ring-compat and re-enable tests
+//! ```
 //! use ring_compat::signature::{
 //!     ed25519::{Signature, SigningKey, VerifyKey},
 //!     Signer, Verifier
