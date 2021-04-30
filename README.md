@@ -18,9 +18,10 @@ and can be easily used for bare-metal or lightweight WebAssembly programming.
 
 ## Minimum Supported Rust Version
 
-All crates in this repository support Rust **1.41** or higher. In future minimum
-supported Rust version can be changed, but it will be done with the minor
-version bump.
+All crates in this repository support Rust **1.47** or higher.
+
+In the future the minimum supported Rust version may be changed,
+but it will be accompanied by minor version bump.
 
 ## Usage
 
@@ -44,7 +45,7 @@ dual licensed as above, without any additional terms or conditions.
 
 [//]: # (badges)
 
-[rustc-image]: https://img.shields.io/badge/rustc-1.41+-blue.svg
+[rustc-image]: https://img.shields.io/badge/rustc-1.47+-blue.svg
 [chat-image]: https://img.shields.io/badge/zulip-join_chat-blue.svg
 [chat-link]: https://rustcrypto.zulipchat.com/#narrow/stream/260048-signatures
 [deps-image]: https://deps.rs/repo/github/RustCrypto/signatures/status.svg
