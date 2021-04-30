@@ -161,7 +161,7 @@
 //!
 //! ```
 //! use ring_compat::signature::{
-//!     ed25519::{Signature, SigningKey, VerifyKey},
+//!     ed25519::{Signature, SigningKey, VerifyingKey},
 //!     Signer, Verifier
 //! };
 //! #
@@ -222,7 +222,7 @@
 //!
 //! /// `HelloVerifier` defined above instantiated with *ring*
 //! /// as the signature verification provider.
-//! pub type RingHelloVerifier = HelloVerifier<VerifyKey>;
+//! pub type RingHelloVerifier = HelloVerifier<VerifyingKey>;
 //!
 //! let verifier = RingHelloVerifier { verify_key };
 //! assert!(verifier.verify(person, &signature).is_ok());
