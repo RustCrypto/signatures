@@ -4,7 +4,7 @@ use crate::{
     hazmat::{DigestPrimitive, FromDigest, VerifyPrimitive},
     Error, Signature, SignatureSize,
 };
-use core::{fmt::Debug, ops::Add};
+use core::{cmp::Ordering, fmt::Debug, ops::Add};
 use elliptic_curve::{
     consts::U1,
     ff::PrimeField,
@@ -181,6 +181,37 @@ where
 {
     fn eq(&self, other: &Self) -> bool {
         self.inner.eq(&other.inner)
+    }
+}
+
+impl<C> PartialOrd for VerifyingKey<C>
+where
+    C: Curve + Order + ProjectiveArithmetic,
+    AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
+    ProjectivePoint<C>: From<AffinePoint<C>>,
+    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
+    UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
+    UncompressedPointSize<C>: ArrayLength<u8>,
+{
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl<C> Ord for VerifyingKey<C>
+where
+    C: Curve + Order + ProjectiveArithmetic,
+    AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
+    ProjectivePoint<C>: From<AffinePoint<C>>,
+    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
+    UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
+    UncompressedPointSize<C>: ArrayLength<u8>,
+{
+    fn cmp(&self, other: &Self) -> Ordering {
+        // TODO(tarcieri): use `PartialEq`, `PartialOrd`, and `Ord` impls from `elliptic-curve`
+        // This is implemented this way to reduce bounds for `AffinePoint<C>`
+        self.to_encoded_point(false)
+            .cmp(&other.to_encoded_point(false))
     }
 }
 
