@@ -194,7 +194,7 @@ where
     UncompressedPointSize<C>: ArrayLength<u8>,
 {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
+        self.inner.partial_cmp(&other.inner)
     }
 }
 
@@ -208,10 +208,7 @@ where
     UncompressedPointSize<C>: ArrayLength<u8>,
 {
     fn cmp(&self, other: &Self) -> Ordering {
-        // TODO(tarcieri): use `PartialEq`, `PartialOrd`, and `Ord` impls from `elliptic-curve`
-        // This is implemented this way to reduce bounds for `AffinePoint<C>`
-        self.to_encoded_point(false)
-            .cmp(&other.to_encoded_point(false))
+        self.inner.cmp(&other.inner)
     }
 }
 
