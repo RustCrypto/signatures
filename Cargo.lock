@@ -129,23 +129,23 @@ dependencies = [
 [[package]]
 name = "ecdsa"
 version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6b568b5e72165dd8913ac2aad6a60cb9cb297287615544c523c37f9247b58fc8"
+dependencies = [
+ "der",
+ "elliptic-curve",
+ "signature",
+]
+
+[[package]]
+name = "ecdsa"
+version = "0.11.1"
 dependencies = [
  "der",
  "elliptic-curve",
  "hex-literal",
  "hmac",
  "sha2",
- "signature",
-]
-
-[[package]]
-name = "ecdsa"
-version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6b568b5e72165dd8913ac2aad6a60cb9cb297287615544c523c37f9247b58fc8"
-dependencies = [
- "der",
- "elliptic-curve",
  "signature",
 ]
 
@@ -314,7 +314,7 @@ version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1cf301f7f053902eaf046d541cd7b454a588b2bdd571f18195b57ae197aed2cb"
 dependencies = [
- "ecdsa 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ecdsa 0.11.0",
  "elliptic-curve",
 ]
 
@@ -324,7 +324,7 @@ version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94e3bfd7d8f202c293072de214ad93480b533985bfee4fa4a13cfdd185fab13d"
 dependencies = [
- "ecdsa 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ecdsa 0.11.0",
  "elliptic-curve",
 ]
 
@@ -440,7 +440,7 @@ checksum = "aa5d9fa3ce9ca8fadd287d21da5320dbf6de6a08908acdf95247aeadc2c41964"
 dependencies = [
  "aead",
  "digest",
- "ecdsa 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ecdsa 0.11.0",
  "ed25519 1.0.3",
  "generic-array",
  "opaque-debug",
