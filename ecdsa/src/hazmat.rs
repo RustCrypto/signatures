@@ -15,17 +15,22 @@
 use {
     crate::SignatureSize,
     core::borrow::Borrow,
-    elliptic_curve::{ff::PrimeField, ops::Invert, FieldBytes, ProjectiveArithmetic, Scalar},
+    elliptic_curve::{
+        group::ff::PrimeField, ops::Invert, FieldBytes, ProjectiveArithmetic, Scalar,
+    },
     signature::Error,
 };
 
 #[cfg(feature = "digest")]
-use crate::signature::{digest::Digest, PrehashSignature};
+use {
+    crate::signature::{digest::Digest, PrehashSignature},
+    elliptic_curve::FieldSize,
+};
 
 #[cfg(any(feature = "arithmetic", feature = "digest"))]
 use crate::{
     elliptic_curve::{generic_array::ArrayLength, weierstrass::Curve},
-    Order, Signature,
+    Signature,
 };
 
 /// Try to sign the given prehashed message using ECDSA.
@@ -37,7 +42,7 @@ use crate::{
 #[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
 pub trait SignPrimitive<C>
 where
-    C: Curve + Order + ProjectiveArithmetic,
+    C: Curve + ProjectiveArithmetic,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -61,7 +66,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
 pub trait RecoverableSignPrimitive<C>
 where
-    C: Curve + Order + ProjectiveArithmetic,
+    C: Curve + ProjectiveArithmetic,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -81,7 +86,7 @@ where
 #[cfg(feature = "arithmetic")]
 impl<C, T> SignPrimitive<C> for T
 where
-    C: Curve + Order + ProjectiveArithmetic,
+    C: Curve + ProjectiveArithmetic,
     T: RecoverableSignPrimitive<C>,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     SignatureSize<C>: ArrayLength<u8>,
@@ -105,7 +110,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
 pub trait VerifyPrimitive<C>
 where
-    C: Curve + Order + ProjectiveArithmetic,
+    C: Curve + ProjectiveArithmetic,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -134,7 +139,7 @@ where
 /// [1]: https://github.com/RustCrypto/traits/tree/master/signature/derive
 #[cfg(feature = "digest")]
 #[cfg_attr(docsrs, doc(cfg(feature = "digest")))]
-pub trait DigestPrimitive: Curve + Order {
+pub trait DigestPrimitive: Curve {
     /// Preferred digest to use when computing ECDSA signatures for this
     /// elliptic curve. This should be a member of the SHA-2 family.
     type Digest: Digest;
@@ -154,14 +159,14 @@ pub trait FromDigest<C: Curve> {
     /// Instantiate this type from a [`Digest`] instance
     fn from_digest<D>(digest: D) -> Self
     where
-        D: Digest<OutputSize = C::FieldSize>;
+        D: Digest<OutputSize = FieldSize<C>>;
 }
 
 #[cfg(feature = "digest")]
 impl<C> PrehashSignature for Signature<C>
 where
     C: DigestPrimitive,
-    <C::FieldSize as core::ops::Add>::Output: ArrayLength<u8>,
+    <FieldSize<C> as core::ops::Add>::Output: ArrayLength<u8>,
 {
     type Digest = C::Digest;
 }

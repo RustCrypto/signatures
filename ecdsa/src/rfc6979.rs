@@ -5,12 +5,12 @@
 
 use crate::hazmat::FromDigest;
 use elliptic_curve::{
-    ff::PrimeField,
     generic_array::GenericArray,
+    group::ff::PrimeField,
     ops::Invert,
     weierstrass::Curve,
     zeroize::{Zeroize, Zeroizing},
-    FieldBytes, NonZeroScalar, ProjectiveArithmetic, Scalar,
+    FieldBytes, FieldSize, NonZeroScalar, ProjectiveArithmetic, Scalar,
 };
 use hmac::{Hmac, Mac, NewMac};
 use signature::digest::{BlockInput, FixedOutput, Reset, Update};
@@ -24,7 +24,7 @@ pub fn generate_k<C, D>(
 ) -> Zeroizing<NonZeroScalar<C>>
 where
     C: Curve + ProjectiveArithmetic,
-    D: FixedOutput<OutputSize = C::FieldSize> + BlockInput + Clone + Default + Reset + Update,
+    D: FixedOutput<OutputSize = FieldSize<C>> + BlockInput + Clone + Default + Reset + Update,
     Scalar<C>:
         PrimeField<Repr = FieldBytes<C>> + FromDigest<C> + Invert<Output = Scalar<C>> + Zeroize,
 {
@@ -78,7 +78,7 @@ where
             k.update(entropy_input);
             k.update(nonce);
             k.update(additional_data);
-            k = Hmac::new_from_slice(&k.finalize().into_bytes()).unwrap();
+            k = Hmac::new_from_slice(&k.finalize().into_bytes()).expect("HMAC error");
 
             // Steps 3.2.e,g: v = HMAC_k(v)
             k.update(&v);
@@ -98,7 +98,7 @@ where
 
         self.k.update(&self.v);
         self.k.update(&[0x00]);
-        self.k = Hmac::new_from_slice(&self.k.finalize_reset().into_bytes()).unwrap();
+        self.k = Hmac::new_from_slice(&self.k.finalize_reset().into_bytes()).expect("HMAC error");
         self.k.update(&self.v);
         self.v = self.k.finalize_reset().into_bytes();
     }
@@ -107,7 +107,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::generate_k;
-    use elliptic_curve::{dev::NonZeroScalar, ff::PrimeField};
+    use elliptic_curve::{dev::NonZeroScalar, group::ff::PrimeField};
     use hex_literal::hex;
     use sha2::{Digest, Sha256};
 

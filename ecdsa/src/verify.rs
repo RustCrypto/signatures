@@ -7,13 +7,13 @@ use crate::{
 use core::{cmp::Ordering, fmt::Debug, ops::Add};
 use elliptic_curve::{
     consts::U1,
-    ff::PrimeField,
     generic_array::ArrayLength,
+    group::ff::PrimeField,
     sec1::{
         EncodedPoint, FromEncodedPoint, ToEncodedPoint, UncompressedPointSize, UntaggedPointSize,
     },
     weierstrass::{Curve, PointCompression},
-    AffinePoint, FieldBytes, Order, ProjectiveArithmetic, ProjectivePoint, PublicKey, Scalar,
+    AffinePoint, FieldBytes, FieldSize, ProjectiveArithmetic, ProjectivePoint, PublicKey, Scalar,
 };
 use signature::{digest::Digest, DigestVerifier};
 
@@ -34,7 +34,7 @@ use core::str::FromStr;
 #[derive(Copy, Clone, Debug)]
 pub struct VerifyingKey<C>
 where
-    C: Curve + Order + ProjectiveArithmetic,
+    C: Curve + ProjectiveArithmetic,
     AffinePoint<C>: Copy + Clone + Debug,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
 {
@@ -43,7 +43,7 @@ where
 
 impl<C> VerifyingKey<C>
 where
-    C: Curve + Order + ProjectiveArithmetic,
+    C: Curve + ProjectiveArithmetic,
     AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
     ProjectivePoint<C>: From<AffinePoint<C>>,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
@@ -73,8 +73,8 @@ where
 
 impl<C, D> DigestVerifier<D, Signature<C>> for VerifyingKey<C>
 where
-    C: Curve + Order + ProjectiveArithmetic,
-    D: Digest<OutputSize = C::FieldSize>,
+    C: Curve + ProjectiveArithmetic,
+    D: Digest<OutputSize = FieldSize<C>>,
     AffinePoint<C>: Copy + Clone + Debug + VerifyPrimitive<C>,
     ProjectivePoint<C>: From<AffinePoint<C>>,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>> + FromDigest<C>,
@@ -89,8 +89,8 @@ where
 
 impl<C> signature::Verifier<Signature<C>> for VerifyingKey<C>
 where
-    C: Curve + Order + ProjectiveArithmetic + DigestPrimitive,
-    C::Digest: Digest<OutputSize = C::FieldSize>,
+    C: Curve + ProjectiveArithmetic + DigestPrimitive,
+    C::Digest: Digest<OutputSize = FieldSize<C>>,
     AffinePoint<C>: Copy + Clone + Debug + VerifyPrimitive<C>,
     ProjectivePoint<C>: From<AffinePoint<C>>,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>> + FromDigest<C>,
@@ -103,7 +103,7 @@ where
 
 impl<C> From<&VerifyingKey<C>> for EncodedPoint<C>
 where
-    C: Curve + Order + ProjectiveArithmetic + PointCompression,
+    C: Curve + ProjectiveArithmetic + PointCompression,
     AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
     ProjectivePoint<C>: From<AffinePoint<C>>,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
@@ -117,7 +117,7 @@ where
 
 impl<C> From<PublicKey<C>> for VerifyingKey<C>
 where
-    C: Curve + Order + ProjectiveArithmetic,
+    C: Curve + ProjectiveArithmetic,
     AffinePoint<C>: Copy + Clone + Debug,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
 {
@@ -128,7 +128,7 @@ where
 
 impl<C> From<&PublicKey<C>> for VerifyingKey<C>
 where
-    C: Curve + Order + ProjectiveArithmetic,
+    C: Curve + ProjectiveArithmetic,
     AffinePoint<C>: Copy + Clone + Debug,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
 {
@@ -139,7 +139,7 @@ where
 
 impl<C> From<VerifyingKey<C>> for PublicKey<C>
 where
-    C: Curve + Order + ProjectiveArithmetic,
+    C: Curve + ProjectiveArithmetic,
     AffinePoint<C>: Copy + Clone + Debug,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
 {
@@ -150,7 +150,7 @@ where
 
 impl<C> From<&VerifyingKey<C>> for PublicKey<C>
 where
-    C: Curve + Order + ProjectiveArithmetic,
+    C: Curve + ProjectiveArithmetic,
     AffinePoint<C>: Copy + Clone + Debug,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
 {
@@ -161,7 +161,7 @@ where
 
 impl<C> Eq for VerifyingKey<C>
 where
-    C: Curve + Order + ProjectiveArithmetic,
+    C: Curve + ProjectiveArithmetic,
     AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
     ProjectivePoint<C>: From<AffinePoint<C>>,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
@@ -172,7 +172,7 @@ where
 
 impl<C> PartialEq for VerifyingKey<C>
 where
-    C: Curve + Order + ProjectiveArithmetic,
+    C: Curve + ProjectiveArithmetic,
     AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
     ProjectivePoint<C>: From<AffinePoint<C>>,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
@@ -186,7 +186,7 @@ where
 
 impl<C> PartialOrd for VerifyingKey<C>
 where
-    C: Curve + Order + ProjectiveArithmetic,
+    C: Curve + ProjectiveArithmetic,
     AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
     ProjectivePoint<C>: From<AffinePoint<C>>,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
@@ -200,7 +200,7 @@ where
 
 impl<C> Ord for VerifyingKey<C>
 where
-    C: Curve + Order + ProjectiveArithmetic,
+    C: Curve + ProjectiveArithmetic,
     AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
     ProjectivePoint<C>: From<AffinePoint<C>>,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
@@ -216,7 +216,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "pkcs8")))]
 impl<C> FromPublicKey for VerifyingKey<C>
 where
-    C: Curve + AlgorithmParameters + Order + ProjectiveArithmetic + PointCompression,
+    C: Curve + AlgorithmParameters + ProjectiveArithmetic + PointCompression,
     AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
     ProjectivePoint<C>: From<AffinePoint<C>>,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
@@ -232,7 +232,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "pem")))]
 impl<C> FromStr for VerifyingKey<C>
 where
-    C: Curve + AlgorithmParameters + Order + ProjectiveArithmetic + PointCompression,
+    C: Curve + AlgorithmParameters + ProjectiveArithmetic + PointCompression,
     AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
     ProjectivePoint<C>: From<AffinePoint<C>>,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
