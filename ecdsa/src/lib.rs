@@ -28,7 +28,7 @@
 //!
 //! ## Minimum Supported Rust Version
 //!
-//! Rust **1.47** or higher.
+//! Rust **1.51** or higher.
 //!
 //! Minimum supported Rust version may be changed in the future, but it will be
 //! accompanied with a minor version bump.
@@ -44,7 +44,7 @@
 
 #![no_std]
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![forbid(unsafe_code)]
+#![forbid(unsafe_code, clippy::unwrap_used)]
 #![warn(missing_docs, rust_2018_idioms)]
 #![doc(
     html_logo_url = "https://raw.githubusercontent.com/RustCrypto/meta/master/logo_small.png",
@@ -97,17 +97,17 @@ use core::{
 };
 use elliptic_curve::{
     generic_array::{sequence::Concat, typenum::Unsigned, ArrayLength, GenericArray},
-    FieldBytes, Order, ScalarBytes,
+    FieldBytes, FieldSize, NumBytes, ScalarBytes,
 };
 
 #[cfg(feature = "arithmetic")]
-use elliptic_curve::{ff::PrimeField, NonZeroScalar, ProjectiveArithmetic, Scalar};
+use elliptic_curve::{group::ff::PrimeField, NonZeroScalar, ProjectiveArithmetic, Scalar};
 
 #[cfg(feature = "der")]
 use elliptic_curve::generic_array::typenum::NonZero;
 
 /// Size of a fixed sized signature for the given elliptic curve.
-pub type SignatureSize<C> = <<C as elliptic_curve::Curve>::FieldSize as Add>::Output;
+pub type SignatureSize<C> = <FieldSize<C> as Add>::Output;
 
 /// Fixed-size byte array containing an ECDSA signature
 pub type SignatureBytes<C> = GenericArray<u8, SignatureSize<C>>;
@@ -126,7 +126,7 @@ pub type SignatureBytes<C> = GenericArray<u8, SignatureSize<C>>;
 /// ASN.1 DER-encoded signatures also supported via the
 /// [`Signature::from_der`] and [`Signature::to_der`] methods.
 #[derive(Clone, Eq, PartialEq)]
-pub struct Signature<C: Curve + Order>
+pub struct Signature<C: Curve>
 where
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -135,7 +135,7 @@ where
 
 impl<C> Signature<C>
 where
-    C: Curve + Order,
+    C: Curve,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Create a [`Signature`] from the serialized `r` and `s` scalar values
@@ -152,9 +152,9 @@ where
     #[cfg_attr(docsrs, doc(cfg(feature = "der")))]
     pub fn from_der(bytes: &[u8]) -> Result<Self, Error>
     where
-        C::FieldSize: Add + ArrayLength<u8> + NonZero,
+        FieldSize<C>: Add + ArrayLength<u8> + NonZero,
         der::MaxSize<C>: ArrayLength<u8>,
-        <C::FieldSize as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
+        <FieldSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
     {
         der::Signature::<C>::try_from(bytes).and_then(Self::try_from)
     }
@@ -164,12 +164,12 @@ where
     #[cfg_attr(docsrs, doc(cfg(feature = "der")))]
     pub fn to_der(&self) -> der::Signature<C>
     where
-        C::FieldSize: Add + ArrayLength<u8> + NonZero,
+        FieldSize<C>: Add + ArrayLength<u8> + NonZero,
         der::MaxSize<C>: ArrayLength<u8>,
-        <C::FieldSize as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
+        <FieldSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
     {
-        let (r, s) = self.bytes.split_at(C::FieldSize::to_usize());
-        der::Signature::from_scalar_bytes(r, s)
+        let (r, s) = self.bytes.split_at(C::UInt::NUM_BYTES);
+        der::Signature::from_scalar_bytes(r, s).expect("DER encoding error")
     }
 }
 
@@ -177,21 +177,21 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
 impl<C> Signature<C>
 where
-    C: Curve + Order + ProjectiveArithmetic,
+    C: Curve + ProjectiveArithmetic,
     Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     <Scalar<C> as PrimeField>::Repr: From<Scalar<C>> + for<'a> From<&'a Scalar<C>>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Get the `r` component of this signature
     pub fn r(&self) -> NonZeroScalar<C> {
-        let r_bytes = GenericArray::clone_from_slice(&self.bytes[..C::FieldSize::to_usize()]);
+        let r_bytes = GenericArray::clone_from_slice(&self.bytes[..C::UInt::NUM_BYTES]);
         NonZeroScalar::from_repr(r_bytes)
             .unwrap_or_else(|| unreachable!("r-component ensured valid in constructor"))
     }
 
     /// Get the `s` component of this signature
     pub fn s(&self) -> NonZeroScalar<C> {
-        let s_bytes = GenericArray::clone_from_slice(&self.bytes[C::FieldSize::to_usize()..]);
+        let s_bytes = GenericArray::clone_from_slice(&self.bytes[C::UInt::NUM_BYTES..]);
         NonZeroScalar::from_repr(s_bytes)
             .unwrap_or_else(|| unreachable!("r-component ensured valid in constructor"))
     }
@@ -204,7 +204,7 @@ where
     where
         Scalar<C>: NormalizeLow,
     {
-        let s_bytes = GenericArray::from_mut_slice(&mut self.bytes[C::FieldSize::to_usize()..]);
+        let s_bytes = GenericArray::from_mut_slice(&mut self.bytes[C::UInt::NUM_BYTES..]);
         Scalar::<C>::from_repr(s_bytes.clone())
             .map(|s| {
                 let (s_low, was_high) = s.normalize_low();
@@ -221,7 +221,7 @@ where
 
 impl<C> signature::Signature for Signature<C>
 where
-    C: Curve + Order,
+    C: Curve,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
@@ -231,7 +231,7 @@ where
 
 impl<C> AsRef<[u8]> for Signature<C>
 where
-    C: Curve + Order,
+    C: Curve,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn as_ref(&self) -> &[u8] {
@@ -241,7 +241,7 @@ where
 
 impl<C> Copy for Signature<C>
 where
-    C: Curve + Order,
+    C: Curve,
     SignatureSize<C>: ArrayLength<u8>,
     <SignatureSize<C> as ArrayLength<u8>>::ArrayType: Copy,
 {
@@ -249,7 +249,7 @@ where
 
 impl<C> Debug for Signature<C>
 where
-    C: Curve + Order,
+    C: Curve,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -264,7 +264,7 @@ where
 
 impl<C> TryFrom<&[u8]> for Signature<C>
 where
-    C: Curve + Order,
+    C: Curve,
     SignatureSize<C>: ArrayLength<u8>,
 {
     type Error = Error;
@@ -274,7 +274,7 @@ where
             return Err(Error::new());
         }
 
-        for scalar in bytes.chunks_exact(C::FieldSize::to_usize()) {
+        for scalar in bytes.chunks_exact(C::UInt::NUM_BYTES) {
             if scalar.iter().all(|&byte| byte == 0) {
                 return Err(Error::new());
             }
@@ -297,20 +297,18 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "der")))]
 impl<C> TryFrom<der::Signature<C>> for Signature<C>
 where
-    C: Curve + Order,
-    C::FieldSize: Add + ArrayLength<u8> + NonZero,
+    C: Curve,
+    FieldSize<C>: Add + ArrayLength<u8> + NonZero,
     der::MaxSize<C>: ArrayLength<u8>,
-    <C::FieldSize as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
+    <FieldSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
 {
     type Error = Error;
 
     fn try_from(doc: der::Signature<C>) -> Result<Signature<C>, Error> {
         let mut bytes = SignatureBytes::<C>::default();
-        let scalar_size = C::FieldSize::to_usize();
-        let r_begin = scalar_size.checked_sub(doc.r().len()).unwrap();
-        let s_begin = bytes.len().checked_sub(doc.s().len()).unwrap();
-
-        bytes[r_begin..scalar_size].copy_from_slice(doc.r());
+        let r_begin = C::UInt::NUM_BYTES.saturating_sub(doc.r().len());
+        let s_begin = bytes.len().saturating_sub(doc.s().len());
+        bytes[r_begin..C::UInt::NUM_BYTES].copy_from_slice(doc.r());
         bytes[s_begin..].copy_from_slice(doc.s());
         Self::try_from(bytes.as_slice())
     }
