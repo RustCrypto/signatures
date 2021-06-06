@@ -15,9 +15,7 @@
 use {
     crate::SignatureSize,
     core::borrow::Borrow,
-    elliptic_curve::{
-        group::ff::PrimeField, ops::Invert, FieldBytes, ProjectiveArithmetic, Scalar,
-    },
+    elliptic_curve::{ops::Invert, ProjectiveArithmetic, Scalar},
     signature::Error,
 };
 
@@ -43,7 +41,6 @@ use crate::{
 pub trait SignPrimitive<C>
 where
     C: Curve + ProjectiveArithmetic,
-    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Try to sign the prehashed message.
@@ -67,7 +64,6 @@ where
 pub trait RecoverableSignPrimitive<C>
 where
     C: Curve + ProjectiveArithmetic,
-    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Try to sign the prehashed message.
@@ -88,7 +84,6 @@ impl<C, T> SignPrimitive<C> for T
 where
     C: Curve + ProjectiveArithmetic,
     T: RecoverableSignPrimitive<C>,
-    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn try_sign_prehashed<K: Borrow<Scalar<C>> + Invert<Output = Scalar<C>>>(
@@ -111,7 +106,6 @@ where
 pub trait VerifyPrimitive<C>
 where
     C: Curve + ProjectiveArithmetic,
-    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Verify the prehashed message against the provided signature
