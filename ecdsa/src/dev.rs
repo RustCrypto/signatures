@@ -64,7 +64,7 @@ macro_rules! new_signing_test {
         use core::convert::TryInto;
         use $crate::{
             elliptic_curve::{
-                ff::PrimeField, generic_array::GenericArray, ProjectiveArithmetic, Scalar,
+                generic_array::GenericArray, group::ff::PrimeField, ProjectiveArithmetic, Scalar,
             },
             hazmat::SignPrimitive,
         };
@@ -98,8 +98,8 @@ macro_rules! new_verification_test {
         use core::convert::TryInto;
         use $crate::{
             elliptic_curve::{
-                ff::PrimeField, generic_array::GenericArray, sec1::EncodedPoint, AffinePoint,
-                ProjectiveArithmetic, Scalar,
+                generic_array::GenericArray, group::ff::PrimeField, sec1::EncodedPoint,
+                AffinePoint, ProjectiveArithmetic, Scalar,
             },
             hazmat::VerifyPrimitive,
             Signature,
