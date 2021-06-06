@@ -25,8 +25,7 @@ pub fn generate_k<C, D>(
 where
     C: Curve + ProjectiveArithmetic,
     D: FixedOutput<OutputSize = FieldSize<C>> + BlockInput + Clone + Default + Reset + Update,
-    Scalar<C>:
-        PrimeField<Repr = FieldBytes<C>> + FromDigest<C> + Invert<Output = Scalar<C>> + Zeroize,
+    Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + Zeroize,
 {
     let mut x = secret_scalar.to_repr();
     let h1 = Scalar::<C>::from_digest(msg_digest).to_repr();

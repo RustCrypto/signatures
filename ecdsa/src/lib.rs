@@ -178,7 +178,6 @@ where
 impl<C> Signature<C>
 where
     C: Curve + ProjectiveArithmetic,
-    Scalar<C>: PrimeField<Repr = FieldBytes<C>>,
     <Scalar<C> as PrimeField>::Repr: From<Scalar<C>> + for<'a> From<&'a Scalar<C>>,
     SignatureSize<C>: ArrayLength<u8>,
 {
