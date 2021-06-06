@@ -47,8 +47,9 @@
 #![forbid(unsafe_code, clippy::unwrap_used)]
 #![warn(missing_docs, rust_2018_idioms)]
 #![doc(
-    html_logo_url = "https://raw.githubusercontent.com/RustCrypto/meta/master/logo_small.png",
-    html_root_url = "https://docs.rs/ecdsa/0.11.1"
+    html_logo_url = "https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg",
+    html_favicon_url = "https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg",
+    html_root_url = "https://docs.rs/ecdsa/0.12.0-pre"
 )]
 
 #[cfg(feature = "alloc")]
@@ -178,7 +179,6 @@ where
 impl<C> Signature<C>
 where
     C: Curve + ProjectiveArithmetic,
-    <Scalar<C> as PrimeField>::Repr: From<Scalar<C>> + for<'a> From<&'a Scalar<C>>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Get the `r` component of this signature
