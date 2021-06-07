@@ -175,6 +175,24 @@ where
     }
 }
 
+impl<C> TryFrom<Signature<C>> for super::Signature<C>
+where
+    C: Curve,
+    MaxSize<C>: ArrayLength<u8>,
+    <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+{
+    type Error = Error;
+
+    fn try_from(sig: Signature<C>) -> Result<super::Signature<C>, Error> {
+        let mut bytes = super::SignatureBytes::<C>::default();
+        let r_begin = C::UInt::NUM_BYTES.saturating_sub(sig.r().len());
+        let s_begin = bytes.len().saturating_sub(sig.s().len());
+        bytes[r_begin..C::UInt::NUM_BYTES].copy_from_slice(sig.r());
+        bytes[s_begin..].copy_from_slice(sig.s());
+        Self::try_from(bytes.as_slice())
+    }
+}
+
 /// Locate the range within a slice at which a particular subslice is located
 fn find_scalar_range(outer: &[u8], inner: &[u8]) -> Result<Range<usize>, Error> {
     let outer_start = outer.as_ptr() as usize;
