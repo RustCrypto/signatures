@@ -10,7 +10,7 @@ use der::{asn1::UIntBytes, Decodable};
 use elliptic_curve::{
     bigint::NumBytes,
     consts::U9,
-    generic_array::{typenum::NonZero, ArrayLength, GenericArray},
+    generic_array::{ArrayLength, GenericArray},
     weierstrass::Curve,
     FieldSize,
 };
@@ -46,7 +46,6 @@ type SignatureBytes<C> = GenericArray<u8, MaxSize<C>>;
 pub struct Signature<C>
 where
     C: Curve,
-    FieldSize<C>: Add + ArrayLength<u8> + NonZero,
     MaxSize<C>: ArrayLength<u8>,
     <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
@@ -63,7 +62,6 @@ where
 impl<C> signature::Signature for Signature<C>
 where
     C: Curve,
-    FieldSize<C>: Add + ArrayLength<u8> + NonZero,
     MaxSize<C>: ArrayLength<u8>,
     <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
@@ -77,7 +75,6 @@ where
 impl<C> Signature<C>
 where
     C: Curve,
-    FieldSize<C>: Add + ArrayLength<u8> + NonZero,
     MaxSize<C>: ArrayLength<u8>,
     <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
@@ -121,7 +118,6 @@ where
 impl<C> AsRef<[u8]> for Signature<C>
 where
     C: Curve,
-    FieldSize<C>: Add + ArrayLength<u8> + NonZero,
     MaxSize<C>: ArrayLength<u8>,
     <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
@@ -133,7 +129,6 @@ where
 impl<C> fmt::Debug for Signature<C>
 where
     C: Curve,
-    FieldSize<C>: Add + ArrayLength<u8> + NonZero,
     MaxSize<C>: ArrayLength<u8>,
     <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
@@ -148,7 +143,6 @@ where
 impl<C> TryFrom<&[u8]> for Signature<C>
 where
     C: Curve,
-    FieldSize<C>: Add + ArrayLength<u8> + NonZero,
     MaxSize<C>: ArrayLength<u8>,
     <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
@@ -196,7 +190,6 @@ fn find_scalar_range(outer: &[u8], inner: &[u8]) -> Result<Range<usize>, Error> 
 impl<C> signature::PrehashSignature for Signature<C>
 where
     C: Curve + crate::hazmat::DigestPrimitive,
-    FieldSize<C>: Add + ArrayLength<u8> + NonZero,
     MaxSize<C>: ArrayLength<u8>,
     <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
