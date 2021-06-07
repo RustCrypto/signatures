@@ -8,6 +8,7 @@ use core::{
 };
 use der::{asn1::UIntBytes, Decodable};
 use elliptic_curve::{
+    bigint::NumBytes,
     consts::U9,
     generic_array::{typenum::NonZero, ArrayLength, GenericArray},
     weierstrass::Curve,
@@ -157,6 +158,10 @@ where
         let (r, s) = der::Decoder::new(input)
             .sequence(|decoder| Ok((UIntBytes::decode(decoder)?, UIntBytes::decode(decoder)?)))
             .map_err(|_| Error::new())?;
+
+        if r.as_bytes().len() > C::UInt::NUM_BYTES || s.as_bytes().len() > C::UInt::NUM_BYTES {
+            return Err(Error::new());
+        }
 
         let r_range = find_scalar_range(input, r.as_bytes())?;
         let s_range = find_scalar_range(input, s.as_bytes())?;
