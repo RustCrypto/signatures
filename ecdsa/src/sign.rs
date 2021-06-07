@@ -65,11 +65,11 @@ where
 
     /// Initialize signing key from a raw scalar serialized as a byte slice.
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
-        let sk = SecretKey::from_bytes(bytes).map_err(|_| Error::new())?;
+        let inner = SecretKey::from_bytes(bytes)
+            .map(|sk| sk.to_secret_scalar())
+            .map_err(|_| Error::new())?;
 
-        Ok(Self {
-            inner: sk.to_secret_scalar(),
-        })
+        Ok(Self { inner })
     }
 
     /// Get the [`VerifyingKey`] which corresponds to this [`SigningKey`]
