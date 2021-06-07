@@ -12,7 +12,7 @@ use elliptic_curve::{
         EncodedPoint, FromEncodedPoint, ToEncodedPoint, UncompressedPointSize, UntaggedPointSize,
     },
     weierstrass::{Curve, PointCompression},
-    AffinePoint, FieldSize, ProjectiveArithmetic, ProjectivePoint, PublicKey, Scalar,
+    AffinePoint, FieldSize, ProjectiveArithmetic, PublicKey, Scalar,
 };
 use signature::{digest::Digest, DigestVerifier};
 
@@ -34,7 +34,6 @@ use core::str::FromStr;
 pub struct VerifyingKey<C>
 where
     C: Curve + ProjectiveArithmetic,
-    AffinePoint<C>: Copy + Clone + Debug,
 {
     pub(crate) inner: PublicKey<C>,
 }
@@ -42,8 +41,7 @@ where
 impl<C> VerifyingKey<C>
 where
     C: Curve + ProjectiveArithmetic,
-    AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
-    ProjectivePoint<C>: From<AffinePoint<C>>,
+    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
     UncompressedPointSize<C>: ArrayLength<u8>,
 {
@@ -72,8 +70,7 @@ impl<C, D> DigestVerifier<D, Signature<C>> for VerifyingKey<C>
 where
     C: Curve + ProjectiveArithmetic,
     D: Digest<OutputSize = FieldSize<C>>,
-    AffinePoint<C>: Copy + Clone + Debug + VerifyPrimitive<C>,
-    ProjectivePoint<C>: From<AffinePoint<C>>,
+    AffinePoint<C>: VerifyPrimitive<C>,
     Scalar<C>: FromDigest<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -88,8 +85,7 @@ impl<C> signature::Verifier<Signature<C>> for VerifyingKey<C>
 where
     C: Curve + ProjectiveArithmetic + DigestPrimitive,
     C::Digest: Digest<OutputSize = FieldSize<C>>,
-    AffinePoint<C>: Copy + Clone + Debug + VerifyPrimitive<C>,
-    ProjectivePoint<C>: From<AffinePoint<C>>,
+    AffinePoint<C>: VerifyPrimitive<C>,
     Scalar<C>: FromDigest<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -101,8 +97,7 @@ where
 impl<C> From<&VerifyingKey<C>> for EncodedPoint<C>
 where
     C: Curve + ProjectiveArithmetic + PointCompression,
-    AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
-    ProjectivePoint<C>: From<AffinePoint<C>>,
+    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
     UncompressedPointSize<C>: ArrayLength<u8>,
 {
@@ -114,7 +109,6 @@ where
 impl<C> From<PublicKey<C>> for VerifyingKey<C>
 where
     C: Curve + ProjectiveArithmetic,
-    AffinePoint<C>: Copy + Clone + Debug,
 {
     fn from(public_key: PublicKey<C>) -> VerifyingKey<C> {
         VerifyingKey { inner: public_key }
@@ -124,7 +118,6 @@ where
 impl<C> From<&PublicKey<C>> for VerifyingKey<C>
 where
     C: Curve + ProjectiveArithmetic,
-    AffinePoint<C>: Copy + Clone + Debug,
 {
     fn from(public_key: &PublicKey<C>) -> VerifyingKey<C> {
         public_key.clone().into()
@@ -134,7 +127,6 @@ where
 impl<C> From<VerifyingKey<C>> for PublicKey<C>
 where
     C: Curve + ProjectiveArithmetic,
-    AffinePoint<C>: Copy + Clone + Debug,
 {
     fn from(verifying_key: VerifyingKey<C>) -> PublicKey<C> {
         verifying_key.inner
@@ -144,7 +136,6 @@ where
 impl<C> From<&VerifyingKey<C>> for PublicKey<C>
 where
     C: Curve + ProjectiveArithmetic,
-    AffinePoint<C>: Copy + Clone + Debug,
 {
     fn from(verifying_key: &VerifyingKey<C>) -> PublicKey<C> {
         verifying_key.clone().into()
@@ -154,8 +145,7 @@ where
 impl<C> Eq for VerifyingKey<C>
 where
     C: Curve + ProjectiveArithmetic,
-    AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
-    ProjectivePoint<C>: From<AffinePoint<C>>,
+    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
     UncompressedPointSize<C>: ArrayLength<u8>,
 {
@@ -164,8 +154,7 @@ where
 impl<C> PartialEq for VerifyingKey<C>
 where
     C: Curve + ProjectiveArithmetic,
-    AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
-    ProjectivePoint<C>: From<AffinePoint<C>>,
+    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
     UncompressedPointSize<C>: ArrayLength<u8>,
 {
@@ -177,8 +166,7 @@ where
 impl<C> PartialOrd for VerifyingKey<C>
 where
     C: Curve + ProjectiveArithmetic,
-    AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
-    ProjectivePoint<C>: From<AffinePoint<C>>,
+    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
     UncompressedPointSize<C>: ArrayLength<u8>,
 {
@@ -190,8 +178,7 @@ where
 impl<C> Ord for VerifyingKey<C>
 where
     C: Curve + ProjectiveArithmetic,
-    AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
-    ProjectivePoint<C>: From<AffinePoint<C>>,
+    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
     UncompressedPointSize<C>: ArrayLength<u8>,
 {
@@ -205,8 +192,7 @@ where
 impl<C> FromPublicKey for VerifyingKey<C>
 where
     C: Curve + AlgorithmParameters + ProjectiveArithmetic + PointCompression,
-    AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
-    ProjectivePoint<C>: From<AffinePoint<C>>,
+    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
     UncompressedPointSize<C>: ArrayLength<u8>,
 {
@@ -220,8 +206,7 @@ where
 impl<C> FromStr for VerifyingKey<C>
 where
     C: Curve + AlgorithmParameters + ProjectiveArithmetic + PointCompression,
-    AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
-    ProjectivePoint<C>: From<AffinePoint<C>>,
+    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
     UncompressedPointSize<C>: ArrayLength<u8>,
 {

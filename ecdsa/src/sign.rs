@@ -20,8 +20,7 @@ use signature::{
 #[cfg(feature = "verify")]
 use {
     crate::verify::VerifyingKey,
-    core::fmt::Debug,
-    elliptic_curve::{AffinePoint, ProjectivePoint, PublicKey},
+    elliptic_curve::{AffinePoint, PublicKey},
 };
 
 #[cfg(feature = "pkcs8")]
@@ -75,11 +74,7 @@ where
     /// Get the [`VerifyingKey`] which corresponds to this [`SigningKey`]
     #[cfg(feature = "verify")]
     #[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
-    pub fn verifying_key(&self) -> VerifyingKey<C>
-    where
-        AffinePoint<C>: Copy + Clone + Debug + Default,
-        ProjectivePoint<C>: From<AffinePoint<C>>,
-    {
+    pub fn verifying_key(&self) -> VerifyingKey<C> {
         VerifyingKey {
             inner: PublicKey::from_secret_scalar(&self.inner),
         }
@@ -201,8 +196,7 @@ where
 impl<C> From<&SigningKey<C>> for VerifyingKey<C>
 where
     C: Curve + ProjectiveArithmetic,
-    AffinePoint<C>: Copy + Clone + Debug + Default,
-    ProjectivePoint<C>: From<AffinePoint<C>>,
+
     Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C> + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -216,8 +210,7 @@ where
 impl<C> FromPrivateKey for SigningKey<C>
 where
     C: Curve + AlgorithmParameters + ProjectiveArithmetic,
-    AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
-    ProjectivePoint<C>: From<AffinePoint<C>>,
+    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C> + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
     UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
@@ -235,8 +228,7 @@ where
 impl<C> FromStr for SigningKey<C>
 where
     C: Curve + AlgorithmParameters + ProjectiveArithmetic,
-    AffinePoint<C>: Copy + Clone + Debug + Default + FromEncodedPoint<C> + ToEncodedPoint<C>,
-    ProjectivePoint<C>: From<AffinePoint<C>>,
+    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C> + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
     UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
