@@ -104,9 +104,6 @@ use elliptic_curve::{
 #[cfg(feature = "arithmetic")]
 use elliptic_curve::{group::ff::PrimeField, NonZeroScalar, ProjectiveArithmetic, Scalar};
 
-#[cfg(feature = "der")]
-use elliptic_curve::generic_array::typenum::NonZero;
-
 /// Size of a fixed sized signature for the given elliptic curve.
 pub type SignatureSize<C> = <FieldSize<C> as Add>::Output;
 
@@ -153,7 +150,6 @@ where
     #[cfg_attr(docsrs, doc(cfg(feature = "der")))]
     pub fn from_der(bytes: &[u8]) -> Result<Self, Error>
     where
-        FieldSize<C>: Add + ArrayLength<u8> + NonZero,
         der::MaxSize<C>: ArrayLength<u8>,
         <FieldSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
     {
@@ -165,7 +161,6 @@ where
     #[cfg_attr(docsrs, doc(cfg(feature = "der")))]
     pub fn to_der(&self) -> der::Signature<C>
     where
-        FieldSize<C>: Add + ArrayLength<u8> + NonZero,
         der::MaxSize<C>: ArrayLength<u8>,
         <FieldSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
     {
@@ -289,27 +284,6 @@ where
         Ok(Self {
             bytes: GenericArray::clone_from_slice(bytes),
         })
-    }
-}
-
-#[cfg(feature = "der")]
-#[cfg_attr(docsrs, doc(cfg(feature = "der")))]
-impl<C> TryFrom<der::Signature<C>> for Signature<C>
-where
-    C: Curve,
-    FieldSize<C>: Add + ArrayLength<u8> + NonZero,
-    der::MaxSize<C>: ArrayLength<u8>,
-    <FieldSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
-{
-    type Error = Error;
-
-    fn try_from(doc: der::Signature<C>) -> Result<Signature<C>, Error> {
-        let mut bytes = SignatureBytes::<C>::default();
-        let r_begin = C::UInt::NUM_BYTES.saturating_sub(doc.r().len());
-        let s_begin = bytes.len().saturating_sub(doc.s().len());
-        bytes[r_begin..C::UInt::NUM_BYTES].copy_from_slice(doc.r());
-        bytes[s_begin..].copy_from_slice(doc.s());
-        Self::try_from(bytes.as_slice())
     }
 }
 
