@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.12.0 (2021-06-07)
+### Changed
+- Bump `der` crate to v0.4 ([#302], [#315])
+- Bump `elliptic-curve` crate dependency to v0.10 ([#315])
+- MSRV 1.51+ ([#302], [#315])
+
+### Removed
+- Bounds now expressed via `*Arithmetic` traits ([#303], [#312])
+
+[#302]: https://github.com/RustCrypto/signatures/pull/302
+[#303]: https://github.com/RustCrypto/signatures/pull/303
+[#315]: https://github.com/RustCrypto/signatures/pull/315
+
 ## 0.11.1 (2021-05-24)
 ### Added
 - `Ord` and `PartialOrd` impls on VerifyingKey ([#298], [#299])
