@@ -8,7 +8,7 @@ use core::{
 };
 use der::{asn1::UIntBytes, Decodable};
 use elliptic_curve::{
-    bigint::NumBytes,
+    bigint::Encoding as _,
     consts::U9,
     generic_array::{ArrayLength, GenericArray},
     weierstrass::Curve,
@@ -153,7 +153,7 @@ where
             .sequence(|decoder| Ok((UIntBytes::decode(decoder)?, UIntBytes::decode(decoder)?)))
             .map_err(|_| Error::new())?;
 
-        if r.as_bytes().len() > C::UInt::NUM_BYTES || s.as_bytes().len() > C::UInt::NUM_BYTES {
+        if r.as_bytes().len() > C::UInt::BYTE_SIZE || s.as_bytes().len() > C::UInt::BYTE_SIZE {
             return Err(Error::new());
         }
 
@@ -185,9 +185,9 @@ where
 
     fn try_from(sig: Signature<C>) -> Result<super::Signature<C>, Error> {
         let mut bytes = super::SignatureBytes::<C>::default();
-        let r_begin = C::UInt::NUM_BYTES.saturating_sub(sig.r().len());
+        let r_begin = C::UInt::BYTE_SIZE.saturating_sub(sig.r().len());
         let s_begin = bytes.len().saturating_sub(sig.s().len());
-        bytes[r_begin..C::UInt::NUM_BYTES].copy_from_slice(sig.r());
+        bytes[r_begin..C::UInt::BYTE_SIZE].copy_from_slice(sig.r());
         bytes[s_begin..].copy_from_slice(sig.s());
         Self::try_from(bytes.as_slice())
     }

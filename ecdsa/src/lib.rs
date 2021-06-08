@@ -97,8 +97,9 @@ use core::{
     ops::Add,
 };
 use elliptic_curve::{
+    bigint::Encoding as _,
     generic_array::{sequence::Concat, typenum::Unsigned, ArrayLength, GenericArray},
-    FieldBytes, FieldSize, NumBytes, ScalarBytes,
+    FieldBytes, FieldSize, ScalarBytes,
 };
 
 #[cfg(feature = "arithmetic")]
@@ -164,7 +165,7 @@ where
         der::MaxSize<C>: ArrayLength<u8>,
         <FieldSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
     {
-        let (r, s) = self.bytes.split_at(C::UInt::NUM_BYTES);
+        let (r, s) = self.bytes.split_at(C::UInt::BYTE_SIZE);
         der::Signature::from_scalar_bytes(r, s).expect("DER encoding error")
     }
 }
@@ -178,14 +179,14 @@ where
 {
     /// Get the `r` component of this signature
     pub fn r(&self) -> NonZeroScalar<C> {
-        let r_bytes = GenericArray::clone_from_slice(&self.bytes[..C::UInt::NUM_BYTES]);
+        let r_bytes = GenericArray::clone_from_slice(&self.bytes[..C::UInt::BYTE_SIZE]);
         NonZeroScalar::from_repr(r_bytes)
             .unwrap_or_else(|| unreachable!("r-component ensured valid in constructor"))
     }
 
     /// Get the `s` component of this signature
     pub fn s(&self) -> NonZeroScalar<C> {
-        let s_bytes = GenericArray::clone_from_slice(&self.bytes[C::UInt::NUM_BYTES..]);
+        let s_bytes = GenericArray::clone_from_slice(&self.bytes[C::UInt::BYTE_SIZE..]);
         NonZeroScalar::from_repr(s_bytes)
             .unwrap_or_else(|| unreachable!("r-component ensured valid in constructor"))
     }
@@ -198,7 +199,7 @@ where
     where
         Scalar<C>: NormalizeLow,
     {
-        let s_bytes = GenericArray::from_mut_slice(&mut self.bytes[C::UInt::NUM_BYTES..]);
+        let s_bytes = GenericArray::from_mut_slice(&mut self.bytes[C::UInt::BYTE_SIZE..]);
         Scalar::<C>::from_repr(s_bytes.clone())
             .map(|s| {
                 let (s_low, was_high) = s.normalize_low();
@@ -268,7 +269,7 @@ where
             return Err(Error::new());
         }
 
-        for scalar in bytes.chunks_exact(C::UInt::NUM_BYTES) {
+        for scalar in bytes.chunks_exact(C::UInt::BYTE_SIZE) {
             if scalar.iter().all(|&byte| byte == 0) {
                 return Err(Error::new());
             }
