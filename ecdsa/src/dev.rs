@@ -172,14 +172,14 @@ macro_rules! new_wycheproof_test {
         #[test]
         fn $name() {
             use blobby::Blob5Iterator;
-            use elliptic_curve::{bigint::NumBytes, generic_array::typenum::Unsigned};
+            use elliptic_curve::{bigint::Encoding as _, generic_array::typenum::Unsigned};
 
             // Build a field element but allow for too-short input (left pad with zeros)
             // or too-long input (check excess leftmost bytes are zeros).
             fn element_from_padded_slice<C: elliptic_curve::Curve>(
                 data: &[u8],
             ) -> elliptic_curve::FieldBytes<C> {
-                let point_len = C::UInt::NUM_BYTES;
+                let point_len = C::UInt::BYTE_SIZE;
                 if data.len() >= point_len {
                     let offset = data.len() - point_len;
                     for v in data.iter().take(offset) {
