@@ -12,7 +12,7 @@ dependencies = [
 [[package]]
 name = "base64ct"
 version = "1.0.0"
-source = "git+https://github.com/rustcrypto/utils.git#3fc828a86a31b2b5016dd64e4f3b38a858f9d070"
+source = "git+https://github.com/rustcrypto/utils.git#dd17922cba2798f9a002850acf455cf2d6215483"
 
 [[package]]
 name = "bincode"
@@ -59,7 +59,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 [[package]]
 name = "const-oid"
 version = "0.6.0"
-source = "git+https://github.com/rustcrypto/utils.git#3fc828a86a31b2b5016dd64e4f3b38a858f9d070"
+source = "git+https://github.com/rustcrypto/utils.git#dd17922cba2798f9a002850acf455cf2d6215483"
 
 [[package]]
 name = "cpufeatures"
@@ -72,8 +72,8 @@ dependencies = [
 
 [[package]]
 name = "crypto-bigint"
-version = "0.1.0"
-source = "git+https://github.com/rustcrypto/utils.git#3fc828a86a31b2b5016dd64e4f3b38a858f9d070"
+version = "0.2.0-pre"
+source = "git+https://github.com/rustcrypto/utils.git#dd17922cba2798f9a002850acf455cf2d6215483"
 dependencies = [
  "generic-array",
  "subtle",
@@ -114,7 +114,7 @@ dependencies = [
 [[package]]
 name = "der"
 version = "0.4.0-pre"
-source = "git+https://github.com/rustcrypto/utils.git#3fc828a86a31b2b5016dd64e4f3b38a858f9d070"
+source = "git+https://github.com/rustcrypto/utils.git#dd17922cba2798f9a002850acf455cf2d6215483"
 dependencies = [
  "const-oid",
 ]
@@ -200,7 +200,7 @@ dependencies = [
 [[package]]
 name = "elliptic-curve"
 version = "0.10.0-pre"
-source = "git+https://github.com/rustcrypto/traits.git#6dced063c1d943e04ee52e5e53bba5e08b83b450"
+source = "git+https://github.com/rustcrypto/traits.git#23fb60e731179833bf8b0da51dbc51bbd5531dc7"
 dependencies = [
  "crypto-bigint",
  "ff",
@@ -336,7 +336,7 @@ dependencies = [
 [[package]]
 name = "pkcs8"
 version = "0.7.0-pre"
-source = "git+https://github.com/rustcrypto/utils.git#3fc828a86a31b2b5016dd64e4f3b38a858f9d070"
+source = "git+https://github.com/rustcrypto/utils.git#dd17922cba2798f9a002850acf455cf2d6215483"
 dependencies = [
  "base64ct",
  "der 0.4.0-pre",
@@ -486,7 +486,7 @@ checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
 [[package]]
 name = "spki"
 version = "0.4.0-pre"
-source = "git+https://github.com/rustcrypto/utils.git#3fc828a86a31b2b5016dd64e4f3b38a858f9d070"
+source = "git+https://github.com/rustcrypto/utils.git#dd17922cba2798f9a002850acf455cf2d6215483"
 dependencies = [
  "der 0.4.0-pre",
 ]

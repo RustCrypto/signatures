@@ -2,6 +2,7 @@
 
 use crate::hazmat::FromDigest;
 use elliptic_curve::{
+    bigint::Encoding as _,
     consts::U32,
     dev::{MockCurve, Scalar, ScalarBytes},
     subtle::{ConditionallySelectable, ConstantTimeLess},
@@ -16,7 +17,7 @@ impl FromDigest<MockCurve> for Scalar {
     where
         D: Digest<OutputSize = U32>,
     {
-        let uint = UInt::from_be_bytes(&digest.finalize());
+        let uint = UInt::from_be_bytes(digest.finalize().into());
         let overflow = !uint.ct_lt(&MockCurve::ORDER);
         let scalar = uint.wrapping_add(&UInt::conditional_select(
             &UInt::ZERO,
