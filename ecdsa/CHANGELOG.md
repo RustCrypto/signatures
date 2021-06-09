@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.12.1 (2021-06-09)
+### Added
+- Explicit `Copy` bounds on `VerifyingKey` ([#318])
+
+[#318]: https://github.com/RustCrypto/signatures/pull/318
+
 ## 0.12.0 (2021-06-07)
 ### Changed
 - Bump `der` crate to v0.4 ([#302], [#315])
