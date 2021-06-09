@@ -30,7 +30,7 @@ use core::str::FromStr;
 /// Requires an [`elliptic_curve::ProjectiveArithmetic`] impl on the curve, and a
 /// [`VerifyPrimitive`] impl on its associated `AffinePoint` type.
 #[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct VerifyingKey<C>
 where
     C: Curve + ProjectiveArithmetic,
@@ -65,6 +65,8 @@ where
         self.inner.to_encoded_point(compress)
     }
 }
+
+impl<C> Copy for VerifyingKey<C> where C: Curve + ProjectiveArithmetic {}
 
 impl<C, D> DigestVerifier<D, Signature<C>> for VerifyingKey<C>
 where
