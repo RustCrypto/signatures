@@ -86,6 +86,17 @@ where
     }
 }
 
+impl<C> Drop for SigningKey<C>
+where
+    C: Curve + ProjectiveArithmetic,
+    Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C> + Zeroize,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn drop(&mut self) {
+        self.inner.zeroize();
+    }
+}
+
 impl<C> From<SecretKey<C>> for SigningKey<C>
 where
     C: Curve + ProjectiveArithmetic,
