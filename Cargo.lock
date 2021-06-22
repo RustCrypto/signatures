@@ -67,21 +67,22 @@ checksum = "44c32f031ea41b4291d695026c023b95d59db2d8a2c7640800ed56bc8f510f22"
 
 [[package]]
 name = "cpufeatures"
-version = "0.1.4"
+version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed00c67cb5d0a7d64a44f6ad2668db7e7530311dd53ea79bcd4fb022c64911c8"
+checksum = "66c99696f6c9dd7f35d486b9d04d7e6e202aa3e8c40d553f2fdf5e7e0c6a71ef"
 dependencies = [
  "libc",
 ]
 
 [[package]]
 name = "crypto-bigint"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "281d926f72b42bf3ba840b88cd53e39f36be9f66e34c8df3fb336372b3753d41"
+checksum = "bdc9968be9247fb330af911b91a58a267cbbcfcb8dea88debaf977738950dce5"
 dependencies = [
  "generic-array",
  "subtle",
+ "zeroize",
 ]
 
 [[package]]
@@ -150,7 +151,7 @@ name = "ecdsa"
 version = "0.12.2"
 dependencies = [
  "der 0.4.0",
- "elliptic-curve 0.10.2",
+ "elliptic-curve 0.10.3",
  "hex-literal",
  "hmac",
  "sha2",
@@ -199,15 +200,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c13e9b0c3c4170dcc2a12783746c4205d98e18957f57854251eea3f9750fe005"
 dependencies = [
  "generic-array",
- "rand_core 0.6.2",
+ "rand_core 0.6.3",
  "subtle",
 ]
 
 [[package]]
 name = "elliptic-curve"
-version = "0.10.2"
+version = "0.10.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "59029dd05f60215bbe37eda4b32ba1a142abc8b01a938955b20b92ff0d713e8e"
+checksum = "dd035cb119cbc25e91bb6f1abbfe341388ddb47a1fe5e77ca6bcbe231e87580b"
 dependencies = [
  "crypto-bigint",
  "ff",
@@ -215,7 +216,7 @@ dependencies = [
  "group",
  "hex-literal",
  "pkcs8",
- "rand_core 0.6.2",
+ "rand_core 0.6.3",
  "subtle",
  "zeroize",
 ]
@@ -226,7 +227,7 @@ version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "63eec06c61e487eecf0f7e6e6372e596a81922c28d33e645d6983ca6493a1af0"
 dependencies = [
- "rand_core 0.6.2",
+ "rand_core 0.6.3",
  "subtle",
 ]
 
@@ -258,7 +259,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1c363a5301b8f153d80747126a04b3c82073b9fe3130571a9d170cacdeaf7912"
 dependencies = [
  "ff",
- "rand_core 0.6.2",
+ "rand_core 0.6.3",
  "subtle",
 ]
 
@@ -295,9 +296,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
-version = "0.2.95"
+version = "0.2.97"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "789da6d93f1b866ffe175afc5322a4d76c038605a1c3319bb57b06967ca98a36"
+checksum = "12b8adadd720df158f4d70dfe7ccc6adb0472d7c55ca83445f6a5ab3e36f8fb6"
 
 [[package]]
 name = "log"
@@ -310,9 +311,9 @@ dependencies = [
 
 [[package]]
 name = "once_cell"
-version = "1.7.2"
+version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "af8b08b04175473088b46763e51ee54da5f9a164bc162f615b91bc179dbf15a3"
+checksum = "692fcb63b64b1758029e0a96ee63e049ce8c5948587f2f7208df04625e5f6b56"
 
 [[package]]
 name = "opaque-debug"
@@ -410,9 +411,9 @@ dependencies = [
 
 [[package]]
 name = "rand_core"
-version = "0.6.2"
+version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "34cf66eb183df1c5876e2dcf6b13d57340741e8dc255b48e40a26de954d06ae7"
+checksum = "d34f1408f55294453790c48b2f1ebbb1c5b4b7563eb1f418bcfcfdbb06ebb4e7"
 
 [[package]]
 name = "rand_hc"
@@ -482,7 +483,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0f0242b8e50dd9accdd56170e94ca1ebd223b098eb9c83539a6e367d0f36ae68"
 dependencies = [
  "digest",
- "rand_core 0.6.2",
+ "rand_core 0.6.3",
 ]
 
 [[package]]
@@ -508,9 +509,9 @@ checksum = "1e81da0851ada1f3e9d4312c704aa4f8806f0f9d69faaf8df2f3464b4a9437c2"
 
 [[package]]
 name = "syn"
-version = "1.0.72"
+version = "1.0.73"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a1e8cdbefb79a9a5a65e0db8b47b723ee907b7c7f8496c76a1770b5c310bab82"
+checksum = "f71489ff30030d2ae598524f61326b902466f72a0fb1a8564c001cc63425bcc7"
 dependencies = [
  "proc-macro2",
  "quote",
