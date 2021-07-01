@@ -16,32 +16,29 @@ jobs:
   rustfmt:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout sources
-        uses: actions/checkout@v1
-
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v1
+      - uses: actions-rs/toolchain@v1
         with:
-          profile: minimal
           toolchain: stable
           components: rustfmt
-
-      - name: Run cargo fmt
-        uses: actions-rs/cargo@v1
+          override: true
+          profile: minimal
+      - uses: actions-rs/cargo@v1
         with:
           command: fmt
           args: --all -- --check
+
   clippy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
       - uses: actions-rs/toolchain@v1
         with:
-          profile: minimal
-          toolchain: 1.51.0
+          toolchain: 1.51.0 # MSRV
           components: clippy
+          override: true
+          profile: minimal
       - run: cargo clippy --all-features -- -D warnings
-
 
   codecov:
     runs-on: ubuntu-latest

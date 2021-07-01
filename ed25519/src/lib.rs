@@ -281,6 +281,7 @@ impl Signature {
     }
 
     /// Return the inner byte array
+    #[allow(clippy::wrong_self_convention)] // TODO: fix in next breaking release
     pub fn to_bytes(&self) -> [u8; SIGNATURE_LENGTH] {
         self.0
     }
