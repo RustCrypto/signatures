@@ -4,7 +4,7 @@ use crate::{
     hazmat::{DigestPrimitive, FromDigest, VerifyPrimitive},
     Error, Signature, SignatureSize,
 };
-use core::{cmp::Ordering, fmt::Debug, ops::Add};
+use core::{cmp::Ordering, convert::TryFrom, fmt::Debug, ops::Add};
 use elliptic_curve::{
     consts::U1,
     generic_array::ArrayLength,
@@ -186,6 +186,20 @@ where
 {
     fn cmp(&self, other: &Self) -> Ordering {
         self.inner.cmp(&other.inner)
+    }
+}
+
+impl<C> TryFrom<&[u8]> for VerifyingKey<C>
+where
+    C: Curve + ProjectiveArithmetic,
+    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
+    UncompressedPointSize<C>: ArrayLength<u8>,
+{
+    type Error = Error;
+
+    fn try_from(bytes: &[u8]) -> Result<Self, Error> {
+        Self::from_sec1_bytes(bytes)
     }
 }
 
