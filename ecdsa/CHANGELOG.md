@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.12.3 (2021-06-17)
+### Added
+- Impl `TryFrom<&[u8]>` for `Verifying<C>` ([#329])
+- Impl `TryFrom<&[u8]>` for `SigningKey<C>` ([#330])
+
+### Changed
+- Use `signature::Result` alias ([#331])
+
+[#329]: https://github.com/RustCrypto/signatures/pull/329
+[#330]: https://github.com/RustCrypto/signatures/pull/330
+[#331]: https://github.com/RustCrypto/signatures/pull/331
+
 ## 0.12.2 (2021-06-18)
 ### Added
 - Zeroization on drop for `SigningKey` ([#321])
