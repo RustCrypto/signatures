@@ -2,7 +2,7 @@
 
 use crate::{
     hazmat::{DigestPrimitive, FromDigest, VerifyPrimitive},
-    Error, Signature, SignatureSize,
+    Error, Result, Signature, SignatureSize,
 };
 use core::{cmp::Ordering, convert::TryFrom, fmt::Debug, ops::Add};
 use elliptic_curve::{
@@ -46,14 +46,14 @@ where
     UncompressedPointSize<C>: ArrayLength<u8>,
 {
     /// Initialize [`VerifyingKey`] from a SEC1-encoded public key.
-    pub fn from_sec1_bytes(bytes: &[u8]) -> Result<Self, Error> {
+    pub fn from_sec1_bytes(bytes: &[u8]) -> Result<Self> {
         PublicKey::from_sec1_bytes(bytes)
             .map(|pk| Self { inner: pk })
             .map_err(|_| Error::new())
     }
 
     /// Initialize [`VerifyingKey`] from an [`EncodedPoint`].
-    pub fn from_encoded_point(public_key: &EncodedPoint<C>) -> Result<Self, Error> {
+    pub fn from_encoded_point(public_key: &EncodedPoint<C>) -> Result<Self> {
         PublicKey::<C>::from_encoded_point(public_key)
             .map(|public_key| Self { inner: public_key })
             .ok_or_else(Error::new)
@@ -76,7 +76,7 @@ where
     Scalar<C>: FromDigest<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
-    fn verify_digest(&self, digest: D, signature: &Signature<C>) -> Result<(), Error> {
+    fn verify_digest(&self, digest: D, signature: &Signature<C>) -> Result<()> {
         self.inner
             .as_affine()
             .verify_prehashed(&Scalar::<C>::from_digest(digest), signature)
@@ -91,7 +91,7 @@ where
     Scalar<C>: FromDigest<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
-    fn verify(&self, msg: &[u8], signature: &Signature<C>) -> Result<(), Error> {
+    fn verify(&self, msg: &[u8], signature: &Signature<C>) -> Result<()> {
         self.verify_digest(C::Digest::new().chain(msg), signature)
     }
 }
@@ -198,7 +198,7 @@ where
 {
     type Error = Error;
 
-    fn try_from(bytes: &[u8]) -> Result<Self, Error> {
+    fn try_from(bytes: &[u8]) -> Result<Self> {
         Self::from_sec1_bytes(bytes)
     }
 }
@@ -228,7 +228,7 @@ where
 {
     type Err = Error;
 
-    fn from_str(s: &str) -> Result<Self, Error> {
+    fn from_str(s: &str) -> Result<Self> {
         Self::from_public_key_pem(s).map_err(|_| Error::new())
     }
 }

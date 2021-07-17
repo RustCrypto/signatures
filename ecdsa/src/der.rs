@@ -1,6 +1,6 @@
 //! Support for ECDSA signatures encoded as ASN.1 DER.
 
-use crate::Error;
+use crate::{Error, Result};
 use core::{
     convert::{TryFrom, TryInto},
     fmt,
@@ -66,7 +66,7 @@ where
     <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
     /// Parse an ASN.1 DER-encoded ECDSA signature from a byte slice
-    fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
+    fn from_bytes(bytes: &[u8]) -> Result<Self> {
         bytes.try_into()
     }
 }
@@ -95,7 +95,7 @@ where
     }
 
     /// Create an ASN.1 DER encoded signature from big endian `r` and `s` scalars
-    pub(crate) fn from_scalar_bytes(r: &[u8], s: &[u8]) -> Result<Self, der::Error> {
+    pub(crate) fn from_scalar_bytes(r: &[u8], s: &[u8]) -> der::Result<Self> {
         let mut bytes = SignatureBytes::<C>::default();
         let mut encoder = der::Encoder::new(&mut bytes);
         encoder.message(&[&UIntBytes::new(r)?, &UIntBytes::new(s)?])?;
@@ -148,7 +148,7 @@ where
 {
     type Error = Error;
 
-    fn try_from(input: &[u8]) -> Result<Self, Error> {
+    fn try_from(input: &[u8]) -> Result<Self> {
         let (r, s) = der::Decoder::new(input)
             .sequence(|decoder| Ok((UIntBytes::decode(decoder)?, UIntBytes::decode(decoder)?)))
             .map_err(|_| Error::new())?;
@@ -183,7 +183,7 @@ where
 {
     type Error = Error;
 
-    fn try_from(sig: Signature<C>) -> Result<super::Signature<C>, Error> {
+    fn try_from(sig: Signature<C>) -> Result<super::Signature<C>> {
         let mut bytes = super::SignatureBytes::<C>::default();
         let r_begin = C::UInt::BYTE_SIZE.saturating_sub(sig.r().len());
         let s_begin = bytes.len().saturating_sub(sig.s().len());
@@ -194,7 +194,7 @@ where
 }
 
 /// Locate the range within a slice at which a particular subslice is located
-fn find_scalar_range(outer: &[u8], inner: &[u8]) -> Result<Range<usize>, Error> {
+fn find_scalar_range(outer: &[u8], inner: &[u8]) -> Result<Range<usize>> {
     let outer_start = outer.as_ptr() as usize;
     let inner_start = inner.as_ptr() as usize;
     let start = inner_start
