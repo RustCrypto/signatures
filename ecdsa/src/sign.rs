@@ -6,6 +6,7 @@ use crate::{
     hazmat::{DigestPrimitive, FromDigest, SignPrimitive},
     rfc6979, Error, Signature, SignatureSize,
 };
+use core::convert::TryFrom;
 use elliptic_curve::{
     generic_array::ArrayLength, group::ff::PrimeField, ops::Invert, weierstrass::Curve,
     zeroize::Zeroize, FieldBytes, FieldSize, NonZeroScalar, ProjectiveArithmetic, Scalar,
@@ -200,6 +201,19 @@ where
         Self {
             inner: secret_scalar,
         }
+    }
+}
+
+impl<C> TryFrom<&[u8]> for SigningKey<C>
+where
+    C: Curve + ProjectiveArithmetic,
+    Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C> + Zeroize,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    type Error = Error;
+
+    fn try_from(bytes: &[u8]) -> Result<Self, Error> {
+        Self::from_bytes(bytes)
     }
 }
 
