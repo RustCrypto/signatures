@@ -81,7 +81,7 @@ mod verify;
 pub use elliptic_curve::{self, sec1::EncodedPoint, weierstrass::Curve};
 
 // Re-export the `signature` crate (and select types)
-pub use signature::{self, Error};
+pub use signature::{self, Error, Result};
 
 #[cfg(feature = "sign")]
 #[cfg_attr(docsrs, doc(cfg(feature = "sign")))]
@@ -139,17 +139,14 @@ where
 {
     /// Create a [`Signature`] from the serialized `r` and `s` scalar values
     /// which comprise the signature.
-    pub fn from_scalars(
-        r: impl Into<FieldBytes<C>>,
-        s: impl Into<FieldBytes<C>>,
-    ) -> Result<Self, Error> {
+    pub fn from_scalars(r: impl Into<FieldBytes<C>>, s: impl Into<FieldBytes<C>>) -> Result<Self> {
         Self::try_from(r.into().concat(s.into()).as_slice())
     }
 
     /// Parse a signature from ASN.1 DER
     #[cfg(feature = "der")]
     #[cfg_attr(docsrs, doc(cfg(feature = "der")))]
-    pub fn from_der(bytes: &[u8]) -> Result<Self, Error>
+    pub fn from_der(bytes: &[u8]) -> Result<Self>
     where
         der::MaxSize<C>: ArrayLength<u8>,
         <FieldSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
@@ -195,7 +192,7 @@ where
     /// [BIP 0062: Dealing with Malleability][1].
     ///
     /// [1]: https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki
-    pub fn normalize_s(&mut self) -> Result<bool, Error>
+    pub fn normalize_s(&mut self) -> Result<bool>
     where
         Scalar<C>: NormalizeLow,
     {
@@ -219,7 +216,7 @@ where
     C: Curve,
     SignatureSize<C>: ArrayLength<u8>,
 {
-    fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
+    fn from_bytes(bytes: &[u8]) -> Result<Self> {
         Self::try_from(bytes)
     }
 }
@@ -264,7 +261,7 @@ where
 {
     type Error = Error;
 
-    fn try_from(bytes: &[u8]) -> Result<Self, Error> {
+    fn try_from(bytes: &[u8]) -> Result<Self> {
         if bytes.len() != <SignatureSize<C>>::to_usize() {
             return Err(Error::new());
         }

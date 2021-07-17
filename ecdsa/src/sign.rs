@@ -4,7 +4,7 @@
 
 use crate::{
     hazmat::{DigestPrimitive, FromDigest, SignPrimitive},
-    rfc6979, Error, Signature, SignatureSize,
+    rfc6979, Error, Result, Signature, SignatureSize,
 };
 use core::convert::TryFrom;
 use elliptic_curve::{
@@ -64,7 +64,7 @@ where
     }
 
     /// Initialize signing key from a raw scalar serialized as a byte slice.
-    pub fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self> {
         let inner = SecretKey::from_bytes(bytes)
             .map(|sk| sk.to_secret_scalar())
             .map_err(|_| Error::new())?;
@@ -132,7 +132,7 @@ where
     /// Sign message prehash using a deterministic ephemeral scalar (`k`)
     /// computed using the algorithm described in RFC 6979 (Section 3.2):
     /// <https://tools.ietf.org/html/rfc6979#section-3>
-    fn try_sign_digest(&self, digest: D) -> Result<Signature<C>, Error> {
+    fn try_sign_digest(&self, digest: D) -> Result<Signature<C>> {
         let k = rfc6979::generate_k(&self.inner, digest.clone(), &[]);
         let msg_scalar = Scalar::<C>::from_digest(digest);
         self.inner.try_sign_prehashed(&**k, &msg_scalar)
@@ -146,7 +146,7 @@ where
     Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C> + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
 {
-    fn try_sign(&self, msg: &[u8]) -> Result<Signature<C>, signature::Error> {
+    fn try_sign(&self, msg: &[u8]) -> Result<Signature<C>> {
         self.try_sign_digest(C::Digest::new().chain(msg))
     }
 }
@@ -165,7 +165,7 @@ where
         &self,
         mut rng: impl CryptoRng + RngCore,
         digest: D,
-    ) -> Result<Signature<C>, Error> {
+    ) -> Result<Signature<C>> {
         let mut added_entropy = FieldBytes::<C>::default();
         rng.fill_bytes(&mut added_entropy);
 
@@ -182,11 +182,7 @@ where
     Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C> + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
 {
-    fn try_sign_with_rng(
-        &self,
-        rng: impl CryptoRng + RngCore,
-        msg: &[u8],
-    ) -> Result<Signature<C>, Error> {
+    fn try_sign_with_rng(&self, rng: impl CryptoRng + RngCore, msg: &[u8]) -> Result<Signature<C>> {
         self.try_sign_digest_with_rng(rng, C::Digest::new().chain(msg))
     }
 }
@@ -212,7 +208,7 @@ where
 {
     type Error = Error;
 
-    fn try_from(bytes: &[u8]) -> Result<Self, Error> {
+    fn try_from(bytes: &[u8]) -> Result<Self> {
         Self::from_bytes(bytes)
     }
 }
@@ -261,7 +257,7 @@ where
 {
     type Err = Error;
 
-    fn from_str(s: &str) -> Result<Self, Error> {
+    fn from_str(s: &str) -> Result<Self> {
         Self::from_pkcs8_pem(s).map_err(|_| Error::new())
     }
 }

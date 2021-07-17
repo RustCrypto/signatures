@@ -13,10 +13,9 @@
 
 #[cfg(feature = "arithmetic")]
 use {
-    crate::SignatureSize,
+    crate::{Result, SignatureSize},
     core::borrow::Borrow,
     elliptic_curve::{ops::Invert, ProjectiveArithmetic, Scalar},
-    signature::Error,
 };
 
 #[cfg(feature = "digest")]
@@ -54,7 +53,7 @@ where
         &self,
         ephemeral_scalar: &K,
         hashed_msg: &Scalar<C>,
-    ) -> Result<Signature<C>, Error>;
+    ) -> Result<Signature<C>>;
 }
 
 /// [`SignPrimitive`] for signature implementations that can provide public key
@@ -76,7 +75,7 @@ where
         &self,
         ephemeral_scalar: &K,
         hashed_msg: &Scalar<C>,
-    ) -> Result<(Signature<C>, bool), Error>;
+    ) -> Result<(Signature<C>, bool)>;
 }
 
 #[cfg(feature = "arithmetic")]
@@ -90,7 +89,7 @@ where
         &self,
         ephemeral_scalar: &K,
         hashed_msg: &Scalar<C>,
-    ) -> Result<Signature<C>, Error> {
+    ) -> Result<Signature<C>> {
         self.try_sign_recoverable_prehashed(ephemeral_scalar, hashed_msg)
             .map(|res| res.0)
     }
@@ -114,11 +113,7 @@ where
     ///
     /// - `hashed_msg`: prehashed message to be verified
     /// - `signature`: signature to be verified against the key and message
-    fn verify_prehashed(
-        &self,
-        hashed_msg: &Scalar<C>,
-        signature: &Signature<C>,
-    ) -> Result<(), Error>;
+    fn verify_prehashed(&self, hashed_msg: &Scalar<C>, signature: &Signature<C>) -> Result<()>;
 }
 
 /// Bind a preferred [`Digest`] algorithm to an elliptic curve type.
