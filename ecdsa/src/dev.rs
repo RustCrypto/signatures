@@ -217,9 +217,9 @@ macro_rules! new_wycheproof_test {
 
                 match verifying_key.verify(msg, &sig) {
                     Ok(_) if pass => None,
-                    Ok(_) => Some("signature verify failed"),
+                    Ok(_) => Some("signature verify unexpectedly succeeded"),
                     Err(_) if !pass => None,
-                    Err(_) => Some("signature verify unexpectedly succeeded"),
+                    Err(_) => Some("signature verify failed"),
                 }
             }
 
