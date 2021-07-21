@@ -101,5 +101,8 @@ jobs:
       - name: Run cargo test --lib
         run: cargo test --lib --release
 
-      - name: Run cargo test --all-features
-        run: cargo test --all-features --release
+      - name: Run cargo test --features serde
+        run: cargo test --features serde --release
+
+      - name: Run cargo test --features serde_as_bytes
+        run: cargo test --features serde_as_bytes --release

@@ -352,6 +352,7 @@ impl<'a> TryFrom<&'a [u8]> for Signature {
 
 #[cfg(feature = "serde")]
 impl Serialize for Signature {
+    #[cfg(not(feature = "serde_as_bytes"))]
     fn serialize<S: ser::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         use ser::SerializeTuple;
 
@@ -363,12 +364,18 @@ impl Serialize for Signature {
 
         seq.end()
     }
+
+    #[cfg(feature = "serde_as_bytes")]
+    fn serialize<S: ser::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_bytes(&self.0)
+    }
 }
 
 // serde lacks support for deserializing arrays larger than 32-bytes
 // see: <https://github.com/serde-rs/serde/issues/631>
 #[cfg(feature = "serde")]
 impl<'de> Deserialize<'de> for Signature {
+    #[cfg(not(feature = "serde_as_bytes"))]
     fn deserialize<D: de::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         struct ByteArrayVisitor;
 
@@ -400,6 +407,34 @@ impl<'de> Deserialize<'de> for Signature {
             .deserialize_tuple(SIGNATURE_LENGTH, ByteArrayVisitor)
             .map(|bytes| bytes.into())
     }
+
+    #[cfg(feature = "serde_as_bytes")]
+    fn deserialize<D: de::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        struct ByteArrayVisitor;
+
+        impl<'de> de::Visitor<'de> for ByteArrayVisitor {
+            type Value = [u8; SIGNATURE_LENGTH];
+
+            fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+                formatter.write_str("bytestring of length 64")
+            }
+
+            fn visit_bytes<E>(self, bytes: &[u8]) -> Result<Self::Value, E>
+            where
+                E: de::Error,
+            {
+                use de::Error;
+
+                bytes
+                    .try_into()
+                    .map_err(|_| Error::invalid_length(bytes.len(), &self))
+            }
+        }
+
+        deserializer
+            .deserialize_bytes(ByteArrayVisitor)
+            .map(Signature::from)
+    }
 }
 
 #[cfg(all(test, feature = "serde", feature = "std"))]
@@ -418,12 +453,29 @@ mod tests {
     fn test_serialize() {
         let signature = Signature::try_from(&EXAMPLE_SIGNATURE[..]).unwrap();
         let encoded_signature: Vec<u8> = bincode::serialize(&signature).unwrap();
-        assert_eq!(&EXAMPLE_SIGNATURE[..], &encoded_signature[..]);
+
+        let expected = if cfg!(not(feature = "serde_as_bytes")) {
+            Vec::from(&EXAMPLE_SIGNATURE[..])
+        } else {
+            let mut bytes = Vec::from(SIGNATURE_LENGTH.to_le_bytes());
+            bytes.extend_from_slice(&EXAMPLE_SIGNATURE[..]);
+            bytes
+        };
+
+        assert_eq!(&expected[..], &encoded_signature[..]);
     }
 
     #[test]
     fn test_deserialize() {
-        let signature = bincode::deserialize::<Signature>(&EXAMPLE_SIGNATURE).unwrap();
+        let encoded_signature = if cfg!(not(feature = "serde_as_bytes")) {
+            Vec::from(&EXAMPLE_SIGNATURE[..])
+        } else {
+            let mut bytes = Vec::from(SIGNATURE_LENGTH.to_le_bytes());
+            bytes.extend_from_slice(&EXAMPLE_SIGNATURE[..]);
+            bytes
+        };
+
+        let signature = bincode::deserialize::<Signature>(&encoded_signature).unwrap();
         assert_eq!(&EXAMPLE_SIGNATURE[..], signature.as_bytes());
     }
 }

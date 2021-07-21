@@ -23,4 +23,5 @@ rand_core = { version = "0.5", features = ["std"] }
 
 [features]
 default = ["std"]
+serde_as_bytes = ["serde"]
 std = ["signature/std"]
