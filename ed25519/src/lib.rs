@@ -258,7 +258,7 @@
 //!   array representation. As per the `serde_bytes` documentation, this can most easily be realised
 //!   using the `#[serde(with = "serde_bytes")]` annotation, e.g.:
 //!
-//!   ```compile_fail
+//!   ```ignore
 //!   # use ed25519::Signature;
 //!   # use serde::{Deserialize, Serialize};
 //!   #[derive(Deserialize, Serialize)]
@@ -269,7 +269,7 @@
 #![no_std]
 #![doc(
     html_logo_url = "https://raw.githubusercontent.com/RustCrypto/meta/master/logo_small.png",
-    html_root_url = "https://docs.rs/ed25519/1.1.1"
+    html_root_url = "https://docs.rs/ed25519/1.2.0"
 )]
 #![forbid(unsafe_code)]
 #![warn(missing_docs, rust_2018_idioms, unused_qualifications)]
