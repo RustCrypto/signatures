@@ -236,7 +236,6 @@
 //! - [`ring-compat`] - compatibility wrapper for [*ring*]
 //! - [`signatory-sodiumoxide`] - compatibility wrapper for [`sodiumoxide`]
 //! - [`yubihsm`] - host-side client library for YubiHSM2 devices from Yubico
-
 //!
 //! [`ed25519-dalek`]: https://docs.rs/ed25519-dalek
 //! [`ring-compat`]: https://docs.rs/ring-compat
@@ -245,6 +244,27 @@
 //! [`signatory-sodiumoxide`]: https://docs.rs/signatory-sodiumoxide/
 //! [`sodiumoxide`]: https://github.com/sodiumoxide/sodiumoxide
 //! [`yubihsm`]: https://github.com/iqlusioninc/yubihsm.rs/blob/develop/README.md
+//!
+//! # Features
+//!
+//! The following features are presently supported:
+//!
+//! - `std` *(default)*: Enable `std` support in [`signature`], which currently only affects whether
+//!   [`signature::Error`] implements `std::error::Error`.
+//! - `serde`: Implement `serde::Deserialize` and `serde::Serialize` for [`Signature`]. Signatures
+//!   are serialized as their bytes.
+//! - `serde_bytes`: Implement `serde_bytes::Deserialize` and `serde_bytes::Serialize` for
+//!   [`Signature`]. This enables more compact representations for formats with an efficient byte
+//!   array representation. As per the `serde_bytes` documentation, this can most easily be realised
+//!   using the `#[serde(with = "serde_bytes")]` annotation, e.g.:
+//!
+//!   ```compile_fail
+//!   # use ed25519::Signature;
+//!   # use serde::{Deserialize, Serialize};
+//!   #[derive(Deserialize, Serialize)]
+//!   #[serde(transparent)]
+//!   struct SignatureAsBytes(#[serde(with = "serde_bytes")] Signature);
+//!   ```
 
 #![no_std]
 #![doc(
