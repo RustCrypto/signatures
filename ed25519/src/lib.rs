@@ -256,8 +256,10 @@
 
 #[cfg(feature = "serde")]
 use serde::{de, ser, Deserialize, Serialize};
+#[cfg(feature = "serde_bytes")]
+use serde_bytes_crate as serde_bytes;
 
-#[cfg(all(test, feature = "std"))]
+#[cfg(all(feature = "std", any(test, feature = "serde_bytes")))]
 extern crate std;
 
 pub use signature::{self, Error};
@@ -402,6 +404,49 @@ impl<'de> Deserialize<'de> for Signature {
     }
 }
 
+#[cfg(feature = "serde_bytes")]
+impl serde_bytes::Serialize for Signature {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_bytes(&self.0)
+    }
+}
+
+#[cfg(feature = "serde_bytes")]
+impl<'de> serde_bytes::Deserialize<'de> for Signature {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: de::Deserializer<'de>,
+    {
+        struct ByteArrayVisitor;
+
+        impl<'de> de::Visitor<'de> for ByteArrayVisitor {
+            type Value = [u8; SIGNATURE_LENGTH];
+
+            fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+                formatter.write_str("bytestring of length 64")
+            }
+
+            fn visit_bytes<E>(self, bytes: &[u8]) -> Result<Self::Value, E>
+            where
+                E: de::Error,
+            {
+                use de::Error;
+
+                bytes
+                    .try_into()
+                    .map_err(|_| Error::invalid_length(bytes.len(), &self))
+            }
+        }
+
+        deserializer
+            .deserialize_bytes(ByteArrayVisitor)
+            .map(Signature::from)
+    }
+}
+
 #[cfg(all(test, feature = "serde", feature = "std"))]
 mod tests {
     use super::*;
@@ -424,6 +469,44 @@ mod tests {
     #[test]
     fn test_deserialize() {
         let signature = bincode::deserialize::<Signature>(&EXAMPLE_SIGNATURE).unwrap();
+        assert_eq!(&EXAMPLE_SIGNATURE[..], signature.as_bytes());
+    }
+
+    #[cfg(feature = "serde_bytes")]
+    #[test]
+    fn test_serialize_bytes() {
+        use bincode::Options;
+
+        let signature = Signature::try_from(&EXAMPLE_SIGNATURE[..]).unwrap();
+
+        let mut encoded_signature = Vec::new();
+        let options = bincode::DefaultOptions::new()
+            .with_fixint_encoding()
+            .allow_trailing_bytes();
+        let mut serializer = bincode::Serializer::new(&mut encoded_signature, options);
+        serde_bytes::serialize(&signature, &mut serializer).unwrap();
+
+        let mut expected = Vec::from(SIGNATURE_LENGTH.to_le_bytes());
+        expected.extend(&EXAMPLE_SIGNATURE[..]);
+        assert_eq!(&expected[..], &encoded_signature[..]);
+    }
+
+    #[cfg(feature = "serde_bytes")]
+    #[test]
+    fn test_deserialize_bytes() {
+        use bincode::Options;
+
+        let mut encoded_signature = Vec::from(SIGNATURE_LENGTH.to_le_bytes());
+        encoded_signature.extend(&EXAMPLE_SIGNATURE[..]);
+
+        let options = bincode::DefaultOptions::new()
+            .with_fixint_encoding()
+            .allow_trailing_bytes();
+        let mut deserializer =
+            bincode::de::Deserializer::from_slice(&encoded_signature[..], options);
+
+        let signature: Signature = serde_bytes::deserialize(&mut deserializer).unwrap();
+
         assert_eq!(&EXAMPLE_SIGNATURE[..], signature.as_bytes());
     }
 }
