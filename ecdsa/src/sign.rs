@@ -6,16 +6,23 @@ use crate::{
     hazmat::{DigestPrimitive, FromDigest, SignPrimitive},
     rfc6979, Error, Result, Signature, SignatureSize,
 };
-use core::convert::TryFrom;
+use core::{
+    convert::TryFrom,
+    fmt::{self, Debug},
+};
 use elliptic_curve::{
-    generic_array::ArrayLength, group::ff::PrimeField, ops::Invert, weierstrass::Curve,
-    zeroize::Zeroize, FieldBytes, FieldSize, NonZeroScalar, ProjectiveArithmetic, Scalar,
-    SecretKey,
+    generic_array::ArrayLength,
+    group::ff::PrimeField,
+    ops::Invert,
+    subtle::{Choice, ConstantTimeEq},
+    weierstrass::Curve,
+    zeroize::Zeroize,
+    FieldBytes, FieldSize, NonZeroScalar, ProjectiveArithmetic, Scalar, SecretKey,
 };
 use signature::{
     digest::{BlockInput, Digest, FixedOutput, Reset, Update},
     rand_core::{CryptoRng, RngCore},
-    DigestSigner, RandomizedDigestSigner, RandomizedSigner,
+    DigestSigner, RandomizedDigestSigner, RandomizedSigner, Signer,
 };
 
 #[cfg(feature = "verify")]
@@ -40,6 +47,7 @@ use core::str::FromStr;
 ///
 /// Requires an [`elliptic_curve::ProjectiveArithmetic`] impl on the curve, and a
 /// [`SignPrimitive`] impl on its associated `Scalar` type.
+#[derive(Clone)]
 #[cfg_attr(docsrs, doc(cfg(feature = "sign")))]
 pub struct SigningKey<C>
 where
@@ -87,6 +95,29 @@ where
     }
 }
 
+impl<C> ConstantTimeEq for SigningKey<C>
+where
+    C: Curve + ProjectiveArithmetic,
+    Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C> + Zeroize,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn ct_eq(&self, other: &Self) -> Choice {
+        self.inner.ct_eq(&other.inner)
+    }
+}
+
+impl<C> Debug for SigningKey<C>
+where
+    C: Curve + ProjectiveArithmetic,
+    Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C> + Zeroize,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // TODO(tarcieri): use `finish_non_exhaustive` when stable
+        f.debug_tuple("SigningKey").field(&"...").finish()
+    }
+}
+
 impl<C> Drop for SigningKey<C>
 where
     C: Curve + ProjectiveArithmetic,
@@ -95,6 +126,25 @@ where
 {
     fn drop(&mut self) {
         self.inner.zeroize();
+    }
+}
+
+impl<C> Eq for SigningKey<C>
+where
+    C: Curve + ProjectiveArithmetic,
+    Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C> + Zeroize,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+}
+
+impl<C> PartialEq for SigningKey<C>
+where
+    C: Curve + ProjectiveArithmetic,
+    Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C> + Zeroize,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn eq(&self, other: &SigningKey<C>) -> bool {
+        self.ct_eq(other).into()
     }
 }
 
@@ -139,7 +189,7 @@ where
     }
 }
 
-impl<C> signature::Signer<Signature<C>> for SigningKey<C>
+impl<C> Signer<Signature<C>> for SigningKey<C>
 where
     Self: DigestSigner<C::Digest, Signature<C>>,
     C: Curve + ProjectiveArithmetic + DigestPrimitive,

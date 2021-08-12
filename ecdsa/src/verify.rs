@@ -14,7 +14,7 @@ use elliptic_curve::{
     weierstrass::{Curve, PointCompression},
     AffinePoint, FieldSize, ProjectiveArithmetic, PublicKey, Scalar,
 };
-use signature::{digest::Digest, DigestVerifier};
+use signature::{digest::Digest, DigestVerifier, Verifier};
 
 #[cfg(feature = "pkcs8")]
 use crate::elliptic_curve::{
@@ -83,7 +83,7 @@ where
     }
 }
 
-impl<C> signature::Verifier<Signature<C>> for VerifyingKey<C>
+impl<C> Verifier<Signature<C>> for VerifyingKey<C>
 where
     C: Curve + ProjectiveArithmetic + DigestPrimitive,
     C::Digest: Digest<OutputSize = FieldSize<C>>,
