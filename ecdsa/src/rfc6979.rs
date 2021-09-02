@@ -35,7 +35,7 @@ where
     loop {
         let mut tmp = FieldBytes::<C>::default();
         hmac_drbg.generate_into(&mut tmp);
-        if let Some(k) = NonZeroScalar::from_repr(tmp) {
+        if let Some(k) = NonZeroScalar::from_repr(tmp).into() {
             return Zeroizing::new(k);
         }
     }

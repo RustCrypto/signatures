@@ -98,7 +98,7 @@ use core::{
 };
 use elliptic_curve::{
     bigint::Encoding as _,
-    generic_array::{sequence::Concat, typenum::Unsigned, ArrayLength, GenericArray},
+    generic_array::{sequence::Concat, ArrayLength, GenericArray},
     FieldBytes, FieldSize, ScalarBytes,
 };
 
@@ -137,12 +137,6 @@ where
     C: Curve,
     SignatureSize<C>: ArrayLength<u8>,
 {
-    /// Create a [`Signature`] from the serialized `r` and `s` scalar values
-    /// which comprise the signature.
-    pub fn from_scalars(r: impl Into<FieldBytes<C>>, s: impl Into<FieldBytes<C>>) -> Result<Self> {
-        Self::try_from(r.into().concat(s.into()).as_slice())
-    }
-
     /// Parse a signature from ASN.1 DER
     #[cfg(feature = "der")]
     #[cfg_attr(docsrs, doc(cfg(feature = "der")))]
@@ -152,6 +146,22 @@ where
         <FieldSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
     {
         der::Signature::<C>::try_from(bytes).and_then(Self::try_from)
+    }
+
+    /// Create a [`Signature`] from the serialized `r` and `s` scalar values
+    /// which comprise the signature.
+    pub fn from_scalars(r: impl Into<FieldBytes<C>>, s: impl Into<FieldBytes<C>>) -> Result<Self> {
+        Self::try_from(r.into().concat(s.into()).as_slice())
+    }
+
+    /// Split the signature into its `r` and `s` components, represented as bytes.
+    pub fn split_bytes(&self) -> (FieldBytes<C>, FieldBytes<C>) {
+        let (r_bytes, s_bytes) = self.bytes.split_at(C::UInt::BYTE_SIZE);
+
+        (
+            GenericArray::clone_from_slice(r_bytes),
+            GenericArray::clone_from_slice(s_bytes),
+        )
     }
 
     /// Serialize this signature as ASN.1 DER
@@ -176,38 +186,36 @@ where
 {
     /// Get the `r` component of this signature
     pub fn r(&self) -> NonZeroScalar<C> {
-        let r_bytes = GenericArray::clone_from_slice(&self.bytes[..C::UInt::BYTE_SIZE]);
-        NonZeroScalar::from_repr(r_bytes)
+        NonZeroScalar::from_repr(self.split_bytes().0)
             .unwrap_or_else(|| unreachable!("r-component ensured valid in constructor"))
     }
 
     /// Get the `s` component of this signature
     pub fn s(&self) -> NonZeroScalar<C> {
-        let s_bytes = GenericArray::clone_from_slice(&self.bytes[C::UInt::BYTE_SIZE..]);
-        NonZeroScalar::from_repr(s_bytes)
-            .unwrap_or_else(|| unreachable!("r-component ensured valid in constructor"))
+        NonZeroScalar::from_repr(self.split_bytes().1)
+            .unwrap_or_else(|| unreachable!("s-component ensured valid in constructor"))
+    }
+
+    /// Split the signature into its `r` and `s` scalars.
+    pub fn split_scalars(&self) -> (NonZeroScalar<C>, NonZeroScalar<C>) {
+        (self.r(), self.s())
     }
 
     /// Normalize signature into "low S" form as described in
     /// [BIP 0062: Dealing with Malleability][1].
     ///
     /// [1]: https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki
-    pub fn normalize_s(&mut self) -> Result<bool>
+    pub fn normalize_s(&mut self) -> bool
     where
         Scalar<C>: NormalizeLow,
     {
-        let s_bytes = GenericArray::from_mut_slice(&mut self.bytes[C::UInt::BYTE_SIZE..]);
-        Scalar::<C>::from_repr(s_bytes.clone())
-            .map(|s| {
-                let (s_low, was_high) = s.normalize_low();
+        let (s_low, was_high) = self.s().normalize_low();
 
-                if was_high {
-                    s_bytes.copy_from_slice(&s_low.to_repr());
-                }
+        if was_high {
+            self.bytes[C::UInt::BYTE_SIZE..].copy_from_slice(&s_low.to_repr());
+        }
 
-                was_high
-            })
-            .ok_or_else(Error::new)
+        was_high
     }
 }
 
@@ -262,7 +270,7 @@ where
     type Error = Error;
 
     fn try_from(bytes: &[u8]) -> Result<Self> {
-        if bytes.len() != <SignatureSize<C>>::to_usize() {
+        if bytes.len() != C::UInt::BYTE_SIZE * 2 {
             return Err(Error::new());
         }
 
