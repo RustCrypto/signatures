@@ -186,14 +186,14 @@ where
 {
     /// Get the `r` component of this signature
     pub fn r(&self) -> NonZeroScalar<C> {
-        NonZeroScalar::from_repr(self.split_bytes().0)
-            .unwrap_or_else(|| unreachable!("r-component ensured valid in constructor"))
+        NonZeroScalar::try_from(self.split_bytes().0.as_slice())
+            .expect("r-component ensured valid in constructor")
     }
 
     /// Get the `s` component of this signature
     pub fn s(&self) -> NonZeroScalar<C> {
-        NonZeroScalar::from_repr(self.split_bytes().1)
-            .unwrap_or_else(|| unreachable!("s-component ensured valid in constructor"))
+        NonZeroScalar::try_from(self.split_bytes().1.as_slice())
+            .expect("s-component ensured valid in constructor")
     }
 
     /// Split the signature into its `r` and `s` scalars.
