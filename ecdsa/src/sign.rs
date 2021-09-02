@@ -26,10 +26,7 @@ use signature::{
 };
 
 #[cfg(feature = "verify")]
-use {
-    crate::verify::VerifyingKey,
-    elliptic_curve::{AffinePoint, PublicKey},
-};
+use {crate::verify::VerifyingKey, elliptic_curve::PublicKey};
 
 #[cfg(feature = "pkcs8")]
 use crate::elliptic_curve::{
@@ -37,7 +34,7 @@ use crate::elliptic_curve::{
     ops::Add,
     pkcs8::{self, FromPrivateKey},
     sec1::{FromEncodedPoint, ToEncodedPoint, UncompressedPointSize, UntaggedPointSize},
-    AlgorithmParameters,
+    AffinePoint, AlgorithmParameters,
 };
 
 #[cfg(feature = "pem")]
