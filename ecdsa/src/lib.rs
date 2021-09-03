@@ -205,17 +205,15 @@ where
     /// [BIP 0062: Dealing with Malleability][1].
     ///
     /// [1]: https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki
-    pub fn normalize_s(&mut self) -> bool
+    pub fn normalize_s(&self) -> Option<Self>
     where
         Scalar<C>: NormalizeLow,
     {
-        let (s_low, was_high) = self.s().normalize_low();
-
-        if was_high {
-            self.bytes[C::UInt::BYTE_SIZE..].copy_from_slice(&s_low.to_repr());
-        }
-
-        was_high
+        self.s().normalize_low().map(|s_low| {
+            let mut result = self.clone();
+            result.bytes[C::UInt::BYTE_SIZE..].copy_from_slice(&s_low.to_repr());
+            result
+        })
     }
 }
 
@@ -300,9 +298,10 @@ where
 pub trait NormalizeLow: Sized {
     /// Normalize scalar to the lower half of the field (i.e. negate it if it's
     /// larger than half the curve's order).
-    /// Returns a tuple with the new scalar and a boolean indicating whether the given scalar
-    /// was in the higher half.
+    ///
+    /// Returns an `Option` with a new scalar if the original wasn't already
+    /// low-normalized.
     ///
     /// May be implemented to work in variable time.
-    fn normalize_low(&self) -> (Self, bool);
+    fn normalize_low(&self) -> Option<Self>;
 }
