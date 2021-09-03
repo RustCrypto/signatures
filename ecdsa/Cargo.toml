@@ -30,15 +30,14 @@ sha2 = { version = "0.9", default-features = false }
 default = ["digest"]
 alloc = []
 arithmetic = ["elliptic-curve/arithmetic"]
-dev = ["arithmetic", "digest", "elliptic-curve/dev", "hazmat", "zeroize"]
+dev = ["arithmetic", "digest", "elliptic-curve/dev", "hazmat"]
 digest = ["signature/digest-preview"]
 hazmat = []
 pkcs8 = ["elliptic-curve/pkcs8", "der"]
 pem = ["elliptic-curve/pem", "pkcs8"]
-sign = ["arithmetic", "digest", "hazmat", "hmac", "zeroize"]
+sign = ["arithmetic", "digest", "hazmat", "hmac"]
 std = ["alloc", "elliptic-curve/std", "signature/std"]
 verify = ["arithmetic", "digest", "hazmat"]
-zeroize = ["elliptic-curve/zeroize"]
 
 [package.metadata.docs.rs]
 all-features = true

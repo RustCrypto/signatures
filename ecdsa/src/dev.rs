@@ -2,9 +2,10 @@
 
 use crate::hazmat::FromDigest;
 use elliptic_curve::{
-    bigint::Encoding as _,
+    bigint::{ArrayEncoding, Encoding},
     consts::U32,
-    dev::{MockCurve, Scalar, ScalarBytes},
+    dev::{MockCurve, Scalar},
+    group::ff::PrimeField,
     subtle::{ConditionallySelectable, ConstantTimeLess},
     Curve,
 };
@@ -25,8 +26,7 @@ impl FromDigest<MockCurve> for Scalar {
             overflow,
         ));
 
-        // TODO(tarcieri): simpler conversion
-        ScalarBytes::from_uint(&scalar).unwrap().into_scalar()
+        Self::from_repr(scalar.to_be_byte_array()).unwrap()
     }
 }
 

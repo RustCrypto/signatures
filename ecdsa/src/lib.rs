@@ -99,7 +99,7 @@ use core::{
 use elliptic_curve::{
     bigint::Encoding as _,
     generic_array::{sequence::Concat, ArrayLength, GenericArray},
-    FieldBytes, FieldSize, ScalarBytes,
+    FieldBytes, FieldSize, ScalarCore,
 };
 
 #[cfg(feature = "arithmetic")]
@@ -277,7 +277,7 @@ where
                 return Err(Error::new());
             }
 
-            if ScalarBytes::<C>::new(GenericArray::clone_from_slice(scalar))
+            if ScalarCore::<C>::from_bytes_be(GenericArray::clone_from_slice(scalar))
                 .is_none()
                 .into()
             {
