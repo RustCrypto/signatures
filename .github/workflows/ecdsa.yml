@@ -45,8 +45,7 @@ jobs:
       - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features pem
       - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features sign
       - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features verify
-      - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features zeroize
-      - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features arithmetic,dev,digest,hazmat,pkcs8,pem,sign,verify,zeroize
+      - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features arithmetic,dev,digest,hazmat,pkcs8,pem,sign,verify
 
   test:
     runs-on: ubuntu-latest
