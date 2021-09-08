@@ -8,9 +8,8 @@ use elliptic_curve::{
     generic_array::GenericArray,
     group::ff::PrimeField,
     ops::Invert,
-    weierstrass::Curve,
     zeroize::{Zeroize, Zeroizing},
-    FieldBytes, FieldSize, NonZeroScalar, ProjectiveArithmetic, Scalar,
+    FieldBytes, FieldSize, NonZeroScalar, PrimeCurve, ProjectiveArithmetic, Scalar,
 };
 use hmac::{Hmac, Mac, NewMac};
 use signature::digest::{BlockInput, FixedOutput, Reset, Update};
@@ -23,7 +22,7 @@ pub fn generate_k<C, D>(
     additional_data: &[u8],
 ) -> Zeroizing<NonZeroScalar<C>>
 where
-    C: Curve + ProjectiveArithmetic,
+    C: PrimeCurve + ProjectiveArithmetic,
     D: FixedOutput<OutputSize = FieldSize<C>> + BlockInput + Clone + Default + Reset + Update,
     Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + Zeroize,
 {

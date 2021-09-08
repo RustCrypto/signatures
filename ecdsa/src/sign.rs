@@ -15,9 +15,8 @@ use elliptic_curve::{
     group::ff::PrimeField,
     ops::Invert,
     subtle::{Choice, ConstantTimeEq},
-    weierstrass::Curve,
     zeroize::Zeroize,
-    FieldBytes, FieldSize, NonZeroScalar, ProjectiveArithmetic, Scalar, SecretKey,
+    FieldBytes, FieldSize, NonZeroScalar, PrimeCurve, ProjectiveArithmetic, Scalar, SecretKey,
 };
 use signature::{
     digest::{BlockInput, Digest, FixedOutput, Reset, Update},
@@ -48,7 +47,7 @@ use core::str::FromStr;
 #[cfg_attr(docsrs, doc(cfg(feature = "sign")))]
 pub struct SigningKey<C>
 where
-    C: Curve + ProjectiveArithmetic,
+    C: PrimeCurve + ProjectiveArithmetic,
     Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C> + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -57,7 +56,7 @@ where
 
 impl<C> SigningKey<C>
 where
-    C: Curve + ProjectiveArithmetic,
+    C: PrimeCurve + ProjectiveArithmetic,
     Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C> + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -94,7 +93,7 @@ where
 
 impl<C> ConstantTimeEq for SigningKey<C>
 where
-    C: Curve + ProjectiveArithmetic,
+    C: PrimeCurve + ProjectiveArithmetic,
     Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C> + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -105,7 +104,7 @@ where
 
 impl<C> Debug for SigningKey<C>
 where
-    C: Curve + ProjectiveArithmetic,
+    C: PrimeCurve + ProjectiveArithmetic,
     Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C> + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -117,7 +116,7 @@ where
 
 impl<C> Drop for SigningKey<C>
 where
-    C: Curve + ProjectiveArithmetic,
+    C: PrimeCurve + ProjectiveArithmetic,
     Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C> + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -128,7 +127,7 @@ where
 
 impl<C> Eq for SigningKey<C>
 where
-    C: Curve + ProjectiveArithmetic,
+    C: PrimeCurve + ProjectiveArithmetic,
     Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C> + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -136,7 +135,7 @@ where
 
 impl<C> PartialEq for SigningKey<C>
 where
-    C: Curve + ProjectiveArithmetic,
+    C: PrimeCurve + ProjectiveArithmetic,
     Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C> + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -147,7 +146,7 @@ where
 
 impl<C> From<SecretKey<C>> for SigningKey<C>
 where
-    C: Curve + ProjectiveArithmetic,
+    C: PrimeCurve + ProjectiveArithmetic,
     Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C> + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -158,7 +157,7 @@ where
 
 impl<C> From<&SecretKey<C>> for SigningKey<C>
 where
-    C: Curve + ProjectiveArithmetic,
+    C: PrimeCurve + ProjectiveArithmetic,
     Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C> + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -171,7 +170,7 @@ where
 
 impl<C, D> DigestSigner<D, Signature<C>> for SigningKey<C>
 where
-    C: Curve + ProjectiveArithmetic,
+    C: PrimeCurve + ProjectiveArithmetic,
     D: FixedOutput<OutputSize = FieldSize<C>> + BlockInput + Clone + Default + Reset + Update,
     Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C> + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
@@ -189,7 +188,7 @@ where
 impl<C> Signer<Signature<C>> for SigningKey<C>
 where
     Self: DigestSigner<C::Digest, Signature<C>>,
-    C: Curve + ProjectiveArithmetic + DigestPrimitive,
+    C: PrimeCurve + ProjectiveArithmetic + DigestPrimitive,
     Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C> + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -200,7 +199,7 @@ where
 
 impl<C, D> RandomizedDigestSigner<D, Signature<C>> for SigningKey<C>
 where
-    C: Curve + ProjectiveArithmetic,
+    C: PrimeCurve + ProjectiveArithmetic,
     D: FixedOutput<OutputSize = FieldSize<C>> + BlockInput + Clone + Default + Reset + Update,
     Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C> + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
@@ -225,7 +224,7 @@ where
 impl<C> RandomizedSigner<Signature<C>> for SigningKey<C>
 where
     Self: RandomizedDigestSigner<C::Digest, Signature<C>>,
-    C: Curve + ProjectiveArithmetic + DigestPrimitive,
+    C: PrimeCurve + ProjectiveArithmetic + DigestPrimitive,
     Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C> + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -236,7 +235,7 @@ where
 
 impl<C> From<NonZeroScalar<C>> for SigningKey<C>
 where
-    C: Curve + ProjectiveArithmetic,
+    C: PrimeCurve + ProjectiveArithmetic,
     Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C> + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -249,7 +248,7 @@ where
 
 impl<C> TryFrom<&[u8]> for SigningKey<C>
 where
-    C: Curve + ProjectiveArithmetic,
+    C: PrimeCurve + ProjectiveArithmetic,
     Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C> + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -263,7 +262,7 @@ where
 #[cfg(feature = "verify")]
 impl<C> From<&SigningKey<C>> for VerifyingKey<C>
 where
-    C: Curve + ProjectiveArithmetic,
+    C: PrimeCurve + ProjectiveArithmetic,
 
     Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C> + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
@@ -277,7 +276,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "pkcs8")))]
 impl<C> FromPrivateKey for SigningKey<C>
 where
-    C: Curve + AlgorithmParameters + ProjectiveArithmetic,
+    C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C> + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,
@@ -295,7 +294,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "pem")))]
 impl<C> FromStr for SigningKey<C>
 where
-    C: Curve + AlgorithmParameters + ProjectiveArithmetic,
+    C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C> + Zeroize,
     SignatureSize<C>: ArrayLength<u8>,

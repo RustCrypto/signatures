@@ -26,7 +26,7 @@ use {
 
 #[cfg(any(feature = "arithmetic", feature = "digest"))]
 use crate::{
-    elliptic_curve::{generic_array::ArrayLength, weierstrass::Curve},
+    elliptic_curve::{generic_array::ArrayLength, PrimeCurve},
     Signature,
 };
 
@@ -39,7 +39,7 @@ use crate::{
 #[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
 pub trait SignPrimitive<C>
 where
-    C: Curve + ProjectiveArithmetic,
+    C: PrimeCurve + ProjectiveArithmetic,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Try to sign the prehashed message.
@@ -62,7 +62,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
 pub trait RecoverableSignPrimitive<C>
 where
-    C: Curve + ProjectiveArithmetic,
+    C: PrimeCurve + ProjectiveArithmetic,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Try to sign the prehashed message.
@@ -81,7 +81,7 @@ where
 #[cfg(feature = "arithmetic")]
 impl<C, T> SignPrimitive<C> for T
 where
-    C: Curve + ProjectiveArithmetic,
+    C: PrimeCurve + ProjectiveArithmetic,
     T: RecoverableSignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -104,7 +104,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
 pub trait VerifyPrimitive<C>
 where
-    C: Curve + ProjectiveArithmetic,
+    C: PrimeCurve + ProjectiveArithmetic,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Verify the prehashed message against the provided signature
@@ -128,7 +128,7 @@ where
 /// [1]: https://github.com/RustCrypto/traits/tree/master/signature/derive
 #[cfg(feature = "digest")]
 #[cfg_attr(docsrs, doc(cfg(feature = "digest")))]
-pub trait DigestPrimitive: Curve {
+pub trait DigestPrimitive: PrimeCurve {
     /// Preferred digest to use when computing ECDSA signatures for this
     /// elliptic curve. This should be a member of the SHA-2 family.
     type Digest: Digest;
@@ -144,7 +144,7 @@ pub trait DigestPrimitive: Curve {
 /// use cases.
 #[cfg(feature = "digest")]
 #[cfg_attr(docsrs, doc(cfg(feature = "digest")))]
-pub trait FromDigest<C: Curve> {
+pub trait FromDigest<C: PrimeCurve> {
     /// Instantiate this type from a [`Digest`] instance
     fn from_digest<D>(digest: D) -> Self
     where

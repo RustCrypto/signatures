@@ -78,7 +78,7 @@ mod sign;
 mod verify;
 
 // Re-export the `elliptic-curve` crate (and select types)
-pub use elliptic_curve::{self, sec1::EncodedPoint, weierstrass::Curve};
+pub use elliptic_curve::{self, sec1::EncodedPoint, PrimeCurve};
 
 // Re-export the `signature` crate (and select types)
 pub use signature::{self, Error, Result};
@@ -125,7 +125,7 @@ pub type SignatureBytes<C> = GenericArray<u8, SignatureSize<C>>;
 /// ASN.1 DER-encoded signatures also supported via the
 /// [`Signature::from_der`] and [`Signature::to_der`] methods.
 #[derive(Clone, Eq, PartialEq)]
-pub struct Signature<C: Curve>
+pub struct Signature<C: PrimeCurve>
 where
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -134,7 +134,7 @@ where
 
 impl<C> Signature<C>
 where
-    C: Curve,
+    C: PrimeCurve,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Parse a signature from ASN.1 DER
@@ -181,7 +181,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
 impl<C> Signature<C>
 where
-    C: Curve + ProjectiveArithmetic,
+    C: PrimeCurve + ProjectiveArithmetic,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Get the `r` component of this signature
@@ -219,7 +219,7 @@ where
 
 impl<C> signature::Signature for Signature<C>
 where
-    C: Curve,
+    C: PrimeCurve,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn from_bytes(bytes: &[u8]) -> Result<Self> {
@@ -229,7 +229,7 @@ where
 
 impl<C> AsRef<[u8]> for Signature<C>
 where
-    C: Curve,
+    C: PrimeCurve,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn as_ref(&self) -> &[u8] {
@@ -239,7 +239,7 @@ where
 
 impl<C> Copy for Signature<C>
 where
-    C: Curve,
+    C: PrimeCurve,
     SignatureSize<C>: ArrayLength<u8>,
     <SignatureSize<C> as ArrayLength<u8>>::ArrayType: Copy,
 {
@@ -247,7 +247,7 @@ where
 
 impl<C> Debug for Signature<C>
 where
-    C: Curve,
+    C: PrimeCurve,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -262,7 +262,7 @@ where
 
 impl<C> TryFrom<&[u8]> for Signature<C>
 where
-    C: Curve,
+    C: PrimeCurve,
     SignatureSize<C>: ArrayLength<u8>,
 {
     type Error = Error;
