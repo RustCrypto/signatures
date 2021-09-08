@@ -208,7 +208,7 @@ dependencies = [
 [[package]]
 name = "elliptic-curve"
 version = "0.11.0-pre"
-source = "git+https://github.com/RustCrypto/traits.git#405c176ce5e9d4007f6f87ae7fc89348ffdc930b"
+source = "git+https://github.com/RustCrypto/traits.git#9d916903fa715b52f8fe80e72f621bf9632a9e8a"
 dependencies = [
  "crypto-bigint",
  "ff",
