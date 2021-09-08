@@ -70,7 +70,7 @@ where
     /// Initialize signing key from a raw scalar serialized as a byte slice.
     pub fn from_bytes(bytes: &[u8]) -> Result<Self> {
         let inner = SecretKey::from_be_bytes(bytes)
-            .map(|sk| sk.to_secret_scalar())
+            .map(|sk| sk.to_nonzero_scalar())
             .map_err(|_| Error::new())?;
 
         Ok(Self { inner })
@@ -163,7 +163,7 @@ where
 {
     fn from(secret_key: &SecretKey<C>) -> Self {
         Self {
-            inner: secret_key.to_secret_scalar(),
+            inner: secret_key.to_nonzero_scalar(),
         }
     }
 }
