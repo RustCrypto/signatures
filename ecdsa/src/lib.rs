@@ -277,7 +277,7 @@ where
                 return Err(Error::new());
             }
 
-            if ScalarCore::<C>::from_bytes_be(GenericArray::clone_from_slice(scalar))
+            if ScalarCore::<C>::from_be_bytes(GenericArray::clone_from_slice(scalar))
                 .is_none()
                 .into()
             {
