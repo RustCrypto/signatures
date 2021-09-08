@@ -11,8 +11,7 @@ use elliptic_curve::{
     bigint::Encoding as _,
     consts::U9,
     generic_array::{ArrayLength, GenericArray},
-    weierstrass::Curve,
-    FieldSize,
+    FieldSize, PrimeCurve,
 };
 
 #[cfg(feature = "alloc")]
@@ -45,7 +44,7 @@ type SignatureBytes<C> = GenericArray<u8, MaxSize<C>>;
 /// Generic over the scalar size of the elliptic curve.
 pub struct Signature<C>
 where
-    C: Curve,
+    C: PrimeCurve,
     MaxSize<C>: ArrayLength<u8>,
     <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
@@ -61,7 +60,7 @@ where
 
 impl<C> signature::Signature for Signature<C>
 where
-    C: Curve,
+    C: PrimeCurve,
     MaxSize<C>: ArrayLength<u8>,
     <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
@@ -74,7 +73,7 @@ where
 #[allow(clippy::len_without_is_empty)]
 impl<C> Signature<C>
 where
-    C: Curve,
+    C: PrimeCurve,
     MaxSize<C>: ArrayLength<u8>,
     <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
@@ -117,7 +116,7 @@ where
 
 impl<C> AsRef<[u8]> for Signature<C>
 where
-    C: Curve,
+    C: PrimeCurve,
     MaxSize<C>: ArrayLength<u8>,
     <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
@@ -128,7 +127,7 @@ where
 
 impl<C> fmt::Debug for Signature<C>
 where
-    C: Curve,
+    C: PrimeCurve,
     MaxSize<C>: ArrayLength<u8>,
     <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
@@ -142,7 +141,7 @@ where
 
 impl<C> TryFrom<&[u8]> for Signature<C>
 where
-    C: Curve,
+    C: PrimeCurve,
     MaxSize<C>: ArrayLength<u8>,
     <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
@@ -177,7 +176,7 @@ where
 
 impl<C> TryFrom<Signature<C>> for super::Signature<C>
 where
-    C: Curve,
+    C: PrimeCurve,
     MaxSize<C>: ArrayLength<u8>,
     <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
@@ -207,7 +206,7 @@ fn find_scalar_range(outer: &[u8], inner: &[u8]) -> Result<Range<usize>> {
 #[cfg(all(feature = "digest", feature = "hazmat"))]
 impl<C> signature::PrehashSignature for Signature<C>
 where
-    C: Curve + crate::hazmat::DigestPrimitive,
+    C: PrimeCurve + crate::hazmat::DigestPrimitive,
     MaxSize<C>: ArrayLength<u8>,
     <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
