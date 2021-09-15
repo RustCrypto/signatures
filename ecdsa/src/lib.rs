@@ -272,15 +272,10 @@ where
             return Err(Error::new());
         }
 
-        for scalar in bytes.chunks_exact(C::UInt::BYTE_SIZE) {
-            if scalar.iter().all(|&byte| byte == 0) {
-                return Err(Error::new());
-            }
+        for scalar_bytes in bytes.chunks_exact(C::UInt::BYTE_SIZE) {
+            let scalar = ScalarCore::<C>::from_be_slice(scalar_bytes).map_err(|_| Error::new())?;
 
-            if ScalarCore::<C>::from_be_bytes(GenericArray::clone_from_slice(scalar))
-                .is_none()
-                .into()
-            {
+            if scalar.is_zero().into() {
                 return Err(Error::new());
             }
         }
