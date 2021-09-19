@@ -29,10 +29,8 @@ use {crate::verify::VerifyingKey, elliptic_curve::PublicKey};
 
 #[cfg(feature = "pkcs8")]
 use crate::elliptic_curve::{
-    consts::U1,
-    ops::Add,
     pkcs8::{self, FromPrivateKey},
-    sec1::{FromEncodedPoint, ToEncodedPoint, UncompressedPointSize, UntaggedPointSize},
+    sec1::{self, FromEncodedPoint, ToEncodedPoint},
     AffinePoint, AlgorithmParameters,
 };
 
@@ -278,10 +276,9 @@ impl<C> FromPrivateKey for SigningKey<C>
 where
     C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    FieldSize<C>: sec1::ModulusSize,
     Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
-    UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
-    UncompressedPointSize<C>: ArrayLength<u8>,
 {
     fn from_pkcs8_private_key_info(
         private_key_info: pkcs8::PrivateKeyInfo<'_>,
@@ -296,10 +293,9 @@ impl<C> FromStr for SigningKey<C>
 where
     C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    FieldSize<C>: sec1::ModulusSize,
     Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
-    UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
-    UncompressedPointSize<C>: ArrayLength<u8>,
 {
     type Err = Error;
 

@@ -4,13 +4,10 @@ use crate::{
     hazmat::{DigestPrimitive, FromDigest, VerifyPrimitive},
     Error, Result, Signature, SignatureSize,
 };
-use core::{cmp::Ordering, convert::TryFrom, fmt::Debug, ops::Add};
+use core::{cmp::Ordering, convert::TryFrom, fmt::Debug};
 use elliptic_curve::{
-    consts::U1,
     generic_array::ArrayLength,
-    sec1::{
-        EncodedPoint, FromEncodedPoint, ToEncodedPoint, UncompressedPointSize, UntaggedPointSize,
-    },
+    sec1::{self, EncodedPoint, FromEncodedPoint, ToEncodedPoint},
     AffinePoint, FieldSize, PointCompression, PrimeCurve, ProjectiveArithmetic, PublicKey, Scalar,
 };
 use signature::{digest::Digest, DigestVerifier, Verifier};
@@ -41,8 +38,7 @@ impl<C> VerifyingKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
-    UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
-    UncompressedPointSize<C>: ArrayLength<u8>,
+    FieldSize<C>: sec1::ModulusSize,
 {
     /// Initialize [`VerifyingKey`] from a SEC1-encoded public key.
     pub fn from_sec1_bytes(bytes: &[u8]) -> Result<Self> {
@@ -99,8 +95,7 @@ impl<C> From<&VerifyingKey<C>> for EncodedPoint<C>
 where
     C: PrimeCurve + ProjectiveArithmetic + PointCompression,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
-    UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
-    UncompressedPointSize<C>: ArrayLength<u8>,
+    FieldSize<C>: sec1::ModulusSize,
 {
     fn from(verifying_key: &VerifyingKey<C>) -> EncodedPoint<C> {
         verifying_key.to_encoded_point(C::COMPRESS_POINTS)
@@ -143,21 +138,11 @@ where
     }
 }
 
-impl<C> Eq for VerifyingKey<C>
-where
-    C: PrimeCurve + ProjectiveArithmetic,
-    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
-    UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
-    UncompressedPointSize<C>: ArrayLength<u8>,
-{
-}
+impl<C> Eq for VerifyingKey<C> where C: PrimeCurve + ProjectiveArithmetic {}
 
 impl<C> PartialEq for VerifyingKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
-    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
-    UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
-    UncompressedPointSize<C>: ArrayLength<u8>,
 {
     fn eq(&self, other: &Self) -> bool {
         self.inner.eq(&other.inner)
@@ -168,8 +153,7 @@ impl<C> PartialOrd for VerifyingKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
-    UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
-    UncompressedPointSize<C>: ArrayLength<u8>,
+    FieldSize<C>: sec1::ModulusSize,
 {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         self.inner.partial_cmp(&other.inner)
@@ -180,8 +164,7 @@ impl<C> Ord for VerifyingKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
-    UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
-    UncompressedPointSize<C>: ArrayLength<u8>,
+    FieldSize<C>: sec1::ModulusSize,
 {
     fn cmp(&self, other: &Self) -> Ordering {
         self.inner.cmp(&other.inner)
@@ -192,8 +175,7 @@ impl<C> TryFrom<&[u8]> for VerifyingKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
-    UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
-    UncompressedPointSize<C>: ArrayLength<u8>,
+    FieldSize<C>: sec1::ModulusSize,
 {
     type Error = Error;
 
@@ -208,8 +190,7 @@ impl<C> FromPublicKey for VerifyingKey<C>
 where
     C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic + PointCompression,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
-    UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
-    UncompressedPointSize<C>: ArrayLength<u8>,
+    FieldSize<C>: sec1::ModulusSize,
 {
     fn from_spki(spki: pkcs8::SubjectPublicKeyInfo<'_>) -> pkcs8::Result<Self> {
         PublicKey::from_spki(spki).map(|inner| Self { inner })
@@ -222,8 +203,7 @@ impl<C> FromStr for VerifyingKey<C>
 where
     C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic + PointCompression,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
-    UntaggedPointSize<C>: Add<U1> + ArrayLength<u8>,
-    UncompressedPointSize<C>: ArrayLength<u8>,
+    FieldSize<C>: sec1::ModulusSize,
 {
     type Err = Error;
 
