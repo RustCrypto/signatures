@@ -62,7 +62,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 [[package]]
 name = "const-oid"
 version = "0.6.1"
-source = "git+https://github.com/rustcrypto/formats#cc06abfcff56356cee6457162321be21369ab435"
+source = "git+https://github.com/rustcrypto/formats#85322893dc6038d91027599fcf6b19489acd1f7d"
 
 [[package]]
 name = "cpufeatures"
@@ -75,9 +75,9 @@ dependencies = [
 
 [[package]]
 name = "crypto-bigint"
-version = "0.2.8"
+version = "0.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "43b0ca41e2a75a407a44812f110ecd40e1efacb8993f612746491e12d5b929fe"
+checksum = "51e7ef8604ba15f1ea2cef61e17577e630ee39aef7f94305d138dbf1a216ada3"
 dependencies = [
  "generic-array",
  "rand_core 0.6.3",
@@ -120,7 +120,7 @@ dependencies = [
 [[package]]
 name = "der"
 version = "0.4.3"
-source = "git+https://github.com/rustcrypto/formats#cc06abfcff56356cee6457162321be21369ab435"
+source = "git+https://github.com/rustcrypto/formats#85322893dc6038d91027599fcf6b19489acd1f7d"
 dependencies = [
  "const-oid",
 ]
@@ -207,7 +207,7 @@ dependencies = [
 [[package]]
 name = "elliptic-curve"
 version = "0.11.0-pre"
-source = "git+https://github.com/RustCrypto/traits.git#259193dd05089f2626ac6a87460f21ac206a4d12"
+source = "git+https://github.com/RustCrypto/traits.git#5251de66e4f9f74c6659b111cacfb78a70b85e4a"
 dependencies = [
  "crypto-bigint",
  "der 0.4.3",
@@ -485,9 +485,10 @@ dependencies = [
 [[package]]
 name = "sec1"
 version = "0.0.0"
-source = "git+https://github.com/rustcrypto/formats#cc06abfcff56356cee6457162321be21369ab435"
+source = "git+https://github.com/rustcrypto/formats#85322893dc6038d91027599fcf6b19489acd1f7d"
 dependencies = [
  "der 0.4.3",
+ "generic-array",
  "zeroize",
 ]
 
