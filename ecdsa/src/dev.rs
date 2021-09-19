@@ -102,7 +102,9 @@ macro_rules! new_verification_test {
         use core::convert::TryInto;
         use $crate::{
             elliptic_curve::{
-                generic_array::GenericArray, group::ff::PrimeField, sec1::EncodedPoint,
+                generic_array::GenericArray,
+                group::ff::PrimeField,
+                sec1::{EncodedPoint, FromEncodedPoint},
                 AffinePoint, ProjectiveArithmetic, Scalar,
             },
             hazmat::VerifyPrimitive,
@@ -112,13 +114,13 @@ macro_rules! new_verification_test {
         #[test]
         fn ecdsa_verify_success() {
             for vector in $vectors {
-                let q_encoded = EncodedPoint::from_affine_coordinates(
+                let q_encoded = EncodedPoint::<$curve>::from_affine_coordinates(
                     GenericArray::from_slice(vector.q_x),
                     GenericArray::from_slice(vector.q_y),
                     false,
                 );
 
-                let q: AffinePoint<$curve> = q_encoded.decode().unwrap();
+                let q = AffinePoint::<$curve>::from_encoded_point(&q_encoded).unwrap();
 
                 let maybe_z = Scalar::<$curve>::from_repr(GenericArray::clone_from_slice(vector.m));
                 assert!(bool::from(maybe_z.is_some()), "invalid vector.m");
@@ -138,13 +140,13 @@ macro_rules! new_verification_test {
         #[test]
         fn ecdsa_verify_invalid_s() {
             for vector in $vectors {
-                let q_encoded = EncodedPoint::from_affine_coordinates(
+                let q_encoded = EncodedPoint::<$curve>::from_affine_coordinates(
                     GenericArray::from_slice(vector.q_x),
                     GenericArray::from_slice(vector.q_y),
                     false,
                 );
 
-                let q: AffinePoint<$curve> = q_encoded.decode().unwrap();
+                let q = AffinePoint::<$curve>::from_encoded_point(&q_encoded).unwrap();
 
                 let maybe_z = Scalar::<$curve>::from_repr(GenericArray::clone_from_slice(vector.m));
                 assert!(bool::from(maybe_z.is_some()), "invalid vector.m");
@@ -210,9 +212,11 @@ macro_rules! new_wycheproof_test {
             ) -> Option<&'static str> {
                 let x = element_from_padded_slice::<$curve>(wx);
                 let y = element_from_padded_slice::<$curve>(wy);
-                let q_encoded: EncodedPoint<$curve> =
-                    EncodedPoint::from_affine_coordinates(&x, &y, /* compress= */ false);
-                let verifying_key = $crate::VerifyingKey::from_encoded_point(&q_encoded).unwrap();
+                let q_encoded = EncodedPoint::<$curve>::from_affine_coordinates(
+                    &x, &y, /* compress= */ false,
+                );
+                let verifying_key =
+                    $crate::VerifyingKey::<$curve>::from_encoded_point(&q_encoded).unwrap();
 
                 let sig = match Signature::from_der(sig) {
                     Ok(s) => s,
