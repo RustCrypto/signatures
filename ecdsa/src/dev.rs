@@ -1,35 +1,5 @@
 //! Development-related functionality.
 
-use crate::hazmat::FromDigest;
-use elliptic_curve::{
-    bigint::{ArrayEncoding, Encoding},
-    consts::U32,
-    dev::{MockCurve, Scalar},
-    group::ff::PrimeField,
-    subtle::{ConditionallySelectable, ConstantTimeLess},
-    Curve,
-};
-use signature::digest::Digest;
-
-type UInt = <MockCurve as Curve>::UInt;
-
-impl FromDigest<MockCurve> for Scalar {
-    fn from_digest<D>(digest: D) -> Self
-    where
-        D: Digest<OutputSize = U32>,
-    {
-        let uint = UInt::from_be_bytes(digest.finalize().into());
-        let overflow = !uint.ct_lt(&MockCurve::ORDER);
-        let scalar = uint.wrapping_add(&UInt::conditional_select(
-            &UInt::ZERO,
-            &MockCurve::ORDER,
-            overflow,
-        ));
-
-        Self::from_repr(scalar.to_be_byte_array()).unwrap()
-    }
-}
-
 // TODO(tarcieri): implement full set of tests from ECDSA2VS
 // <https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/dss2/ecdsa2vs.pdf>
 

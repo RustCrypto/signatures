@@ -209,7 +209,7 @@ dependencies = [
 [[package]]
 name = "elliptic-curve"
 version = "0.11.0-pre"
-source = "git+https://github.com/RustCrypto/traits.git#5251de66e4f9f74c6659b111cacfb78a70b85e4a"
+source = "git+https://github.com/RustCrypto/traits.git#fea0010f3356186804b42e57a8cb3612b96dab9f"
 dependencies = [
  "crypto-bigint",
  "der 0.4.3",
@@ -492,6 +492,7 @@ checksum = "821f61b502d21d297a599436b55d03fff2340961a13bfd0a2c010380b8435823"
 dependencies = [
  "der 0.4.3",
  "generic-array",
+ "subtle",
  "zeroize",
 ]
 

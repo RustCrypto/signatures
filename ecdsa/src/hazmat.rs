@@ -134,23 +134,6 @@ pub trait DigestPrimitive: PrimeCurve {
     type Digest: Digest;
 }
 
-/// Instantiate this type from the output of a digest.
-///
-/// This trait is intended for use in ECDSA and should perform a conversion
-/// which is compatible with the rules for calculating `h` from `H(M)` set out
-/// in RFC6979 section 2.4. This conversion cannot fail.
-///
-/// This trait may also be useful for other hash-to-scalar or hash-to-curve
-/// use cases.
-#[cfg(feature = "digest")]
-#[cfg_attr(docsrs, doc(cfg(feature = "digest")))]
-pub trait FromDigest<C: PrimeCurve> {
-    /// Instantiate this type from a [`Digest`] instance
-    fn from_digest<D>(digest: D) -> Self
-    where
-        D: Digest<OutputSize = FieldSize<C>>;
-}
-
 #[cfg(feature = "digest")]
 impl<C> PrehashSignature for Signature<C>
 where
