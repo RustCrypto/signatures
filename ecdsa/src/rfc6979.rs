@@ -3,11 +3,10 @@
 //! Implementation of the algorithm described in RFC 6979 (Section 3.2):
 //! <https://tools.ietf.org/html/rfc6979#section-3>
 
-use crate::hazmat::FromDigest;
 use elliptic_curve::{
     generic_array::GenericArray,
     group::ff::PrimeField,
-    ops::Invert,
+    ops::{Invert, Reduce},
     zeroize::{Zeroize, Zeroizing},
     FieldBytes, FieldSize, NonZeroScalar, PrimeCurve, ProjectiveArithmetic, Scalar,
 };
@@ -24,10 +23,10 @@ pub fn generate_k<C, D>(
 where
     C: PrimeCurve + ProjectiveArithmetic,
     D: FixedOutput<OutputSize = FieldSize<C>> + BlockInput + Clone + Default + Reset + Update,
-    Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + Zeroize,
+    Scalar<C>: Invert<Output = Scalar<C>> + Reduce<C::UInt>,
 {
     let mut x = secret_scalar.to_repr();
-    let h1 = Scalar::<C>::from_digest(msg_digest).to_repr();
+    let h1 = Scalar::<C>::from_be_bytes_reduced(msg_digest.finalize_fixed()).to_repr();
     let mut hmac_drbg = HmacDrbg::<D>::new(&x, &h1, additional_data);
     x.zeroize();
 

@@ -3,7 +3,7 @@
 // TODO(tarcieri): support for hardware crypto accelerators
 
 use crate::{
-    hazmat::{DigestPrimitive, FromDigest, SignPrimitive},
+    hazmat::{DigestPrimitive, SignPrimitive},
     rfc6979, Error, Result, Signature, SignatureSize,
 };
 use core::{
@@ -13,7 +13,7 @@ use core::{
 use elliptic_curve::{
     generic_array::ArrayLength,
     group::ff::PrimeField,
-    ops::Invert,
+    ops::{Invert, Reduce},
     subtle::{Choice, ConstantTimeEq},
     zeroize::Zeroize,
     FieldBytes, FieldSize, NonZeroScalar, PrimeCurve, ProjectiveArithmetic, Scalar, SecretKey,
@@ -46,7 +46,7 @@ use core::str::FromStr;
 pub struct SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = Scalar<C>> + Reduce<C::UInt> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     inner: NonZeroScalar<C>,
@@ -55,7 +55,7 @@ where
 impl<C> SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = Scalar<C>> + Reduce<C::UInt> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Generate a cryptographically random [`SigningKey`].
@@ -92,7 +92,7 @@ where
 impl<C> ConstantTimeEq for SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = Scalar<C>> + Reduce<C::UInt> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn ct_eq(&self, other: &Self) -> Choice {
@@ -103,7 +103,7 @@ where
 impl<C> Debug for SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = Scalar<C>> + Reduce<C::UInt> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -115,7 +115,7 @@ where
 impl<C> Drop for SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = Scalar<C>> + Reduce<C::UInt> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn drop(&mut self) {
@@ -123,18 +123,20 @@ where
     }
 }
 
+/// Constant-time comparison
 impl<C> Eq for SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = Scalar<C>> + Reduce<C::UInt> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
 }
 
+/// Constant-time comparison
 impl<C> PartialEq for SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = Scalar<C>> + Reduce<C::UInt> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn eq(&self, other: &SigningKey<C>) -> bool {
@@ -145,7 +147,7 @@ where
 impl<C> From<SecretKey<C>> for SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = Scalar<C>> + Reduce<C::UInt> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn from(secret_key: SecretKey<C>) -> Self {
@@ -156,7 +158,7 @@ where
 impl<C> From<&SecretKey<C>> for SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = Scalar<C>> + Reduce<C::UInt> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn from(secret_key: &SecretKey<C>) -> Self {
@@ -170,15 +172,15 @@ impl<C, D> DigestSigner<D, Signature<C>> for SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
     D: FixedOutput<OutputSize = FieldSize<C>> + BlockInput + Clone + Default + Reset + Update,
-    Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = Scalar<C>> + Reduce<C::UInt> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Sign message prehash using a deterministic ephemeral scalar (`k`)
     /// computed using the algorithm described in RFC 6979 (Section 3.2):
     /// <https://tools.ietf.org/html/rfc6979#section-3>
-    fn try_sign_digest(&self, digest: D) -> Result<Signature<C>> {
-        let k = rfc6979::generate_k(&self.inner, digest.clone(), &[]);
-        let msg_scalar = Scalar::<C>::from_digest(digest);
+    fn try_sign_digest(&self, msg_digest: D) -> Result<Signature<C>> {
+        let k = rfc6979::generate_k(&self.inner, msg_digest.clone(), &[]);
+        let msg_scalar = Scalar::<C>::from_be_bytes_reduced(msg_digest.finalize_fixed());
         self.inner.try_sign_prehashed(&**k, &msg_scalar)
     }
 }
@@ -187,7 +189,7 @@ impl<C> Signer<Signature<C>> for SigningKey<C>
 where
     Self: DigestSigner<C::Digest, Signature<C>>,
     C: PrimeCurve + ProjectiveArithmetic + DigestPrimitive,
-    Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = Scalar<C>> + Reduce<C::UInt> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn try_sign(&self, msg: &[u8]) -> Result<Signature<C>> {
@@ -199,7 +201,7 @@ impl<C, D> RandomizedDigestSigner<D, Signature<C>> for SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
     D: FixedOutput<OutputSize = FieldSize<C>> + BlockInput + Clone + Default + Reset + Update,
-    Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = Scalar<C>> + Reduce<C::UInt> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Sign message prehash using an ephemeral scalar (`k`) derived according
@@ -208,13 +210,13 @@ where
     fn try_sign_digest_with_rng(
         &self,
         mut rng: impl CryptoRng + RngCore,
-        digest: D,
+        msg_digest: D,
     ) -> Result<Signature<C>> {
         let mut added_entropy = FieldBytes::<C>::default();
         rng.fill_bytes(&mut added_entropy);
 
-        let k = rfc6979::generate_k(&self.inner, digest.clone(), &added_entropy);
-        let msg_scalar = Scalar::<C>::from_digest(digest);
+        let k = rfc6979::generate_k(&self.inner, msg_digest.clone(), &added_entropy);
+        let msg_scalar = Scalar::<C>::from_be_bytes_reduced(msg_digest.finalize_fixed());
         self.inner.try_sign_prehashed(&**k, &msg_scalar)
     }
 }
@@ -223,7 +225,7 @@ impl<C> RandomizedSigner<Signature<C>> for SigningKey<C>
 where
     Self: RandomizedDigestSigner<C::Digest, Signature<C>>,
     C: PrimeCurve + ProjectiveArithmetic + DigestPrimitive,
-    Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = Scalar<C>> + Reduce<C::UInt> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn try_sign_with_rng(&self, rng: impl CryptoRng + RngCore, msg: &[u8]) -> Result<Signature<C>> {
@@ -234,7 +236,7 @@ where
 impl<C> From<NonZeroScalar<C>> for SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = Scalar<C>> + Reduce<C::UInt> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn from(secret_scalar: NonZeroScalar<C>) -> Self {
@@ -247,7 +249,7 @@ where
 impl<C> TryFrom<&[u8]> for SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = Scalar<C>> + Reduce<C::UInt> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     type Error = Error;
@@ -261,8 +263,7 @@ where
 impl<C> From<&SigningKey<C>> for VerifyingKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
-
-    Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = Scalar<C>> + Reduce<C::UInt> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn from(signing_key: &SigningKey<C>) -> VerifyingKey<C> {
@@ -277,7 +278,7 @@ where
     C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldSize<C>: sec1::ModulusSize,
-    Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = Scalar<C>> + Reduce<C::UInt> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn from_pkcs8_private_key_info(
@@ -294,7 +295,7 @@ where
     C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldSize<C>: sec1::ModulusSize,
-    Scalar<C>: FromDigest<C> + Invert<Output = Scalar<C>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = Scalar<C>> + Reduce<C::UInt> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     type Err = Error;

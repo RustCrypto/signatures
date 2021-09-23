@@ -1,12 +1,13 @@
 //! ECDSA verification key.
 
 use crate::{
-    hazmat::{DigestPrimitive, FromDigest, VerifyPrimitive},
+    hazmat::{DigestPrimitive, VerifyPrimitive},
     Error, Result, Signature, SignatureSize,
 };
 use core::{cmp::Ordering, convert::TryFrom, fmt::Debug};
 use elliptic_curve::{
     generic_array::ArrayLength,
+    ops::Reduce,
     sec1::{self, EncodedPoint, FromEncodedPoint, ToEncodedPoint},
     AffinePoint, FieldSize, PointCompression, PrimeCurve, ProjectiveArithmetic, PublicKey, Scalar,
 };
@@ -68,13 +69,12 @@ where
     C: PrimeCurve + ProjectiveArithmetic,
     D: Digest<OutputSize = FieldSize<C>>,
     AffinePoint<C>: VerifyPrimitive<C>,
-    Scalar<C>: FromDigest<C>,
+    Scalar<C>: Reduce<C::UInt>,
     SignatureSize<C>: ArrayLength<u8>,
 {
-    fn verify_digest(&self, digest: D, signature: &Signature<C>) -> Result<()> {
-        self.inner
-            .as_affine()
-            .verify_prehashed(&Scalar::<C>::from_digest(digest), signature)
+    fn verify_digest(&self, msg_digest: D, signature: &Signature<C>) -> Result<()> {
+        let scalar = Scalar::<C>::from_be_bytes_reduced(msg_digest.finalize());
+        self.inner.as_affine().verify_prehashed(&scalar, signature)
     }
 }
 
@@ -83,7 +83,7 @@ where
     C: PrimeCurve + ProjectiveArithmetic + DigestPrimitive,
     C::Digest: Digest<OutputSize = FieldSize<C>>,
     AffinePoint<C>: VerifyPrimitive<C>,
-    Scalar<C>: FromDigest<C>,
+    Scalar<C>: Reduce<C::UInt>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn verify(&self, msg: &[u8], signature: &Signature<C>) -> Result<()> {
