@@ -289,22 +289,27 @@ use core::{
     fmt::{self, Debug},
 };
 
-/// Length of an Ed25519 signature
-pub const SIGNATURE_LENGTH: usize = 64;
+/// Length of an Ed25519 signature in bytes.
+#[deprecated(since = "1.3.0", note = "use ed25519::Signature::BYTE_SIZE instead")]
+pub const SIGNATURE_LENGTH: usize = Signature::BYTE_SIZE;
 
 /// Ed25519 signature.
-#[derive(Copy, Clone)]
-pub struct Signature([u8; SIGNATURE_LENGTH]);
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct Signature([u8; Signature::BYTE_SIZE]);
 
 impl Signature {
-    /// Create a new signature from a byte array
-    pub fn new(bytes: [u8; SIGNATURE_LENGTH]) -> Self {
-        Self::from(bytes)
+    /// Size of an encoded Ed25519 signature in bytes.
+    pub const BYTE_SIZE: usize = 64;
+
+    /// Create a new signature from a byte array.
+    pub fn new(bytes: [u8; Self::BYTE_SIZE]) -> Self {
+        // TODO(tarcieri): validate signature using pseudo-reduction logic in `TryFrom` impl
+        // This would require a breaking change to have this method return `Result`.
+        Self(bytes)
     }
 
-    /// Return the inner byte array
-    #[allow(clippy::wrong_self_convention)] // TODO: fix in next breaking release
-    pub fn to_bytes(&self) -> [u8; SIGNATURE_LENGTH] {
+    /// Return the inner byte array.
+    pub fn to_bytes(self) -> [u8; Self::BYTE_SIZE] {
         self.0
     }
 }
@@ -329,18 +334,8 @@ impl Debug for Signature {
     }
 }
 
-// TODO(tarcieri): derive `Eq` after const generics are available
-impl Eq for Signature {}
-
-// TODO(tarcieri): derive `PartialEq` after const generics are available
-impl PartialEq for Signature {
-    fn eq(&self, other: &Self) -> bool {
-        self.as_ref().eq(other.as_ref())
-    }
-}
-
-impl From<[u8; SIGNATURE_LENGTH]> for Signature {
-    fn from(bytes: [u8; SIGNATURE_LENGTH]) -> Signature {
+impl From<[u8; Signature::BYTE_SIZE]> for Signature {
+    fn from(bytes: [u8; Signature::BYTE_SIZE]) -> Signature {
         Signature(bytes)
     }
 }
@@ -349,10 +344,7 @@ impl<'a> TryFrom<&'a [u8]> for Signature {
     type Error = Error;
 
     fn try_from(bytes: &'a [u8]) -> Result<Self, Error> {
-        // TODO(tarcieri): use TryInto when const generics are available
-        if bytes.len() != SIGNATURE_LENGTH {
-            return Err(Error::new());
-        }
+        let result = bytes.try_into().map(Self).map_err(|_| Error::new())?;
 
         // Perform a partial reduction check on the signature's `s` scalar.
         // When properly reduced, at least the three highest bits of the scalar
@@ -362,13 +354,12 @@ impl<'a> TryFrom<&'a [u8]> for Signature {
         // full reduction check in the event that the 4th most significant bit
         // is set), however it will catch a number of invalid signatures
         // relatively inexpensively.
-        if bytes[SIGNATURE_LENGTH - 1] & 0b1110_0000 != 0 {
+        // TODO(tarcieri): move this to `Signature::new` in next breaking release?
+        if result.0[Signature::BYTE_SIZE - 1] & 0b1110_0000 != 0 {
             return Err(Error::new());
         }
 
-        let mut arr = [0u8; SIGNATURE_LENGTH];
-        arr.copy_from_slice(bytes);
-        Ok(Signature(arr))
+        Ok(result)
     }
 }
 
@@ -377,7 +368,7 @@ impl Serialize for Signature {
     fn serialize<S: ser::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         use ser::SerializeTuple;
 
-        let mut seq = serializer.serialize_tuple(SIGNATURE_LENGTH)?;
+        let mut seq = serializer.serialize_tuple(Signature::BYTE_SIZE)?;
 
         for byte in &self.0[..] {
             seq.serialize_element(byte)?;
@@ -395,18 +386,18 @@ impl<'de> Deserialize<'de> for Signature {
         struct ByteArrayVisitor;
 
         impl<'de> de::Visitor<'de> for ByteArrayVisitor {
-            type Value = [u8; SIGNATURE_LENGTH];
+            type Value = [u8; Signature::BYTE_SIZE];
 
             fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
                 formatter.write_str("bytestring of length 64")
             }
 
-            fn visit_seq<A>(self, mut seq: A) -> Result<[u8; SIGNATURE_LENGTH], A::Error>
+            fn visit_seq<A>(self, mut seq: A) -> Result<[u8; Signature::BYTE_SIZE], A::Error>
             where
                 A: de::SeqAccess<'de>,
             {
                 use de::Error;
-                let mut arr = [0u8; SIGNATURE_LENGTH];
+                let mut arr = [0u8; Signature::BYTE_SIZE];
 
                 for (i, byte) in arr.iter_mut().enumerate() {
                     *byte = seq
@@ -419,7 +410,7 @@ impl<'de> Deserialize<'de> for Signature {
         }
 
         deserializer
-            .deserialize_tuple(SIGNATURE_LENGTH, ByteArrayVisitor)
+            .deserialize_tuple(Signature::BYTE_SIZE, ByteArrayVisitor)
             .map(|bytes| bytes.into())
     }
 }
@@ -443,7 +434,7 @@ impl<'de> serde_bytes::Deserialize<'de> for Signature {
         struct ByteArrayVisitor;
 
         impl<'de> de::Visitor<'de> for ByteArrayVisitor {
-            type Value = [u8; SIGNATURE_LENGTH];
+            type Value = [u8; Signature::BYTE_SIZE];
 
             fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
                 formatter.write_str("bytestring of length 64")
@@ -464,69 +455,5 @@ impl<'de> serde_bytes::Deserialize<'de> for Signature {
         deserializer
             .deserialize_bytes(ByteArrayVisitor)
             .map(Signature::from)
-    }
-}
-
-#[cfg(all(test, feature = "serde", feature = "std"))]
-mod tests {
-    use super::*;
-    use signature::Signature as _;
-    use std::{convert::TryFrom, vec::Vec};
-
-    const EXAMPLE_SIGNATURE: [u8; SIGNATURE_LENGTH] = [
-        63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41,
-        40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18,
-        17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,
-    ];
-
-    #[test]
-    fn test_serialize() {
-        let signature = Signature::try_from(&EXAMPLE_SIGNATURE[..]).unwrap();
-        let encoded_signature: Vec<u8> = bincode::serialize(&signature).unwrap();
-        assert_eq!(&EXAMPLE_SIGNATURE[..], &encoded_signature[..]);
-    }
-
-    #[test]
-    fn test_deserialize() {
-        let signature = bincode::deserialize::<Signature>(&EXAMPLE_SIGNATURE).unwrap();
-        assert_eq!(&EXAMPLE_SIGNATURE[..], signature.as_bytes());
-    }
-
-    #[cfg(feature = "serde_bytes")]
-    #[test]
-    fn test_serialize_bytes() {
-        use bincode::Options;
-
-        let signature = Signature::try_from(&EXAMPLE_SIGNATURE[..]).unwrap();
-
-        let mut encoded_signature = Vec::new();
-        let options = bincode::DefaultOptions::new()
-            .with_fixint_encoding()
-            .allow_trailing_bytes();
-        let mut serializer = bincode::Serializer::new(&mut encoded_signature, options);
-        serde_bytes::serialize(&signature, &mut serializer).unwrap();
-
-        let mut expected = Vec::from(SIGNATURE_LENGTH.to_le_bytes());
-        expected.extend(&EXAMPLE_SIGNATURE[..]);
-        assert_eq!(&expected[..], &encoded_signature[..]);
-    }
-
-    #[cfg(feature = "serde_bytes")]
-    #[test]
-    fn test_deserialize_bytes() {
-        use bincode::Options;
-
-        let mut encoded_signature = Vec::from(SIGNATURE_LENGTH.to_le_bytes());
-        encoded_signature.extend(&EXAMPLE_SIGNATURE[..]);
-
-        let options = bincode::DefaultOptions::new()
-            .with_fixint_encoding()
-            .allow_trailing_bytes();
-        let mut deserializer =
-            bincode::de::Deserializer::from_slice(&encoded_signature[..], options);
-
-        let signature: Signature = serde_bytes::deserialize(&mut deserializer).unwrap();
-
-        assert_eq!(&EXAMPLE_SIGNATURE[..], signature.as_bytes());
     }
 }
