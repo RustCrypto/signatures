@@ -1,8 +1,0 @@
-[package]
-name = "ed25519_no_std"
-version = "0.1.0"
-authors = ["RustCrypto Developers"]
-edition = "2018"
-
-[dependencies]
-ed25519 = { path = "../../ed25519", default-features = false }

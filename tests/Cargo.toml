@@ -1,2 +1,0 @@
-[workspace]
-members = ["ed25519_no_std"]
