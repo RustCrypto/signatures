@@ -1,4 +1,4 @@
-# RustCrypto: signatures ![Rust Version][rustc-image] [![Project Chat][chat-image]][chat-link] [![dependency status][deps-image]][deps-link]
+# RustCrypto: signatures [![Project Chat][chat-image]][chat-link] [![dependency status][deps-image]][deps-link]
 
 Support for [digital signatures][1], which provide authentication of data using
 public-key cryptography.
@@ -15,13 +15,6 @@ and can be easily used for bare-metal or lightweight WebAssembly programming.
 |-------------|-----------|-----------|---------------|-------|
 | [`ecdsa`]   | [ECDSA](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm) | [![crates.io](https://img.shields.io/crates/v/ecdsa.svg)](https://crates.io/crates/ecdsa) | [![Documentation](https://docs.rs/ecdsa/badge.svg)](https://docs.rs/ecdsa) | [![ecdsa build](https://github.com/RustCrypto/signatures/workflows/ecdsa/badge.svg?branch=master&event=push)](https://github.com/RustCrypto/signatures/actions?query=workflow%3Aecdsa) |
 | [`ed25519`] | [Ed25519](https://en.wikipedia.org/wiki/EdDSA) | [![crates.io](https://img.shields.io/crates/v/ed25519.svg)](https://crates.io/crates/ed25519) | [![Documentation](https://docs.rs/ed25519/badge.svg)](https://docs.rs/ed25519) | [![ed25519 build](https://github.com/RustCrypto/signatures/workflows/ed25519/badge.svg?branch=master&event=push)](https://github.com/RustCrypto/signatures/actions?query=workflow%3Aed25519)
-
-## Minimum Supported Rust Version
-
-All crates in this repository support Rust **1.47** or higher.
-
-In the future the minimum supported Rust version may be changed,
-but it will be accompanied by minor version bump.
 
 ## Usage
 
@@ -45,7 +38,6 @@ dual licensed as above, without any additional terms or conditions.
 
 [//]: # (badges)
 
-[rustc-image]: https://img.shields.io/badge/rustc-1.47+-blue.svg
 [chat-image]: https://img.shields.io/badge/zulip-join_chat-blue.svg
 [chat-link]: https://rustcrypto.zulipchat.com/#narrow/stream/260048-signatures
 [deps-image]: https://deps.rs/repo/github/RustCrypto/signatures/status.svg
