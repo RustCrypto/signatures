@@ -1,4 +1,5 @@
 [workspace]
+resolver = "2"
 members = ["ecdsa", "ed25519"]
 
 [patch.crates-io]
