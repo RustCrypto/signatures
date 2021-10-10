@@ -267,6 +267,7 @@
 //!   ```
 
 #![no_std]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![doc(
     html_logo_url = "https://raw.githubusercontent.com/RustCrypto/meta/master/logo_small.png",
     html_root_url = "https://docs.rs/ed25519/1.3.0-pre"
@@ -279,10 +280,14 @@ use serde::{de, ser, Deserialize, Serialize};
 #[cfg(feature = "serde_bytes")]
 use serde_bytes_crate as serde_bytes;
 
-#[cfg(all(feature = "std", any(test, feature = "serde_bytes")))]
-extern crate std;
+#[cfg(feature = "pkcs8")]
+#[cfg_attr(docsrs, doc(cfg(feature = "pkcs8")))]
+pub mod pkcs8;
 
 pub use signature::{self, Error};
+
+#[cfg(feature = "pkcs8")]
+pub use crate::pkcs8::KeypairBytes;
 
 use core::{
     convert::{TryFrom, TryInto},
@@ -315,7 +320,7 @@ impl Signature {
 }
 
 impl signature::Signature for Signature {
-    fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
+    fn from_bytes(bytes: &[u8]) -> signature::Result<Self> {
         bytes.try_into()
     }
 }
@@ -343,7 +348,7 @@ impl From<[u8; Signature::BYTE_SIZE]> for Signature {
 impl<'a> TryFrom<&'a [u8]> for Signature {
     type Error = Error;
 
-    fn try_from(bytes: &'a [u8]) -> Result<Self, Error> {
+    fn try_from(bytes: &'a [u8]) -> signature::Result<Self> {
         let result = bytes.try_into().map(Self).map_err(|_| Error::new())?;
 
         // Perform a partial reduction check on the signature's `s` scalar.
