@@ -6,7 +6,7 @@ use core::{
     fmt,
     ops::{Add, Range},
 };
-use der::{asn1::UIntBytes, Decodable};
+use der::{asn1::UIntBytes, Decodable, Encodable};
 use elliptic_curve::{
     bigint::Encoding as _,
     consts::U9,
@@ -95,12 +95,21 @@ where
 
     /// Create an ASN.1 DER encoded signature from big endian `r` and `s` scalars
     pub(crate) fn from_scalar_bytes(r: &[u8], s: &[u8]) -> der::Result<Self> {
+        let r = UIntBytes::new(r)?;
+        let s = UIntBytes::new(s)?;
+
         let mut bytes = SignatureBytes::<C>::default();
         let mut encoder = der::Encoder::new(&mut bytes);
-        encoder.message(&[&UIntBytes::new(r)?, &UIntBytes::new(s)?])?;
 
-        let sig = encoder.finish()?;
-        sig.try_into().map_err(|_| der::Tag::Sequence.value_error())
+        encoder.sequence((r.encoded_len()? + s.encoded_len()?)?, |seq| {
+            seq.encode(&r)?;
+            seq.encode(&s)
+        })?;
+
+        encoder
+            .finish()?
+            .try_into()
+            .map_err(|_| der::Tag::Sequence.value_error())
     }
 
     /// Get the `r` component of the signature (leading zeros removed)
