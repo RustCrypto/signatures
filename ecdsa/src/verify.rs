@@ -116,7 +116,7 @@ where
     C: PrimeCurve + ProjectiveArithmetic,
 {
     fn from(public_key: &PublicKey<C>) -> VerifyingKey<C> {
-        public_key.clone().into()
+        (*public_key).into()
     }
 }
 
@@ -134,7 +134,7 @@ where
     C: PrimeCurve + ProjectiveArithmetic,
 {
     fn from(verifying_key: &VerifyingKey<C>) -> PublicKey<C> {
-        verifying_key.clone().into()
+        (*verifying_key).into()
     }
 }
 
