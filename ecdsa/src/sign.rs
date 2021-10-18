@@ -29,7 +29,7 @@ use {crate::verify::VerifyingKey, elliptic_curve::PublicKey};
 
 #[cfg(feature = "pkcs8")]
 use crate::elliptic_curve::{
-    pkcs8::{self, FromPrivateKey},
+    pkcs8::{self, DecodePrivateKey},
     sec1::{self, FromEncodedPoint, ToEncodedPoint},
     AffinePoint, AlgorithmParameters,
 };
@@ -273,7 +273,7 @@ where
 
 #[cfg(feature = "pkcs8")]
 #[cfg_attr(docsrs, doc(cfg(feature = "pkcs8")))]
-impl<C> FromPrivateKey for SigningKey<C>
+impl<C> DecodePrivateKey for SigningKey<C>
 where
     C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,

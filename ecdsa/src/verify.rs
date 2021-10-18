@@ -15,7 +15,7 @@ use signature::{digest::Digest, DigestVerifier, Verifier};
 
 #[cfg(feature = "pkcs8")]
 use crate::elliptic_curve::{
-    pkcs8::{self, FromPublicKey},
+    pkcs8::{self, DecodePublicKey},
     AlgorithmParameters,
 };
 
@@ -186,13 +186,13 @@ where
 
 #[cfg(feature = "pkcs8")]
 #[cfg_attr(docsrs, doc(cfg(feature = "pkcs8")))]
-impl<C> FromPublicKey for VerifyingKey<C>
+impl<C> DecodePublicKey for VerifyingKey<C>
 where
     C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic + PointCompression,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldSize<C>: sec1::ModulusSize,
 {
-    fn from_spki(spki: pkcs8::SubjectPublicKeyInfo<'_>) -> pkcs8::Result<Self> {
+    fn from_spki(spki: pkcs8::SubjectPublicKeyInfo<'_>) -> der::Result<Self> {
         PublicKey::from_spki(spki).map(|inner| Self { inner })
     }
 }
