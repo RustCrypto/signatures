@@ -2,11 +2,11 @@
 
 #![cfg(feature = "pkcs8")]
 
-use ed25519::pkcs8::{FromPrivateKey, KeypairBytes};
+use ed25519::pkcs8::{DecodePrivateKey, KeypairBytes};
 use hex_literal::hex;
 
 #[cfg(feature = "alloc")]
-use ed25519::pkcs8::ToPrivateKey;
+use ed25519::pkcs8::EncodePrivateKey;
 
 /// Ed25519 PKCS#8 v1 private key encoded as ASN.1 DER
 const PKCS8_V1_DER: &[u8] = include_bytes!("examples/pkcs8-v1.der");

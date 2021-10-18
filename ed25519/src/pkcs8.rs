@@ -3,10 +3,10 @@
 //! Implements Ed25519 PKCS#8 private keys as described in RFC8410 Section 7:
 //! <https://datatracker.ietf.org/doc/html/rfc8410#section-7>
 
-pub use pkcs8::FromPrivateKey;
+pub use pkcs8::DecodePrivateKey;
 
 #[cfg(feature = "alloc")]
-pub use pkcs8::ToPrivateKey;
+pub use pkcs8::EncodePrivateKey;
 
 use core::convert::TryInto;
 
@@ -56,7 +56,7 @@ impl KeypairBytes {
     }
 }
 
-impl FromPrivateKey for KeypairBytes {
+impl DecodePrivateKey for KeypairBytes {
     fn from_pkcs8_private_key_info(private_key: pkcs8::PrivateKeyInfo<'_>) -> pkcs8::Result<Self> {
         private_key.algorithm.assert_algorithm_oid(ALGORITHM_OID)?;
 
@@ -92,7 +92,7 @@ impl FromPrivateKey for KeypairBytes {
 
 #[cfg(feature = "alloc")]
 #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
-impl ToPrivateKey for KeypairBytes {
+impl EncodePrivateKey for KeypairBytes {
     fn to_pkcs8_der(&self) -> pkcs8::Result<pkcs8::PrivateKeyDocument> {
         let algorithm = pkcs8::AlgorithmIdentifier {
             oid: ALGORITHM_OID,
@@ -106,12 +106,12 @@ impl ToPrivateKey for KeypairBytes {
         private_key[1] = 0x20;
         private_key[2..].copy_from_slice(&self.secret_key);
 
-        Ok(pkcs8::PrivateKeyInfo {
+        pkcs8::PrivateKeyInfo {
             algorithm,
             private_key: &private_key,
             public_key: self.public_key.as_ref().map(AsRef::as_ref),
         }
-        .to_der())
+        .to_der()
     }
 }
 
