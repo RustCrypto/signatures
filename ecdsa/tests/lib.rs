@@ -2,7 +2,6 @@
 
 #![cfg(feature = "dev")]
 
-use core::convert::TryFrom;
 use elliptic_curve::dev::MockCurve;
 
 type Signature = ecdsa::Signature<MockCurve>;

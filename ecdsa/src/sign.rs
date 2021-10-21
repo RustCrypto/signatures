@@ -6,10 +6,7 @@ use crate::{
     hazmat::{DigestPrimitive, SignPrimitive},
     rfc6979, Error, Result, Signature, SignatureSize,
 };
-use core::{
-    convert::TryFrom,
-    fmt::{self, Debug},
-};
+use core::fmt::{self, Debug};
 use elliptic_curve::{
     generic_array::ArrayLength,
     group::ff::PrimeField,

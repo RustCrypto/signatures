@@ -4,7 +4,7 @@ use crate::{
     hazmat::{DigestPrimitive, VerifyPrimitive},
     Error, Result, Signature, SignatureSize,
 };
-use core::{cmp::Ordering, convert::TryFrom, fmt::Debug};
+use core::{cmp::Ordering, fmt::Debug};
 use elliptic_curve::{
     generic_array::ArrayLength,
     ops::Reduce,
