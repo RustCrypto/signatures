@@ -2,7 +2,6 @@
 
 use crate::{Error, Result};
 use core::{
-    convert::{TryFrom, TryInto},
     fmt,
     ops::{Add, Range},
 };

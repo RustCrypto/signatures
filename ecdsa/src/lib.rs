@@ -92,7 +92,6 @@ pub use sign::SigningKey;
 pub use verify::VerifyingKey;
 
 use core::{
-    convert::TryFrom,
     fmt::{self, Debug},
     ops::Add,
 };

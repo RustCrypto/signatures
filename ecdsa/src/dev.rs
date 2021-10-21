@@ -32,7 +32,6 @@ pub struct TestVector {
 #[cfg_attr(docsrs, doc(cfg(feature = "dev")))]
 macro_rules! new_signing_test {
     ($curve:path, $vectors:expr) => {
-        use core::convert::TryInto;
         use $crate::{
             elliptic_curve::{
                 bigint::Encoding, generic_array::GenericArray, group::ff::PrimeField, Curve,
@@ -69,7 +68,6 @@ macro_rules! new_signing_test {
 #[cfg_attr(docsrs, doc(cfg(feature = "dev")))]
 macro_rules! new_verification_test {
     ($curve:path, $vectors:expr) => {
-        use core::convert::TryInto;
         use $crate::{
             elliptic_curve::{
                 generic_array::GenericArray,
