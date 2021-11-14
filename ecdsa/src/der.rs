@@ -157,7 +157,11 @@ where
 
     fn try_from(input: &[u8]) -> Result<Self> {
         let (r, s) = der::Decoder::new(input)
-            .sequence(|decoder| Ok((UIntBytes::decode(decoder)?, UIntBytes::decode(decoder)?)))
+            .and_then(|mut decoder| {
+                decoder.sequence(|decoder| {
+                    Ok((UIntBytes::decode(decoder)?, UIntBytes::decode(decoder)?))
+                })
+            })
             .map_err(|_| Error::new())?;
 
         if r.as_bytes().len() > C::UInt::BYTE_SIZE || s.as_bytes().len() > C::UInt::BYTE_SIZE {
