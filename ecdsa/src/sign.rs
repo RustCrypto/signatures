@@ -270,6 +270,23 @@ where
 
 #[cfg(feature = "pkcs8")]
 #[cfg_attr(docsrs, doc(cfg(feature = "pkcs8")))]
+impl<C> TryFrom<pkcs8::PrivateKeyInfo<'_>> for SigningKey<C>
+where
+    C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic,
+    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    FieldSize<C>: sec1::ModulusSize,
+    Scalar<C>: Invert<Output = Scalar<C>> + Reduce<C::UInt> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    type Error = pkcs8::Error;
+
+    fn try_from(private_key_info: pkcs8::PrivateKeyInfo<'_>) -> pkcs8::Result<Self> {
+        SecretKey::try_from(private_key_info).map(Into::into)
+    }
+}
+
+#[cfg(feature = "pkcs8")]
+#[cfg_attr(docsrs, doc(cfg(feature = "pkcs8")))]
 impl<C> DecodePrivateKey for SigningKey<C>
 where
     C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic,
@@ -278,11 +295,6 @@ where
     Scalar<C>: Invert<Output = Scalar<C>> + Reduce<C::UInt> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
-    fn from_pkcs8_private_key_info(
-        private_key_info: pkcs8::PrivateKeyInfo<'_>,
-    ) -> pkcs8::Result<Self> {
-        SecretKey::from_pkcs8_private_key_info(private_key_info).map(Into::into)
-    }
 }
 
 #[cfg(feature = "pem")]
