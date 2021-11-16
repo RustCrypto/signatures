@@ -186,15 +186,27 @@ where
 
 #[cfg(feature = "pkcs8")]
 #[cfg_attr(docsrs, doc(cfg(feature = "pkcs8")))]
+impl<C> TryFrom<pkcs8::SubjectPublicKeyInfo<'_>> for VerifyingKey<C>
+where
+    C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic + PointCompression,
+    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    FieldSize<C>: sec1::ModulusSize,
+{
+    type Error = pkcs8::spki::Error;
+
+    fn try_from(spki: pkcs8::SubjectPublicKeyInfo<'_>) -> pkcs8::spki::Result<Self> {
+        PublicKey::try_from(spki).map(|inner| Self { inner })
+    }
+}
+
+#[cfg(feature = "pkcs8")]
+#[cfg_attr(docsrs, doc(cfg(feature = "pkcs8")))]
 impl<C> DecodePublicKey for VerifyingKey<C>
 where
     C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic + PointCompression,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldSize<C>: sec1::ModulusSize,
 {
-    fn from_spki(spki: pkcs8::SubjectPublicKeyInfo<'_>) -> pkcs8::spki::Result<Self> {
-        PublicKey::from_spki(spki).map(|inner| Self { inner })
-    }
 }
 
 #[cfg(feature = "pem")]

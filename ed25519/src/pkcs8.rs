@@ -8,7 +8,7 @@ pub use pkcs8::DecodePrivateKey;
 #[cfg(feature = "alloc")]
 pub use pkcs8::EncodePrivateKey;
 
-use core::convert::TryInto;
+use core::convert::{TryFrom, TryInto};
 
 /// Algorithm [`ObjectIdentifier`][`pkcs8::ObjectIdentifier`] for the Ed25519
 /// digital signature algorithm (`id-Ed25519`).
@@ -56,8 +56,10 @@ impl KeypairBytes {
     }
 }
 
-impl DecodePrivateKey for KeypairBytes {
-    fn from_pkcs8_private_key_info(private_key: pkcs8::PrivateKeyInfo<'_>) -> pkcs8::Result<Self> {
+impl TryFrom<pkcs8::PrivateKeyInfo<'_>> for KeypairBytes {
+    type Error = pkcs8::Error;
+
+    fn try_from(private_key: pkcs8::PrivateKeyInfo<'_>) -> pkcs8::Result<Self> {
         private_key.algorithm.assert_algorithm_oid(ALGORITHM_OID)?;
 
         if private_key.algorithm.parameters.is_some() {
@@ -89,6 +91,8 @@ impl DecodePrivateKey for KeypairBytes {
         })
     }
 }
+
+impl DecodePrivateKey for KeypairBytes {}
 
 #[cfg(feature = "alloc")]
 #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
