@@ -13,7 +13,7 @@
 
 #[cfg(feature = "arithmetic")]
 use {
-    crate::{Result, SignatureSize},
+    crate::{RecoveryId, Result, SignatureSize},
     core::borrow::Borrow,
     elliptic_curve::{ops::Invert, ProjectiveArithmetic, Scalar},
 };
@@ -75,7 +75,7 @@ where
         &self,
         ephemeral_scalar: &K,
         hashed_msg: &Scalar<C>,
-    ) -> Result<(Signature<C>, bool)>;
+    ) -> Result<(Signature<C>, RecoveryId)>;
 }
 
 #[cfg(feature = "arithmetic")]

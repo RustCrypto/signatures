@@ -55,6 +55,8 @@
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
+pub mod recovery;
+
 #[cfg(feature = "der")]
 #[cfg_attr(docsrs, doc(cfg(feature = "der")))]
 pub mod der;
@@ -76,6 +78,8 @@ mod sign;
 
 #[cfg(feature = "verify")]
 mod verify;
+
+pub use crate::recovery::RecoveryId;
 
 // Re-export the `elliptic-curve` crate (and select types)
 pub use elliptic_curve::{self, sec1::EncodedPoint, PrimeCurve};
