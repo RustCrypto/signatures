@@ -106,7 +106,7 @@ use elliptic_curve::{
 };
 
 #[cfg(feature = "arithmetic")]
-use elliptic_curve::{group::ff::PrimeField, NonZeroScalar, ProjectiveArithmetic, Scalar};
+use elliptic_curve::{ff::PrimeField, IsHigh, NonZeroScalar, ScalarArithmetic};
 
 /// Size of a fixed sized signature for the given elliptic curve.
 pub type SignatureSize<C> = <FieldSize<C> as Add>::Output;
@@ -184,7 +184,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
 impl<C> Signature<C>
 where
-    C: PrimeCurve + ProjectiveArithmetic,
+    C: PrimeCurve + ScalarArithmetic,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Get the `r` component of this signature
@@ -208,15 +208,17 @@ where
     /// [BIP 0062: Dealing with Malleability][1].
     ///
     /// [1]: https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki
-    pub fn normalize_s(&self) -> Option<Self>
-    where
-        Scalar<C>: NormalizeLow,
-    {
-        self.s().normalize_low().map(|s_low| {
+    pub fn normalize_s(&self) -> Option<Self> {
+        let s = self.s();
+
+        if s.is_high().into() {
+            let neg_s = -s;
             let mut result = self.clone();
-            result.bytes[C::UInt::BYTE_SIZE..].copy_from_slice(&s_low.to_repr());
-            result
-        })
+            result.bytes[C::UInt::BYTE_SIZE..].copy_from_slice(&neg_s.to_repr());
+            Some(result)
+        } else {
+            None
+        }
     }
 }
 
@@ -287,19 +289,4 @@ where
             bytes: GenericArray::clone_from_slice(bytes),
         })
     }
-}
-
-/// Normalize a scalar (i.e. ECDSA S) to the lower half the field, as described
-/// in [BIP 0062: Dealing with Malleability][1].
-///
-/// [1]: https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki
-pub trait NormalizeLow: Sized {
-    /// Normalize scalar to the lower half of the field (i.e. negate it if it's
-    /// larger than half the curve's order).
-    ///
-    /// Returns an `Option` with a new scalar if the original wasn't already
-    /// low-normalized.
-    ///
-    /// May be implemented to work in variable time.
-    fn normalize_low(&self) -> Option<Self>;
 }
