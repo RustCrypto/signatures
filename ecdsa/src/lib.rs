@@ -55,7 +55,7 @@
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
-pub mod recovery;
+mod recovery;
 
 #[cfg(feature = "der")]
 #[cfg_attr(docsrs, doc(cfg(feature = "der")))]

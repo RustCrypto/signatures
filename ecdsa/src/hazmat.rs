@@ -30,6 +30,9 @@ use crate::{
     Signature,
 };
 
+#[cfg(docsrs)]
+use elliptic_curve::ops::Reduce;
+
 /// Try to sign the given prehashed message using ECDSA.
 ///
 /// This trait is intended to be implemented on a type with access
@@ -49,50 +52,23 @@ where
     /// - `ephemeral_scalar`: ECDSA `k` value. MUST BE UNIFORMLY RANDOM!!!
     /// - `hashed_msg`: scalar computed from a hashed message digest to be signed.
     ///   MUST BE OUTPUT OF A CRYPTOGRAPHICALLY SECURE DIGEST ALGORITHM!!!
-    fn try_sign_prehashed<K: Borrow<Scalar<C>> + Invert<Output = Scalar<C>>>(
-        &self,
-        ephemeral_scalar: &K,
-        hashed_msg: &Scalar<C>,
-    ) -> Result<Signature<C>>;
-}
-
-/// [`SignPrimitive`] for signature implementations that can provide public key
-/// recovery implementation.
-#[cfg(feature = "arithmetic")]
-#[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
-pub trait RecoverableSignPrimitive<C>
-where
-    C: PrimeCurve + ProjectiveArithmetic,
-    SignatureSize<C>: ArrayLength<u8>,
-{
-    /// Try to sign the prehashed message.
     ///
-    /// Accepts the same arguments as [`SignPrimitive::try_sign_prehashed`]
-    /// but returns a boolean flag which indicates whether or not the
-    /// y-coordinate of the computed 𝐑 = 𝑘×𝑮 point is odd, which can be
-    /// incorporated into recoverable signatures.
-    fn try_sign_recoverable_prehashed<K: Borrow<Scalar<C>> + Invert<Output = Scalar<C>>>(
+    /// # Computing the `hashed_msg` scalar
+    ///
+    /// To compute a [`Scalar`] from a message digest, use the [`Reduce`] trait
+    /// on the computed digest, e.g. `Scalar::from_be_bytes_reduced`.
+    ///
+    /// # Returns
+    ///
+    /// ECDSA [`Signature`] and, when possible/desired, a [`RecoveryId`]
+    /// which can be used to recover the verifying key for a given signature.
+    fn try_sign_prehashed<K>(
         &self,
         ephemeral_scalar: &K,
         hashed_msg: &Scalar<C>,
-    ) -> Result<(Signature<C>, RecoveryId)>;
-}
-
-#[cfg(feature = "arithmetic")]
-impl<C, T> SignPrimitive<C> for T
-where
-    C: PrimeCurve + ProjectiveArithmetic,
-    T: RecoverableSignPrimitive<C>,
-    SignatureSize<C>: ArrayLength<u8>,
-{
-    fn try_sign_prehashed<K: Borrow<Scalar<C>> + Invert<Output = Scalar<C>>>(
-        &self,
-        ephemeral_scalar: &K,
-        hashed_msg: &Scalar<C>,
-    ) -> Result<Signature<C>> {
-        self.try_sign_recoverable_prehashed(ephemeral_scalar, hashed_msg)
-            .map(|res| res.0)
-    }
+    ) -> Result<(Signature<C>, Option<RecoveryId>)>
+    where
+        K: Borrow<Scalar<C>> + Invert<Output = Scalar<C>>;
 }
 
 /// Verify the given prehashed message using ECDSA.
