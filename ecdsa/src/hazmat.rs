@@ -13,9 +13,11 @@
 
 #[cfg(feature = "arithmetic")]
 use {
-    crate::{RecoveryId, Result, SignatureSize},
+    crate::{Error, RecoveryId, Result, SignatureSize},
     core::borrow::Borrow,
-    elliptic_curve::{ops::Invert, ProjectiveArithmetic, Scalar},
+    elliptic_curve::{
+        ff::PrimeField, ops::Invert, FieldBytes, ProjectiveArithmetic, Scalar, ScalarArithmetic,
+    },
 };
 
 #[cfg(feature = "digest")]
@@ -33,6 +35,32 @@ use crate::{
 #[cfg(docsrs)]
 use elliptic_curve::ops::Reduce;
 
+/// Multiplication operation performed on the ECDSA `k` scalar.
+///
+/// This trait provides a minimum integration needed for a curve implementation
+/// to leverage a generic implementation of ECDSA. It's designed to make it
+/// possible to encapsulate elements of the base field from the public API,
+/// exposing only the functionality needed to compute ECDSA signatures.
+///
+/// When implemented on a particular curve's `Scalar` type, it will receive a
+/// blanket impl of [`SignPrimitive`], which contains the core ECDSA signature
+/// algorithm.
+#[cfg(feature = "arithmetic")]
+#[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
+pub trait MulBaseReduced: PrimeField {
+    /// Perform 𝑘×𝑮 fixed-base scalar multiplication, lifting the x-coordinate
+    /// of the resulting `AffinePoint` into an integer, and then reduce it into
+    /// an element of the scalar field.
+    ///
+    /// The implementation will look roughly like the following:
+    ///
+    /// ```ignore
+    /// let x = (C::ProjectivePoint::generator() * k).to_affine().x;
+    /// Scalar::from_be_bytes_reduced(x.to_bytes())
+    /// ```
+    fn mul_base_reduced(&self) -> Self;
+}
+
 /// Try to sign the given prehashed message using ECDSA.
 ///
 /// This trait is intended to be implemented on a type with access
@@ -42,7 +70,7 @@ use elliptic_curve::ops::Reduce;
 #[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
 pub trait SignPrimitive<C>
 where
-    C: PrimeCurve + ProjectiveArithmetic,
+    C: PrimeCurve + ScalarArithmetic,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Try to sign the prehashed message.
@@ -117,4 +145,43 @@ where
     <FieldSize<C> as core::ops::Add>::Output: ArrayLength<u8>,
 {
     type Digest = C::Digest;
+}
+
+/// Generic implementation of the ECDSA signature algorithm for curves whose
+/// `C::Scalar` type impls the [`MulBaseReduced`] trait.
+#[cfg(feature = "arithmetic")]
+#[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
+impl<C, S> SignPrimitive<C> for S
+where
+    C: PrimeCurve + ScalarArithmetic<Scalar = S>,
+    S: MulBaseReduced + Into<FieldBytes<C>>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    #[allow(clippy::many_single_char_names)]
+    fn try_sign_prehashed<K>(&self, k: &K, z: &S) -> Result<(Signature<C>, Option<RecoveryId>)>
+    where
+        K: Borrow<S> + Invert<Output = S>,
+    {
+        if k.borrow().is_zero().into() {
+            return Err(Error::new());
+        }
+
+        let k_inverse = Option::<S>::from(k.invert()).ok_or_else(Error::new)?;
+
+        // Compute 𝐑 = 𝑘×𝑮, then lift x-coordinate of 𝐑 (element of base field)
+        // into a serialized big integer, then reduce it into an element of the
+        // scalar field.
+        let r = k.borrow().mul_base_reduced();
+
+        // Compute `s` as a signature over `r` and `z`.
+        // TODO(tarcieri): avoid making a copy of `z` with better reference-based bounds
+        let s = k_inverse * (*z + (r * self));
+
+        if s.is_zero().into() {
+            return Err(Error::new());
+        }
+
+        // TODO(tarcieri): support for computing recovery ID
+        Ok((Signature::from_scalars(r, s)?, None))
+    }
 }
