@@ -25,7 +25,11 @@ pub const ALGORITHM_OID: ObjectIdentifier = ObjectIdentifier::new("1.3.101.112")
 
 /// Ed25519 keypair serialized as bytes.
 ///
-/// This type is primarily useful for decoding/encoding PKCS#8 private key files.
+/// This type is primarily useful for decoding/encoding PKCS#8 private key
+/// files (either DER or PEM) encoded using the following traits:
+///
+/// - [`DecodePrivateKey`]: decode DER or PEM encoded PKCS#8 private key.
+/// - [`EncodePrivateKey`]: encode DER or PEM encoded PKCS#8 private key.
 pub struct KeypairBytes {
     /// Ed25519 secret key.
     ///
