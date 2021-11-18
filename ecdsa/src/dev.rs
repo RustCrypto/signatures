@@ -54,7 +54,7 @@ macro_rules! new_signing_test {
                 let d = decode_scalar(vector.d).expect("invalid vector.d");
                 let k = decode_scalar(vector.k).expect("invalid vector.m");
                 let z = decode_scalar(vector.m).expect("invalid vector.z");
-                let sig = d.try_sign_prehashed(k, z).expect("ECDSA sign failed");
+                let sig = d.try_sign_prehashed(k, z).expect("ECDSA sign failed").0;
 
                 assert_eq!(vector.r, sig.r().to_bytes().as_slice());
                 assert_eq!(vector.s, sig.s().to_bytes().as_slice());
