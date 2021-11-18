@@ -286,22 +286,22 @@ pub use signature::{self, Error};
 #[cfg(feature = "pkcs8")]
 pub use crate::pkcs8::KeypairBytes;
 
-use core::convert::{TryFrom, TryInto};
+use core::{
+    convert::{TryFrom, TryInto},
+    fmt, str,
+};
 
+#[cfg(feature = "serde")]
+use serde::{de, ser, Deserialize, Serialize};
 #[cfg(feature = "serde_bytes")]
 use serde_bytes_crate as serde_bytes;
-#[cfg(feature = "serde")]
-use {
-    core::fmt,
-    serde::{de, ser, Deserialize, Serialize},
-};
 
 /// Length of an Ed25519 signature in bytes.
 #[deprecated(since = "1.3.0", note = "use ed25519::Signature::BYTE_SIZE instead")]
 pub const SIGNATURE_LENGTH: usize = Signature::BYTE_SIZE;
 
 /// Ed25519 signature.
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub struct Signature([u8; Signature::BYTE_SIZE]);
 
 impl Signature {
@@ -363,6 +363,80 @@ impl TryFrom<&[u8]> for Signature {
 
     fn try_from(bytes: &[u8]) -> signature::Result<Self> {
         Self::from_bytes(bytes)
+    }
+}
+
+impl fmt::Debug for Signature {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "ed25519::Signature({})", self)
+    }
+}
+
+impl fmt::Display for Signature {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:X}", self)
+    }
+}
+
+impl fmt::LowerHex for Signature {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for byte in &self.0 {
+            write!(f, "{:02x}", byte)?;
+        }
+        Ok(())
+    }
+}
+
+impl fmt::UpperHex for Signature {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for byte in &self.0 {
+            write!(f, "{:02X}", byte)?;
+        }
+        Ok(())
+    }
+}
+
+/// Decode a signature from hexadecimal.
+///
+/// Upper and lower case hexadecimal are both accepted, however mixed case is
+/// rejected.
+impl str::FromStr for Signature {
+    type Err = Error;
+
+    fn from_str(hex: &str) -> signature::Result<Self> {
+        if hex.as_bytes().len() != Signature::BYTE_SIZE * 2 {
+            return Err(Error::new());
+        }
+
+        let mut upper_case = None;
+
+        // Ensure all characters are valid and case is not mixed
+        for &byte in hex.as_bytes() {
+            match byte {
+                b'0'..=b'9' => (),
+                b'a'..=b'z' => match upper_case {
+                    Some(true) => return Err(Error::new()),
+                    Some(false) => (),
+                    None => upper_case = Some(false),
+                },
+                b'A'..=b'Z' => match upper_case {
+                    Some(true) => (),
+                    Some(false) => return Err(Error::new()),
+                    None => upper_case = Some(true),
+                },
+                _ => return Err(Error::new()),
+            }
+        }
+
+        let mut result = [0u8; Self::BYTE_SIZE];
+        for (digit, byte) in hex.as_bytes().chunks_exact(2).zip(result.iter_mut()) {
+            *byte = str::from_utf8(digit)
+                .ok()
+                .and_then(|s| u8::from_str_radix(s, 16).ok())
+                .ok_or_else(Error::new)?;
+        }
+
+        Self::try_from(&result[..])
     }
 }
 
