@@ -54,7 +54,7 @@ macro_rules! new_signing_test {
                 let d = decode_scalar(vector.d).expect("invalid vector.d");
                 let k = decode_scalar(vector.k).expect("invalid vector.m");
                 let z = decode_scalar(vector.m).expect("invalid vector.z");
-                let sig = d.try_sign_prehashed(&k, &z).expect("ECDSA sign failed");
+                let sig = d.try_sign_prehashed(k, z).expect("ECDSA sign failed");
 
                 assert_eq!(vector.r, sig.r().to_bytes().as_slice());
                 assert_eq!(vector.s, sig.s().to_bytes().as_slice());
@@ -100,7 +100,7 @@ macro_rules! new_verification_test {
                 )
                 .unwrap();
 
-                let result = q.verify_prehashed(&z, &sig);
+                let result = q.verify_prehashed(z, &sig);
                 assert!(result.is_ok());
             }
         }
@@ -128,7 +128,7 @@ macro_rules! new_verification_test {
                     Signature::from_scalars(GenericArray::clone_from_slice(vector.r), s_tweaked)
                         .unwrap();
 
-                let result = q.verify_prehashed(&z, &sig);
+                let result = q.verify_prehashed(z, &sig);
                 assert!(result.is_err());
             }
         }
