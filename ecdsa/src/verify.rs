@@ -74,7 +74,7 @@ where
 {
     fn verify_digest(&self, msg_digest: D, signature: &Signature<C>) -> Result<()> {
         let scalar = Scalar::<C>::from_be_bytes_reduced(msg_digest.finalize());
-        self.inner.as_affine().verify_prehashed(&scalar, signature)
+        self.inner.as_affine().verify_prehashed(scalar, signature)
     }
 }
 

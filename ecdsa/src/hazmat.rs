@@ -18,8 +18,8 @@ use {
     elliptic_curve::{
         group::Curve as _,
         ops::{Invert, Reduce},
-        AffineXCoordinate, Field, FieldBytes, Group, ProjectiveArithmetic, Scalar,
-        ScalarArithmetic,
+        AffineArithmetic, AffineXCoordinate, Field, FieldBytes, Group, ProjectiveArithmetic,
+        Scalar, ScalarArithmetic,
     },
 };
 
@@ -41,7 +41,7 @@ use crate::{
 /// secret scalar via `&self`, such as particular curve's `Scalar` type.
 #[cfg(feature = "arithmetic")]
 #[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
-pub trait SignPrimitive<C>: Field + Sized
+pub trait SignPrimitive<C>: Field + Into<FieldBytes<C>> + Reduce<C::UInt> + Sized
 where
     C: PrimeCurve + ProjectiveArithmetic + ScalarArithmetic<Scalar = Self>,
     SignatureSize<C>: ArrayLength<u8>,
@@ -70,7 +70,6 @@ where
         z: Scalar<C>,
     ) -> Result<(Signature<C>, Option<RecoveryId>)>
     where
-        Self: Into<FieldBytes<C>> + Reduce<C::UInt>,
         K: Borrow<Self> + Invert<Output = Self>,
     {
         if k.borrow().is_zero().into() {
@@ -78,7 +77,7 @@ where
         }
 
         // Compute scalar inversion of 𝑘
-        let k_inverse = Option::<Scalar<C>>::from(k.invert()).ok_or_else(Error::new)?;
+        let k_inv = Option::<Scalar<C>>::from(k.invert()).ok_or_else(Error::new)?;
 
         // Compute 𝐑 = 𝑘×𝑮
         let R = (C::ProjectivePoint::generator() * k.borrow()).to_affine();
@@ -88,7 +87,7 @@ where
         let r = Self::from_be_bytes_reduced(R.x());
 
         // Compute `s` as a signature over `r` and `z`.
-        let s = k_inverse * (z + (r * self));
+        let s = k_inv * (z + (r * self));
 
         if s.is_zero().into() {
             return Err(Error::new());
@@ -106,18 +105,34 @@ where
 /// particular curve's `AffinePoint` type.
 #[cfg(feature = "arithmetic")]
 #[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
-pub trait VerifyPrimitive<C>
+pub trait VerifyPrimitive<C>: AffineXCoordinate<C> + Copy + Sized
 where
-    C: PrimeCurve + ProjectiveArithmetic,
+    C: PrimeCurve + AffineArithmetic<AffinePoint = Self> + ProjectiveArithmetic,
+    Scalar<C>: Reduce<C::UInt>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Verify the prehashed message against the provided signature
     ///
     /// Accepts the following arguments:
     ///
-    /// - `hashed_msg`: prehashed message to be verified
-    /// - `signature`: signature to be verified against the key and message
-    fn verify_prehashed(&self, hashed_msg: &Scalar<C>, signature: &Signature<C>) -> Result<()>;
+    /// - `z`: prehashed message to be verified
+    /// - `sig`: signature to be verified against the key and message
+    fn verify_prehashed(&self, z: Scalar<C>, sig: &Signature<C>) -> Result<()> {
+        let (r, s) = sig.split_scalars();
+        let s_inv = Option::<Scalar<C>>::from(s.invert()).ok_or_else(Error::new)?;
+        let u1 = z * s_inv;
+        let u2 = *r * s_inv;
+
+        let x = ((C::ProjectivePoint::generator() * u1) + (C::ProjectivePoint::from(*self) * u2))
+            .to_affine()
+            .x();
+
+        if Scalar::<C>::from_be_bytes_reduced(x) == *r {
+            Ok(())
+        } else {
+            Err(Error::new())
+        }
+    }
 }
 
 /// Bind a preferred [`Digest`] algorithm to an elliptic curve type.
