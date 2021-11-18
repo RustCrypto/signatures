@@ -8,13 +8,20 @@ pub use pkcs8::DecodePrivateKey;
 #[cfg(feature = "alloc")]
 pub use pkcs8::EncodePrivateKey;
 
-use core::convert::{TryFrom, TryInto};
+use core::{
+    convert::{TryFrom, TryInto},
+    fmt,
+};
+use pkcs8::ObjectIdentifier;
 
-/// Algorithm [`ObjectIdentifier`][`pkcs8::ObjectIdentifier`] for the Ed25519
-/// digital signature algorithm (`id-Ed25519`).
+#[cfg(feature = "zeroize")]
+use zeroize::Zeroize;
+
+/// Algorithm [`ObjectIdentifier`] for the Ed25519 digital signature algorithm
+/// (`id-Ed25519`).
 ///
 /// <http://oid-info.com/get/1.3.101.112>
-const ALGORITHM_OID: pkcs8::ObjectIdentifier = pkcs8::ObjectIdentifier::new("1.3.101.112");
+pub const ALGORITHM_OID: ObjectIdentifier = ObjectIdentifier::new("1.3.101.112");
 
 /// Ed25519 keypair serialized as bytes.
 ///
@@ -104,18 +111,38 @@ impl EncodePrivateKey for KeypairBytes {
         };
 
         // Serialize private key as nested OCTET STRING
-        // TODO(tarcieri): zeroize this intermediate buffer?
         let mut private_key = [0u8; 2 + (Self::BYTE_SIZE / 2)];
         private_key[0] = 0x04;
         private_key[1] = 0x20;
         private_key[2..].copy_from_slice(&self.secret_key);
 
-        pkcs8::PrivateKeyInfo {
+        let result = pkcs8::PrivateKeyInfo {
             algorithm,
             private_key: &private_key,
             public_key: self.public_key.as_ref().map(AsRef::as_ref),
         }
-        .to_der()
+        .to_der();
+
+        #[cfg(feature = "zeroize")]
+        private_key.zeroize();
+
+        result
+    }
+}
+
+impl<'a> fmt::Debug for KeypairBytes {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("KeypairBytes")
+            .field("public_key", &self.public_key)
+            .finish() // TODO: use `finish_non_exhaustive` when MSRV 1.53
+    }
+}
+
+#[cfg(feature = "zeroize")]
+#[cfg_attr(docsrs, doc(cfg(feature = "zeroize")))]
+impl Drop for KeypairBytes {
+    fn drop(&mut self) {
+        self.secret_key.zeroize()
     }
 }
 
