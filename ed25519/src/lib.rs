@@ -277,11 +277,6 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs, rust_2018_idioms, unused_qualifications)]
 
-#[cfg(feature = "serde")]
-use serde::{de, ser, Deserialize, Serialize};
-#[cfg(feature = "serde_bytes")]
-use serde_bytes_crate as serde_bytes;
-
 #[cfg(feature = "pkcs8")]
 #[cfg_attr(docsrs, doc(cfg(feature = "pkcs8")))]
 pub mod pkcs8;
@@ -291,9 +286,14 @@ pub use signature::{self, Error};
 #[cfg(feature = "pkcs8")]
 pub use crate::pkcs8::KeypairBytes;
 
-use core::{
-    convert::{TryFrom, TryInto},
-    fmt::{self, Debug},
+use core::convert::{TryFrom, TryInto};
+
+#[cfg(feature = "serde_bytes")]
+use serde_bytes_crate as serde_bytes;
+#[cfg(feature = "serde")]
+use {
+    core::fmt,
+    serde::{de, ser, Deserialize, Serialize},
 };
 
 /// Length of an Ed25519 signature in bytes.
@@ -301,56 +301,15 @@ use core::{
 pub const SIGNATURE_LENGTH: usize = Signature::BYTE_SIZE;
 
 /// Ed25519 signature.
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct Signature([u8; Signature::BYTE_SIZE]);
 
 impl Signature {
     /// Size of an encoded Ed25519 signature in bytes.
     pub const BYTE_SIZE: usize = 64;
 
-    /// Create a new signature from a byte array.
-    pub fn new(bytes: [u8; Self::BYTE_SIZE]) -> Self {
-        // TODO(tarcieri): validate signature using pseudo-reduction logic in `TryFrom` impl
-        // This would require a breaking change to have this method return `Result`.
-        Self(bytes)
-    }
-
-    /// Return the inner byte array.
-    pub fn to_bytes(self) -> [u8; Self::BYTE_SIZE] {
-        self.0
-    }
-}
-
-impl signature::Signature for Signature {
-    fn from_bytes(bytes: &[u8]) -> signature::Result<Self> {
-        bytes.try_into()
-    }
-}
-
-impl AsRef<[u8]> for Signature {
-    fn as_ref(&self) -> &[u8] {
-        self.0.as_ref()
-    }
-}
-
-// can't derive `Debug`, `PartialEq`, or `Eq` below because core array types
-// only have  trait implementations for lengths 0..=32
-impl Debug for Signature {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "ed25519::Signature({:?})", &self.0[..])
-    }
-}
-
-impl From<[u8; Signature::BYTE_SIZE]> for Signature {
-    fn from(bytes: [u8; Signature::BYTE_SIZE]) -> Signature {
-        Signature(bytes)
-    }
-}
-
-impl<'a> TryFrom<&'a [u8]> for Signature {
-    type Error = Error;
-
-    fn try_from(bytes: &'a [u8]) -> signature::Result<Self> {
+    /// Parse an Ed25519 signature from a byte slice.
+    pub fn from_bytes(bytes: &[u8]) -> signature::Result<Self> {
         let result = bytes.try_into().map(Self).map_err(|_| Error::new())?;
 
         // Perform a partial reduction check on the signature's `s` scalar.
@@ -361,12 +320,49 @@ impl<'a> TryFrom<&'a [u8]> for Signature {
         // full reduction check in the event that the 4th most significant bit
         // is set), however it will catch a number of invalid signatures
         // relatively inexpensively.
-        // TODO(tarcieri): move this to `Signature::new` in next breaking release?
         if result.0[Signature::BYTE_SIZE - 1] & 0b1110_0000 != 0 {
             return Err(Error::new());
         }
 
         Ok(result)
+    }
+
+    /// Return the inner byte array.
+    pub fn to_bytes(self) -> [u8; Self::BYTE_SIZE] {
+        self.0
+    }
+
+    /// Create a new signature from a byte array.
+    #[deprecated(since = "1.3.0", note = "use ed25519::Signature::from_bytes instead")]
+    pub fn new(bytes: [u8; Self::BYTE_SIZE]) -> Self {
+        Self(bytes)
+    }
+}
+
+impl signature::Signature for Signature {
+    fn from_bytes(bytes: &[u8]) -> signature::Result<Self> {
+        Self::from_bytes(bytes)
+    }
+}
+
+impl AsRef<[u8]> for Signature {
+    fn as_ref(&self) -> &[u8] {
+        self.0.as_ref()
+    }
+}
+
+// TODO(tarcieri): remove this in the next breaking release
+impl From<[u8; Signature::BYTE_SIZE]> for Signature {
+    fn from(bytes: [u8; Signature::BYTE_SIZE]) -> Signature {
+        Signature(bytes)
+    }
+}
+
+impl TryFrom<&[u8]> for Signature {
+    type Error = Error;
+
+    fn try_from(bytes: &[u8]) -> signature::Result<Self> {
+        Self::from_bytes(bytes)
     }
 }
 
