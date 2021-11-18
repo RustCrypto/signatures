@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.3.0 (2021-11-18)
+### Added
+- `Signature::BYTE_SIZE` constant ([#380])
+- PKCS#8 support via `KeypairBytes` type ([#381])
+- `zeroize` feature ([#400])
+- Impl `Display`/`LowerHex`/`UpperHex`/`FromStr` for `Signature` ([#402])
+
+### Changed
+- Deprecate `SIGNATURE_LENGTH` constant in favor of `Signature::BYTE_SIZE` ([#380])
+- Deprecate `Signature::new` in favor of `Signature::from_bytes`/`TryFrom` ([#401])
+- `Signature::new` now panics on invalid signatures ([#403])
+
+[#380]: https://github.com/RustCrypto/signatures/pull/380
+[#381]: https://github.com/RustCrypto/signatures/pull/381
+[#400]: https://github.com/RustCrypto/signatures/pull/400
+[#401]: https://github.com/RustCrypto/signatures/pull/401
+[#402]: https://github.com/RustCrypto/signatures/pull/402
+[#403]: https://github.com/RustCrypto/signatures/pull/403
+
 ## 1.2.0 (2021-07-21)
 ### Added
 - `serde_bytes` optional dependency ([#337])
