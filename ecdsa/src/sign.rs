@@ -178,7 +178,7 @@ where
     fn try_sign_digest(&self, msg_digest: D) -> Result<Signature<C>> {
         let k = rfc6979::generate_k(&self.inner, msg_digest.clone(), &[]);
         let msg_scalar = Scalar::<C>::from_be_bytes_reduced(msg_digest.finalize_fixed());
-        Ok(self.inner.try_sign_prehashed(&**k, &msg_scalar)?.0)
+        Ok(self.inner.try_sign_prehashed(**k, msg_scalar)?.0)
     }
 }
 
@@ -214,7 +214,7 @@ where
 
         let k = rfc6979::generate_k(&self.inner, msg_digest.clone(), &added_entropy);
         let msg_scalar = Scalar::<C>::from_be_bytes_reduced(msg_digest.finalize_fixed());
-        Ok(self.inner.try_sign_prehashed(&**k, &msg_scalar)?.0)
+        Ok(self.inner.try_sign_prehashed(**k, msg_scalar)?.0)
     }
 }
 
