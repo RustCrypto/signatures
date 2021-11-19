@@ -106,7 +106,13 @@ use elliptic_curve::{
 };
 
 #[cfg(feature = "arithmetic")]
-use elliptic_curve::{ff::PrimeField, IsHigh, NonZeroScalar, ScalarArithmetic};
+use {
+    core::str,
+    elliptic_curve::{ff::PrimeField, IsHigh, NonZeroScalar, ScalarArithmetic},
+};
+
+#[cfg(feature = "serde")]
+use elliptic_curve::serde::{de, ser, Deserialize, Serialize};
 
 /// Size of a fixed sized signature for the given elliptic curve.
 pub type SignatureSize<C> = <FieldSize<C> as Add>::Output;
@@ -288,5 +294,140 @@ where
         Ok(Self {
             bytes: GenericArray::clone_from_slice(bytes),
         })
+    }
+}
+
+impl<C> fmt::Display for Signature<C>
+where
+    C: PrimeCurve,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:X}", self)
+    }
+}
+
+impl<C> fmt::LowerHex for Signature<C>
+where
+    C: PrimeCurve,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for byte in &self.bytes {
+            write!(f, "{:02x}", byte)?;
+        }
+        Ok(())
+    }
+}
+
+impl<C> fmt::UpperHex for Signature<C>
+where
+    C: PrimeCurve,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for byte in &self.bytes {
+            write!(f, "{:02X}", byte)?;
+        }
+        Ok(())
+    }
+}
+
+#[cfg(feature = "arithmetic")]
+#[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
+impl<C> str::FromStr for Signature<C>
+where
+    C: PrimeCurve + ScalarArithmetic,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    type Err = Error;
+
+    fn from_str(hex: &str) -> Result<Self> {
+        if hex.as_bytes().len() != C::UInt::BYTE_SIZE * 4 {
+            return Err(Error::new());
+        }
+
+        if !hex
+            .as_bytes()
+            .iter()
+            .all(|&byte| matches!(byte, b'0'..=b'9' | b'a'..=b'z' | b'A'..=b'Z'))
+        {
+            return Err(Error::new());
+        }
+
+        let (r_hex, s_hex) = hex.split_at(C::UInt::BYTE_SIZE * 2);
+
+        let r = r_hex
+            .parse::<NonZeroScalar<C>>()
+            .map_err(|_| Error::new())?;
+
+        let s = s_hex
+            .parse::<NonZeroScalar<C>>()
+            .map_err(|_| Error::new())?;
+
+        Self::from_scalars(r, s)
+    }
+}
+
+#[cfg(feature = "serde")]
+#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
+impl<C> Serialize for Signature<C>
+where
+    C: PrimeCurve + ScalarArithmetic,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    #[cfg(not(feature = "alloc"))]
+    fn serialize<S>(&self, serializer: S) -> core::result::Result<S::Ok, S::Error>
+    where
+        S: ser::Serializer,
+    {
+        self.as_ref().serialize(serializer)
+    }
+
+    #[cfg(feature = "alloc")]
+    fn serialize<S>(&self, serializer: S) -> core::result::Result<S::Ok, S::Error>
+    where
+        S: ser::Serializer,
+    {
+        use alloc::string::ToString;
+        if serializer.is_human_readable() {
+            self.to_string().serialize(serializer)
+        } else {
+            self.as_ref().serialize(serializer)
+        }
+    }
+}
+
+#[cfg(all(feature = "arithmetic", feature = "serde"))]
+#[cfg_attr(docsrs, doc(all(feature = "arithmetic", feature = "serde")))]
+impl<'de, C> Deserialize<'de> for Signature<C>
+where
+    C: PrimeCurve + ScalarArithmetic,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    #[cfg(not(feature = "alloc"))]
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
+    where
+        D: de::Deserializer<'de>,
+    {
+        use de::Error;
+        <&[u8]>::deserialize(deserializer)
+            .and_then(|slice| Self::try_from(bytes).map_err(D::Error::custom))
+    }
+
+    #[cfg(feature = "alloc")]
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
+    where
+        D: de::Deserializer<'de>,
+    {
+        use de::Error;
+        if deserializer.is_human_readable() {
+            <&str>::deserialize(deserializer)?
+                .parse()
+                .map_err(D::Error::custom)
+        } else {
+            <&[u8]>::deserialize(deserializer)
+                .and_then(|bytes| Self::try_from(bytes).map_err(D::Error::custom))
+        }
     }
 }

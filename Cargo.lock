@@ -170,15 +170,6 @@ dependencies = [
 
 [[package]]
 name = "ed25519"
-version = "1.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4620d40f6d2601794401d6dd95a5cf69b6c157852539470eeda433a99b3c0efc"
-dependencies = [
- "signature",
-]
-
-[[package]]
-name = "ed25519"
 version = "1.3.0"
 dependencies = [
  "bincode",
@@ -194,13 +185,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "ed25519"
+version = "1.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "74e1069e39f1454367eb2de793ed062fac4c35c2934b76a81d90dd9abcd28816"
+dependencies = [
+ "signature",
+]
+
+[[package]]
 name = "ed25519-dalek"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c762bae6dcaf24c4c84667b8579785430908723d5c889f469d76a41d59cc7a9d"
 dependencies = [
  "curve25519-dalek",
- "ed25519 1.2.0",
+ "ed25519 1.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand",
  "serde",
  "sha2",
@@ -222,7 +222,7 @@ dependencies = [
 [[package]]
 name = "elliptic-curve"
 version = "0.11.0-pre"
-source = "git+https://github.com/RustCrypto/traits.git#7d813023da0ce6e418e4f7bf3b0dda9914a891cb"
+source = "git+https://github.com/RustCrypto/traits.git#88d5ea3ad633d13c9ac3b064c084f645830d7713"
 dependencies = [
  "crypto-bigint 0.3.2",
  "der 0.5.1",
@@ -233,6 +233,7 @@ dependencies = [
  "pem-rfc7468 0.2.3",
  "rand_core 0.6.3",
  "sec1",
+ "serde",
  "subtle",
  "zeroize",
 ]
@@ -495,7 +496,7 @@ dependencies = [
  "aead",
  "digest",
  "ecdsa 0.12.4",
- "ed25519 1.2.0",
+ "ed25519 1.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "generic-array",
  "opaque-debug",
  "p256",
@@ -506,9 +507,9 @@ dependencies = [
 
 [[package]]
 name = "sec1"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2503adcd8c83e7081b3f9a3173f328f4d6cd50e116aaa324389b46f2d771d595"
+checksum = "08da66b8b0965a5555b6bd6639e68ccba85e1e2506f5fbb089e93f8a04e1a2d1"
 dependencies = [
  "der 0.5.1",
  "generic-array",
