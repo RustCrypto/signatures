@@ -112,7 +112,11 @@ use {
 };
 
 #[cfg(feature = "serde")]
-use elliptic_curve::serde::{de, ser, Deserialize, Serialize};
+use elliptic_curve::serde::{ser, Serialize};
+
+// TODO(tarcieri): support deserialization with the `arithmetic` feature disabled
+#[cfg(all(feature = "arithmetic", feature = "serde"))]
+use elliptic_curve::serde::{de, Deserialize};
 
 /// Size of a fixed sized signature for the given elliptic curve.
 pub type SignatureSize<C> = <FieldSize<C> as Add>::Output;
@@ -373,7 +377,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 impl<C> Serialize for Signature<C>
 where
-    C: PrimeCurve + ScalarArithmetic,
+    C: PrimeCurve,
     SignatureSize<C>: ArrayLength<u8>,
 {
     #[cfg(not(feature = "alloc"))]
@@ -398,6 +402,7 @@ where
     }
 }
 
+// TODO(tarcieri): support deserialization with the `arithmetic` feature disabled
 #[cfg(all(feature = "arithmetic", feature = "serde"))]
 #[cfg_attr(docsrs, doc(all(feature = "arithmetic", feature = "serde")))]
 impl<'de, C> Deserialize<'de> for Signature<C>
@@ -412,7 +417,7 @@ where
     {
         use de::Error;
         <&[u8]>::deserialize(deserializer)
-            .and_then(|slice| Self::try_from(bytes).map_err(D::Error::custom))
+            .and_then(|bytes| Self::try_from(bytes).map_err(D::Error::custom))
     }
 
     #[cfg(feature = "alloc")]
