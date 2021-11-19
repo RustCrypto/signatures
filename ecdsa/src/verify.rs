@@ -14,13 +14,17 @@ use elliptic_curve::{
 use signature::{digest::Digest, DigestVerifier, Verifier};
 
 #[cfg(feature = "pkcs8")]
-use crate::elliptic_curve::{
+use elliptic_curve::{
     pkcs8::{self, DecodePublicKey},
     AlgorithmParameters,
 };
 
 #[cfg(feature = "pem")]
 use core::str::FromStr;
+
+#[cfg(all(feature = "pem", feature = "serde"))]
+#[cfg_attr(docsrs, doc(all(feature = "pem", feature = "serde")))]
+use elliptic_curve::serde::{de, ser, Deserialize, Serialize};
 
 /// ECDSA verification key (i.e. public key). Generic over elliptic curves.
 ///
@@ -221,5 +225,37 @@ where
 
     fn from_str(s: &str) -> Result<Self> {
         Self::from_public_key_pem(s).map_err(|_| Error::new())
+    }
+}
+
+#[cfg(all(feature = "pem", feature = "serde"))]
+#[cfg_attr(docsrs, doc(all(feature = "pem", feature = "serde")))]
+impl<C> Serialize for VerifyingKey<C>
+where
+    C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic + PointCompression,
+    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    FieldSize<C>: sec1::ModulusSize,
+{
+    fn serialize<S>(&self, serializer: S) -> core::result::Result<S::Ok, S::Error>
+    where
+        S: ser::Serializer,
+    {
+        self.inner.serialize(serializer)
+    }
+}
+
+#[cfg(all(feature = "pem", feature = "serde"))]
+#[cfg_attr(docsrs, doc(all(feature = "pem", feature = "serde")))]
+impl<'de, C> Deserialize<'de> for VerifyingKey<C>
+where
+    C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic + PointCompression,
+    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    FieldSize<C>: sec1::ModulusSize,
+{
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
+    where
+        D: de::Deserializer<'de>,
+    {
+        PublicKey::<C>::deserialize(deserializer).map(Into::into)
     }
 }
