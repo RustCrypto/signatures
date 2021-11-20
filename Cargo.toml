@@ -1,6 +1,3 @@
 [workspace]
 resolver = "2"
 members = ["ecdsa", "ed25519"]
-
-[patch.crates-io]
-elliptic-curve = { git = "https://github.com/RustCrypto/traits.git" }
