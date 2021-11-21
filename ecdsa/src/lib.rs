@@ -1,17 +1,6 @@
-//! Elliptic Curve Digital Signature Algorithm (ECDSA) as specified in
-//! [FIPS 186-4] (Digital Signature Standard)
-//!
-//! ## About
-//!
-//! This crate provides generic ECDSA support which can be used in the
-//! following ways:
-//!
-//! - Generic implementation of ECDSA usable with the following crates:
-//!   - [`k256`] (secp256k1)
-//!   - [`p256`] (NIST P-256)
-//! - ECDSA signature types alone which can be used to provide interoperability
-//!   between other crates that provide an ECDSA implementation:
-//!   - [`p384`] (NIST P-384)
+#![doc = include_str!("../README.md")]
+
+//! ## Interop
 //!
 //! Any crates which provide an implementation of ECDSA for a particular
 //! elliptic curve can leverage the types from this crate, along with the
@@ -26,14 +15,6 @@
 //! wrap the ECDSA implementations from [*ring*] in a generic, interoperable
 //! API.
 //!
-//! ## Minimum Supported Rust Version
-//!
-//! Rust **1.56** or higher.
-//!
-//! Minimum supported Rust version may be changed in the future, but it will be
-//! accompanied with a minor version bump.
-//!
-//! [FIPS 186-4]: https://csrc.nist.gov/publications/detail/fips/186/4/final
 //! [`k256`]: https://docs.rs/k256
 //! [`p256`]: https://docs.rs/p256
 //! [`p256::ecdsa::Signature`]: https://docs.rs/p256/latest/p256/ecdsa/type.Signature.html
@@ -49,7 +30,7 @@
 #![doc(
     html_logo_url = "https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg",
     html_favicon_url = "https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg",
-    html_root_url = "https://docs.rs/ecdsa/0.13.0-pre"
+    html_root_url = "https://docs.rs/ecdsa/0.13.0"
 )]
 
 #[cfg(feature = "alloc")]
@@ -404,7 +385,7 @@ where
 
 // TODO(tarcieri): support deserialization with the `arithmetic` feature disabled
 #[cfg(all(feature = "arithmetic", feature = "serde"))]
-#[cfg_attr(docsrs, doc(all(feature = "arithmetic", feature = "serde")))]
+#[cfg_attr(docsrs, doc(cfg(all(feature = "arithmetic", feature = "serde"))))]
 impl<'de, C> Deserialize<'de> for Signature<C>
 where
     C: PrimeCurve + ScalarArithmetic,
