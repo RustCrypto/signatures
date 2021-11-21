@@ -1,4 +1,4 @@
-# RustCrypto: ECDSA
+# [RustCrypto]: ECDSA
 
 [![crate][crate-image]][crate-link]
 [![Docs][docs-image]][docs-link]
@@ -57,8 +57,12 @@ dual licensed as above, without any additional terms or conditions.
 [rustc-image]: https://img.shields.io/badge/rustc-1.56+-blue.svg
 [chat-image]: https://img.shields.io/badge/zulip-join_chat-blue.svg
 [chat-link]: https://rustcrypto.zulipchat.com/#narrow/stream/260048-signatures
-[build-image]: https://github.com/RustCrypto/signatures/workflows/ecdsa/badge.svg?branch=master&event=push
-[build-link]: https://github.com/RustCrypto/signatures/actions?query=workflow%3Aecdsa
+[build-image]: https://github.com/RustCrypto/signatures/actions/workflows/ecdsa.yml/badge.svg
+[build-link]: https://github.com/RustCrypto/signatures/actions/workflows/ecdsa.yml
+
+[//]: # (links)
+
+[RustCrypto]: https://github.com/RustCrypto
 
 [//]: # (footnotes)
 
