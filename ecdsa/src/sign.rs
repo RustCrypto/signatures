@@ -13,7 +13,9 @@ use elliptic_curve::{
     ops::{Invert, Reduce},
     subtle::{Choice, ConstantTimeEq},
     zeroize::Zeroize,
-    FieldBytes, FieldSize, NonZeroScalar, PrimeCurve, ProjectiveArithmetic, Scalar, SecretKey,
+    zeroize::Zeroizing,
+    FieldBytes, FieldSize, NonZeroScalar, PrimeCurve, ProjectiveArithmetic, Scalar, ScalarCore,
+    SecretKey,
 };
 use signature::{
     digest::{BlockInput, Digest, FixedOutput, Reset, Update},
@@ -176,8 +178,17 @@ where
     /// computed using the algorithm described in RFC 6979 (Section 3.2):
     /// <https://tools.ietf.org/html/rfc6979#section-3>
     fn try_sign_digest(&self, msg_digest: D) -> Result<Signature<C>> {
-        let k = rfc6979::generate_k(&self.inner, msg_digest.clone(), &[]);
+        let x = Zeroizing::new(ScalarCore::<C>::from(self.inner));
         let msg_scalar = Scalar::<C>::from_be_bytes_reduced(msg_digest.finalize_fixed());
+        let k = Zeroizing::new(
+            NonZeroScalar::<C>::from_uint(*rfc6979::generate_k::<D, _>(
+                x.as_uint(),
+                &C::ORDER,
+                &msg_scalar.to_repr(),
+                &[],
+            ))
+            .unwrap(),
+        );
         Ok(self.inner.try_sign_prehashed(**k, msg_scalar)?.0)
     }
 }
@@ -209,11 +220,20 @@ where
         mut rng: impl CryptoRng + RngCore,
         msg_digest: D,
     ) -> Result<Signature<C>> {
-        let mut added_entropy = FieldBytes::<C>::default();
-        rng.fill_bytes(&mut added_entropy);
+        let mut entropy = FieldBytes::<C>::default();
+        rng.fill_bytes(&mut entropy);
 
-        let k = rfc6979::generate_k(&self.inner, msg_digest.clone(), &added_entropy);
+        let x = Zeroizing::new(ScalarCore::<C>::from(self.inner));
         let msg_scalar = Scalar::<C>::from_be_bytes_reduced(msg_digest.finalize_fixed());
+        let k = Zeroizing::new(
+            NonZeroScalar::<C>::from_uint(*rfc6979::generate_k::<D, _>(
+                x.as_uint(),
+                &C::ORDER,
+                &msg_scalar.to_repr(),
+                &entropy,
+            ))
+            .unwrap(),
+        );
         Ok(self.inner.try_sign_prehashed(**k, msg_scalar)?.0)
     }
 }

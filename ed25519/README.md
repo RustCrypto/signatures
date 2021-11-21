@@ -1,4 +1,4 @@
-# RustCrypto: Ed25519
+# [RustCrypto]: Ed25519
 
 [![crate][crate-image]][crate-link]
 [![Docs][docs-image]][docs-link]
@@ -57,7 +57,11 @@ dual licensed as above, without any additional terms or conditions.
 [build-image]: https://github.com/RustCrypto/signatures/workflows/ed25519/badge.svg?branch=master&event=push
 [build-link]: https://github.com/RustCrypto/signatures/actions?query=workflow%3Aed25519
 
-[//]: # (general links)
+[//]: # (links)
+
+[RustCrypto]: https://github.com/RustCrypto
+
+[//]: # (footnotes)
 
 [1]: https://en.wikipedia.org/wiki/EdDSA
 [2]: https://tools.ietf.org/html/rfc8032

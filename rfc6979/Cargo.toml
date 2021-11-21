@@ -1,0 +1,24 @@
+[package]
+name    = "rfc6979"
+version = "0.0.0" # Also update html_root_url in lib.rs when bumping this
+description = """
+Pure Rust implementation of RFC6979: Deterministic Usage of the
+Digital Signature Algorithm (DSA) and Elliptic Curve Digital Signature Algorithm (ECDSA)
+"""
+authors = ["RustCrypto Developers"]
+license = "Apache-2.0 OR MIT"
+repository = "https://github.com/RustCrypto/signatures/tree/master/rfc6979"
+readme = "README.md"
+categories = ["cryptography", "no-std"]
+keywords = ["dsa", "ecdsa", "signature"]
+edition = "2021"
+rust-version = "1.56"
+
+[dependencies]
+crypto-bigint = { version = "0.3", default-features = false, features = ["generic-array", "zeroize"] }
+hmac = { version = "0.11", default-features = false }
+zeroize = { version = "1", default-features = false }
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

@@ -70,10 +70,6 @@ pub mod dev;
 pub mod hazmat;
 
 #[cfg(feature = "sign")]
-#[cfg_attr(docsrs, doc(cfg(feature = "sign")))]
-pub mod rfc6979;
-
-#[cfg(feature = "sign")]
 mod sign;
 
 #[cfg(feature = "verify")]
@@ -87,13 +83,17 @@ pub use elliptic_curve::{self, sec1::EncodedPoint, PrimeCurve};
 // Re-export the `signature` crate (and select types)
 pub use signature::{self, Error, Result};
 
+#[cfg(feature = "rfc6979")]
+#[cfg_attr(docsrs, doc(cfg(feature = "rfc6979")))]
+pub use rfc6979;
+
 #[cfg(feature = "sign")]
 #[cfg_attr(docsrs, doc(cfg(feature = "sign")))]
-pub use sign::SigningKey;
+pub use crate::sign::SigningKey;
 
 #[cfg(feature = "verify")]
 #[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
-pub use verify::VerifyingKey;
+pub use crate::verify::VerifyingKey;
 
 use core::{
     fmt::{self, Debug},
