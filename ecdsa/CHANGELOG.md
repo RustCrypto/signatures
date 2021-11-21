@@ -4,6 +4,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.13.0 (2021-11-21)
+### Added
+- `RecoveryId` type ([#392])
+- Default generic impl of `SignPrimitive::try_sign_prehashed` ([#396])
+- Default generic impl of `VerifyPrimitive::verify_prehashed` ([#397])
+- `serde` support ([#406])
+
+### Changed
+- Make `Signature::normalize_s` non-mutating ([#355])
+- Switch from `ScalarBytes<C>` to `ScalarCore<C>` ([#356])
+- Use `PrimeCurve` trait ([#357])
+- Replace `FromDigest` trait with `Reduce` ([#372])
+- 2021 edition upgrade; MSRV 1.56 ([#384])
+- Allow `signature` v1.4 as a dependency ([#385])
+- Bump `der` dependency to v0.5 ([#408])
+- Bump `elliptic-curve` dependency to v0.11 ([#408])
+- Split out `rfc6979` crate ([#409])
+
+### Removed
+- `NormalizeLow` trait ([#393])
+- `RecoverableSignPrimitive` ([#394])
+
+[#355]: https://github.com/RustCrypto/signatures/pull/355
+[#356]: https://github.com/RustCrypto/signatures/pull/356
+[#357]: https://github.com/RustCrypto/signatures/pull/357
+[#372]: https://github.com/RustCrypto/signatures/pull/372
+[#384]: https://github.com/RustCrypto/signatures/pull/384
+[#385]: https://github.com/RustCrypto/signatures/pull/385
+[#392]: https://github.com/RustCrypto/signatures/pull/392
+[#393]: https://github.com/RustCrypto/signatures/pull/393
+[#394]: https://github.com/RustCrypto/signatures/pull/394
+[#396]: https://github.com/RustCrypto/signatures/pull/396
+[#397]: https://github.com/RustCrypto/signatures/pull/397
+[#406]: https://github.com/RustCrypto/signatures/pull/406
+[#408]: https://github.com/RustCrypto/signatures/pull/408
+[#409]: https://github.com/RustCrypto/signatures/pull/409
+
 ## 0.12.4 (2021-08-12)
 ### Added
 - Impl `Clone`, `Debug`, `*Eq` for `SigningKey` ([#345])

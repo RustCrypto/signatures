@@ -229,7 +229,7 @@ where
 }
 
 #[cfg(all(feature = "pem", feature = "serde"))]
-#[cfg_attr(docsrs, doc(all(feature = "pem", feature = "serde")))]
+#[cfg_attr(docsrs, doc(cfg(all(feature = "pem", feature = "serde"))))]
 impl<C> Serialize for VerifyingKey<C>
 where
     C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic + PointCompression,
@@ -245,7 +245,7 @@ where
 }
 
 #[cfg(all(feature = "pem", feature = "serde"))]
-#[cfg_attr(docsrs, doc(all(feature = "pem", feature = "serde")))]
+#[cfg_attr(docsrs, doc(cfg(all(feature = "pem", feature = "serde"))))]
 impl<'de, C> Deserialize<'de> for VerifyingKey<C>
 where
     C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic + PointCompression,
