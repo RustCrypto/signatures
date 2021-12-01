@@ -1,25 +1,5 @@
-//! Ed25519 signatures.
-//!
-//! Edwards Digital Signature Algorithm (EdDSA) over Curve25519 as specified in
-//! RFC 8032: <https://tools.ietf.org/html/rfc8032>
-//!
-//! This crate doesn't contain an implementation of Ed25519, but instead
-//! contains an [`ed25519::Signature`][`Signature`] type which other crates can
-//! use in conjunction with the [`signature::Signer`] and
-//! [`signature::Verifier`] traits defined in the [`signature`] crate.
-//!
-//! These traits allow crates which produce and consume Ed25519 signatures
-//! to be written abstractly in such a way that different signing_key/verifier
-//! providers can be plugged in, enabling support for using different
-//! Ed25519 implementations, including HSMs or Cloud KMS services.
-//!
-//! ## Minimum Supported Rust Version
-//!
-//! Rust **1.56** or higher.
-//!
-//! Minimum supported Rust version may be changed in the future, but such
-//! changes will be accompanied with a minor version bump.
-//!
+#![doc = include_str!("../README.md")]
+
 //! # Using Ed25519 generically over algorithm implementations/providers
 //!
 //! By using the `ed25519` crate, you can write code which signs and verifies
@@ -272,7 +252,7 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![doc(
     html_logo_url = "https://raw.githubusercontent.com/RustCrypto/meta/master/logo_small.png",
-    html_root_url = "https://docs.rs/ed25519/1.3.0"
+    html_root_url = "https://docs.rs/ed25519/1.4.0-pre"
 )]
 #![forbid(unsafe_code)]
 #![warn(missing_docs, rust_2018_idioms, unused_qualifications)]
@@ -286,10 +266,7 @@ pub use signature::{self, Error};
 #[cfg(feature = "pkcs8")]
 pub use crate::pkcs8::KeypairBytes;
 
-use core::{
-    convert::{TryFrom, TryInto},
-    fmt, str,
-};
+use core::{fmt, str};
 
 #[cfg(feature = "serde")]
 use serde::{de, ser, Deserialize, Serialize};

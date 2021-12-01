@@ -10,6 +10,10 @@
 [Edwards Digital Signature Algorithm (EdDSA)][1] over Curve25519 as specified
 in [RFC 8032][2].
 
+[Documentation][docs-link]
+
+## About
+
 This crate doesn't contain an implementation of Ed25519, but instead
 contains an [`ed25519::Signature`][3] type which other crates can use in
 conjunction with the [`signature::Signer`][4] and [`signature::Verifier`][5]
@@ -20,14 +24,22 @@ to be written abstractly in such a way that different signer/verifier
 providers can be plugged in, enabling support for using different
 Ed25519 implementations, including HSMs or Cloud KMS services.
 
-[Documentation][docs-link]
-
 ## Minimum Supported Rust Version
 
-This crate requires **Rust 1.56** at a minimum.
+This crate requires **Rust 1.56** at a minimum as it is a Rust 2021 edition crate.
 
-We may change the MSRV in the future, but it will be accompanied by a minor
-version bump.
+Previous 1.x releases of this crate supported an MSRV of 1.47. If you would
+like to use this crate with earlier releases of Rust, use the following version
+constraint in your project's Cargo.toml to constrain it to the supported
+version range:
+
+```toml
+[dependencies]
+ed25519 = ">=1, <1.4" # ed25519 1.4 requires MSRV 1.56
+```
+
+Note that is our policy that we may change the MSRV in the future, but it will
+be accompanied by a minor version bump.
 
 ## License
 

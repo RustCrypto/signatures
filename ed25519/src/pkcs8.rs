@@ -8,10 +8,7 @@ pub use pkcs8::DecodePrivateKey;
 #[cfg(feature = "alloc")]
 pub use pkcs8::EncodePrivateKey;
 
-use core::{
-    convert::{TryFrom, TryInto},
-    fmt,
-};
+use core::fmt;
 use pkcs8::ObjectIdentifier;
 
 #[cfg(feature = "zeroize")]
