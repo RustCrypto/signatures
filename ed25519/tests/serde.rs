@@ -3,8 +3,6 @@
 #![cfg(feature = "serde")]
 
 use ed25519::Signature;
-use signature::Signature as _;
-use std::{convert::TryFrom, vec::Vec};
 
 #[cfg(feature = "serde_bytes")]
 use serde_bytes_crate as serde_bytes;
@@ -25,7 +23,7 @@ fn test_serialize() {
 #[test]
 fn test_deserialize() {
     let signature = bincode::deserialize::<Signature>(&EXAMPLE_SIGNATURE).unwrap();
-    assert_eq!(&EXAMPLE_SIGNATURE[..], signature.as_bytes());
+    assert_eq!(&EXAMPLE_SIGNATURE[..], signature.as_ref());
 }
 
 #[cfg(feature = "serde_bytes")]
@@ -62,5 +60,5 @@ fn test_deserialize_bytes() {
 
     let signature: Signature = serde_bytes::deserialize(&mut deserializer).unwrap();
 
-    assert_eq!(&EXAMPLE_SIGNATURE[..], signature.as_bytes());
+    assert_eq!(&EXAMPLE_SIGNATURE[..], signature.as_ref());
 }
