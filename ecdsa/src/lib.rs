@@ -64,10 +64,6 @@ pub use elliptic_curve::{self, sec1::EncodedPoint, PrimeCurve};
 // Re-export the `signature` crate (and select types)
 pub use signature::{self, Error, Result};
 
-#[cfg(feature = "rfc6979")]
-#[cfg_attr(docsrs, doc(cfg(feature = "rfc6979")))]
-pub use rfc6979;
-
 #[cfg(feature = "sign")]
 #[cfg_attr(docsrs, doc(cfg(feature = "sign")))]
 pub use crate::sign::SigningKey;

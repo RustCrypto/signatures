@@ -4,8 +4,7 @@
 //!
 //! YOU PROBABLY DON'T WANT TO USE THESE!
 //!
-//! These primitives are easy-to-misuse low-level interfaces intended to be
-//! implemented by elliptic curve crates and consumed only by this crate!
+//! These primitives are easy-to-misuse low-level interfaces.
 //!
 //! If you are an end user / non-expert in cryptography, do not use these!
 //! Failure to use them correctly can lead to catastrophic failures including
@@ -25,14 +24,20 @@ use {
 
 #[cfg(feature = "digest")]
 use {
-    crate::signature::{digest::Digest, PrehashSignature},
     elliptic_curve::FieldSize,
+    signature::{digest::Digest, PrehashSignature},
 };
 
 #[cfg(any(feature = "arithmetic", feature = "digest"))]
 use crate::{
     elliptic_curve::{generic_array::ArrayLength, PrimeCurve},
     Signature,
+};
+
+#[cfg(all(feature = "sign"))]
+use {
+    elliptic_curve::{ff::PrimeField, zeroize::Zeroizing, NonZeroScalar, ScalarCore},
+    signature::digest::{BlockInput, FixedOutput, Reset, Update},
 };
 
 /// Try to sign the given prehashed message using ECDSA.
@@ -160,4 +165,28 @@ where
     <FieldSize<C> as core::ops::Add>::Output: ArrayLength<u8>,
 {
     type Digest = C::Digest;
+}
+
+/// Deterministically compute ECDSA ephemeral scalar `k` using the method
+/// described in RFC6979.
+///
+/// Accepts the following parameters:
+/// - `x`: secret key
+/// - `z`: message scalar (i.e. message digest reduced mod p)
+/// - `ad`: optional additional data, e.g. added entropy from an RNG
+#[cfg(all(feature = "sign"))]
+#[cfg_attr(docsrs, doc(cfg(feature = "sign")))]
+pub fn rfc6979_generate_k<C, D>(
+    x: &NonZeroScalar<C>,
+    z: &Scalar<C>,
+    ad: &[u8],
+) -> Zeroizing<NonZeroScalar<C>>
+where
+    C: PrimeCurve + ProjectiveArithmetic,
+    D: FixedOutput<OutputSize = FieldSize<C>> + BlockInput + Clone + Default + Reset + Update,
+{
+    // TODO(tarcieri): avoid this conversion
+    let x = Zeroizing::new(ScalarCore::<C>::from(x));
+    let k = rfc6979::generate_k::<D, C::UInt>(x.as_uint(), &C::ORDER, &z.to_repr(), ad);
+    Zeroizing::new(NonZeroScalar::<C>::from_uint(*k).unwrap())
 }
