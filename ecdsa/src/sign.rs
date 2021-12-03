@@ -3,8 +3,8 @@
 // TODO(tarcieri): support for hardware crypto accelerators
 
 use crate::{
-    hazmat::{DigestPrimitive, SignPrimitive},
-    rfc6979, Error, Result, Signature, SignatureSize,
+    hazmat::{rfc6979_generate_k, DigestPrimitive, SignPrimitive},
+    Error, Result, Signature, SignatureSize,
 };
 use core::fmt::{self, Debug};
 use elliptic_curve::{
@@ -13,9 +13,7 @@ use elliptic_curve::{
     ops::{Invert, Reduce},
     subtle::{Choice, ConstantTimeEq},
     zeroize::Zeroize,
-    zeroize::Zeroizing,
-    FieldBytes, FieldSize, NonZeroScalar, PrimeCurve, ProjectiveArithmetic, Scalar, ScalarCore,
-    SecretKey,
+    FieldBytes, FieldSize, NonZeroScalar, PrimeCurve, ProjectiveArithmetic, Scalar, SecretKey,
 };
 use signature::{
     digest::{BlockInput, Digest, FixedOutput, Reset, Update},
@@ -178,17 +176,8 @@ where
     /// computed using the algorithm described in RFC 6979 (Section 3.2):
     /// <https://tools.ietf.org/html/rfc6979#section-3>
     fn try_sign_digest(&self, msg_digest: D) -> Result<Signature<C>> {
-        let x = Zeroizing::new(ScalarCore::<C>::from(self.inner));
         let msg_scalar = Scalar::<C>::from_be_bytes_reduced(msg_digest.finalize_fixed());
-        let k = Zeroizing::new(
-            NonZeroScalar::<C>::from_uint(*rfc6979::generate_k::<D, _>(
-                x.as_uint(),
-                &C::ORDER,
-                &msg_scalar.to_repr(),
-                &[],
-            ))
-            .unwrap(),
-        );
+        let k = rfc6979_generate_k::<C, D>(&self.inner, &msg_scalar, &[]);
         Ok(self.inner.try_sign_prehashed(**k, msg_scalar)?.0)
     }
 }
@@ -223,17 +212,8 @@ where
         let mut entropy = FieldBytes::<C>::default();
         rng.fill_bytes(&mut entropy);
 
-        let x = Zeroizing::new(ScalarCore::<C>::from(self.inner));
         let msg_scalar = Scalar::<C>::from_be_bytes_reduced(msg_digest.finalize_fixed());
-        let k = Zeroizing::new(
-            NonZeroScalar::<C>::from_uint(*rfc6979::generate_k::<D, _>(
-                x.as_uint(),
-                &C::ORDER,
-                &msg_scalar.to_repr(),
-                &entropy,
-            ))
-            .unwrap(),
-        );
+        let k = rfc6979_generate_k::<C, D>(&self.inner, &msg_scalar, &entropy);
         Ok(self.inner.try_sign_prehashed(**k, msg_scalar)?.0)
     }
 }
