@@ -18,7 +18,7 @@ use {
         group::Curve as _,
         ops::{Invert, LinearCombination, Reduce},
         AffineArithmetic, AffineXCoordinate, Field, FieldBytes, Group, ProjectiveArithmetic,
-        Scalar, ScalarArithmetic,
+        ProjectivePoint, Scalar, ScalarArithmetic,
     },
 };
 
@@ -112,7 +112,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
 pub trait VerifyPrimitive<C>: AffineXCoordinate<C> + Copy + Sized
 where
-    C: PrimeCurve + AffineArithmetic<AffinePoint = Self> + LinearCombination + ProjectiveArithmetic,
+    C: PrimeCurve + AffineArithmetic<AffinePoint = Self> + ProjectiveArithmetic,
     Scalar<C>: Reduce<C::UInt>,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -127,10 +127,10 @@ where
         let s_inv = Option::<Scalar<C>>::from(s.invert()).ok_or_else(Error::new)?;
         let u1 = z * s_inv;
         let u2 = *r * s_inv;
-        let x = C::lincomb(
-            &C::ProjectivePoint::generator(),
+        let x = ProjectivePoint::<C>::lincomb(
+            &ProjectivePoint::<C>::generator(),
             &u1,
-            &C::ProjectivePoint::from(*self),
+            &ProjectivePoint::<C>::from(*self),
             &u2,
         )
         .to_affine()
