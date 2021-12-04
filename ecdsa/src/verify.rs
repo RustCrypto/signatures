@@ -30,6 +30,15 @@ use elliptic_curve::serde::{de, ser, Deserialize, Serialize};
 ///
 /// Requires an [`elliptic_curve::ProjectiveArithmetic`] impl on the curve, and a
 /// [`VerifyPrimitive`] impl on its associated `AffinePoint` type.
+///
+/// # `serde` support
+///
+/// When the `serde` feature of this crate is enabled, it provides support for
+/// serializing and deserializing ECDSA signatures using the `Serialize` and
+/// `Deserialize` traits.
+///
+/// The serialization leverages the encoding used by the [`PublicKey`] type,
+/// which is a binary-oriented ASN.1 DER encoding.
 #[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
 #[derive(Clone, Debug)]
 pub struct VerifyingKey<C>
