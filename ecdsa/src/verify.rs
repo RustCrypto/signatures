@@ -7,7 +7,7 @@ use crate::{
 use core::{cmp::Ordering, fmt::Debug};
 use elliptic_curve::{
     generic_array::ArrayLength,
-    ops::{LinearCombination, Reduce},
+    ops::Reduce,
     sec1::{self, EncodedPoint, FromEncodedPoint, ToEncodedPoint},
     AffinePoint, FieldSize, PointCompression, PrimeCurve, ProjectiveArithmetic, PublicKey, Scalar,
 };
@@ -79,7 +79,7 @@ impl<C> Copy for VerifyingKey<C> where C: PrimeCurve + ProjectiveArithmetic {}
 
 impl<C, D> DigestVerifier<D, Signature<C>> for VerifyingKey<C>
 where
-    C: PrimeCurve + ProjectiveArithmetic + LinearCombination,
+    C: PrimeCurve + ProjectiveArithmetic,
     D: Digest<OutputSize = FieldSize<C>>,
     AffinePoint<C>: VerifyPrimitive<C>,
     Scalar<C>: Reduce<C::UInt>,
@@ -93,7 +93,7 @@ where
 
 impl<C> Verifier<Signature<C>> for VerifyingKey<C>
 where
-    C: PrimeCurve + ProjectiveArithmetic + DigestPrimitive + LinearCombination,
+    C: PrimeCurve + ProjectiveArithmetic + DigestPrimitive,
     C::Digest: Digest<OutputSize = FieldSize<C>>,
     AffinePoint<C>: VerifyPrimitive<C>,
     Scalar<C>: Reduce<C::UInt>,
