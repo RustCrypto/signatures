@@ -16,7 +16,7 @@ use {
     core::borrow::Borrow,
     elliptic_curve::{
         group::Curve as _,
-        ops::{Invert, Reduce},
+        ops::{Invert, LinearCombination, Reduce},
         AffineArithmetic, AffineXCoordinate, Field, FieldBytes, Group, ProjectiveArithmetic,
         Scalar, ScalarArithmetic,
     },
@@ -112,7 +112,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
 pub trait VerifyPrimitive<C>: AffineXCoordinate<C> + Copy + Sized
 where
-    C: PrimeCurve + AffineArithmetic<AffinePoint = Self> + ProjectiveArithmetic,
+    C: PrimeCurve + AffineArithmetic<AffinePoint = Self> + LinearCombination + ProjectiveArithmetic,
     Scalar<C>: Reduce<C::UInt>,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -127,10 +127,14 @@ where
         let s_inv = Option::<Scalar<C>>::from(s.invert()).ok_or_else(Error::new)?;
         let u1 = z * s_inv;
         let u2 = *r * s_inv;
-
-        let x = ((C::ProjectivePoint::generator() * u1) + (C::ProjectivePoint::from(*self) * u2))
-            .to_affine()
-            .x();
+        let x = C::lincomb(
+            &C::ProjectivePoint::generator(),
+            &u1,
+            &C::ProjectivePoint::from(*self),
+            &u2,
+        )
+        .to_affine()
+        .x();
 
         if Scalar::<C>::from_be_bytes_reduced(x) == *r {
             Ok(())
