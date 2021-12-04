@@ -1,5 +1,13 @@
 #![doc = include_str!("../README.md")]
 
+//! ## `serde` support
+//!
+//! When the `serde` feature of this crate is enabled, `Serialize` and
+//! `Deserialize` impls are provided for the [`Signature`] and [`VerifyingKey`]
+//! types.
+//!
+//! Please see type-specific documentation for more information.
+//!
 //! ## Interop
 //!
 //! Any crates which provide an implementation of ECDSA for a particular
@@ -114,6 +122,15 @@ pub type SignatureBytes<C> = GenericArray<u8, SignatureSize<C>>;
 ///
 /// ASN.1 DER-encoded signatures also supported via the
 /// [`Signature::from_der`] and [`Signature::to_der`] methods.
+///
+/// # `serde` support
+///
+/// When the `serde` feature of this crate is enabled, it provides support for
+/// serializing and deserializing ECDSA signatures using the `Serialize` and
+/// `Deserialize` traits.
+///
+/// The serialization uses a 64-byte fixed encoding when used with binary
+/// formats, and a hexadecimal encoding when used with text formats.
 #[derive(Clone, Eq, PartialEq)]
 pub struct Signature<C: PrimeCurve>
 where
