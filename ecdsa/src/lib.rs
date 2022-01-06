@@ -90,6 +90,9 @@ use elliptic_curve::{
     FieldBytes, FieldSize, ScalarCore,
 };
 
+#[cfg(feature = "alloc")]
+use alloc::vec::Vec;
+
 #[cfg(feature = "arithmetic")]
 use {
     core::str,
@@ -181,6 +184,13 @@ where
     {
         let (r, s) = self.bytes.split_at(C::UInt::BYTE_SIZE);
         der::Signature::from_scalar_bytes(r, s).expect("DER encoding error")
+    }
+
+    /// Convert this signature into a byte vector.
+    #[cfg(feature = "alloc")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
+    pub fn to_vec(&self) -> Vec<u8> {
+        self.bytes.to_vec()
     }
 }
 
