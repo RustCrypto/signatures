@@ -257,6 +257,9 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs, rust_2018_idioms, unused_qualifications)]
 
+#[cfg(feature = "alloc")]
+extern crate alloc;
+
 #[cfg(feature = "pkcs8")]
 #[cfg_attr(docsrs, doc(cfg(feature = "pkcs8")))]
 pub mod pkcs8;
@@ -268,6 +271,8 @@ pub use crate::pkcs8::KeypairBytes;
 
 use core::{fmt, str};
 
+#[cfg(feature = "alloc")]
+use alloc::vec::Vec;
 #[cfg(feature = "serde")]
 use serde::{de, ser, Deserialize, Serialize};
 #[cfg(feature = "serde_bytes")]
@@ -309,9 +314,16 @@ impl Signature {
         self.0
     }
 
+    /// Convert this signature into a byte vector.
+    #[cfg(feature = "alloc")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
+    pub fn to_vec(&self) -> Vec<u8> {
+        self.0.to_vec()
+    }
+
     /// DEPRECATED: Create a new signature from a byte array.
     ///
-    /// # Warning
+    /// # Panics
     ///
     /// This method will panic if an invalid signature is encountered.
     ///
