@@ -84,14 +84,14 @@ where
         // Compute scalar inversion of 𝑘
         let k_inv = Option::<Scalar<C>>::from(k.invert()).ok_or_else(Error::new)?;
 
-        // Compute 𝐑 = 𝑘×𝑮
+        // Compute 𝑹 = 𝑘×𝑮
         let R = (C::ProjectivePoint::generator() * k.borrow()).to_affine();
 
-        // Lift x-coordinate of 𝐑 (element of base field) into a serialized big
+        // Lift x-coordinate of 𝑹 (element of base field) into a serialized big
         // integer, then reduce it into an element of the scalar field
         let r = Self::from_be_bytes_reduced(R.x());
 
-        // Compute `s` as a signature over `r` and `z`.
+        // Compute 𝒔 as a signature over 𝒓 and 𝒛.
         let s = k_inv * (z + (r * self));
 
         if s.is_zero().into() {
