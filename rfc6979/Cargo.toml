@@ -16,7 +16,7 @@ rust-version = "1.56"
 
 [dependencies]
 crypto-bigint = { version = "0.3", default-features = false, features = ["generic-array", "zeroize"] }
-hmac = { version = "0.11", default-features = false }
+hmac = { version = "0.12", default-features = false }
 zeroize = { version = "1", default-features = false }
 
 [package.metadata.docs.rs]
