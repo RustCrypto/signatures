@@ -37,7 +37,12 @@ use crate::{
 #[cfg(all(feature = "sign"))]
 use {
     elliptic_curve::{ff::PrimeField, zeroize::Zeroizing, NonZeroScalar, ScalarCore},
-    signature::digest::{BlockInput, FixedOutput, Reset, Update},
+    signature::digest::{
+        block_buffer::Eager,
+        core_api::{BlockSizeUser, BufferKindUser, CoreProxy, FixedOutputCore},
+        generic_array::typenum::{IsLess, Le, NonZero, U256},
+        HashMarker, OutputSizeUser,
+    },
 };
 
 /// Try to sign the given prehashed message using ECDSA.
@@ -187,7 +192,16 @@ pub fn rfc6979_generate_k<C, D>(
 ) -> Zeroizing<NonZeroScalar<C>>
 where
     C: PrimeCurve + ProjectiveArithmetic,
-    D: FixedOutput<OutputSize = FieldSize<C>> + BlockInput + Clone + Default + Reset + Update,
+    D: CoreProxy + OutputSizeUser<OutputSize = FieldSize<C>>,
+    D::Core: BlockSizeUser
+        + BufferKindUser<BufferKind = Eager>
+        + Clone
+        + Default
+        + FixedOutputCore
+        + HashMarker
+        + OutputSizeUser<OutputSize = D::OutputSize>,
+    <D::Core as BlockSizeUser>::BlockSize: IsLess<U256>,
+    Le<<D::Core as BlockSizeUser>::BlockSize, U256>: NonZero,
 {
     // TODO(tarcieri): avoid this conversion
     let x = Zeroizing::new(ScalarCore::<C>::from(x));

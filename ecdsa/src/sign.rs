@@ -16,7 +16,12 @@ use elliptic_curve::{
     FieldBytes, FieldSize, NonZeroScalar, PrimeCurve, ProjectiveArithmetic, Scalar, SecretKey,
 };
 use signature::{
-    digest::{BlockInput, Digest, FixedOutput, Reset, Update},
+    digest::{
+        block_buffer::Eager,
+        core_api::{BlockSizeUser, BufferKindUser, CoreProxy, FixedOutputCore},
+        generic_array::typenum::{IsLess, Le, NonZero, U256},
+        Digest, HashMarker, OutputSizeUser,
+    },
     rand_core::{CryptoRng, RngCore},
     DigestSigner, RandomizedDigestSigner, RandomizedSigner, Signer,
 };
@@ -168,7 +173,16 @@ where
 impl<C, D> DigestSigner<D, Signature<C>> for SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
-    D: FixedOutput<OutputSize = FieldSize<C>> + BlockInput + Clone + Default + Reset + Update,
+    D: CoreProxy + Digest + OutputSizeUser<OutputSize = FieldSize<C>>,
+    D::Core: BlockSizeUser
+        + BufferKindUser<BufferKind = Eager>
+        + Clone
+        + Default
+        + FixedOutputCore
+        + HashMarker
+        + OutputSizeUser<OutputSize = D::OutputSize>,
+    <D::Core as BlockSizeUser>::BlockSize: IsLess<U256>,
+    Le<<D::Core as BlockSizeUser>::BlockSize, U256>: NonZero,
     Scalar<C>: Invert<Output = Scalar<C>> + Reduce<C::UInt> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -176,7 +190,7 @@ where
     /// computed using the algorithm described in RFC 6979 (Section 3.2):
     /// <https://tools.ietf.org/html/rfc6979#section-3>
     fn try_sign_digest(&self, msg_digest: D) -> Result<Signature<C>> {
-        let msg_scalar = Scalar::<C>::from_be_bytes_reduced(msg_digest.finalize_fixed());
+        let msg_scalar = Scalar::<C>::from_be_bytes_reduced(msg_digest.finalize());
         let k = rfc6979_generate_k::<C, D>(&self.inner, &msg_scalar, &[]);
         Ok(self.inner.try_sign_prehashed(**k, msg_scalar)?.0)
     }
@@ -190,14 +204,23 @@ where
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn try_sign(&self, msg: &[u8]) -> Result<Signature<C>> {
-        self.try_sign_digest(C::Digest::new().chain(msg))
+        self.try_sign_digest(C::Digest::new().chain_update(msg))
     }
 }
 
 impl<C, D> RandomizedDigestSigner<D, Signature<C>> for SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
-    D: FixedOutput<OutputSize = FieldSize<C>> + BlockInput + Clone + Default + Reset + Update,
+    D: CoreProxy + Digest + OutputSizeUser<OutputSize = FieldSize<C>>,
+    D::Core: BlockSizeUser
+        + BufferKindUser<BufferKind = Eager>
+        + Clone
+        + Default
+        + FixedOutputCore
+        + HashMarker
+        + OutputSizeUser<OutputSize = D::OutputSize>,
+    <D::Core as BlockSizeUser>::BlockSize: IsLess<U256>,
+    Le<<D::Core as BlockSizeUser>::BlockSize, U256>: NonZero,
     Scalar<C>: Invert<Output = Scalar<C>> + Reduce<C::UInt> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -212,7 +235,7 @@ where
         let mut entropy = FieldBytes::<C>::default();
         rng.fill_bytes(&mut entropy);
 
-        let msg_scalar = Scalar::<C>::from_be_bytes_reduced(msg_digest.finalize_fixed());
+        let msg_scalar = Scalar::<C>::from_be_bytes_reduced(msg_digest.finalize());
         let k = rfc6979_generate_k::<C, D>(&self.inner, &msg_scalar, &entropy);
         Ok(self.inner.try_sign_prehashed(**k, msg_scalar)?.0)
     }
@@ -226,7 +249,7 @@ where
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn try_sign_with_rng(&self, rng: impl CryptoRng + RngCore, msg: &[u8]) -> Result<Signature<C>> {
-        self.try_sign_digest_with_rng(rng, C::Digest::new().chain(msg))
+        self.try_sign_digest_with_rng(rng, C::Digest::new().chain_update(msg))
     }
 }
 
