@@ -223,7 +223,7 @@ dependencies = [
 [[package]]
 name = "rfc6979"
 version = "0.1.0"
-source = "git+https://github.com/khonsulabs/signatures?branch=elliptic-curve-digest#9b8b7a4a33d86becee76ae0aaea2cd28ea209f5b"
+source = "git+https://github.com/khonsulabs/signatures?branch=elliptic-curve-digest#38c3786c304e69e5ca4c5debe2bef89da1c6aa45"
 dependencies = [
  "crypto-bigint",
  "hmac",
