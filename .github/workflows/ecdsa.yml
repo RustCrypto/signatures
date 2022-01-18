@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - "ecdsa/**"
+      - "rfc6979/**"
       - "Cargo.*"
   push:
     branches: master
