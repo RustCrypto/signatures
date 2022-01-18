@@ -41,6 +41,13 @@ ed25519 = ">=1, <1.4" # ed25519 1.4 requires MSRV 1.56
 Note that is our policy that we may change the MSRV in the future, but it will
 be accompanied by a minor version bump.
 
+## SemVer Policy
+
+- All on-by-default features of this library are covered by SemVer
+- MSRV is considered exempt from SemVer as noted above
+- The `pkcs8` crate is exempted as it's a pre-1.0 dependency, however, upgrades
+  to this crate will be accompanied by a minor version bump.
+
 ## License
 
 All crates licensed under either of
