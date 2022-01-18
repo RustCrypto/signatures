@@ -17,6 +17,7 @@ use {
     elliptic_curve::{
         group::Curve as _,
         ops::{Invert, LinearCombination, Reduce},
+        subtle::CtOption,
         AffineArithmetic, AffineXCoordinate, Field, FieldBytes, Group, ProjectiveArithmetic,
         ProjectivePoint, Scalar, ScalarArithmetic,
     },
@@ -37,7 +38,12 @@ use crate::{
 #[cfg(all(feature = "sign"))]
 use {
     elliptic_curve::{ff::PrimeField, zeroize::Zeroizing, NonZeroScalar, ScalarCore},
-    signature::digest::{BlockInput, FixedOutput, Reset, Update},
+    signature::digest::{
+        block_buffer::Eager,
+        core_api::{BlockSizeUser, BufferKindUser, CoreProxy, FixedOutputCore},
+        generic_array::typenum::{IsLess, Le, NonZero, U256},
+        HashMarker, OutputSizeUser,
+    },
 };
 
 /// Try to sign the given prehashed message using ECDSA.
@@ -75,7 +81,7 @@ where
         z: Scalar<C>,
     ) -> Result<(Signature<C>, Option<RecoveryId>)>
     where
-        K: Borrow<Self> + Invert<Output = Self>,
+        K: Borrow<Self> + Invert<Output = CtOption<Self>>,
     {
         if k.borrow().is_zero().into() {
             return Err(Error::new());
@@ -124,7 +130,7 @@ where
     /// - `sig`: signature to be verified against the key and message
     fn verify_prehashed(&self, z: Scalar<C>, sig: &Signature<C>) -> Result<()> {
         let (r, s) = sig.split_scalars();
-        let s_inv = Option::<Scalar<C>>::from(s.invert()).ok_or_else(Error::new)?;
+        let s_inv = *s.invert();
         let u1 = z * s_inv;
         let u2 = *r * s_inv;
         let x = ProjectivePoint::<C>::lincomb(
@@ -187,7 +193,16 @@ pub fn rfc6979_generate_k<C, D>(
 ) -> Zeroizing<NonZeroScalar<C>>
 where
     C: PrimeCurve + ProjectiveArithmetic,
-    D: FixedOutput<OutputSize = FieldSize<C>> + BlockInput + Clone + Default + Reset + Update,
+    D: CoreProxy + OutputSizeUser<OutputSize = FieldSize<C>>,
+    D::Core: BlockSizeUser
+        + BufferKindUser<BufferKind = Eager>
+        + Clone
+        + Default
+        + FixedOutputCore
+        + HashMarker
+        + OutputSizeUser<OutputSize = D::OutputSize>,
+    <D::Core as BlockSizeUser>::BlockSize: IsLess<U256>,
+    Le<<D::Core as BlockSizeUser>::BlockSize, U256>: NonZero,
 {
     // TODO(tarcieri): avoid this conversion
     let x = Zeroizing::new(ScalarCore::<C>::from(x));

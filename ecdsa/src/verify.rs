@@ -100,7 +100,7 @@ where
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn verify(&self, msg: &[u8], signature: &Signature<C>) -> Result<()> {
-        self.verify_digest(C::Digest::new().chain(msg), signature)
+        self.verify_digest(C::Digest::new().chain_update(msg), signature)
     }
 }
 

@@ -2,6 +2,5 @@
 resolver = "2"
 members = [
     "ecdsa",
-    "ed25519",
     "rfc6979"
 ]
