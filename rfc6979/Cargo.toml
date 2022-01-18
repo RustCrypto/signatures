@@ -12,7 +12,7 @@ readme = "README.md"
 categories = ["cryptography", "no-std"]
 keywords = ["dsa", "ecdsa", "signature"]
 edition = "2021"
-rust-version = "1.56"
+rust-version = "1.57"
 
 [dependencies]
 crypto-bigint = { version = "0.4.0-pre.0", default-features = false, features = ["generic-array", "zeroize"] }
