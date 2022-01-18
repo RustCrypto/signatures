@@ -94,7 +94,7 @@ dependencies = [
  "der",
  "elliptic-curve",
  "hex-literal",
- "rfc6979 0.1.0 (git+https://github.com/khonsulabs/signatures?branch=elliptic-curve-digest)",
+ "rfc6979",
  "sha2",
  "signature",
 ]
@@ -214,16 +214,6 @@ dependencies = [
 [[package]]
 name = "rfc6979"
 version = "0.1.0"
-dependencies = [
- "crypto-bigint",
- "hmac",
- "zeroize",
-]
-
-[[package]]
-name = "rfc6979"
-version = "0.1.0"
-source = "git+https://github.com/khonsulabs/signatures?branch=elliptic-curve-digest#38c3786c304e69e5ca4c5debe2bef89da1c6aa45"
 dependencies = [
  "crypto-bigint",
  "hmac",
