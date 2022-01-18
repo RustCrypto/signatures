@@ -38,7 +38,7 @@
 #![doc(
     html_logo_url = "https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg",
     html_favicon_url = "https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg",
-    html_root_url = "https://docs.rs/ecdsa/0.13.4"
+    html_root_url = "https://docs.rs/ecdsa/0.14.0-pre.0"
 )]
 
 #[cfg(feature = "alloc")]
