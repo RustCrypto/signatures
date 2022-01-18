@@ -1,6 +1,6 @@
 [package]
 name    = "rfc6979"
-version = "0.1.0" # Also update html_root_url in lib.rs when bumping this
+version = "0.2.0-pre.0" # Also update html_root_url in lib.rs when bumping this
 description = """
 Pure Rust implementation of RFC6979: Deterministic Usage of the
 Digital Signature Algorithm (DSA) and Elliptic Curve Digital Signature Algorithm (ECDSA)
