@@ -17,6 +17,7 @@ use {
     elliptic_curve::{
         group::Curve as _,
         ops::{Invert, LinearCombination, Reduce},
+        subtle::CtOption,
         AffineArithmetic, AffineXCoordinate, Field, FieldBytes, Group, ProjectiveArithmetic,
         ProjectivePoint, Scalar, ScalarArithmetic,
     },
@@ -80,7 +81,7 @@ where
         z: Scalar<C>,
     ) -> Result<(Signature<C>, Option<RecoveryId>)>
     where
-        K: Borrow<Self> + Invert<Output = Self>,
+        K: Borrow<Self> + Invert<Output = CtOption<Self>>,
     {
         if k.borrow().is_zero().into() {
             return Err(Error::new());
