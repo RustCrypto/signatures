@@ -129,7 +129,7 @@ where
     /// - `sig`: signature to be verified against the key and message
     fn verify_prehashed(&self, z: Scalar<C>, sig: &Signature<C>) -> Result<()> {
         let (r, s) = sig.split_scalars();
-        let s_inv = Option::<Scalar<C>>::from(s.invert()).ok_or_else(Error::new)?;
+        let s_inv = *s.invert();
         let u1 = z * s_inv;
         let u2 = *r * s_inv;
         let x = ProjectivePoint::<C>::lincomb(
