@@ -2,18 +2,22 @@ name: Workspace
 on:
   pull_request:
     paths-ignore:
-      - README.md
+      - '**/README.md'
+      - '**/CHANGELOG.md'
+      - .github/**
   push:
     branches: master
     paths-ignore:
-      - README.md
+      - '**/README.md'
+      - '**/CHANGELOG.md'
+      - .github/**
 
 env:
   CARGO_INCREMENTAL: 0
   RUSTFLAGS: "-Dwarnings"
 
 jobs:
-  rustfmt:
+  rustfmt_workspace:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
@@ -27,8 +31,21 @@ jobs:
         with:
           command: fmt
           args: --all -- --check
-      - uses: actions-rs/cargo@v1
+
+  rustfmt_ed25519:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
         working-directory: ed25519
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt
+          override: true
+          profile: minimal
+      - uses: actions-rs/cargo@v1
         with:
           command: fmt
           args: --all -- --check
