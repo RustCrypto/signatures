@@ -19,7 +19,7 @@ use hmac::digest::block_buffer::Eager;
 use hmac::digest::core_api::{BlockSizeUser, BufferKindUser, CoreProxy, FixedOutputCore};
 use hmac::digest::generic_array::typenum::{IsLess, Le, NonZero, U256};
 use hmac::digest::generic_array::GenericArray;
-use hmac::digest::{HashMarker, OutputSizeUser};
+use hmac::digest::{FixedOutput, HashMarker, OutputSizeUser};
 use hmac::{Hmac, Mac};
 use zeroize::{Zeroize, Zeroizing};
 
@@ -34,7 +34,7 @@ use zeroize::{Zeroize, Zeroizing};
 #[inline]
 pub fn generate_k<D, I>(x: &I, n: &I, h: &ByteArray<I>, data: &[u8]) -> Zeroizing<I>
 where
-    D: CoreProxy + OutputSizeUser<OutputSize = I::ByteSize>,
+    D: CoreProxy + FixedOutput<OutputSize = I::ByteSize>,
     I: ArrayEncoding + Integer + Zeroize,
     D::Core: BlockSizeUser
         + BufferKindUser<BufferKind = Eager>
@@ -69,7 +69,7 @@ where
 /// deterministic ephemeral scalar `k`.
 pub struct HmacDrbg<D>
 where
-    D: CoreProxy + OutputSizeUser,
+    D: CoreProxy + FixedOutput,
     D::Core: BlockSizeUser
         + BufferKindUser<BufferKind = Eager>
         + Clone
@@ -89,7 +89,7 @@ where
 
 impl<D> HmacDrbg<D>
 where
-    D: CoreProxy + OutputSizeUser,
+    D: CoreProxy + FixedOutput,
     D::Core: BlockSizeUser
         + BufferKindUser<BufferKind = Eager>
         + Clone

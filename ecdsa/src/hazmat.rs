@@ -42,7 +42,7 @@ use {
         block_buffer::Eager,
         core_api::{BlockSizeUser, BufferKindUser, CoreProxy, FixedOutputCore},
         generic_array::typenum::{IsLess, Le, NonZero, U256},
-        HashMarker, OutputSizeUser,
+        FixedOutput, HashMarker, OutputSizeUser,
     },
 };
 
@@ -193,7 +193,7 @@ pub fn rfc6979_generate_k<C, D>(
 ) -> Zeroizing<NonZeroScalar<C>>
 where
     C: PrimeCurve + ProjectiveArithmetic,
-    D: CoreProxy + OutputSizeUser<OutputSize = FieldSize<C>>,
+    D: CoreProxy + FixedOutput<OutputSize = FieldSize<C>>,
     D::Core: BlockSizeUser
         + BufferKindUser<BufferKind = Eager>
         + Clone
