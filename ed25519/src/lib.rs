@@ -139,7 +139,7 @@
 //! instantiate and use the previously defined `HelloSigner` and `HelloVerifier`
 //! types with [`ring-compat`] as the signing/verification provider:
 //!
-//! ```
+//! ```ignore
 //! use ring_compat::signature::{
 //!     ed25519::{Signature, SigningKey, VerifyingKey},
 //!     Signer, Verifier
