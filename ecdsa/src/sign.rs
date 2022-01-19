@@ -20,7 +20,7 @@ use signature::{
         block_buffer::Eager,
         core_api::{BlockSizeUser, BufferKindUser, CoreProxy, FixedOutputCore},
         generic_array::typenum::{IsLess, Le, NonZero, U256},
-        Digest, HashMarker, OutputSizeUser,
+        Digest, FixedOutput, HashMarker, OutputSizeUser,
     },
     rand_core::{CryptoRng, RngCore},
     DigestSigner, RandomizedDigestSigner, RandomizedSigner, Signer,
@@ -173,7 +173,7 @@ where
 impl<C, D> DigestSigner<D, Signature<C>> for SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
-    D: CoreProxy + Digest + OutputSizeUser<OutputSize = FieldSize<C>>,
+    D: CoreProxy + Digest + FixedOutput<OutputSize = FieldSize<C>>,
     D::Core: BlockSizeUser
         + BufferKindUser<BufferKind = Eager>
         + Clone
@@ -190,7 +190,7 @@ where
     /// computed using the algorithm described in RFC 6979 (Section 3.2):
     /// <https://tools.ietf.org/html/rfc6979#section-3>
     fn try_sign_digest(&self, msg_digest: D) -> Result<Signature<C>> {
-        let msg_scalar = Scalar::<C>::from_be_bytes_reduced(msg_digest.finalize());
+        let msg_scalar = Scalar::<C>::from_be_digest_reduced(msg_digest);
         let k = rfc6979_generate_k::<C, D>(&self.inner, &msg_scalar, &[]);
         Ok(self.inner.try_sign_prehashed(**k, msg_scalar)?.0)
     }
@@ -211,7 +211,7 @@ where
 impl<C, D> RandomizedDigestSigner<D, Signature<C>> for SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
-    D: CoreProxy + Digest + OutputSizeUser<OutputSize = FieldSize<C>>,
+    D: CoreProxy + Digest + FixedOutput<OutputSize = FieldSize<C>>,
     D::Core: BlockSizeUser
         + BufferKindUser<BufferKind = Eager>
         + Clone
@@ -235,7 +235,7 @@ where
         let mut entropy = FieldBytes::<C>::default();
         rng.fill_bytes(&mut entropy);
 
-        let msg_scalar = Scalar::<C>::from_be_bytes_reduced(msg_digest.finalize());
+        let msg_scalar = Scalar::<C>::from_be_digest_reduced(msg_digest);
         let k = rfc6979_generate_k::<C, D>(&self.inner, &msg_scalar, &entropy);
         Ok(self.inner.try_sign_prehashed(**k, msg_scalar)?.0)
     }
