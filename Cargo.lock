@@ -135,7 +135,7 @@ dependencies = [
 
 [[package]]
 name = "ecdsa"
-version = "0.14.0-pre.0"
+version = "0.14.0-pre.1"
 dependencies = [
  "der",
  "elliptic-curve",
@@ -185,13 +185,14 @@ dependencies = [
 
 [[package]]
 name = "elliptic-curve"
-version = "0.12.0-pre.0"
-source = "git+https://github.com/RustCrypto/traits#03cbd28d1f6d97fcc35beecdc7af92c307c557cc"
+version = "0.12.0-pre.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b8d8eb14e60f3254bd24d2f4b5675b79c1dc79318e37fb8274e607c4d82ebd9"
 dependencies = [
  "base16ct",
  "crypto-bigint",
  "der",
- "digest",
+ "digest 0.10.1",
  "ff",
  "generic-array",
  "group",
