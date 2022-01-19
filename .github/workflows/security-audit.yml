@@ -26,7 +26,3 @@ jobs:
       - uses: actions-rs/audit-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions-rs/audit-check@v1
-        working-directory: ed25519
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
