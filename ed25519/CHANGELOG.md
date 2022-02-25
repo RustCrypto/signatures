@@ -4,6 +4,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 1.4.0 (2022-02-25)
+
+This crate now requires **Rust 1.56** at a minimum as the Rust edition has been
+upgraded to 2021.
+
+Previous 1.x releases of this crate supported an MSRV of 1.47. If you would
+like to use this crate with earlier releases of Rust, add the following version
+constraint in your project's Cargo.toml to constrain it to the supported
+version range:
+
+```toml
+[dependencies]
+ed25519 = ">=1, <1.4" # ed25519 1.4 requires MSRV 1.56
+```
+
+Note that is our policy that we may change the MSRV in the future, but it will
+be accompanied by a minor version bump.
+
+### Added
+- `Signature::to_vec` ([#428])
+
+### Changed
+- Rust 2021 edition upgrade ([#412])
+
+[#412]: https://github.com/RustCrypto/signatures/pull/412
+[#428]: https://github.com/RustCrypto/signatures/pull/428
+
 ## 1.3.0 (2021-11-18)
 ### Added
 - `Signature::BYTE_SIZE` constant ([#380])
