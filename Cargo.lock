@@ -156,7 +156,7 @@ dependencies = [
 
 [[package]]
 name = "ed25519"
-version = "1.4.0-pre"
+version = "1.4.0"
 dependencies = [
  "bincode",
  "ed25519-dalek",

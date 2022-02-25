@@ -29,7 +29,7 @@ Ed25519 implementations, including HSMs or Cloud KMS services.
 This crate requires **Rust 1.56** at a minimum as it is a Rust 2021 edition crate.
 
 Previous 1.x releases of this crate supported an MSRV of 1.47. If you would
-like to use this crate with earlier releases of Rust, use the following version
+like to use this crate with earlier releases of Rust, add the following version
 constraint in your project's Cargo.toml to constrain it to the supported
 version range:
 
