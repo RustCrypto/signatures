@@ -62,6 +62,15 @@ where
             .map_err(|_| Error::new())
     }
 
+    /// Initialize [`VerifyingKey`] from an affine point.
+    ///
+    /// Returns an [`Error`] if the given affine point is the additive identity
+    /// (a.k.a. point at infinity).
+    pub fn from_affine(affine: AffinePoint<C>) -> Result<Self> {
+        let inner = PublicKey::from_affine(affine).map_err(|_| Error::new())?;
+        Ok(Self { inner })
+    }
+
     /// Initialize [`VerifyingKey`] from an [`EncodedPoint`].
     pub fn from_encoded_point(public_key: &EncodedPoint<C>) -> Result<Self> {
         Option::from(PublicKey::<C>::from_encoded_point(public_key))
