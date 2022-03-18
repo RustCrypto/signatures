@@ -45,8 +45,8 @@ be accompanied by a minor version bump.
 
 - All on-by-default features of this library are covered by SemVer
 - MSRV is considered exempt from SemVer as noted above
-- The `pkcs8` crate is exempted as it's a pre-1.0 dependency, however, upgrades
-  to this crate will be accompanied by a minor version bump.
+- The `pkcs8` module is exempted as it uses a pre-1.0 dependency, however, 
+  breaking changes to this module  will be accompanied by a minor version bump.
 
 ## License
 

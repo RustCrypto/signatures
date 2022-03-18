@@ -255,7 +255,12 @@
     html_root_url = "https://docs.rs/ed25519/1.4.0"
 )]
 #![forbid(unsafe_code)]
-#![warn(missing_docs, rust_2018_idioms, unused_qualifications)]
+#![warn(
+    missing_docs,
+    rust_2018_idioms,
+    unused_lifetimes,
+    unused_qualifications
+)]
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
