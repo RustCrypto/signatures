@@ -148,6 +148,15 @@ dependencies = [
 [[package]]
 name = "ed25519"
 version = "1.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eed12bbf7b5312f8da1c2722bc06d8c6b12c2d86a7fb35a194c7f3e6fc2bbe39"
+dependencies = [
+ "signature",
+]
+
+[[package]]
+name = "ed25519"
+version = "1.4.1"
 dependencies = [
  "bincode",
  "ed25519-dalek",
@@ -161,22 +170,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "ed25519"
-version = "1.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eed12bbf7b5312f8da1c2722bc06d8c6b12c2d86a7fb35a194c7f3e6fc2bbe39"
-dependencies = [
- "signature",
-]
-
-[[package]]
 name = "ed25519-dalek"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c762bae6dcaf24c4c84667b8579785430908723d5c889f469d76a41d59cc7a9d"
 dependencies = [
  "curve25519-dalek",
- "ed25519 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ed25519 1.4.0",
  "rand",
  "serde",
  "sha2 0.9.9",

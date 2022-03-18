@@ -4,7 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 1.4.0 (2022-02-25)
+## 1.4.1 (2022-03-18)
+### Added
+- License files ([#447])
+- `pkcs8::PublicKeyBytes` type ([#455])
+
+[#447]: https://github.com/RustCrypto/signatures/pull/447
+[#455]: https://github.com/RustCrypto/signatures/pull/455
+
+## 1.4.0 (2022-02-25) [YANKED]
 
 This crate now requires **Rust 1.56** at a minimum as the Rust edition has been
 upgraded to 2021.
