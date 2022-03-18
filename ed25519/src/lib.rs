@@ -224,15 +224,11 @@
 //!
 //! - [`ed25519-dalek`] - mature pure Rust implementation of Ed25519
 //! - [`ring-compat`] - compatibility wrapper for [*ring*]
-//! - [`signatory-sodiumoxide`] - compatibility wrapper for [`sodiumoxide`]
 //! - [`yubihsm`] - host-side client library for YubiHSM2 devices from Yubico
 //!
 //! [`ed25519-dalek`]: https://docs.rs/ed25519-dalek
 //! [`ring-compat`]: https://docs.rs/ring-compat
 //! [*ring*]: https://github.com/briansmith/ring
-//! [`signatory-ring`]: https://docs.rs/signatory-ring/
-//! [`signatory-sodiumoxide`]: https://docs.rs/signatory-sodiumoxide/
-//! [`sodiumoxide`]: https://github.com/sodiumoxide/sodiumoxide
 //! [`yubihsm`]: https://github.com/iqlusioninc/yubihsm.rs/blob/develop/README.md
 //!
 //! # Features
