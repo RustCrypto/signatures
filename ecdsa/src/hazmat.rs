@@ -35,9 +35,9 @@ use crate::{
     Signature,
 };
 
-#[cfg(all(feature = "sign"))]
+#[cfg(all(feature = "rfc6979"))]
 use {
-    elliptic_curve::{ff::PrimeField, zeroize::Zeroizing, NonZeroScalar, ScalarCore},
+    elliptic_curve::ScalarCore,
     signature::digest::{
         block_buffer::Eager,
         core_api::{BlockSizeUser, BufferKindUser, CoreProxy, FixedOutputCore},
@@ -62,13 +62,8 @@ where
     /// Accepts the following arguments:
     ///
     /// - `k`: ephemeral scalar value. MUST BE UNIFORMLY RANDOM!!!
-    /// - `z`: scalar computed from a hashed message digest to be signed.
-    ///   MUST BE OUTPUT OF A CRYPTOGRAPHICALLY SECURE DIGEST ALGORITHM!!!
-    ///
-    /// # Computing the `hashed_msg` scalar
-    ///
-    /// To compute a [`Scalar`] from a message digest, use the [`Reduce`] trait
-    /// on the computed digest, e.g. `Scalar::from_be_bytes_reduced`.
+    /// - `z`: message digest to be signed. MUST BE OUTPUT OF A CRYPTOGRAPHICALLY
+    ///        SECURE DIGEST ALGORITHM!!!
     ///
     /// # Returns
     ///
@@ -78,7 +73,7 @@ where
     fn try_sign_prehashed<K>(
         &self,
         k: K,
-        z: Scalar<C>,
+        z: FieldBytes<C>,
     ) -> Result<(Signature<C>, Option<RecoveryId>)>
     where
         K: Borrow<Self> + Invert<Output = CtOption<Self>>,
@@ -86,6 +81,8 @@ where
         if k.borrow().is_zero().into() {
             return Err(Error::new());
         }
+
+        let z = Self::from_be_bytes_reduced(z);
 
         // Compute scalar inversion of 𝑘
         let k_inv = Option::<Scalar<C>>::from(k.invert()).ok_or_else(Error::new)?;
@@ -107,6 +104,41 @@ where
         // TODO(tarcieri): support for computing recovery ID
         Ok((Signature::from_scalars(r, s)?, None))
     }
+
+    /// Try to sign the given message digest deterministically using the method
+    /// described in [RFC6979] for computing ECDSA ephemeral scalar `k`.
+    ///
+    /// Accepts the following parameters:
+    /// - `z`: message digest to be signed.
+    /// - `ad`: optional additional data, e.g. added entropy from an RNG
+    ///
+    /// [RFC6979]: https://datatracker.ietf.org/doc/html/rfc6979
+    #[cfg(all(feature = "rfc6979"))]
+    #[cfg_attr(docsrs, doc(cfg(feature = "rfc6979")))]
+    fn try_sign_prehashed_rfc6979<D>(
+        &self,
+        z: FieldBytes<C>,
+        ad: &[u8],
+    ) -> Result<(Signature<C>, Option<RecoveryId>)>
+    where
+        Self: From<ScalarCore<C>>,
+        C::UInt: for<'a> From<&'a Self>,
+        D: CoreProxy + FixedOutput<OutputSize = FieldSize<C>>,
+        D::Core: BlockSizeUser
+            + BufferKindUser<BufferKind = Eager>
+            + Clone
+            + Default
+            + FixedOutputCore
+            + HashMarker
+            + OutputSizeUser<OutputSize = D::OutputSize>,
+        <D::Core as BlockSizeUser>::BlockSize: IsLess<U256>,
+        Le<<D::Core as BlockSizeUser>::BlockSize, U256>: NonZero,
+    {
+        let x = C::UInt::from(self);
+        let k = rfc6979::generate_k::<D, C::UInt>(&x, &C::ORDER, &z, ad);
+        let k = Self::from(ScalarCore::<C>::new(*k).unwrap());
+        self.try_sign_prehashed(k, z)
+    }
 }
 
 /// Verify the given prehashed message using ECDSA.
@@ -126,9 +158,11 @@ where
     ///
     /// Accepts the following arguments:
     ///
-    /// - `z`: prehashed message to be verified
+    /// - `z`: message digest to be verified. MUST BE OUTPUT OF A
+    ///        CRYPTOGRAPHICALLY SECURE DIGEST ALGORITHM!!!
     /// - `sig`: signature to be verified against the key and message
-    fn verify_prehashed(&self, z: Scalar<C>, sig: &Signature<C>) -> Result<()> {
+    fn verify_prehashed(&self, z: FieldBytes<C>, sig: &Signature<C>) -> Result<()> {
+        let z = Scalar::<C>::from_be_bytes_reduced(z);
         let (r, s) = sig.split_scalars();
         let s_inv = *s.invert();
         let u1 = z * s_inv;
@@ -175,37 +209,4 @@ where
     <FieldSize<C> as core::ops::Add>::Output: ArrayLength<u8>,
 {
     type Digest = C::Digest;
-}
-
-/// Deterministically compute ECDSA ephemeral scalar `k` using the method
-/// described in RFC6979.
-///
-/// Accepts the following parameters:
-/// - `x`: secret key
-/// - `z`: message scalar (i.e. message digest reduced mod p)
-/// - `ad`: optional additional data, e.g. added entropy from an RNG
-#[cfg(all(feature = "sign"))]
-#[cfg_attr(docsrs, doc(cfg(feature = "sign")))]
-pub fn rfc6979_generate_k<C, D>(
-    x: &NonZeroScalar<C>,
-    z: &Scalar<C>,
-    ad: &[u8],
-) -> Zeroizing<NonZeroScalar<C>>
-where
-    C: PrimeCurve + ProjectiveArithmetic,
-    D: CoreProxy + FixedOutput<OutputSize = FieldSize<C>>,
-    D::Core: BlockSizeUser
-        + BufferKindUser<BufferKind = Eager>
-        + Clone
-        + Default
-        + FixedOutputCore
-        + HashMarker
-        + OutputSizeUser<OutputSize = D::OutputSize>,
-    <D::Core as BlockSizeUser>::BlockSize: IsLess<U256>,
-    Le<<D::Core as BlockSizeUser>::BlockSize, U256>: NonZero,
-{
-    // TODO(tarcieri): avoid this conversion
-    let x = Zeroizing::new(ScalarCore::<C>::from(x));
-    let k = rfc6979::generate_k::<D, C::UInt>(x.as_uint(), &C::ORDER, &z.to_repr(), ad);
-    Zeroizing::new(NonZeroScalar::<C>::from_uint(*k).unwrap())
 }

@@ -3,7 +3,7 @@
 // TODO(tarcieri): support for hardware crypto accelerators
 
 use crate::{
-    hazmat::{rfc6979_generate_k, DigestPrimitive, SignPrimitive},
+    hazmat::{DigestPrimitive, SignPrimitive},
     Error, Result, Signature, SignatureSize,
 };
 use core::fmt::{self, Debug};
@@ -173,6 +173,7 @@ where
 impl<C, D> DigestSigner<D, Signature<C>> for SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
+    C::UInt: for<'a> From<&'a Scalar<C>>,
     D: CoreProxy + Digest + FixedOutput<OutputSize = FieldSize<C>>,
     D::Core: BlockSizeUser
         + BufferKindUser<BufferKind = Eager>
@@ -186,13 +187,13 @@ where
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
-    /// Sign message prehash using a deterministic ephemeral scalar (`k`)
-    /// computed using the algorithm described in RFC 6979 (Section 3.2):
-    /// <https://tools.ietf.org/html/rfc6979#section-3>
+    /// Sign message digest using a deterministic ephemeral scalar (`k`)
+    /// computed using the algorithm described in [RFC6979 § 3.2].
+    ///
+    /// [RFC6979 § 3.2]: https://tools.ietf.org/html/rfc6979#section-3
     fn try_sign_digest(&self, msg_digest: D) -> Result<Signature<C>> {
-        let msg_scalar = Scalar::<C>::from_be_digest_reduced(msg_digest);
-        let k = rfc6979_generate_k::<C, D>(&self.inner, &msg_scalar, &[]);
-        Ok(self.inner.try_sign_prehashed(**k, msg_scalar)?.0)
+        let digest = msg_digest.finalize_fixed();
+        Ok(self.inner.try_sign_prehashed_rfc6979::<D>(digest, &[])?.0)
     }
 }
 
@@ -211,6 +212,7 @@ where
 impl<C, D> RandomizedDigestSigner<D, Signature<C>> for SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
+    C::UInt: for<'a> From<&'a Scalar<C>>,
     D: CoreProxy + Digest + FixedOutput<OutputSize = FieldSize<C>>,
     D::Core: BlockSizeUser
         + BufferKindUser<BufferKind = Eager>
@@ -230,14 +232,13 @@ where
     fn try_sign_digest_with_rng(
         &self,
         mut rng: impl CryptoRng + RngCore,
-        msg_digest: D,
+        msg: D,
     ) -> Result<Signature<C>> {
-        let mut entropy = FieldBytes::<C>::default();
-        rng.fill_bytes(&mut entropy);
+        let mut ad = FieldBytes::<C>::default();
+        rng.fill_bytes(&mut ad);
 
-        let msg_scalar = Scalar::<C>::from_be_digest_reduced(msg_digest);
-        let k = rfc6979_generate_k::<C, D>(&self.inner, &msg_scalar, &entropy);
-        Ok(self.inner.try_sign_prehashed(**k, msg_scalar)?.0)
+        let digest = msg.finalize_fixed();
+        Ok(self.inner.try_sign_prehashed_rfc6979::<D>(digest, &ad)?.0)
     }
 }
 
