@@ -5,7 +5,7 @@ use core::{
     fmt,
     ops::{Add, Range},
 };
-use der::{asn1::UIntBytes, Decodable, Encodable};
+use der::{asn1::UIntRef, Decode, Encode, Reader};
 use elliptic_curve::{
     bigint::Encoding as _,
     consts::U9,
@@ -94,8 +94,8 @@ where
 
     /// Create an ASN.1 DER encoded signature from big endian `r` and `s` scalars
     pub(crate) fn from_scalar_bytes(r: &[u8], s: &[u8]) -> der::Result<Self> {
-        let r = UIntBytes::new(r)?;
-        let s = UIntBytes::new(s)?;
+        let r = UIntRef::new(r)?;
+        let s = UIntRef::new(s)?;
 
         let mut bytes = SignatureBytes::<C>::default();
         let mut encoder = der::Encoder::new(&mut bytes);
@@ -156,13 +156,7 @@ where
     type Error = Error;
 
     fn try_from(input: &[u8]) -> Result<Self> {
-        let (r, s) = der::Decoder::new(input)
-            .and_then(|mut decoder| {
-                decoder.sequence(|decoder| {
-                    Ok((UIntBytes::decode(decoder)?, UIntBytes::decode(decoder)?))
-                })
-            })
-            .map_err(|_| Error::new())?;
+        let (r, s) = decode_der(input).map_err(|_| Error::new())?;
 
         if r.as_bytes().len() > C::UInt::BYTE_SIZE || s.as_bytes().len() > C::UInt::BYTE_SIZE {
             return Err(Error::new());
@@ -202,6 +196,21 @@ where
         bytes[s_begin..].copy_from_slice(sig.s());
         Self::try_from(bytes.as_slice())
     }
+}
+
+/// Decode the `r` and `s` components of a DER-encoded ECDSA signature.
+fn decode_der(der_bytes: &[u8]) -> der::Result<(UIntRef<'_>, UIntRef<'_>)> {
+    let mut reader = der::Decoder::new(der_bytes)?;
+    let header = der::Header::decode(&mut reader)?;
+    header.tag.assert_eq(der::Tag::Sequence)?;
+
+    let (r, s) = reader.read_nested(header.length, |reader| {
+        let r = UIntRef::decode(reader)?;
+        let s = UIntRef::decode(reader)?;
+        Ok((r, s))
+    })?;
+
+    reader.finish((r, s))
 }
 
 /// Locate the range within a slice at which a particular subslice is located

@@ -25,7 +25,7 @@ use core::str::FromStr;
 
 #[cfg(all(feature = "pem", feature = "serde"))]
 #[cfg_attr(docsrs, doc(cfg(all(feature = "pem", feature = "serde"))))]
-use elliptic_curve::serde::{de, ser, Deserialize, Serialize};
+use serdect::serde::{de, ser, Deserialize, Serialize};
 
 /// ECDSA verification key (i.e. public key). Generic over elliptic curves.
 ///
