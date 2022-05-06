@@ -98,11 +98,11 @@ use {
 };
 
 #[cfg(feature = "serde")]
-use elliptic_curve::serde::{ser, Serialize};
+use serdect::serde::{ser, Serialize};
 
 // TODO(tarcieri): support deserialization with the `arithmetic` feature disabled
 #[cfg(all(feature = "arithmetic", feature = "serde"))]
-use elliptic_curve::serde::{de, Deserialize};
+use serdect::serde::{de, Deserialize};
 
 /// Size of a fixed sized signature for the given elliptic curve.
 pub type SignatureSize<C> = <FieldSize<C> as Add>::Output;
