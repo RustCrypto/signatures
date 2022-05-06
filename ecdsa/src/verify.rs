@@ -96,8 +96,8 @@ where
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn verify_digest(&self, msg_digest: D, signature: &Signature<C>) -> Result<()> {
-        let scalar = Scalar::<C>::from_be_digest_reduced(msg_digest);
-        self.inner.as_affine().verify_prehashed(scalar, signature)
+        let digest = msg_digest.finalize_fixed();
+        self.inner.as_affine().verify_prehashed(digest, signature)
     }
 }
 
