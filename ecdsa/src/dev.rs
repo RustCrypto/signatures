@@ -53,7 +53,7 @@ macro_rules! new_signing_test {
             for vector in $vectors {
                 let d = decode_scalar(vector.d).expect("invalid vector.d");
                 let k = decode_scalar(vector.k).expect("invalid vector.m");
-                let z = decode_scalar(vector.m).expect("invalid vector.z");
+                let z = GenericArray::clone_from_slice(vector.m);
                 let sig = d.try_sign_prehashed(k, z).expect("ECDSA sign failed").0;
 
                 assert_eq!(vector.r, sig.r().to_bytes().as_slice());
@@ -89,10 +89,7 @@ macro_rules! new_verification_test {
                 );
 
                 let q = AffinePoint::<$curve>::from_encoded_point(&q_encoded).unwrap();
-
-                let maybe_z = Scalar::<$curve>::from_repr(GenericArray::clone_from_slice(vector.m));
-                assert!(bool::from(maybe_z.is_some()), "invalid vector.m");
-                let z = maybe_z.unwrap();
+                let z = GenericArray::clone_from_slice(vector.m);
 
                 let sig = Signature::from_scalars(
                     GenericArray::clone_from_slice(vector.r),
@@ -115,10 +112,7 @@ macro_rules! new_verification_test {
                 );
 
                 let q = AffinePoint::<$curve>::from_encoded_point(&q_encoded).unwrap();
-
-                let maybe_z = Scalar::<$curve>::from_repr(GenericArray::clone_from_slice(vector.m));
-                assert!(bool::from(maybe_z.is_some()), "invalid vector.m");
-                let z = maybe_z.unwrap();
+                let z = GenericArray::clone_from_slice(vector.m);
 
                 // Flip a bit in `s`
                 let mut s_tweaked = GenericArray::clone_from_slice(vector.s);
