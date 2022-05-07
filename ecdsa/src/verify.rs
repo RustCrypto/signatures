@@ -15,10 +15,7 @@ use signature::digest::{Digest, FixedOutput};
 use signature::{DigestVerifier, Verifier};
 
 #[cfg(feature = "pkcs8")]
-use elliptic_curve::{
-    pkcs8::{self, DecodePublicKey},
-    AlgorithmParameters,
-};
+use elliptic_curve::pkcs8::{self, AssociatedOid, DecodePublicKey};
 
 #[cfg(feature = "pem")]
 use core::str::FromStr;
@@ -211,7 +208,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "pkcs8")))]
 impl<C> TryFrom<pkcs8::SubjectPublicKeyInfo<'_>> for VerifyingKey<C>
 where
-    C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic + PointCompression,
+    C: PrimeCurve + AssociatedOid + ProjectiveArithmetic + PointCompression,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldSize<C>: sec1::ModulusSize,
 {
@@ -226,7 +223,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "pkcs8")))]
 impl<C> DecodePublicKey for VerifyingKey<C>
 where
-    C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic + PointCompression,
+    C: PrimeCurve + AssociatedOid + ProjectiveArithmetic + PointCompression,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldSize<C>: sec1::ModulusSize,
 {
@@ -236,7 +233,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "pem")))]
 impl<C> FromStr for VerifyingKey<C>
 where
-    C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic + PointCompression,
+    C: PrimeCurve + AssociatedOid + ProjectiveArithmetic + PointCompression,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldSize<C>: sec1::ModulusSize,
 {
@@ -251,7 +248,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(all(feature = "pem", feature = "serde"))))]
 impl<C> Serialize for VerifyingKey<C>
 where
-    C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic + PointCompression,
+    C: PrimeCurve + AssociatedOid + ProjectiveArithmetic + PointCompression,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldSize<C>: sec1::ModulusSize,
 {
@@ -267,7 +264,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(all(feature = "pem", feature = "serde"))))]
 impl<'de, C> Deserialize<'de> for VerifyingKey<C>
 where
-    C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic + PointCompression,
+    C: PrimeCurve + AssociatedOid + ProjectiveArithmetic + PointCompression,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldSize<C>: sec1::ModulusSize,
 {

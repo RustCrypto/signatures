@@ -31,9 +31,9 @@ use {crate::verify::VerifyingKey, elliptic_curve::PublicKey};
 
 #[cfg(feature = "pkcs8")]
 use crate::elliptic_curve::{
-    pkcs8::{self, DecodePrivateKey},
+    pkcs8::{self, AssociatedOid, DecodePrivateKey},
     sec1::{self, FromEncodedPoint, ToEncodedPoint},
-    AffinePoint, AlgorithmParameters,
+    AffinePoint,
 };
 
 #[cfg(feature = "pem")]
@@ -296,7 +296,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "pkcs8")))]
 impl<C> TryFrom<pkcs8::PrivateKeyInfo<'_>> for SigningKey<C>
 where
-    C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic,
+    C: PrimeCurve + AssociatedOid + ProjectiveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldSize<C>: sec1::ModulusSize,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
@@ -313,7 +313,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "pkcs8")))]
 impl<C> DecodePrivateKey for SigningKey<C>
 where
-    C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic,
+    C: PrimeCurve + AssociatedOid + ProjectiveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldSize<C>: sec1::ModulusSize,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
@@ -325,7 +325,7 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "pem")))]
 impl<C> FromStr for SigningKey<C>
 where
-    C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic,
+    C: PrimeCurve + AssociatedOid + ProjectiveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldSize<C>: sec1::ModulusSize,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
