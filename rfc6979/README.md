@@ -2,10 +2,10 @@
 
 [![crate][crate-image]][crate-link]
 [![Docs][docs-image]][docs-link]
+[![Build Status][build-image]][build-link]
 ![Apache2/MIT licensed][license-image]
 ![MSRV][rustc-image]
 [![Project Chat][chat-image]][chat-link]
-[![Build Status][build-image]][build-link]
 
 Pure Rust implementation of RFC6979: Deterministic Usage of the
 Digital Signature Algorithm (DSA) and Elliptic Curve Digital Signature Algorithm (ECDSA).
@@ -43,12 +43,12 @@ dual licensed as above, without any additional terms or conditions.
 [crate-link]: https://crates.io/crates/rfc6979
 [docs-image]: https://docs.rs/rfc6979/badge.svg
 [docs-link]: https://docs.rs/rfc6979/
+[build-image]: https://github.com/RustCrypto/signatures/actions/workflows/rfc6979.yml/badge.svg
+[build-link]: https://github.com/RustCrypto/signatures/actions/workflows/rfc6979.yml
 [license-image]: https://img.shields.io/badge/license-Apache2.0/MIT-blue.svg
 [rustc-image]: https://img.shields.io/badge/rustc-1.57+-blue.svg
 [chat-image]: https://img.shields.io/badge/zulip-join_chat-blue.svg
 [chat-link]: https://rustcrypto.zulipchat.com/#narrow/stream/260048-signatures
-[build-image]: https://github.com/RustCrypto/signatures/actions/workflows/rfc6979.yml/badge.svg
-[build-link]: https://github.com/RustCrypto/signatures/actions/workflows/rfc6979.yml
 
 [//]: # (links)
 

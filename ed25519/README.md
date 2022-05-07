@@ -69,12 +69,12 @@ dual licensed as above, without any additional terms or conditions.
 [crate-link]: https://crates.io/crates/ed25519
 [docs-image]: https://docs.rs/ed25519/badge.svg
 [docs-link]: https://docs.rs/ed25519/
+[build-image]: https://github.com/RustCrypto/signatures/actions/workflows/ed25519.yml/badge.svg
+[build-link]: https://github.com/RustCrypto/signatures/actions/workflows/ed25519.yml
 [license-image]: https://img.shields.io/badge/license-Apache2.0/MIT-blue.svg
 [rustc-image]: https://img.shields.io/badge/rustc-1.56+-blue.svg
 [chat-image]: https://img.shields.io/badge/zulip-join_chat-blue.svg
 [chat-link]: https://rustcrypto.zulipchat.com/#narrow/stream/260048-signatures
-[build-image]: https://github.com/RustCrypto/signatures/workflows/ed25519/badge.svg?branch=master&event=push
-[build-link]: https://github.com/RustCrypto/signatures/actions?query=workflow%3Aed25519
 
 [//]: # (links)
 
