@@ -3,7 +3,7 @@
 //!
 
 use num_bigint::BigUint;
-use pkcs8::der::{self, asn1::UIntRef, Decode, Decoder, Reader, Sequence};
+use pkcs8::der::{self, asn1::UIntRef, Decode, Reader, Sequence, SliceReader};
 
 /// Container of the DSA signature
 #[derive(Clone, PartialEq, PartialOrd)]
@@ -30,7 +30,7 @@ impl Signature {
     ///
     /// See the [`der` errors](pkcs8::der::Error)
     pub fn from_der(data: &[u8]) -> der::Result<Self> {
-        let mut reader = Decoder::new(data)?;
+        let mut reader = SliceReader::new(data)?;
         reader.decode()
     }
 

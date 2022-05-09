@@ -13,7 +13,7 @@ num-bigint = { package = "num-bigint-dig", version = "0.8.1", features = ["prime
 num-traits = "0.2.15"
 opaque-debug = "0.3.0"
 paste = "1.0.7"
-pkcs8 = { version = "0.9.0-pre.3", features = ["std"] }
+pkcs8 = { version = "0.9.0", features = ["std"] }
 rand = "0.8.5"
 signature = "1.5.0"
 zeroize = "1.5.5"
@@ -22,5 +22,5 @@ zeroize = "1.5.5"
 default = []
 
 [dev-dependencies]
-pkcs8 = { version = "0.9.0-pre.3", features = ["pem"] }
+pkcs8 = { version = "0.9.0", features = ["pem"] }
 sha-1 = "0.10.0"

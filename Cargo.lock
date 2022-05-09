@@ -165,7 +165,7 @@ dependencies = [
  "num-traits",
  "opaque-debug",
  "paste",
- "pkcs8 0.9.0-pre.3",
+ "pkcs8 0.9.0",
  "rand 0.8.5",
  "sha-1",
  "signature",
