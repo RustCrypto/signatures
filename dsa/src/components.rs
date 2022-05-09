@@ -7,6 +7,8 @@ use num_traits::One;
 use pkcs8::der::{self, asn1::UIntRef, DecodeValue, Encode, Header, Reader, Sequence};
 use rand::{CryptoRng, RngCore};
 
+use crate::two;
+
 /// The common components of an DSA keypair
 ///
 /// (the prime p, quotient q and generator g)
@@ -63,11 +65,10 @@ impl Components {
     /// Check whether the components are valid
     #[must_use]
     pub fn is_valid(&self) -> bool {
-        if *self.p() <= BigUint::one() || *self.q() <= BigUint::one() {
-            return false;
-        }
-
-        true
+        *self.p() >= two()
+            && *self.q() >= two()
+            && *self.g() >= BigUint::one()
+            && self.g() < self.p()
     }
 }
 

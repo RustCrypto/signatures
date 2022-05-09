@@ -6,6 +6,7 @@ use crate::{Components, PublicKey, Signature, DSA_OID};
 use core::cmp::min;
 use digest::Digest;
 use num_bigint::BigUint;
+use num_traits::One;
 use pkcs8::{
     der::{asn1::UIntRef, AnyRef, Decode, Encode},
     AlgorithmIdentifier, DecodePrivateKey, EncodePrivateKey, PrivateKeyInfo, SecretDocument,
@@ -61,7 +62,11 @@ impl PrivateKey {
     /// Check whether the private key is valid
     #[must_use]
     pub fn is_valid(&self) -> bool {
-        self.public_key().components().is_valid()
+        if !self.public_key().is_valid() {
+            return false;
+        }
+
+        *self.x() >= BigUint::one() && self.x() < self.public_key().components().q()
     }
 
     /// Sign data with the private key
@@ -120,7 +125,11 @@ impl<'a> TryFrom<PrivateKeyInfo<'a>> for PrivateKey {
         value.algorithm.assert_algorithm_oid(DSA_OID)?;
 
         let parameters = value.algorithm.parameters_any()?;
-        let components = parameters.decode_into()?;
+        let components: Components = parameters.decode_into()?;
+
+        if !components.is_valid() {
+            return Err(pkcs8::Error::KeyMalformed);
+        }
 
         let x = UIntRef::from_der(value.private_key)?;
         let x = BigUint::from_bytes_be(x.as_bytes());
@@ -133,7 +142,13 @@ impl<'a> TryFrom<PrivateKeyInfo<'a>> for PrivateKey {
         };
 
         let public_key = PublicKey::from_components(components, y);
-        Ok(PrivateKey::from_components(public_key, x))
+        let private_key = PrivateKey::from_components(public_key, x);
+
+        if !private_key.is_valid() {
+            return Err(pkcs8::Error::KeyMalformed);
+        }
+
+        Ok(private_key)
     }
 }
 

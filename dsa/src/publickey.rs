@@ -2,7 +2,7 @@
 //! Module containing the definition of the public key container
 //!
 
-use crate::{Components, Signature, DSA_OID};
+use crate::{two, Components, Signature, DSA_OID};
 use core::cmp::min;
 use digest::Digest;
 use num_bigint::{BigUint, ModInverse};
@@ -52,7 +52,7 @@ impl PublicKey {
             return false;
         }
 
-        self.y().modpow(components.q(), components.p()) == BigUint::one()
+        *self.y() >= two() && self.y().modpow(components.q(), components.p()) == BigUint::one()
     }
 
     /// Verify if the signature matches the provided hash
