@@ -1,0 +1,26 @@
+[package]
+name = "dsa"
+version = "0.0.1"
+edition = "2021"
+license = "Apache-2.0 OR MIT"
+readme = "README.md"
+categories = ["cryptography"]
+keywords = ["crypto", "nist", "signature"]
+
+[dependencies]
+digest = "0.10.3"
+num-bigint = { package = "num-bigint-dig", version = "0.8.1", features = ["prime", "rand", "zeroize"] }
+num-traits = "0.2.15"
+opaque-debug = "0.3.0"
+paste = "1.0.7"
+pkcs8 = { version = "0.9.0-pre.3", features = ["std"] }
+rand = "0.8.5"
+signature = "1.5.0"
+zeroize = "1.5.5"
+
+[features]
+default = []
+
+[dev-dependencies]
+pkcs8 = { version = "0.9.0-pre.3", features = ["pem"] }
+sha-1 = "0.10.0"
