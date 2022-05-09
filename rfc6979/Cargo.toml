@@ -15,7 +15,7 @@ edition = "2021"
 rust-version = "1.57"
 
 [dependencies]
-crypto-bigint = { version = "0.4.0-pre.0", default-features = false, features = ["generic-array", "zeroize"] }
+crypto-bigint = { version = "0.4", default-features = false, features = ["generic-array", "zeroize"] }
 hmac = { version = "0.12", default-features = false, features = ["reset"] }
 zeroize = { version = "1", default-features = false }
 
