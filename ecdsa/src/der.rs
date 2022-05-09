@@ -98,14 +98,14 @@ where
         let s = UIntRef::new(s)?;
 
         let mut bytes = SignatureBytes::<C>::default();
-        let mut encoder = der::Encoder::new(&mut bytes);
+        let mut writer = der::SliceWriter::new(&mut bytes);
 
-        encoder.sequence((r.encoded_len()? + s.encoded_len()?)?, |seq| {
+        writer.sequence((r.encoded_len()? + s.encoded_len()?)?, |seq| {
             seq.encode(&r)?;
             seq.encode(&s)
         })?;
 
-        encoder
+        writer
             .finish()?
             .try_into()
             .map_err(|_| der::Tag::Sequence.value_error())
@@ -200,7 +200,7 @@ where
 
 /// Decode the `r` and `s` components of a DER-encoded ECDSA signature.
 fn decode_der(der_bytes: &[u8]) -> der::Result<(UIntRef<'_>, UIntRef<'_>)> {
-    let mut reader = der::Decoder::new(der_bytes)?;
+    let mut reader = der::SliceReader::new(der_bytes)?;
     let header = der::Header::decode(&mut reader)?;
     header.tag.assert_eq(der::Tag::Sequence)?;
 
