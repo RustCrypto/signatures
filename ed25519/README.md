@@ -26,7 +26,7 @@ Ed25519 implementations, including HSMs or Cloud KMS services.
 
 ## Minimum Supported Rust Version
 
-This crate requires **Rust 1.56** at a minimum as it is a Rust 2021 edition crate.
+This crate requires **Rust 1.57** at a minimum.
 
 Previous 1.x releases of this crate supported an MSRV of 1.47. If you would
 like to use this crate with earlier releases of Rust, add the following version
@@ -35,7 +35,7 @@ version range:
 
 ```toml
 [dependencies]
-ed25519 = ">=1, <1.4" # ed25519 1.4 requires MSRV 1.56
+ed25519 = ">=1, <1.4" # ed25519 1.4 requires MSRV 1.57
 ```
 
 Note that is our policy that we may change the MSRV in the future, but it will
@@ -72,7 +72,7 @@ dual licensed as above, without any additional terms or conditions.
 [build-image]: https://github.com/RustCrypto/signatures/actions/workflows/ed25519.yml/badge.svg
 [build-link]: https://github.com/RustCrypto/signatures/actions/workflows/ed25519.yml
 [license-image]: https://img.shields.io/badge/license-Apache2.0/MIT-blue.svg
-[rustc-image]: https://img.shields.io/badge/rustc-1.56+-blue.svg
+[rustc-image]: https://img.shields.io/badge/rustc-1.57+-blue.svg
 [chat-image]: https://img.shields.io/badge/zulip-join_chat-blue.svg
 [chat-link]: https://rustcrypto.zulipchat.com/#narrow/stream/260048-signatures
 
