@@ -69,6 +69,7 @@ pub use self::signature::Signature;
 pub use pkcs8;
 
 #[cfg(feature = "signature")]
+#[cfg_attr(doc_cfg, doc(cfg(feature = "signature")))]
 pub mod compat;
 pub mod consts;
 
