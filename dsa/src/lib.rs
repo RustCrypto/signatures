@@ -68,6 +68,7 @@ pub use self::signature::Signature;
 // Re-export the types needed for de-/serialising keys to DER and PEM
 pub use pkcs8;
 
+#[cfg(feature = "signature")]
 pub mod compat;
 pub mod consts;
 
