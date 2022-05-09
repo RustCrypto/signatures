@@ -1,11 +1,32 @@
 //!
 //! Types providing compatibility with the [signature](::signature) crate
 //!
+//! Example:
+//!
+//! ```
+//! # use dsa::{Components, PrivateKey, compat::{Signer, Verifier}, consts::DSA_1024_160};
+//! # use signature::{Signer as _, Verifier as _};
+//! # use sha1::Sha1;
+//! # fn generate() -> PrivateKey {
+//! # let mut rng = rand::thread_rng();
+//! # let components = Components::generate(&mut rng, DSA_1024_160);
+//! # PrivateKey::generate(&mut rng, components)
+//! # }
+//! let private_key = generate();
+//! let public_key = private_key.public_key().clone();
+//! let signer: Signer<Sha1> = private_key.into();
+//! let verifier: Verifier<Sha1> = public_key.into();
+//!
+//! let signature = signer.sign(b"hello world");
+//! assert!(verifier.verify(b"hello world", &signature).is_ok());
+//! assert!(verifier.verify(b"not hello world", &signature).is_err());
+//! ```
+//!
 
 use crate::{PrivateKey, PublicKey, Signature as InnerSignature};
 use core::fmt;
 use digest::Digest;
-use pkcs8::der::Encode;
+use pkcs8::der::{self, Encode};
 use std::{marker::PhantomData, ops::Deref};
 
 /// Container implementing the [Signature](::signature::Signature) trait
@@ -47,19 +68,22 @@ impl Deref for Signature {
     }
 }
 
-impl From<InnerSignature> for Signature {
-    fn from(signature: InnerSignature) -> Self {
-        Self {
-            raw_signature: signature.to_vec().expect("Failed to serialise signature"),
+impl TryFrom<InnerSignature> for Signature {
+    type Error = der::Error;
+
+    fn try_from(signature: InnerSignature) -> Result<Self, Self::Error> {
+        Ok(Self {
+            raw_signature: signature.to_vec()?,
             signature,
-        }
+        })
     }
 }
 
 impl signature::Signature for Signature {
     fn from_bytes(bytes: &[u8]) -> Result<Self, signature::Error> {
         InnerSignature::from_der(bytes)
-            .map(Into::into)
+            .map(TryInto::try_into)
+            .map_err(signature::Error::from_source)?
             .map_err(signature::Error::from_source)
     }
 }
@@ -96,8 +120,9 @@ where
     fn try_sign(&self, msg: &[u8]) -> Result<Signature, signature::Error> {
         self.private_key
             .sign::<_, D>(&mut rand::thread_rng(), msg)
-            .map(Into::into)
-            .ok_or_else(signature::Error::new)
+            .map(TryInto::try_into)
+            .ok_or_else(signature::Error::new)?
+            .map_err(signature::Error::from_source)
     }
 }
 
