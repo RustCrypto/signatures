@@ -10,8 +10,7 @@
 #![warn(missing_docs, rust_2018_idioms)]
 #![doc(
     html_logo_url = "https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg",
-    html_favicon_url = "https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg",
-    html_root_url = "https://docs.rs/rfc6979/0.1.0"
+    html_favicon_url = "https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg"
 )]
 
 use crypto_bigint::{ArrayEncoding, ByteArray, Integer};
