@@ -3,6 +3,7 @@
 //!
 
 use crate::{Components, Signature, DSA_OID};
+use core::cmp::min;
 use digest::Digest;
 use num_bigint::{BigUint, ModInverse};
 use num_traits::One;
@@ -10,7 +11,6 @@ use pkcs8::{
     der::{asn1::UIntRef, AnyRef, Decode, Encode},
     spki, AlgorithmIdentifier, DecodePublicKey, EncodePublicKey, SubjectPublicKeyInfo,
 };
-use std::cmp::min;
 
 /// DSA public key
 #[derive(Clone, PartialEq, PartialOrd)]

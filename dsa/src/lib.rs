@@ -54,6 +54,7 @@
 //! ```
 //!
 
+#![cfg_attr(not(feature = "signature-compat"), no_std)]
 #![forbid(missing_docs, unsafe_code)]
 #![deny(rust_2018_idioms)]
 
@@ -68,8 +69,8 @@ pub use self::signature::Signature;
 // Re-export the types needed for de-/serialising keys to DER and PEM
 pub use pkcs8;
 
-#[cfg(feature = "signature")]
-#[cfg_attr(doc_cfg, doc(cfg(feature = "signature")))]
+#[cfg(feature = "signature-compat")]
+#[cfg_attr(doc_cfg, doc(cfg(feature = "signature-compat")))]
 pub mod compat;
 pub mod consts;
 

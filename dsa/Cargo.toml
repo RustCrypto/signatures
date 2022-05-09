@@ -6,7 +6,7 @@ license = "Apache-2.0 OR MIT"
 readme = "README.md"
 categories = ["cryptography"]
 keywords = ["crypto", "nist", "signature"]
-rust-version = "1.60" # MSRV because of the feature syntax
+rust-version = "1.57"
 
 [dependencies]
 digest = "0.10.3"
@@ -14,14 +14,14 @@ num-bigint = { package = "num-bigint-dig", version = "0.8.1", default-features =
 num-traits = { version = "0.2.15", default-features = false }
 opaque-debug = "0.3.0"
 paste = "1.0.7"
-pkcs8 = { version = "0.9.0", default-features = false, features = ["std"] }
+pkcs8 = { version = "0.9.0", default-features = false, features = ["alloc"] }
 rand = { version = "0.8.5", default-features = false }
 signature = { version = "1.5.0", optional = true }
 zeroize = { version = "1.5.5", default-features = false }
 
 [features]
-default = ["signature"]
-signature = ["dep:signature", "rand/std", "rand/std_rng"]
+default = ["signature-compat"]
+signature-compat = ["signature", "pkcs8/std", "rand/std", "rand/std_rng"]
 
 [dev-dependencies]
 pkcs8 = { version = "0.9.0", default-features = false, features = ["pem"] }

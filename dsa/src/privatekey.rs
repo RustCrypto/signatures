@@ -3,6 +3,7 @@
 //!
 
 use crate::{Components, PublicKey, Signature, DSA_OID};
+use core::cmp::min;
 use digest::Digest;
 use num_bigint::BigUint;
 use pkcs8::{
@@ -10,7 +11,6 @@ use pkcs8::{
     AlgorithmIdentifier, DecodePrivateKey, EncodePrivateKey, PrivateKeyInfo, SecretDocument,
 };
 use rand::{CryptoRng, RngCore};
-use std::cmp::min;
 use zeroize::Zeroizing;
 
 /// DSA private key
