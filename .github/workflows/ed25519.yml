@@ -24,7 +24,7 @@ jobs:
           - thumbv7em-none-eabi
           - wasm32-unknown-unknown
         toolchain:
-          - 1.56.0 # MSRV
+          - 1.57.0 # MSRV
           - stable
     steps:
       - uses: actions/checkout@v2
@@ -46,7 +46,7 @@ jobs:
           - macos-latest
           - windows-latest
         toolchain:
-          - 1.56.0 # MSRV
+          - 1.57.0 # MSRV
           - stable
     runs-on: ${{ matrix.platform }}
     steps:

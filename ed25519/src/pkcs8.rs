@@ -22,6 +22,9 @@ pub use pkcs8::{spki::EncodePublicKey, EncodePrivateKey};
 use core::fmt;
 use pkcs8::ObjectIdentifier;
 
+#[cfg(feature = "alloc")]
+use pkcs8::der::{Document, SecretDocument};
+
 #[cfg(feature = "pem")]
 use {
     alloc::string::{String, ToString},
@@ -35,7 +38,7 @@ use zeroize::Zeroize;
 /// (`id-Ed25519`).
 ///
 /// <http://oid-info.com/get/1.3.101.112>
-pub const ALGORITHM_OID: ObjectIdentifier = ObjectIdentifier::new("1.3.101.112");
+pub const ALGORITHM_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.3.101.112");
 
 /// Ed25519 Algorithm Identifier.
 pub const ALGORITHM_ID: pkcs8::AlgorithmIdentifier<'static> = pkcs8::AlgorithmIdentifier {
@@ -117,24 +120,25 @@ impl Drop for KeypairBytes {
 #[cfg(feature = "alloc")]
 #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 impl EncodePrivateKey for KeypairBytes {
-    fn to_pkcs8_der(&self) -> pkcs8::Result<pkcs8::PrivateKeyDocument> {
+    fn to_pkcs8_der(&self) -> pkcs8::Result<SecretDocument> {
         // Serialize private key as nested OCTET STRING
         let mut private_key = [0u8; 2 + (Self::BYTE_SIZE / 2)];
         private_key[0] = 0x04;
         private_key[1] = 0x20;
         private_key[2..].copy_from_slice(&self.secret_key);
 
-        let result = pkcs8::PrivateKeyInfo {
+        let private_key_info = pkcs8::PrivateKeyInfo {
             algorithm: ALGORITHM_ID,
             private_key: &private_key,
             public_key: self.public_key.as_ref().map(AsRef::as_ref),
-        }
-        .to_der();
+        };
+
+        let result = SecretDocument::encode_msg(&private_key_info)?;
 
         #[cfg(feature = "zeroize")]
         private_key.zeroize();
 
-        result
+        Ok(result)
     }
 }
 
@@ -239,7 +243,7 @@ impl DecodePublicKey for PublicKeyBytes {}
 #[cfg(feature = "alloc")]
 #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 impl EncodePublicKey for PublicKeyBytes {
-    fn to_public_key_der(&self) -> pkcs8::spki::Result<pkcs8::PublicKeyDocument> {
+    fn to_public_key_der(&self) -> pkcs8::spki::Result<Document> {
         pkcs8::SubjectPublicKeyInfo {
             algorithm: ALGORITHM_ID,
             subject_public_key: &self.0,
