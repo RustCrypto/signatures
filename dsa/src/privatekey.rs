@@ -2,7 +2,7 @@
 //! Module containing the definition of the private key container
 //!
 
-use crate::{Components, PublicKey, Signature, DSA_OID};
+use crate::{sig::Signature, Components, PublicKey, DSA_OID};
 use core::cmp::min;
 use digest::Digest;
 use num_bigint::BigUint;
@@ -12,6 +12,7 @@ use pkcs8::{
     AlgorithmIdentifier, DecodePrivateKey, EncodePrivateKey, PrivateKeyInfo, SecretDocument,
 };
 use rand::{CryptoRng, RngCore};
+use signature::RandomizedDigestSigner;
 use zeroize::Zeroizing;
 
 /// DSA private key
@@ -39,7 +40,6 @@ impl PrivateKey {
     }
 
     /// Generate a new DSA keypair
-    /// Generate a new DSA keypair using the common components
     #[inline]
     pub fn generate<R: CryptoRng + RngCore + ?Sized>(
         rng: &mut R,
@@ -69,12 +69,11 @@ impl PrivateKey {
         *self.x() >= BigUint::one() && self.x() < self.public_key().components().q()
     }
 
-    /// Sign data with the private key
-    pub fn sign<R: CryptoRng + RngCore + ?Sized, D: Digest>(
-        &self,
-        rng: &mut R,
-        data: &[u8],
-    ) -> Option<Signature> {
+    /// Sign some pre-hashed data
+    fn sign<R>(&self, rng: &mut R, hash: &[u8]) -> Option<Signature>
+    where
+        R: CryptoRng + RngCore,
+    {
         // Refuse to sign with an invalid key
         if !self.is_valid() {
             return None;
@@ -83,13 +82,12 @@ impl PrivateKey {
         let components = self.public_key().components();
         let (k, inv_k) = crate::generate::secret_number(rng, components)?;
         let (p, q, g) = (components.p(), components.q(), components.g());
-        let hash = D::digest(data);
         let x = self.x();
 
         let r = g.modpow(&k, p) % q;
 
         let n = (q.bits() / 8) as usize;
-        let block_size = <D as Digest>::output_size();
+        let block_size = hash.len(); // Hash function output size
 
         let z_len = min(n, block_size);
         let z = BigUint::from_bytes_be(&hash[..z_len]);
@@ -97,6 +95,24 @@ impl PrivateKey {
         let s = (inv_k * (z + x * &r)) % q;
 
         Some(Signature::new(r, s))
+    }
+}
+
+impl<D> RandomizedDigestSigner<D, Signature> for PrivateKey
+where
+    D: Digest,
+{
+    fn try_sign_digest_with_rng(
+        &self,
+        mut rng: impl CryptoRng + RngCore,
+        digest: D,
+    ) -> Result<Signature, signature::Error> {
+        let hash = digest.finalize();
+
+        self.sign(&mut rng, &hash)
+            .map(TryInto::try_into)
+            .ok_or_else(signature::Error::new)?
+            .map_err(|_| signature::Error::new())
     }
 }
 
@@ -161,10 +177,12 @@ mod test {
     #![allow(deprecated)]
 
     use crate::{consts::DSA_1024_160, Components, PrivateKey};
+    use digest::Digest;
     use num_bigint::BigUint;
     use num_traits::Zero;
     use pkcs8::{DecodePrivateKey, EncodePrivateKey, LineEnding};
     use sha1::Sha1;
+    use signature::{DigestVerifier, RandomizedDigestSigner};
 
     fn generate_keypair() -> PrivateKey {
         let mut rng = rand::thread_rng();
@@ -188,12 +206,12 @@ mod test {
         let private_key = generate_keypair();
         let public_key = private_key.public_key();
 
-        let signature = private_key
-            .sign::<_, Sha1>(&mut rand::thread_rng(), DATA)
-            .expect("Failed to sign");
+        let signature =
+            private_key.sign_digest_with_rng(rand::thread_rng(), Sha1::new().chain_update(DATA));
+
         assert!(public_key
-            .verify::<Sha1>(DATA, &signature)
-            .expect("Failed to verify"));
+            .verify_digest(Sha1::new().chain_update(DATA), &signature)
+            .is_ok());
     }
 
     #[test]

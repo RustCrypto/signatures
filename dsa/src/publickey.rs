@@ -2,7 +2,7 @@
 //! Module containing the definition of the public key container
 //!
 
-use crate::{two, Components, Signature, DSA_OID};
+use crate::{sig::Signature, two, Components, DSA_OID};
 use core::cmp::min;
 use digest::Digest;
 use num_bigint::{BigUint, ModInverse};
@@ -11,6 +11,7 @@ use pkcs8::{
     der::{asn1::UIntRef, AnyRef, Decode, Encode},
     spki, AlgorithmIdentifier, DecodePublicKey, EncodePublicKey, SubjectPublicKeyInfo,
 };
+use signature::DigestVerifier;
 
 /// DSA public key
 #[derive(Clone, PartialEq, PartialOrd)]
@@ -55,12 +56,9 @@ impl PublicKey {
         *self.y() >= two() && self.y().modpow(components.q(), components.p()) == BigUint::one()
     }
 
-    /// Verify if the signature matches the provided hash
+    /// Verify some prehashed data
     #[must_use]
-    pub fn verify<D>(&self, data: &[u8], signature: &Signature) -> Option<bool>
-    where
-        D: Digest,
-    {
+    fn verify(&self, hash: &[u8], signature: &Signature) -> Option<bool> {
         // Refuse to verify with an invalid key
         if !self.is_valid() {
             return None;
@@ -70,12 +68,11 @@ impl PublicKey {
         let (p, q, g) = (components.p(), components.q(), components.g());
         let (r, s) = (signature.r(), signature.s());
         let y = self.y();
-        let hash = D::digest(data);
 
         let w = s.mod_inverse(q)?.to_biguint().unwrap();
 
         let n = (q.bits() / 8) as usize;
-        let block_size = <D as Digest>::output_size();
+        let block_size = hash.len(); // Hash function output size
 
         let z_len = min(n, block_size);
         let z = BigUint::from_bytes_be(&hash[..z_len]);
@@ -85,6 +82,25 @@ impl PublicKey {
         let v = (g.modpow(&u1, p) * y.modpow(&u2, p) % p) % q;
 
         Some(v == *r)
+    }
+}
+
+impl<D> DigestVerifier<D, Signature> for PublicKey
+where
+    D: Digest,
+{
+    fn verify_digest(&self, digest: D, signature: &Signature) -> Result<(), signature::Error> {
+        let hash = digest.finalize();
+
+        let is_valid = self
+            .verify(&hash, signature)
+            .ok_or_else(signature::Error::new)?;
+
+        if !is_valid {
+            return Err(signature::Error::new());
+        }
+
+        Ok(())
     }
 }
 

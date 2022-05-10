@@ -1,14 +1,18 @@
 //!
-//! Module containing the definition of the signature container
+//! Module containing the definition of the Signature container
 //!
 
+use alloc::vec::Vec;
 use num_bigint::BigUint;
-use pkcs8::der::{self, asn1::UIntRef, Decode, Reader, Sequence, SliceReader};
+use pkcs8::der::{self, asn1::UIntRef, Decode, Encode, Reader, Sequence, SliceReader};
 
 /// Container of the DSA signature
 #[derive(Clone, PartialEq, PartialOrd)]
 #[must_use]
 pub struct Signature {
+    /// Internally cached DER representation of the signature
+    der_repr: Vec<u8>,
+
     /// Signature part r
     r: BigUint,
 
@@ -19,12 +23,19 @@ pub struct Signature {
 opaque_debug::implement!(Signature);
 
 impl Signature {
-    /// Create a new signature container from its components
+    /// Create a new Signature container from its components
     pub fn new(r: BigUint, s: BigUint) -> Self {
-        Self { r, s }
+        let mut signature = Self {
+            der_repr: Vec::with_capacity(0),
+            r,
+            s,
+        };
+        signature.der_repr = signature.to_vec().unwrap();
+
+        signature
     }
 
-    /// Decode a signature from its DER representation
+    /// Decode a Signature from its DER representation
     ///
     /// # Errors
     ///
@@ -44,6 +55,12 @@ impl Signature {
     #[must_use]
     pub fn s(&self) -> &BigUint {
         &self.s
+    }
+}
+
+impl AsRef<[u8]> for Signature {
+    fn as_ref(&self) -> &[u8] {
+        &self.der_repr
     }
 }
 
@@ -71,5 +88,14 @@ impl<'a> Sequence<'a> for Signature {
         let s = UIntRef::new(&s_bytes)?;
 
         encoder(&[&r, &s])
+    }
+}
+
+impl signature::Signature for Signature {
+    fn from_bytes(bytes: &[u8]) -> Result<Self, signature::Error> {
+        Signature::from_der(bytes)
+            .map(TryInto::try_into)
+            .map_err(|_| signature::Error::new())?
+            .map_err(|_| signature::Error::new())
     }
 }

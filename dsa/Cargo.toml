@@ -14,14 +14,13 @@ num-bigint = { package = "num-bigint-dig", version = "0.8.1", default-features =
 num-traits = { version = "0.2.15", default-features = false }
 opaque-debug = "0.3.0"
 paste = "1.0.7"
-pkcs8 = { version = "0.9.0", default-features = false, features = ["alloc"] }
+pkcs8 = { version = "0.9.0", default-features = false }
 rand = { version = "0.8.5", default-features = false }
-signature = { version = "1.5.0", optional = true }
+signature = { version = ">= 1.5.0, < 1.6.0", default-features = false, features = ["digest-preview", "rand-preview"] }
 zeroize = { version = "1.5.5", default-features = false }
 
 [features]
-default = ["signature-compat"]
-signature-compat = ["signature", "pkcs8/std", "rand/std", "rand/std_rng"]
+default = []
 
 [dev-dependencies]
 pkcs8 = { version = "0.9.0", default-features = false, features = ["pem"] }

@@ -54,9 +54,11 @@
 //! ```
 //!
 
-#![cfg_attr(not(feature = "signature-compat"), no_std)]
+#![no_std]
 #![forbid(missing_docs, unsafe_code)]
 #![deny(rust_2018_idioms)]
+
+extern crate alloc;
 
 /// DSA object identifier as defined by RFC-3279, section 2.3.2
 const DSA_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.2.840.10040.4.1");
@@ -64,14 +66,12 @@ const DSA_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.2.840.10040.4.
 pub use self::components::Components;
 pub use self::privatekey::PrivateKey;
 pub use self::publickey::PublicKey;
-pub use self::signature::Signature;
+pub use self::sig::Signature;
 
 // Re-export the types needed for de-/serialising keys to DER and PEM
 pub use pkcs8;
+pub use signature;
 
-#[cfg(feature = "signature-compat")]
-#[cfg_attr(doc_cfg, doc(cfg(feature = "signature-compat")))]
-pub mod compat;
 pub mod consts;
 
 use num_bigint::BigUint;
@@ -81,7 +81,7 @@ mod components;
 mod generate;
 mod privatekey;
 mod publickey;
-mod signature;
+mod sig;
 
 /// Returns a `BigUint` with the value 2
 #[inline]
