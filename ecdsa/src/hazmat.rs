@@ -35,6 +35,9 @@ use crate::{
     Signature,
 };
 
+#[cfg(all(feature = "arithmetic", feature = "digest"))]
+use signature::digest::FixedOutput;
+
 #[cfg(all(feature = "rfc6979"))]
 use {
     elliptic_curve::ScalarCore,
@@ -42,7 +45,7 @@ use {
         block_buffer::Eager,
         core_api::{BlockSizeUser, BufferKindUser, CoreProxy, FixedOutputCore},
         generic_array::typenum::{IsLess, Le, NonZero, U256},
-        FixedOutput, HashMarker, OutputSizeUser,
+        HashMarker, OutputSizeUser,
     },
 };
 
@@ -139,6 +142,34 @@ where
         let k = Self::from(ScalarCore::<C>::new(*k).unwrap());
         self.try_sign_prehashed(k, z)
     }
+
+    /// Try to sign the given digest instance using the method described in
+    /// [RFC6979].
+    ///
+    /// [RFC6979]: https://datatracker.ietf.org/doc/html/rfc6979
+    #[cfg(all(feature = "rfc6979"))]
+    #[cfg_attr(docsrs, doc(cfg(feature = "rfc6979")))]
+    fn try_sign_digest_rfc6979<D>(
+        &self,
+        msg_digest: D,
+        ad: &[u8],
+    ) -> Result<(Signature<C>, Option<RecoveryId>)>
+    where
+        Self: From<ScalarCore<C>>,
+        C::UInt: for<'a> From<&'a Self>,
+        D: CoreProxy + FixedOutput<OutputSize = FieldSize<C>>,
+        D::Core: BlockSizeUser
+            + BufferKindUser<BufferKind = Eager>
+            + Clone
+            + Default
+            + FixedOutputCore
+            + HashMarker
+            + OutputSizeUser<OutputSize = D::OutputSize>,
+        <D::Core as BlockSizeUser>::BlockSize: IsLess<U256>,
+        Le<<D::Core as BlockSizeUser>::BlockSize, U256>: NonZero,
+    {
+        self.try_sign_prehashed_rfc6979::<D>(msg_digest.finalize_fixed(), ad)
+    }
 }
 
 /// Verify the given prehashed message using ECDSA.
@@ -181,6 +212,16 @@ where
         } else {
             Err(Error::new())
         }
+    }
+
+    /// Verify message digest against the provided signature.
+    #[cfg(feature = "digest")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "digest")))]
+    fn verify_digest<D>(&self, msg_digest: D, sig: &Signature<C>) -> Result<()>
+    where
+        D: FixedOutput<OutputSize = FieldSize<C>>,
+    {
+        self.verify_prehashed(msg_digest.finalize_fixed(), sig)
     }
 }
 
