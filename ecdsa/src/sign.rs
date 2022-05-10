@@ -109,8 +109,7 @@ where
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // TODO(tarcieri): use `finish_non_exhaustive` when stable
-        f.debug_tuple("SigningKey").field(&"...").finish()
+        f.debug_struct("SigningKey").finish_non_exhaustive()
     }
 }
 
@@ -192,8 +191,7 @@ where
     ///
     /// [RFC6979 § 3.2]: https://tools.ietf.org/html/rfc6979#section-3
     fn try_sign_digest(&self, msg_digest: D) -> Result<Signature<C>> {
-        let digest = msg_digest.finalize_fixed();
-        Ok(self.inner.try_sign_prehashed_rfc6979::<D>(digest, &[])?.0)
+        Ok(self.inner.try_sign_digest_rfc6979::<D>(msg_digest, &[])?.0)
     }
 }
 
@@ -205,7 +203,7 @@ where
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn try_sign(&self, msg: &[u8]) -> Result<Signature<C>> {
-        self.try_sign_digest(C::Digest::new().chain_update(msg))
+        self.try_sign_digest(C::Digest::new_with_prefix(msg))
     }
 }
 
@@ -232,13 +230,11 @@ where
     fn try_sign_digest_with_rng(
         &self,
         mut rng: impl CryptoRng + RngCore,
-        msg: D,
+        msg_digest: D,
     ) -> Result<Signature<C>> {
         let mut ad = FieldBytes::<C>::default();
         rng.fill_bytes(&mut ad);
-
-        let digest = msg.finalize_fixed();
-        Ok(self.inner.try_sign_prehashed_rfc6979::<D>(digest, &ad)?.0)
+        Ok(self.inner.try_sign_digest_rfc6979::<D>(msg_digest, &ad)?.0)
     }
 }
 
@@ -250,7 +246,7 @@ where
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn try_sign_with_rng(&self, rng: impl CryptoRng + RngCore, msg: &[u8]) -> Result<Signature<C>> {
-        self.try_sign_digest_with_rng(rng, C::Digest::new().chain_update(msg))
+        self.try_sign_digest_with_rng(rng, C::Digest::new_with_prefix(msg))
     }
 }
 
