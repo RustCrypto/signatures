@@ -65,14 +65,14 @@ fn decode_public_key() {
 fn encode_pkcs8_v1() {
     let pk = KeypairBytes::from_pkcs8_der(PKCS8_V1_DER).unwrap();
     let pk_der = pk.to_pkcs8_der().unwrap();
-    assert_eq!(pk_der.as_ref(), PKCS8_V1_DER);
+    assert_eq!(pk_der.as_bytes(), PKCS8_V1_DER);
 }
 
 #[cfg(feature = "alloc")]
 #[test]
 fn encode_pkcs8_v2() {
     let pk = KeypairBytes::from_pkcs8_der(PKCS8_V2_DER).unwrap();
-    let pk2 = KeypairBytes::from_pkcs8_der(pk.to_pkcs8_der().unwrap().as_ref()).unwrap();
+    let pk2 = KeypairBytes::from_pkcs8_der(pk.to_pkcs8_der().unwrap().as_bytes()).unwrap();
     assert_eq!(pk.secret_key, pk2.secret_key);
     assert_eq!(pk.public_key, pk2.public_key);
 }

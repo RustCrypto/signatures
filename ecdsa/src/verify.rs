@@ -64,8 +64,9 @@ where
     /// Returns an [`Error`] if the given affine point is the additive identity
     /// (a.k.a. point at infinity).
     pub fn from_affine(affine: AffinePoint<C>) -> Result<Self> {
-        let inner = PublicKey::from_affine(affine).map_err(|_| Error::new())?;
-        Ok(Self { inner })
+        Ok(Self {
+            inner: PublicKey::from_affine(affine).map_err(|_| Error::new())?,
+        })
     }
 
     /// Initialize [`VerifyingKey`] from an [`EncodedPoint`].
@@ -93,8 +94,7 @@ where
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn verify_digest(&self, msg_digest: D, signature: &Signature<C>) -> Result<()> {
-        let digest = msg_digest.finalize_fixed();
-        self.inner.as_affine().verify_prehashed(digest, signature)
+        self.inner.as_affine().verify_digest(msg_digest, signature)
     }
 }
 
@@ -107,7 +107,7 @@ where
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn verify(&self, msg: &[u8], signature: &Signature<C>) -> Result<()> {
-        self.verify_digest(C::Digest::new().chain_update(msg), signature)
+        self.verify_digest(C::Digest::new_with_prefix(msg), signature)
     }
 }
 

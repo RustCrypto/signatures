@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.14.1 (2022-05-09)
+### Added
+- `SignPrimitive::try_sign_digest_rfc6979` ([#475])
+- `VerifyPrimitive::verify_digest` ([#475])
+
+[#475]: https://github.com/RustCrypto/signatures/pull/475
+
+## 0.14.0 (2022-05-09)
+### Added
+- `VerifyingKey::from_affine` ([#452])
+
+### Changed
+- Bump `digest` dependency to v0.10 ([#433])
+- `SignPrimitive` and `VerifyPrimitive` to accept `FieldBytes<C>` rather than `Scalar<C>` ([#460])
+- Replace `hazmat::rfc6979_generate_k` with `SignPrimitive::try_sign_prehashed_rfc6979` ([#460])
+- Bump `der` dependency to v0.6 ([#468])
+- Bump `elliptic-curve` dependency to v0.12 ([#468])
+- Bump `rfc6979` dependency to v0.2 ([#470])
+
+[#433]: https://github.com/RustCrypto/signatures/pull/433
+[#452]: https://github.com/RustCrypto/signatures/pull/452
+[#460]: https://github.com/RustCrypto/signatures/pull/460
+[#468]: https://github.com/RustCrypto/signatures/pull/468
+[#470]: https://github.com/RustCrypto/signatures/pull/470
+
 ## 0.13.4 (2022-01-06)
 ### Added
 - `Signature::to_vec` ([#428])
