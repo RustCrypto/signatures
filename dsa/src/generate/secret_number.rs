@@ -3,7 +3,7 @@
 //!
 
 use crate::{Components, PrivateKey};
-use alloc::vec;
+use alloc::{vec, vec::Vec};
 use core::cmp::min;
 use digest::{
     block_buffer::Eager,

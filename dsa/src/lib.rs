@@ -54,7 +54,7 @@
 //! ```
 //!
 
-//#![no_std]
+#![no_std]
 #![forbid(missing_docs, unsafe_code)]
 #![deny(rust_2018_idioms)]
 
