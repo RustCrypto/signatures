@@ -58,7 +58,7 @@ impl PublicKey {
 
     /// Verify some prehashed data
     #[must_use]
-    fn verify(&self, hash: &[u8], signature: &Signature) -> Option<bool> {
+    fn verify_prehashed(&self, hash: &[u8], signature: &Signature) -> Option<bool> {
         // Refuse to verify with an invalid key
         if !self.is_valid() {
             return None;
@@ -93,7 +93,7 @@ where
         let hash = digest.finalize();
 
         let is_valid = self
-            .verify(&hash, signature)
+            .verify_prehashed(&hash, signature)
             .ok_or_else(signature::Error::new)?;
 
         if !is_valid {

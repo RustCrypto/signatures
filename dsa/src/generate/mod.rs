@@ -9,7 +9,7 @@ mod secret_number;
 
 pub use self::components::{common as common_components, public as public_component};
 pub use self::keypair::keypair;
-pub use self::secret_number::secret_number;
+pub use self::secret_number::{secret_number, secret_number_rfc6979};
 
 /// Calculate the upper and lower bounds for generating values like p or q
 #[inline]

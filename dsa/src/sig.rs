@@ -7,7 +7,7 @@ use num_bigint::BigUint;
 use pkcs8::der::{self, asn1::UIntRef, Decode, Encode, Reader, Sequence, SliceReader};
 
 /// Container of the DSA signature
-#[derive(Clone, PartialEq, PartialOrd)]
+#[derive(Clone)]
 #[must_use]
 pub struct Signature {
     /// Internally cached DER representation of the signature
@@ -24,7 +24,7 @@ opaque_debug::implement!(Signature);
 
 impl Signature {
     /// Create a new Signature container from its components
-    pub fn new(r: BigUint, s: BigUint) -> Self {
+    pub fn from_components(r: BigUint, s: BigUint) -> Self {
         let mut signature = Self {
             der_repr: Vec::with_capacity(0),
             r,
@@ -39,7 +39,7 @@ impl Signature {
     ///
     /// # Errors
     ///
-    /// See the [`der` errors](pkcs8::der::Error)
+    /// See the [`der` errors](::pkcs8::der::Error)
     pub fn from_der(data: &[u8]) -> der::Result<Self> {
         let mut reader = SliceReader::new(data)?;
         reader.decode()
@@ -72,7 +72,19 @@ impl<'a> Decode<'a> for Signature {
         let r = BigUint::from_bytes_be(r.as_bytes());
         let s = BigUint::from_bytes_be(s.as_bytes());
 
-        Ok(Self::new(r, s))
+        Ok(Self::from_components(r, s))
+    }
+}
+
+impl PartialEq for Signature {
+    fn eq(&self, other: &Self) -> bool {
+        self.r().eq(other.r()) && self.s().eq(other.s())
+    }
+}
+
+impl PartialOrd for Signature {
+    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
+        (self.r(), self.s()).partial_cmp(&(other.r(), other.s()))
     }
 }
 
@@ -93,9 +105,6 @@ impl<'a> Sequence<'a> for Signature {
 
 impl signature::Signature for Signature {
     fn from_bytes(bytes: &[u8]) -> Result<Self, signature::Error> {
-        Signature::from_der(bytes)
-            .map(TryInto::try_into)
-            .map_err(|_| signature::Error::new())?
-            .map_err(|_| signature::Error::new())
+        Signature::from_der(bytes).map_err(|_| signature::Error::new())
     }
 }
