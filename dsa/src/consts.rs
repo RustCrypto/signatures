@@ -1,5 +1,5 @@
 //!
-//! DSA-related constants like parameter sizes
+//! DSA-related constants (like parameter sizes)
 //!
 
 macro_rules! define_param_size {

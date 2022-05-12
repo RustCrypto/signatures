@@ -64,7 +64,7 @@ impl PrivateKey {
 
     /// DSA private component
     ///
-    /// If you decide to clone this value, please consider using [`Zeroize::zeroize`](::zeroize::Zeroize::zeroize()) to zero out the memory region the libs of this integer are located in
+    /// If you decide to clone this value, please consider using [`Zeroize::zeroize`](::zeroize::Zeroize::zeroize()) to zero out the memory after you're done using the clone
     #[must_use]
     pub fn x(&self) -> &BigUint {
         &self.x
