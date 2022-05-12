@@ -55,8 +55,8 @@ where
     let mut hmac = HmacDrbg::<D>::new(&x_bytes, &hash, &[]);
     x_bytes.zeroize();
 
+    let mut buffer = vec![0; k_size];
     loop {
-        let mut buffer = vec![0; k_size];
         hmac.fill_bytes(&mut buffer);
 
         let k = BigUint::from_bytes_be(&buffer);
