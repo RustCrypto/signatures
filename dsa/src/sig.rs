@@ -4,7 +4,7 @@
 
 use alloc::vec::Vec;
 use num_bigint::BigUint;
-use pkcs8::der::{self, asn1::UIntRef, Decode, Encode, Reader, Sequence, SliceReader};
+use pkcs8::der::{self, asn1::UIntRef, Decode, Encode, Reader, Sequence};
 
 /// Container of the DSA signature
 #[derive(Clone)]
@@ -35,16 +35,6 @@ impl Signature {
         signature
     }
 
-    /// Decode a Signature from its DER representation
-    ///
-    /// # Errors
-    ///
-    /// See the [`der` errors](::pkcs8::der::Error)
-    pub fn from_der(data: &[u8]) -> der::Result<Self> {
-        let mut reader = SliceReader::new(data)?;
-        reader.decode()
-    }
-
     /// Signature part r
     #[must_use]
     pub fn r(&self) -> &BigUint {
@@ -66,13 +56,15 @@ impl AsRef<[u8]> for Signature {
 
 impl<'a> Decode<'a> for Signature {
     fn decode<R: Reader<'a>>(reader: &mut R) -> der::Result<Self> {
-        let r = reader.decode::<UIntRef<'_>>()?;
-        let s = reader.decode::<UIntRef<'_>>()?;
+        reader.sequence(|sequence| {
+            let r = sequence.decode::<UIntRef<'_>>()?;
+            let s = sequence.decode::<UIntRef<'_>>()?;
 
-        let r = BigUint::from_bytes_be(r.as_bytes());
-        let s = BigUint::from_bytes_be(s.as_bytes());
+            let r = BigUint::from_bytes_be(r.as_bytes());
+            let s = BigUint::from_bytes_be(s.as_bytes());
 
-        Ok(Self::from_components(r, s))
+            Ok(Self::from_components(r, s))
+        })
     }
 }
 
