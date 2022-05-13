@@ -2,12 +2,11 @@
 //! Module containing the definition of the common components container
 //!
 
+use crate::two;
 use num_bigint::BigUint;
 use num_traits::One;
 use pkcs8::der::{self, asn1::UIntRef, DecodeValue, Encode, Header, Reader, Sequence};
 use rand::{CryptoRng, RngCore};
-
-use crate::two;
 
 /// The common components of an DSA keypair
 ///

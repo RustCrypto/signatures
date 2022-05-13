@@ -1,28 +1,12 @@
-//!
-//! DSA implementation in pure Rust
-//!
-//! # Disclaimer
-//!
-//! THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
-//! INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-//! IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-//! TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-//!
-//! This software has **NOT** been audited and therefore most likely contains security issues!
-//!
-//! **USE AT YOUR OWN RISK!**
-//!
-//! ## Implementation progress
-//!
-//! - [x] Generate components
-//! - [x] Generate keypair
-//! - [x] Import keys
-//! - [x] Export keys
-//! - [x] Sign data
-//! - [x] Verify signatures
-//! - [ ] Test vectors
-//!
-//! ## Example
+#![no_std]
+#![forbid(missing_docs, unsafe_code)]
+#![deny(rust_2018_idioms)]
+#![doc = include_str!("../README.md")]
+#![doc(
+    html_logo_url = "https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg",
+    html_favicon_url = "https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg"
+)]
+
 //!
 //! Generate a DSA keypair
 //!
@@ -54,10 +38,6 @@
 //! ```
 //!
 
-#![no_std]
-#![forbid(missing_docs, unsafe_code)]
-#![deny(rust_2018_idioms)]
-
 extern crate alloc;
 
 /// DSA object identifier as defined by RFC-3279, section 2.3.2
@@ -68,7 +48,6 @@ pub use self::privatekey::PrivateKey;
 pub use self::publickey::PublicKey;
 pub use self::sig::Signature;
 
-// Re-export the types needed for de-/serialising keys to DER and PEM
 pub use pkcs8;
 pub use signature;
 
