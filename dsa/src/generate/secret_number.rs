@@ -21,11 +21,19 @@ use zeroize::Zeroize;
 /// Reduce the hash into an RFC-6979 appropriate form
 fn reduce_hash(q: &BigUint, hash: &[u8]) -> Vec<u8> {
     // Reduce the hash modulo Q
-    let hash_len = min(hash.len(), q.bits() / 8);
+    let q_byte_len = q.bits() / 8;
+
+    let hash_len = min(hash.len(), q_byte_len);
     let hash = &hash[..hash_len];
 
     let hash = BigUint::from_bytes_be(hash);
-    (hash % q).to_bytes_be()
+    let mut reduced = (hash % q).to_bytes_be();
+
+    while reduced.len() < q_byte_len {
+        reduced.insert(0, 0);
+    }
+
+    reduced
 }
 
 /// Generate a per-message secret number k deterministically using the method described in RFC 6979
