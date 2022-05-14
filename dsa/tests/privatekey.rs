@@ -10,10 +10,25 @@ use pkcs8::{DecodePrivateKey, EncodePrivateKey, LineEnding};
 use sha1::Sha1;
 use signature::{DigestVerifier, RandomizedDigestSigner};
 
+const OPENSSL_PEM_PRIVATE_KEY: &str = include_str!("pems/private.pem");
+
 fn generate_keypair() -> PrivateKey {
     let mut rng = rand::thread_rng();
     let components = Components::generate(&mut rng, DSA_1024_160);
     PrivateKey::generate(&mut rng, components)
+}
+
+#[test]
+fn decode_encode_openssl_private_key() {
+    let private_key = PrivateKey::from_pkcs8_pem(OPENSSL_PEM_PRIVATE_KEY)
+        .expect("Failed to decode PEM encoded OpenSSL key");
+    assert!(private_key.is_valid());
+
+    let reencoded_private_key = private_key
+        .to_pkcs8_pem(LineEnding::LF)
+        .expect("Failed to encode private key into PEM representation");
+
+    assert_eq!(*reencoded_private_key, OPENSSL_PEM_PRIVATE_KEY);
 }
 
 #[test]

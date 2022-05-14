@@ -7,12 +7,27 @@ use num_bigint::BigUint;
 use num_traits::One;
 use pkcs8::{DecodePublicKey, EncodePublicKey, LineEnding};
 
+const OPENSSL_PEM_PUBLIC_KEY: &str = include_str!("pems/public.pem");
+
 fn generate_public_key() -> PublicKey {
     let mut rng = rand::thread_rng();
     let components = Components::generate(&mut rng, DSA_1024_160);
     let private_key = PrivateKey::generate(&mut rng, components);
 
     private_key.public_key().clone()
+}
+
+#[test]
+fn decode_encode_openssl_public_key() {
+    let public_key = PublicKey::from_public_key_pem(OPENSSL_PEM_PUBLIC_KEY)
+        .expect("Failed to decode PEM encoded OpenSSL public key");
+    assert!(public_key.is_valid());
+
+    let reencoded_public_key = public_key
+        .to_public_key_pem(LineEnding::LF)
+        .expect("Failed to encode public key into PEM representation");
+
+    assert_eq!(reencoded_public_key, OPENSSL_PEM_PUBLIC_KEY);
 }
 
 #[test]
