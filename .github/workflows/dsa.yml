@@ -48,6 +48,7 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Enforce LF
+        working-directory: .
         run: |
           git config --global core.autocrlf false
           git config --global core.eol lf
