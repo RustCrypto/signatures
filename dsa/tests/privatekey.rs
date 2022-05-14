@@ -25,7 +25,7 @@ fn decode_encode_openssl_private_key() {
     assert!(private_key.is_valid());
 
     let reencoded_private_key = private_key
-        .to_pkcs8_pem(LineEnding::default())
+        .to_pkcs8_pem(LineEnding::LF)
         .expect("Failed to encode private key into PEM representation");
 
     assert_eq!(*reencoded_private_key, OPENSSL_PEM_PRIVATE_KEY);

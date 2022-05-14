@@ -24,7 +24,7 @@ fn decode_encode_openssl_public_key() {
     assert!(public_key.is_valid());
 
     let reencoded_public_key = public_key
-        .to_public_key_pem(LineEnding::default())
+        .to_public_key_pem(LineEnding::LF)
         .expect("Failed to encode public key into PEM representation");
 
     assert_eq!(reencoded_public_key, OPENSSL_PEM_PUBLIC_KEY);
