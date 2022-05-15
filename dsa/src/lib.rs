@@ -1,6 +1,6 @@
 #![no_std]
-#![forbid(missing_docs, unsafe_code)]
-#![deny(rust_2018_idioms)]
+#![forbid(unsafe_code)]
+#![warn(missing_docs, rust_2018_idioms)]
 #![doc = include_str!("../README.md")]
 #![doc(
     html_logo_url = "https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg",
@@ -44,8 +44,8 @@ extern crate alloc;
 const DSA_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.2.840.10040.4.1");
 
 pub use self::components::Components;
-pub use self::privatekey::PrivateKey;
-pub use self::publickey::PublicKey;
+pub use self::private_key::PrivateKey;
+pub use self::public_key::PublicKey;
 pub use self::sig::Signature;
 
 pub use pkcs8;
@@ -58,8 +58,8 @@ use pkcs8::spki::ObjectIdentifier;
 
 mod components;
 mod generate;
-mod privatekey;
-mod publickey;
+mod private_key;
+mod public_key;
 mod sig;
 
 /// Returns a `BigUint` with the value 2
