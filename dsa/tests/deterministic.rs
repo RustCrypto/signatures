@@ -5,7 +5,7 @@ use digest::{
     typenum::{IsLess, Le, NonZero},
     Digest, FixedOutput, HashMarker, OutputSizeUser,
 };
-use dsa::{Components, PrivateKey, PublicKey, Signature};
+use dsa::{Components, Signature, SigningKey, VerifyingKey};
 use num_bigint::BigUint;
 use num_traits::Num;
 use sha1::Sha1;
@@ -15,7 +15,7 @@ use signature::DigestSigner;
 const MESSAGE: &[u8] = b"sample";
 const MESSAGE_2: &[u8] = b"test";
 
-fn dsa_1024_private_key() -> PrivateKey {
+fn dsa_1024_signing_key() -> SigningKey {
     let p = BigUint::from_str_radix(
         "86F5CA03DCFEB225063FF830A0C769B9DD9D6153AD91D7CE27F787C43278B447\
                 E6533B86B18BED6E8A48B784A14C252C5BE0DBF60B86D6385BD2F12FB763ED88\
@@ -45,12 +45,12 @@ fn dsa_1024_private_key() -> PrivateKey {
     .unwrap();
 
     let components = Components::from_components(p, q, g);
-    let public_key = PublicKey::from_components(components, y);
+    let verifying_key = VerifyingKey::from_components(components, y);
 
-    PrivateKey::from_components(public_key, x)
+    SigningKey::from_components(verifying_key, x)
 }
 
-fn dsa_2048_private_key() -> PrivateKey {
+fn dsa_2048_signing_key() -> SigningKey {
     let p = BigUint::from_str_radix(
         "9DB6FB5951B66BB6FE1E140F1D2CE5502374161FD6538DF1648218642F0B5C48\
         C8F7A41AADFA187324B87674FA1822B00F1ECF8136943D7C55757264E5A1A44F\
@@ -100,13 +100,13 @@ fn dsa_2048_private_key() -> PrivateKey {
     .unwrap();
 
     let components = Components::from_components(p, q, g);
-    let public_key = PublicKey::from_components(components, y);
+    let verifying_key = VerifyingKey::from_components(components, y);
 
-    PrivateKey::from_components(public_key, x)
+    SigningKey::from_components(verifying_key, x)
 }
 
 /// Generate a signature given the unhashed message and a private key
-fn generate_signature<D>(private_key: PrivateKey, data: &[u8]) -> Signature
+fn generate_signature<D>(signing_key: SigningKey, data: &[u8]) -> Signature
 where
     D: Digest + CoreProxy + FixedOutput,
     D::Core: BlockSizeUser
@@ -119,7 +119,7 @@ where
     <D::Core as BlockSizeUser>::BlockSize: IsLess<U256>,
     Le<<D::Core as BlockSizeUser>::BlockSize, U256>: NonZero,
 {
-    private_key.sign_digest(<D as Digest>::new().chain_update(data))
+    signing_key.sign_digest(<D as Digest>::new().chain_update(data))
 }
 
 /// Generate a signature using the 1024-bit DSA key
@@ -136,7 +136,7 @@ where
     <D::Core as BlockSizeUser>::BlockSize: IsLess<U256>,
     Le<<D::Core as BlockSizeUser>::BlockSize, U256>: NonZero,
 {
-    generate_signature::<D>(dsa_1024_private_key(), data)
+    generate_signature::<D>(dsa_1024_signing_key(), data)
 }
 
 /// Generate a signature using the 2048-bit DSA key
@@ -153,7 +153,7 @@ where
     <D::Core as BlockSizeUser>::BlockSize: IsLess<U256>,
     Le<<D::Core as BlockSizeUser>::BlockSize, U256>: NonZero,
 {
-    generate_signature::<D>(dsa_2048_private_key(), data)
+    generate_signature::<D>(dsa_2048_signing_key(), data)
 }
 
 /// Create a signature container from the two components in their textual hexadecimal form

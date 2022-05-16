@@ -13,10 +13,10 @@ use pkcs8::{
 };
 use signature::DigestVerifier;
 
-/// DSA public key
+/// DSA public key.
 #[derive(Clone, PartialEq, PartialOrd)]
 #[must_use]
-pub struct PublicKey {
+pub struct VerifyingKey {
     /// common components
     components: Components,
 
@@ -24,9 +24,9 @@ pub struct PublicKey {
     y: BigUint,
 }
 
-opaque_debug::implement!(PublicKey);
+opaque_debug::implement!(VerifyingKey);
 
-impl PublicKey {
+impl VerifyingKey {
     /// Construct a new public key from the common components and the public component
     ///
     /// These values are not getting verified for validity
@@ -85,7 +85,7 @@ impl PublicKey {
     }
 }
 
-impl<D> DigestVerifier<D, Signature> for PublicKey
+impl<D> DigestVerifier<D, Signature> for VerifyingKey
 where
     D: Digest,
 {
@@ -104,7 +104,7 @@ where
     }
 }
 
-impl EncodePublicKey for PublicKey {
+impl EncodePublicKey for VerifyingKey {
     fn to_public_key_der(&self) -> spki::Result<spki::Document> {
         let parameters = self.components.to_vec()?;
         let parameters = AnyRef::from_der(&parameters)?;
@@ -117,16 +117,15 @@ impl EncodePublicKey for PublicKey {
         let y = UIntRef::new(&y_bytes)?;
         let public_key = y.to_vec()?;
 
-        let public_key_info = SubjectPublicKeyInfo {
+        SubjectPublicKeyInfo {
             algorithm,
             subject_public_key: &public_key,
-        };
-
-        public_key_info.try_into()
+        }
+        .try_into()
     }
 }
 
-impl<'a> TryFrom<SubjectPublicKeyInfo<'a>> for PublicKey {
+impl<'a> TryFrom<SubjectPublicKeyInfo<'a>> for VerifyingKey {
     type Error = spki::Error;
 
     fn try_from(value: SubjectPublicKeyInfo<'a>) -> Result<Self, Self::Error> {
@@ -142,4 +141,4 @@ impl<'a> TryFrom<SubjectPublicKeyInfo<'a>> for PublicKey {
     }
 }
 
-impl DecodePublicKey for PublicKey {}
+impl DecodePublicKey for VerifyingKey {}

@@ -2,7 +2,7 @@
 //! Generate a per-message secret number
 //!
 
-use crate::{Components, PrivateKey};
+use crate::{Components, SigningKey};
 use alloc::{vec, vec::Vec};
 use core::cmp::min;
 use digest::{
@@ -42,7 +42,7 @@ fn reduce_hash(q: &BigUint, hash: &[u8]) -> Vec<u8> {
 ///
 /// Secret number k and its modular multiplicative inverse with q
 #[inline]
-pub fn secret_number_rfc6979<D>(private_key: &PrivateKey, hash: &[u8]) -> (BigUint, BigUint)
+pub fn secret_number_rfc6979<D>(signing_key: &SigningKey, hash: &[u8]) -> (BigUint, BigUint)
 where
     D: CoreProxy + FixedOutput,
     D::Core: BlockSizeUser
@@ -55,11 +55,11 @@ where
     <D::Core as BlockSizeUser>::BlockSize: IsLess<U256>,
     Le<<D::Core as BlockSizeUser>::BlockSize, U256>: NonZero,
 {
-    let q = private_key.public_key().components().q();
+    let q = signing_key.verifying_key().components().q();
     let k_size = q.bits() / 8;
     let hash = reduce_hash(q, hash);
 
-    let mut x_bytes = private_key.x().to_bytes_be();
+    let mut x_bytes = signing_key.x().to_bytes_be();
     let mut hmac = HmacDrbg::<D>::new(&x_bytes, &hash, &[]);
     x_bytes.zeroize();
 
