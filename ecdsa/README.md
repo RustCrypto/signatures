@@ -25,6 +25,19 @@ ways:
   generic, interoperable way by leveraging [`ecdsa::Signature`] with the
   [`signature::Signer`] and [`signature::Verifier`] traits.
 
+## ⚠️ Security Warning
+
+The ECDSA implementation contained in this crate has never been independently
+audited for security!
+
+This crate contains a generic implementation of ECDSA which must be
+instantiated using a separate crate providing a concrete implementation of
+arithmetic for a particular curve. It's possible timing variability can exist
+in concrete curve implementations, and thus this crate's security can only be
+properly assessed for a specific elliptic curve.
+
+USE AT YOUR OWN RISK!
+
 ## Minimum Supported Rust Version
 
 This crate requires **Rust 1.57** at a minimum.

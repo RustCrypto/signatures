@@ -17,6 +17,16 @@
 This crate provides an implementation of DSA in pure Rust.  
 It utilises the [`signature`] crate to provide an interface for creating and verifying signatures.  
 
+## ⚠️ Security Warning
+
+The DSA implementation contained in this crate has never been
+independently audited for security.
+
+It may contain timing variabilities or other sidechannels which could
+potentially disclose secret information, including secret keys.
+
+USE AT YOUR OWN RISK!
+
 ## Minimum Supported Rust Version
 
 This crate requires **Rust 1.57** at a minimum.
