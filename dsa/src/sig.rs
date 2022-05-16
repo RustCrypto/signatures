@@ -57,8 +57,8 @@ impl AsRef<[u8]> for Signature {
 impl<'a> Decode<'a> for Signature {
     fn decode<R: Reader<'a>>(reader: &mut R) -> der::Result<Self> {
         reader.sequence(|sequence| {
-            let r = sequence.decode::<UIntRef<'_>>()?;
-            let s = sequence.decode::<UIntRef<'_>>()?;
+            let r = UIntRef::decode(sequence)?;
+            let s = UIntRef::decode(sequence)?;
 
             let r = BigUint::from_bytes_be(r.as_bytes());
             let s = BigUint::from_bytes_be(s.as_bytes());
