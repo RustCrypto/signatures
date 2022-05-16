@@ -500,7 +500,7 @@ impl<'de> Deserialize<'de> for Signature {
 
         deserializer
             .deserialize_tuple(Signature::BYTE_SIZE, ByteArrayVisitor)
-            .map(|bytes| bytes.into())
+            .and_then(|bytes| bytes.try_into().map_err(de::Error::custom))
     }
 }
 
@@ -543,6 +543,6 @@ impl<'de> serde_bytes::Deserialize<'de> for Signature {
 
         deserializer
             .deserialize_bytes(ByteArrayVisitor)
-            .map(Signature::from)
+            .and_then(|bytes| bytes.try_into().map_err(de::Error::custom))
     }
 }
