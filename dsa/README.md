@@ -14,7 +14,8 @@
 
 ## About
 
-This crate provides an implementation of DSA in pure Rust.  
+This crate provides an implementation of DSA in pure Rust.
+
 It utilises the [`signature`] crate to provide an interface for creating and verifying signatures.  
 
 ## ⚠️ Security Warning
