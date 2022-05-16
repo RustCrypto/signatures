@@ -1,7 +1,7 @@
 #![allow(deprecated)]
 
 use digest::Digest;
-use dsa::{consts::DSA_1024_160, Components, PrivateKey, Signature};
+use dsa::{consts::DSA_1024_160, Components, Signature, SigningKey};
 use pkcs8::der::{Decode, Encode};
 use rand::{CryptoRng, RngCore, SeedableRng};
 use rand_chacha::ChaCha8Rng;
@@ -38,10 +38,10 @@ fn seeded_csprng() -> impl CryptoRng + RngCore {
 }
 
 /// Generate a DSA keypair using a seeded CSPRNG
-fn generate_deterministic_keypair() -> PrivateKey {
+fn generate_deterministic_keypair() -> SigningKey {
     let mut rng = seeded_csprng();
     let components = Components::generate(&mut rng, DSA_1024_160);
-    PrivateKey::generate(&mut rng, components)
+    SigningKey::generate(&mut rng, components)
 }
 
 #[test]
@@ -65,9 +65,9 @@ fn decode_encode_signature() {
 
 #[test]
 fn sign_message() {
-    let private_key = generate_deterministic_keypair();
+    let signing_key = generate_deterministic_keypair();
     let generated_signature =
-        private_key.sign_digest_with_rng(seeded_csprng(), Sha256::new().chain_update(MESSAGE));
+        signing_key.sign_digest_with_rng(seeded_csprng(), Sha256::new().chain_update(MESSAGE));
 
     let expected_signature =
         Signature::from_der(MESSAGE_SIGNATURE_CRATE_ASN1).expect("Failed to decode signature");
@@ -77,13 +77,13 @@ fn sign_message() {
 
 #[test]
 fn verify_signature() {
-    let private_key = generate_deterministic_keypair();
-    let public_key = private_key.public_key();
+    let signing_key = generate_deterministic_keypair();
+    let verifying_key = signing_key.verifying_key();
 
     let signature = Signature::from_der(MESSAGE_SIGNATURE_OPENSSL_ASN1)
         .expect("Failed to parse ASN.1 representation of the test signature");
 
-    assert!(public_key
+    assert!(verifying_key
         .verify_digest(Sha256::new().chain_update(MESSAGE), &signature)
         .is_ok());
 }

@@ -2,7 +2,7 @@
 //! Module containing the definition of the private key container
 //!
 
-use crate::{sig::Signature, Components, PublicKey, DSA_OID};
+use crate::{sig::Signature, Components, VerifyingKey, DSA_OID};
 use core::cmp::min;
 use digest::{
     block_buffer::Eager,
@@ -21,29 +21,29 @@ use rand::{CryptoRng, RngCore};
 use signature::{DigestSigner, RandomizedDigestSigner};
 use zeroize::Zeroizing;
 
-/// DSA private key
+/// DSA private key.
 ///
 /// The [`(try_)sign_digest_with_rng`](::signature::RandomizedDigestSigner) API uses regular non-deterministic signatures,
 /// while the [`(try_)sign_digest`](::signature::DigestSigner) API uses deterministic signatures as described in RFC 6979
 #[derive(Clone, PartialEq)]
 #[must_use]
-pub struct PrivateKey {
+pub struct SigningKey {
     /// Public key
-    public_key: PublicKey,
+    verifying_key: VerifyingKey,
 
     /// Private component x
     x: Zeroizing<BigUint>,
 }
 
-opaque_debug::implement!(PrivateKey);
+opaque_debug::implement!(SigningKey);
 
-impl PrivateKey {
+impl SigningKey {
     /// Construct a new private key from the public key and private component
     ///
     /// These values are not getting verified for validity
-    pub fn from_components(public_key: PublicKey, x: BigUint) -> Self {
+    pub fn from_components(verifying_key: VerifyingKey, x: BigUint) -> Self {
         Self {
-            public_key,
+            verifying_key,
             x: Zeroizing::new(x),
         }
     }
@@ -53,13 +53,13 @@ impl PrivateKey {
     pub fn generate<R: CryptoRng + RngCore + ?Sized>(
         rng: &mut R,
         components: Components,
-    ) -> PrivateKey {
+    ) -> SigningKey {
         crate::generate::keypair(rng, components)
     }
 
     /// DSA public key
-    pub const fn public_key(&self) -> &PublicKey {
-        &self.public_key
+    pub const fn verifying_key(&self) -> &VerifyingKey {
+        &self.verifying_key
     }
 
     /// DSA private component
@@ -73,11 +73,11 @@ impl PrivateKey {
     /// Check whether the private key is valid
     #[must_use]
     pub fn is_valid(&self) -> bool {
-        if !self.public_key().is_valid() {
+        if !self.verifying_key().is_valid() {
             return false;
         }
 
-        *self.x() >= BigUint::one() && self.x() < self.public_key().components().q()
+        *self.x() >= BigUint::one() && self.x() < self.verifying_key().components().q()
     }
 
     /// Sign some pre-hashed data
@@ -87,7 +87,7 @@ impl PrivateKey {
             return None;
         }
 
-        let components = self.public_key().components();
+        let components = self.verifying_key().components();
         let (p, q, g) = (components.p(), components.q(), components.g());
         let x = self.x();
 
@@ -105,7 +105,7 @@ impl PrivateKey {
     }
 }
 
-impl<D> DigestSigner<D, Signature> for PrivateKey
+impl<D> DigestSigner<D, Signature> for SigningKey
 where
     D: Digest + CoreProxy + FixedOutput,
     D::Core: BlockSizeUser
@@ -127,7 +127,7 @@ where
     }
 }
 
-impl<D> RandomizedDigestSigner<D, Signature> for PrivateKey
+impl<D> RandomizedDigestSigner<D, Signature> for SigningKey
 where
     D: Digest,
 {
@@ -136,7 +136,7 @@ where
         mut rng: impl CryptoRng + RngCore,
         digest: D,
     ) -> Result<Signature, signature::Error> {
-        let ks = crate::generate::secret_number(&mut rng, self.public_key().components())
+        let ks = crate::generate::secret_number(&mut rng, self.verifying_key().components())
             .ok_or_else(signature::Error::new)?;
         let hash = digest.finalize();
 
@@ -145,9 +145,9 @@ where
     }
 }
 
-impl EncodePrivateKey for PrivateKey {
+impl EncodePrivateKey for SigningKey {
     fn to_pkcs8_der(&self) -> pkcs8::Result<SecretDocument> {
-        let parameters = self.public_key().components().to_vec()?;
+        let parameters = self.verifying_key().components().to_vec()?;
         let parameters = AnyRef::from_der(&parameters)?;
         let algorithm = AlgorithmIdentifier {
             oid: DSA_OID,
@@ -156,14 +156,14 @@ impl EncodePrivateKey for PrivateKey {
 
         let x_bytes = self.x.to_bytes_be();
         let x = UIntRef::new(&x_bytes)?;
-        let private_key = x.to_vec()?;
+        let signing_key = x.to_vec()?;
 
-        let private_key_info = PrivateKeyInfo::new(algorithm, &private_key);
-        private_key_info.try_into()
+        let signing_key_info = PrivateKeyInfo::new(algorithm, &signing_key);
+        signing_key_info.try_into()
     }
 }
 
-impl<'a> TryFrom<PrivateKeyInfo<'a>> for PrivateKey {
+impl<'a> TryFrom<PrivateKeyInfo<'a>> for SigningKey {
     type Error = pkcs8::Error;
 
     fn try_from(value: PrivateKeyInfo<'a>) -> Result<Self, Self::Error> {
@@ -186,15 +186,15 @@ impl<'a> TryFrom<PrivateKeyInfo<'a>> for PrivateKey {
             crate::generate::public_component(&components, &x)
         };
 
-        let public_key = PublicKey::from_components(components, y);
-        let private_key = PrivateKey::from_components(public_key, x);
+        let verifying_key = VerifyingKey::from_components(components, y);
+        let signing_key = SigningKey::from_components(verifying_key, x);
 
-        if !private_key.is_valid() {
+        if !signing_key.is_valid() {
             return Err(pkcs8::Error::KeyMalformed);
         }
 
-        Ok(private_key)
+        Ok(signing_key)
     }
 }
 
-impl DecodePrivateKey for PrivateKey {}
+impl DecodePrivateKey for SigningKey {}
