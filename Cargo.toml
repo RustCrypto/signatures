@@ -6,3 +6,6 @@ members = [
     "ed25519",
     "rfc6979"
 ]
+
+[profile.dev]
+opt-level = 2

@@ -1,10 +1,16 @@
 [package]
 name = "dsa"
 version = "0.0.1"
+description = """
+Pure Rust implementation of the Digital Signature Algorithm (DSA) as specified
+in FIPS 186-4 (Digital Signature Standard), providing RFC6979 deterministic
+signatures as well as support for added entropy
+"""
 edition = "2021"
 license = "Apache-2.0 OR MIT"
 readme = "README.md"
-categories = ["cryptography"]
+repository = "https://github.com/RustCrypto/signatures/tree/master/dsa"
+categories = ["cryptography", "no-std"]
 keywords = ["crypto", "nist", "signature"]
 rust-version = "1.57"
 
