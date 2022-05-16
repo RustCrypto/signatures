@@ -47,9 +47,10 @@ dual licensed as above, without any additional terms or conditions.
 
 [//]: # (crates)
 
-[`ecdsa`]: https://github.com/RustCrypto/signatures/tree/master/ecdsa
-[`ed25519`]: https://github.com/RustCrypto/signatures/tree/master/ed25519
-[`rfc6979`]: https://github.com/RustCrypto/signatures/tree/master/rfc6979
+[`dsa`]: ./dsa
+[`ecdsa`]: ./ecdsa
+[`ed25519`]: ./ed25519
+[`rfc6979`]: ./rfc6979
 
 [//]: # (general links)
 
