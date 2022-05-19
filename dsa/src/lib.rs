@@ -43,7 +43,7 @@ extern crate alloc;
 /// DSA object identifier as defined by RFC-3279, section 2.3.2
 const DSA_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.2.840.10040.4.1");
 
-pub use crate::{
+pub use self::{
     components::Components, sig::Signature, signing_key::SigningKey, verifying_key::VerifyingKey,
 };
 
