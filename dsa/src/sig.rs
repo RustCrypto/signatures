@@ -2,12 +2,11 @@
 //! Module containing the definition of the Signature container
 //!
 
+use crate::Components;
 use alloc::vec::Vec;
 use num_bigint::BigUint;
 use num_traits::Zero;
 use pkcs8::der::{self, asn1::UIntRef, Decode, Encode, Reader, Sequence};
-
-use crate::Components;
 
 /// Container of the DSA signature
 #[derive(Clone)]
