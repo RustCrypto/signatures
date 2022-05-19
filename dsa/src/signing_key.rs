@@ -53,10 +53,10 @@ impl SigningKey {
 
     /// Generate a new DSA keypair
     #[inline]
-    pub fn generate<R: CryptoRng + RngCore + ?Sized>(
-        rng: &mut R,
-        components: Components,
-    ) -> SigningKey {
+    pub fn generate<R>(rng: &mut R, components: Components) -> SigningKey
+    where
+        R: CryptoRng + RngCore + ?Sized,
+    {
         crate::generate::keypair(rng, components)
     }
 
@@ -85,11 +85,6 @@ impl SigningKey {
 
     /// Sign some pre-hashed data
     fn sign_prehashed(&self, (k, inv_k): (BigUint, BigUint), hash: &[u8]) -> Option<Signature> {
-        // Refuse to sign with an invalid key
-        if !self.is_valid() {
-            return None;
-        }
-
         let components = self.verifying_key().components();
         let (p, q, g) = (components.p(), components.q(), components.g());
         let x = self.x();

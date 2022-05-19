@@ -62,15 +62,14 @@ impl VerifyingKey {
     /// Verify some prehashed data
     #[must_use]
     fn verify_prehashed(&self, hash: &[u8], signature: &Signature) -> Option<bool> {
-        // Refuse to verify with an invalid key
-        if !self.is_valid() {
-            return None;
-        }
-
         let components = self.components();
         let (p, q, g) = (components.p(), components.q(), components.g());
         let (r, s) = (signature.r(), signature.s());
         let y = self.y();
+
+        if !signature.r_s_valid(components) {
+            return Some(false);
+        }
 
         let w = s.mod_inverse(q)?.to_biguint().unwrap();
 
