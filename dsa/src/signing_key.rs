@@ -99,7 +99,13 @@ impl SigningKey {
 
         let s = (inv_k * (z + x * &r)) % q;
 
-        Some(Signature::from_components(r, s))
+        let signature = Signature::from_components(r, s);
+        // r or s might be 0 (very unlikely but possible)
+        if !signature.r_s_valid(components) {
+            return None;
+        }
+
+        Some(signature)
     }
 }
 
