@@ -5,14 +5,14 @@
 macro_rules! define_param_size {
     ($l:literal, $n:literal) => {
         ::paste::paste! {
-            #[doc = "DSA paramter size constant; L = " $l ", N = " $n]
+            #[doc = "DSA parameter size constant; L = " $l ", N = " $n]
             pub const [<DSA_ $l _ $n>]: (u32, u32) = ($l, $n);
         }
     };
     (deprecated: $l:literal, $n:literal) => {
         ::paste::paste! {
             #[deprecated(note="This size constant has a security strength of under 112 bits per SP 800-57 Part 1 Rev. 5")]
-            #[doc = "DSA paramter size constant; L = " $l ", N = " $n]
+            #[doc = "DSA parameter size constant; L = " $l ", N = " $n]
             pub const [<DSA_ $l _ $n>]: (u32, u32) = ($l, $n);
         }
     };

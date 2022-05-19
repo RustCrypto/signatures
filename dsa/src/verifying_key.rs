@@ -28,10 +28,13 @@ opaque_debug::implement!(VerifyingKey);
 
 impl VerifyingKey {
     /// Construct a new public key from the common components and the public component
-    ///
-    /// These values are not getting verified for validity
-    pub const fn from_components(components: Components, y: BigUint) -> Self {
-        Self { components, y }
+    pub fn from_components(components: Components, y: BigUint) -> Option<Self> {
+        let verifying_key = Self { components, y };
+
+        if !verifying_key.is_valid() {
+            return None;
+        }
+        Some(verifying_key)
     }
 
     /// DSA common components
@@ -137,7 +140,7 @@ impl<'a> TryFrom<SubjectPublicKeyInfo<'a>> for VerifyingKey {
         let y = UIntRef::from_der(value.subject_public_key)?;
         let y = BigUint::from_bytes_be(y.as_bytes());
 
-        Ok(Self::from_components(components, y))
+        Self::from_components(components, y).ok_or(spki::Error::KeyMalformed)
     }
 }
 

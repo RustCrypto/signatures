@@ -39,13 +39,16 @@ opaque_debug::implement!(SigningKey);
 
 impl SigningKey {
     /// Construct a new private key from the public key and private component
-    ///
-    /// These values are not getting verified for validity
-    pub fn from_components(verifying_key: VerifyingKey, x: BigUint) -> Self {
-        Self {
+    pub fn from_components(verifying_key: VerifyingKey, x: BigUint) -> Option<Self> {
+        let signing_key = Self {
             verifying_key,
             x: Zeroizing::new(x),
+        };
+
+        if !signing_key.is_valid() {
+            return None;
         }
+        Some(signing_key)
     }
 
     /// Generate a new DSA keypair
@@ -186,14 +189,10 @@ impl<'a> TryFrom<PrivateKeyInfo<'a>> for SigningKey {
             crate::generate::public_component(&components, &x)
         };
 
-        let verifying_key = VerifyingKey::from_components(components, y);
-        let signing_key = SigningKey::from_components(verifying_key, x);
+        let verifying_key =
+            VerifyingKey::from_components(components, y).ok_or(pkcs8::Error::KeyMalformed)?;
 
-        if !signing_key.is_valid() {
-            return Err(pkcs8::Error::KeyMalformed);
-        }
-
-        Ok(signing_key)
+        SigningKey::from_components(verifying_key, x).ok_or(pkcs8::Error::KeyMalformed)
     }
 }
 
