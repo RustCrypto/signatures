@@ -15,5 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Components::generate` now takes an `KeySize` struct instead of an `(u32, u32)` tuple
 - `Components::from_components`, `SigningKey::from_components` and `VerifyingKey::from_components` are now fallible and validate themselves upon creation
 
+### Removed
+
+- `is_valid` functions on `Components`, `SigningKey` and `VerifyingKey` (successful construction/deserialisation now implies validity)
+
 ## 0.2.0 (2022-05-16)
 - Initial release

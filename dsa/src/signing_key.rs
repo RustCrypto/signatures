@@ -75,7 +75,7 @@ impl SigningKey {
 
     /// Check whether the private key is valid
     #[must_use]
-    pub fn is_valid(&self) -> bool {
+    pub(crate) fn is_valid(&self) -> bool {
         if !self.verifying_key().is_valid() {
             return false;
         }

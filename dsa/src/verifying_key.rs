@@ -50,7 +50,7 @@ impl VerifyingKey {
 
     /// Check whether the public key is valid
     #[must_use]
-    pub fn is_valid(&self) -> bool {
+    pub(crate) fn is_valid(&self) -> bool {
         let components = self.components();
         if !components.is_valid() {
             return false;
