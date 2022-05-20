@@ -30,13 +30,13 @@ opaque_debug::implement!(Components);
 
 impl Components {
     /// Construct the common components container from its inner values (p, q and g)
-    pub fn from_components(p: BigUint, q: BigUint, g: BigUint) -> Option<Self> {
+    pub fn from_components(p: BigUint, q: BigUint, g: BigUint) -> signature::Result<Self> {
         let components = Self { p, q, g };
 
         if !components.is_valid() {
-            return None;
+            return Err(signature::Error::new());
         }
-        Some(components)
+        Ok(components)
     }
 
     /// Generate a new pair of common components
@@ -87,9 +87,8 @@ impl<'a> DecodeValue<'a> for Components {
         let g = BigUint::from_bytes_be(g.as_bytes());
 
         // TODO: Using this error doesn't seem right
-        Self::from_components(p, q, g).ok_or_else(|| {
-            der::Error::new(ErrorKind::Value { tag: Tag::Integer }, reader.position())
-        })
+        Self::from_components(p, q, g)
+            .map_err(|_| der::Error::new(ErrorKind::Value { tag: Tag::Integer }, reader.position()))
     }
 }
 

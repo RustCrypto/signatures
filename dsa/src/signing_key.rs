@@ -39,16 +39,16 @@ opaque_debug::implement!(SigningKey);
 
 impl SigningKey {
     /// Construct a new private key from the public key and private component
-    pub fn from_components(verifying_key: VerifyingKey, x: BigUint) -> Option<Self> {
+    pub fn from_components(verifying_key: VerifyingKey, x: BigUint) -> signature::Result<Self> {
         let signing_key = Self {
             verifying_key,
             x: Zeroizing::new(x),
         };
 
         if !signing_key.is_valid() {
-            return None;
+            return Err(signature::Error::new());
         }
-        Some(signing_key)
+        Ok(signing_key)
     }
 
     /// Generate a new DSA keypair
@@ -176,10 +176,6 @@ impl<'a> TryFrom<PrivateKeyInfo<'a>> for SigningKey {
         let parameters = value.algorithm.parameters_any()?;
         let components: Components = parameters.decode_into()?;
 
-        if !components.is_valid() {
-            return Err(pkcs8::Error::KeyMalformed);
-        }
-
         let x = UIntRef::from_der(value.private_key)?;
         let x = BigUint::from_bytes_be(x.as_bytes());
 
@@ -191,9 +187,9 @@ impl<'a> TryFrom<PrivateKeyInfo<'a>> for SigningKey {
         };
 
         let verifying_key =
-            VerifyingKey::from_components(components, y).ok_or(pkcs8::Error::KeyMalformed)?;
+            VerifyingKey::from_components(components, y).map_err(|_| pkcs8::Error::KeyMalformed)?;
 
-        SigningKey::from_components(verifying_key, x).ok_or(pkcs8::Error::KeyMalformed)
+        SigningKey::from_components(verifying_key, x).map_err(|_| pkcs8::Error::KeyMalformed)
     }
 }
 
