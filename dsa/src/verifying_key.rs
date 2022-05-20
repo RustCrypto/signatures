@@ -67,7 +67,7 @@ impl VerifyingKey {
         let (r, s) = (signature.r(), signature.s());
         let y = self.y();
 
-        if !signature.r_s_valid(components) {
+        if !signature.r_s_valid(q) {
             return Some(false);
         }
 

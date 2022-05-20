@@ -101,7 +101,7 @@ impl SigningKey {
 
         let signature = Signature::from_components(r, s);
         // r or s might be 0 (very unlikely but possible)
-        if !signature.r_s_valid(components) {
+        if !signature.r_s_valid(q) {
             return None;
         }
 

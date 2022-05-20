@@ -8,6 +8,8 @@
 )]
 
 //!
+//! # Examples
+//!
 //! Generate a DSA keypair
 //!
 //! ```

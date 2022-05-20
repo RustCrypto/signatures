@@ -2,7 +2,6 @@
 //! Module containing the definition of the Signature container
 //!
 
-use crate::Components;
 use alloc::vec::Vec;
 use num_bigint::BigUint;
 use num_traits::Zero;
@@ -38,12 +37,8 @@ impl Signature {
     }
 
     /// Verify signature component validity
-    pub(crate) fn r_s_valid(&self, components: &Components) -> bool {
-        if self.r().is_zero()
-            || self.s().is_zero()
-            || self.r() > components.q()
-            || self.s() > components.q()
-        {
+    pub(crate) fn r_s_valid(&self, q: &BigUint) -> bool {
+        if self.r().is_zero() || self.s().is_zero() || self.r() > q || self.s() > q {
             return false;
         }
 
