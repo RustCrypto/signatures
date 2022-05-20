@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- `is_valid` functions on `Components`, `SigningKey` and `VerifyingKey` (successful construction/deserialisation now implies validity)
+- Removed `is_valid` functions on `Components`, `SigningKey` and `VerifyingKey` (successful construction/deserialisation now implies validity)
 
 ## 0.2.0 (2022-05-16)
 - Initial release
