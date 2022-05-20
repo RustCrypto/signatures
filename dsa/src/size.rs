@@ -31,7 +31,7 @@ impl KeySize {
 
     /// Define a custom parameter size
     ///
-    /// **⚠ YOU MOST LIKELY SHOULD NOT AND DO NOT NEED TO USE THIS!**
+    /// **⚠ YOU MOST LIKELY DO NOT NEED TO AND SHOULD NOT USE THIS!**
     pub const fn custom(l: u32, n: u32) -> Self {
         Self { l, n }
     }

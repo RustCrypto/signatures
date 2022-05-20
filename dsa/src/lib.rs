@@ -22,21 +22,25 @@
 //!
 //! Create keypair from existing components
 //!
-//! ```no_run
+//! ```
 //! # use dsa::{Components, SigningKey, VerifyingKey};
 //! # use num_bigint::BigUint;
 //! # use num_traits::One;
 //! # let read_common_parameters = || (BigUint::one(), BigUint::one(), BigUint::one());
 //! # let read_public_component = || BigUint::one();
 //! # let read_private_component = || BigUint::one();
+//! # || -> signature::Result<()> {
 //! let (p, q, g) = read_common_parameters();
-//! let components = Components::from_components(p, q, g).unwrap();
+//! let components = Components::from_components(p, q, g)?;
 //!
 //! let x = read_public_component();
-//! let verifying_key = VerifyingKey::from_components(components, x).unwrap();
+//! let verifying_key = VerifyingKey::from_components(components, x)?;
 //!
 //! let y = read_private_component();
-//! let signing_key = SigningKey::from_components(verifying_key, y).unwrap();
+//! let signing_key = SigningKey::from_components(verifying_key, y)?;
+//!
+//! # Ok(())
+//! # }();
 //! ```
 //!
 
