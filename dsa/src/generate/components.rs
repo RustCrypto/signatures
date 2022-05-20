@@ -4,6 +4,7 @@
 
 use crate::{
     generate::{calculate_bounds, generate_prime},
+    size::KeySize,
     two, Components,
 };
 use num_bigint::{prime::probably_prime, BigUint, RandBigInt};
@@ -18,7 +19,7 @@ const MR_ROUNDS: usize = 64;
 /// # Returns
 ///
 /// Tuple of three `BigUint`s. Ordered like this `(p, q, g)`
-pub fn common<R>(rng: &mut R, (l, n): (u32, u32)) -> (BigUint, BigUint, BigUint)
+pub fn common<R>(rng: &mut R, KeySize { l, n }: KeySize) -> (BigUint, BigUint, BigUint)
 where
     R: CryptoRng + RngCore + ?Sized,
 {

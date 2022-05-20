@@ -1,5 +1,5 @@
 use digest::Digest;
-use dsa::{consts::DSA_2048_256, Components, SigningKey};
+use dsa::{Components, KeySize, SigningKey};
 use pkcs8::{EncodePrivateKey, EncodePublicKey, LineEnding};
 use sha1::Sha1;
 use signature::{RandomizedDigestSigner, Signature};
@@ -7,7 +7,7 @@ use std::{fs::File, io::Write};
 
 fn main() {
     let mut rng = rand::thread_rng();
-    let components = Components::generate(&mut rng, DSA_2048_256);
+    let components = Components::generate(&mut rng, KeySize::DSA_2048_256);
     let signing_key = SigningKey::generate(&mut rng, components);
     let verifying_key = signing_key.verifying_key();
 

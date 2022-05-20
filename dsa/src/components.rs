@@ -2,7 +2,7 @@
 //! Module containing the definition of the common components container
 //!
 
-use crate::two;
+use crate::{size::KeySize, two};
 use num_bigint::BigUint;
 use num_traits::One;
 use pkcs8::der::{
@@ -40,14 +40,11 @@ impl Components {
     }
 
     /// Generate a new pair of common components
-    ///
-    /// Please only use the parameter sizes defined by NIST.
-    /// We allow you to plug in any numbers you want but just because you can doesn't mean you should!
-    pub fn generate<R>(rng: &mut R, size_param: (u32, u32)) -> Self
+    pub fn generate<R>(rng: &mut R, key_size: KeySize) -> Self
     where
         R: CryptoRng + RngCore + ?Sized,
     {
-        let (p, q, g) = crate::generate::common_components(rng, size_param);
+        let (p, q, g) = crate::generate::common_components(rng, key_size);
         Self::from_components(p, q, g).expect("[Bug] Newly generated components considered invalid")
     }
 

@@ -11,9 +11,9 @@
 //! Generate a DSA keypair
 //!
 //! ```
-//! # use dsa::{consts::DSA_2048_256, Components, SigningKey};
+//! # use dsa::{KeySize, Components, SigningKey};
 //! let mut csprng = rand::thread_rng();
-//! let components = Components::generate(&mut csprng, DSA_2048_256);
+//! let components = Components::generate(&mut csprng, KeySize::DSA_2048_256);
 //! let signing_key = SigningKey::generate(&mut csprng, components);
 //! let verifying_key = signing_key.verifying_key();
 //! ```
@@ -44,13 +44,12 @@ extern crate alloc;
 const DSA_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.2.840.10040.4.1");
 
 pub use self::{
-    components::Components, sig::Signature, signing_key::SigningKey, verifying_key::VerifyingKey,
+    components::Components, sig::Signature, signing_key::SigningKey, size::KeySize,
+    verifying_key::VerifyingKey,
 };
 
 pub use pkcs8;
 pub use signature;
-
-pub mod consts;
 
 use num_bigint::BigUint;
 use pkcs8::spki::ObjectIdentifier;
@@ -59,6 +58,7 @@ mod components;
 mod generate;
 mod sig;
 mod signing_key;
+mod size;
 mod verifying_key;
 
 /// Returns a `BigUint` with the value 2

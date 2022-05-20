@@ -2,7 +2,7 @@
 // But we want to use those small key sizes for fast tests
 #![allow(deprecated)]
 
-use dsa::{consts::DSA_1024_160, Components, SigningKey, VerifyingKey};
+use dsa::{Components, KeySize, SigningKey, VerifyingKey};
 use num_bigint::BigUint;
 use num_traits::One;
 use pkcs8::{DecodePublicKey, EncodePublicKey, LineEnding};
@@ -11,7 +11,7 @@ const OPENSSL_PEM_PUBLIC_KEY: &str = include_str!("pems/public.pem");
 
 fn generate_verifying_key() -> VerifyingKey {
     let mut rng = rand::thread_rng();
-    let components = Components::generate(&mut rng, DSA_1024_160);
+    let components = Components::generate(&mut rng, KeySize::DSA_1024_160);
     let signing_key = SigningKey::generate(&mut rng, components);
 
     signing_key.verifying_key().clone()
