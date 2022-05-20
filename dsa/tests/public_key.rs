@@ -21,7 +21,6 @@ fn generate_verifying_key() -> VerifyingKey {
 fn decode_encode_openssl_verifying_key() {
     let verifying_key = VerifyingKey::from_public_key_pem(OPENSSL_PEM_PUBLIC_KEY)
         .expect("Failed to decode PEM encoded OpenSSL public key");
-    assert!(verifying_key.is_valid());
 
     let reencoded_verifying_key = verifying_key
         .to_public_key_pem(LineEnding::LF)

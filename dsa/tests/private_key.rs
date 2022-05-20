@@ -22,7 +22,6 @@ fn generate_keypair() -> SigningKey {
 fn decode_encode_openssl_signing_key() {
     let signing_key = SigningKey::from_pkcs8_pem(OPENSSL_PEM_PRIVATE_KEY)
         .expect("Failed to decode PEM encoded OpenSSL key");
-    assert!(signing_key.is_valid());
 
     let reencoded_signing_key = signing_key
         .to_pkcs8_pem(LineEnding::LF)
