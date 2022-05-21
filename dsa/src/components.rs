@@ -4,7 +4,7 @@
 
 use crate::{size::KeySize, two};
 use num_bigint::BigUint;
-use num_traits::One;
+use num_traits::Zero;
 use pkcs8::der::{self, asn1::UIntRef, DecodeValue, Encode, Header, Reader, Sequence, Tag};
 use rand::{CryptoRng, RngCore};
 
@@ -29,12 +29,11 @@ opaque_debug::implement!(Components);
 impl Components {
     /// Construct the common components container from its inner values (p, q and g)
     pub fn from_components(p: BigUint, q: BigUint, g: BigUint) -> signature::Result<Self> {
-        let components = Self { p, q, g };
-
-        if !components.is_valid() {
+        if p < two() || q < two() || g.is_zero() || g > p {
             return Err(signature::Error::new());
         }
-        Ok(components)
+
+        Ok(Self { p, q, g })
     }
 
     /// Generate a new pair of common components
@@ -62,15 +61,6 @@ impl Components {
     #[must_use]
     pub const fn g(&self) -> &BigUint {
         &self.g
-    }
-
-    /// Check whether the components are valid
-    #[must_use]
-    pub(crate) fn is_valid(&self) -> bool {
-        *self.p() >= two()
-            && *self.q() >= two()
-            && *self.g() >= BigUint::one()
-            && self.g() < self.p()
     }
 }
 

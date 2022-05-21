@@ -12,7 +12,7 @@ use digest::{
     Digest, FixedOutput, HashMarker, OutputSizeUser,
 };
 use num_bigint::BigUint;
-use num_traits::One;
+use num_traits::Zero;
 use pkcs8::{
     der::{asn1::UIntRef, AnyRef, Decode, Encode},
     AlgorithmIdentifier, DecodePrivateKey, EncodePrivateKey, PrivateKeyInfo, SecretDocument,
@@ -40,15 +40,14 @@ opaque_debug::implement!(SigningKey);
 impl SigningKey {
     /// Construct a new private key from the public key and private component
     pub fn from_components(verifying_key: VerifyingKey, x: BigUint) -> signature::Result<Self> {
-        let signing_key = Self {
-            verifying_key,
-            x: Zeroizing::new(x),
-        };
-
-        if !signing_key.is_valid() {
+        if x.is_zero() || x > *verifying_key.components().q() {
             return Err(signature::Error::new());
         }
-        Ok(signing_key)
+
+        Ok(Self {
+            verifying_key,
+            x: Zeroizing::new(x),
+        })
     }
 
     /// Generate a new DSA keypair
@@ -71,16 +70,6 @@ impl SigningKey {
     #[must_use]
     pub fn x(&self) -> &BigUint {
         &self.x
-    }
-
-    /// Check whether the private key is valid
-    #[must_use]
-    pub(crate) fn is_valid(&self) -> bool {
-        if !self.verifying_key().is_valid() {
-            return false;
-        }
-
-        *self.x() >= BigUint::one() && self.x() < self.verifying_key().components().q()
     }
 
     /// Sign some pre-hashed data

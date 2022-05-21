@@ -29,12 +29,11 @@ opaque_debug::implement!(VerifyingKey);
 impl VerifyingKey {
     /// Construct a new public key from the common components and the public component
     pub fn from_components(components: Components, y: BigUint) -> signature::Result<Self> {
-        let verifying_key = Self { components, y };
-
-        if !verifying_key.is_valid() {
+        if y < two() || y.modpow(components.q(), components.p()) != BigUint::one() {
             return Err(signature::Error::new());
         }
-        Ok(verifying_key)
+
+        Ok(Self { components, y })
     }
 
     /// DSA common components
@@ -46,17 +45,6 @@ impl VerifyingKey {
     #[must_use]
     pub const fn y(&self) -> &BigUint {
         &self.y
-    }
-
-    /// Check whether the public key is valid
-    #[must_use]
-    pub(crate) fn is_valid(&self) -> bool {
-        let components = self.components();
-        if !components.is_valid() {
-            return false;
-        }
-
-        *self.y() >= two() && self.y().modpow(components.q(), components.p()) == BigUint::one()
     }
 
     /// Verify some prehashed data
