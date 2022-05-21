@@ -2,7 +2,7 @@
 //! Module containing the definition of the private key container
 //!
 
-use crate::{sig::Signature, Components, VerifyingKey, DSA_OID};
+use crate::{sig::Signature, Components, VerifyingKey, OID};
 use core::cmp::min;
 use digest::{
     block_buffer::Eager,
@@ -154,7 +154,7 @@ impl EncodePrivateKey for SigningKey {
         let parameters = self.verifying_key().components().to_vec()?;
         let parameters = AnyRef::from_der(&parameters)?;
         let algorithm = AlgorithmIdentifier {
-            oid: DSA_OID,
+            oid: OID,
             parameters: Some(parameters),
         };
 
@@ -171,7 +171,7 @@ impl<'a> TryFrom<PrivateKeyInfo<'a>> for SigningKey {
     type Error = pkcs8::Error;
 
     fn try_from(value: PrivateKeyInfo<'a>) -> Result<Self, Self::Error> {
-        value.algorithm.assert_algorithm_oid(DSA_OID)?;
+        value.algorithm.assert_algorithm_oid(OID)?;
 
         let parameters = value.algorithm.parameters_any()?;
         let components: Components = parameters.decode_into()?;

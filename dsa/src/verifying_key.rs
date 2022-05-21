@@ -2,7 +2,7 @@
 //! Module containing the definition of the public key container
 //!
 
-use crate::{sig::Signature, two, Components, DSA_OID};
+use crate::{sig::Signature, two, Components, OID};
 use core::cmp::min;
 use digest::Digest;
 use num_bigint::{BigUint, ModInverse};
@@ -111,7 +111,7 @@ impl EncodePublicKey for VerifyingKey {
         let parameters = self.components.to_vec()?;
         let parameters = AnyRef::from_der(&parameters)?;
         let algorithm = AlgorithmIdentifier {
-            oid: DSA_OID,
+            oid: OID,
             parameters: Some(parameters),
         };
 
@@ -131,7 +131,7 @@ impl<'a> TryFrom<SubjectPublicKeyInfo<'a>> for VerifyingKey {
     type Error = spki::Error;
 
     fn try_from(value: SubjectPublicKeyInfo<'a>) -> Result<Self, Self::Error> {
-        value.algorithm.assert_algorithm_oid(DSA_OID)?;
+        value.algorithm.assert_algorithm_oid(OID)?;
 
         let parameters = value.algorithm.parameters_any()?;
         let components = parameters.decode_into()?;

@@ -65,7 +65,7 @@ mod size;
 mod verifying_key;
 
 /// DSA object identifier as defined by RFC-3279, section 2.3.2
-const DSA_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.2.840.10040.4.1");
+pub const OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.2.840.10040.4.1");
 
 /// Returns a `BigUint` with the value 2
 #[inline]

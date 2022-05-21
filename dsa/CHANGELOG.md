@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Internal sanity check validating the `r` and `s` components of the signature
+- Public `OID` constant representing the object identifier defined in RFC-3279, section 2.3.2 
 
 ### Changed
 
