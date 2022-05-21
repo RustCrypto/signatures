@@ -19,7 +19,7 @@ use pkcs8::{
 };
 use rand::{CryptoRng, RngCore};
 use signature::{DigestSigner, RandomizedDigestSigner};
-use zeroize::Zeroizing;
+use zeroize::{Zeroize, Zeroizing};
 
 /// DSA private key.
 ///
@@ -158,12 +158,17 @@ impl EncodePrivateKey for SigningKey {
             parameters: Some(parameters),
         };
 
-        let x_bytes = self.x.to_bytes_be();
+        let mut x_bytes = self.x().to_bytes_be();
         let x = UIntRef::new(&x_bytes)?;
-        let signing_key = x.to_vec()?;
+        let mut signing_key = x.to_vec()?;
 
         let signing_key_info = PrivateKeyInfo::new(algorithm, &signing_key);
-        signing_key_info.try_into()
+        let secret_document = signing_key_info.try_into()?;
+
+        signing_key.zeroize();
+        x_bytes.zeroize();
+
+        Ok(secret_document)
     }
 }
 
