@@ -76,9 +76,9 @@ dependencies = [
 
 [[package]]
 name = "crypto-bigint"
-version = "0.4.2"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "de3e45371ac6a1370324b085acb466f24b07d4d66da6999a42c8ce655bd14e0e"
+checksum = "f322d21b9f3edc2a5d5e2237e78d7b72f4da0b979df0da94cae705df1edd0181"
 dependencies = [
  "generic-array",
  "rand_core 0.6.3",
@@ -148,7 +148,6 @@ dependencies = [
  "num-bigint-dig",
  "num-traits",
  "opaque-debug",
- "paste",
  "pkcs8",
  "rand 0.8.5",
  "rand_chacha 0.3.1",
@@ -374,12 +373,6 @@ name = "opaque-debug"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
-
-[[package]]
-name = "paste"
-version = "1.0.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c520e05135d6e763148b6426a837e239041653ba7becd2e538c076c738025fc"
 
 [[package]]
 name = "pem-rfc7468"

@@ -16,6 +16,7 @@ where
     let x = rng.gen_biguint_range(&BigUint::one(), components.q());
     let y = components::public(&components, &x);
 
-    let verifying_key = VerifyingKey::from_components(components, y);
-    SigningKey::from_components(verifying_key, x)
+    VerifyingKey::from_components(components, y)
+        .and_then(|verifying_key| SigningKey::from_components(verifying_key, x))
+        .expect("[Bug] Newly generated keypair considered invalid")
 }

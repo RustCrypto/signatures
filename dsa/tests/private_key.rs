@@ -3,7 +3,7 @@
 #![allow(deprecated)]
 
 use digest::Digest;
-use dsa::{consts::DSA_1024_160, Components, SigningKey};
+use dsa::{Components, KeySize, SigningKey};
 use num_bigint::BigUint;
 use num_traits::Zero;
 use pkcs8::{DecodePrivateKey, EncodePrivateKey, LineEnding};
@@ -14,7 +14,7 @@ const OPENSSL_PEM_PRIVATE_KEY: &str = include_str!("pems/private.pem");
 
 fn generate_keypair() -> SigningKey {
     let mut rng = rand::thread_rng();
-    let components = Components::generate(&mut rng, DSA_1024_160);
+    let components = Components::generate(&mut rng, KeySize::DSA_1024_160);
     SigningKey::generate(&mut rng, components)
 }
 
@@ -22,7 +22,6 @@ fn generate_keypair() -> SigningKey {
 fn decode_encode_openssl_signing_key() {
     let signing_key = SigningKey::from_pkcs8_pem(OPENSSL_PEM_PRIVATE_KEY)
         .expect("Failed to decode PEM encoded OpenSSL key");
-    assert!(signing_key.is_valid());
 
     let reencoded_signing_key = signing_key
         .to_pkcs8_pem(LineEnding::LF)

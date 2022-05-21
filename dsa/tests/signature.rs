@@ -1,7 +1,7 @@
 #![allow(deprecated)]
 
 use digest::Digest;
-use dsa::{consts::DSA_1024_160, Components, Signature, SigningKey};
+use dsa::{Components, KeySize, Signature, SigningKey};
 use pkcs8::der::{Decode, Encode};
 use rand::{CryptoRng, RngCore, SeedableRng};
 use rand_chacha::ChaCha8Rng;
@@ -40,7 +40,7 @@ fn seeded_csprng() -> impl CryptoRng + RngCore {
 /// Generate a DSA keypair using a seeded CSPRNG
 fn generate_deterministic_keypair() -> SigningKey {
     let mut rng = seeded_csprng();
-    let components = Components::generate(&mut rng, DSA_1024_160);
+    let components = Components::generate(&mut rng, KeySize::DSA_1024_160);
     SigningKey::generate(&mut rng, components)
 }
 

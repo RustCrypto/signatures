@@ -2,7 +2,7 @@
 //! Module containing the definition of the private key container
 //!
 
-use crate::{sig::Signature, Components, VerifyingKey, DSA_OID};
+use crate::{sig::Signature, Components, VerifyingKey, OID};
 use core::cmp::min;
 use digest::{
     block_buffer::Eager,
@@ -12,14 +12,14 @@ use digest::{
     Digest, FixedOutput, HashMarker, OutputSizeUser,
 };
 use num_bigint::BigUint;
-use num_traits::One;
+use num_traits::Zero;
 use pkcs8::{
     der::{asn1::UIntRef, AnyRef, Decode, Encode},
     AlgorithmIdentifier, DecodePrivateKey, EncodePrivateKey, PrivateKeyInfo, SecretDocument,
 };
 use rand::{CryptoRng, RngCore};
 use signature::{DigestSigner, RandomizedDigestSigner};
-use zeroize::Zeroizing;
+use zeroize::{Zeroize, Zeroizing};
 
 /// DSA private key.
 ///
@@ -39,21 +39,23 @@ opaque_debug::implement!(SigningKey);
 
 impl SigningKey {
     /// Construct a new private key from the public key and private component
-    ///
-    /// These values are not getting verified for validity
-    pub fn from_components(verifying_key: VerifyingKey, x: BigUint) -> Self {
-        Self {
+    pub fn from_components(verifying_key: VerifyingKey, x: BigUint) -> signature::Result<Self> {
+        if x.is_zero() || x > *verifying_key.components().q() {
+            return Err(signature::Error::new());
+        }
+
+        Ok(Self {
             verifying_key,
             x: Zeroizing::new(x),
-        }
+        })
     }
 
     /// Generate a new DSA keypair
     #[inline]
-    pub fn generate<R: CryptoRng + RngCore + ?Sized>(
-        rng: &mut R,
-        components: Components,
-    ) -> SigningKey {
+    pub fn generate<R>(rng: &mut R, components: Components) -> SigningKey
+    where
+        R: CryptoRng + RngCore + ?Sized,
+    {
         crate::generate::keypair(rng, components)
     }
 
@@ -70,23 +72,8 @@ impl SigningKey {
         &self.x
     }
 
-    /// Check whether the private key is valid
-    #[must_use]
-    pub fn is_valid(&self) -> bool {
-        if !self.verifying_key().is_valid() {
-            return false;
-        }
-
-        *self.x() >= BigUint::one() && self.x() < self.verifying_key().components().q()
-    }
-
     /// Sign some pre-hashed data
     fn sign_prehashed(&self, (k, inv_k): (BigUint, BigUint), hash: &[u8]) -> Option<Signature> {
-        // Refuse to sign with an invalid key
-        if !self.is_valid() {
-            return None;
-        }
-
         let components = self.verifying_key().components();
         let (p, q, g) = (components.p(), components.q(), components.g());
         let x = self.x();
@@ -101,7 +88,13 @@ impl SigningKey {
 
         let s = (inv_k * (z + x * &r)) % q;
 
-        Some(Signature::from_components(r, s))
+        let signature = Signature::from_components(r, s);
+        // r or s might be 0 (very unlikely but possible)
+        if !signature.r_s_valid(q) {
+            return None;
+        }
+
+        Some(signature)
     }
 }
 
@@ -150,16 +143,21 @@ impl EncodePrivateKey for SigningKey {
         let parameters = self.verifying_key().components().to_vec()?;
         let parameters = AnyRef::from_der(&parameters)?;
         let algorithm = AlgorithmIdentifier {
-            oid: DSA_OID,
+            oid: OID,
             parameters: Some(parameters),
         };
 
-        let x_bytes = self.x.to_bytes_be();
+        let mut x_bytes = self.x().to_bytes_be();
         let x = UIntRef::new(&x_bytes)?;
-        let signing_key = x.to_vec()?;
+        let mut signing_key = x.to_vec()?;
 
         let signing_key_info = PrivateKeyInfo::new(algorithm, &signing_key);
-        signing_key_info.try_into()
+        let secret_document = signing_key_info.try_into()?;
+
+        signing_key.zeroize();
+        x_bytes.zeroize();
+
+        Ok(secret_document)
     }
 }
 
@@ -167,14 +165,10 @@ impl<'a> TryFrom<PrivateKeyInfo<'a>> for SigningKey {
     type Error = pkcs8::Error;
 
     fn try_from(value: PrivateKeyInfo<'a>) -> Result<Self, Self::Error> {
-        value.algorithm.assert_algorithm_oid(DSA_OID)?;
+        value.algorithm.assert_algorithm_oid(OID)?;
 
         let parameters = value.algorithm.parameters_any()?;
         let components: Components = parameters.decode_into()?;
-
-        if !components.is_valid() {
-            return Err(pkcs8::Error::KeyMalformed);
-        }
 
         let x = UIntRef::from_der(value.private_key)?;
         let x = BigUint::from_bytes_be(x.as_bytes());
@@ -186,14 +180,10 @@ impl<'a> TryFrom<PrivateKeyInfo<'a>> for SigningKey {
             crate::generate::public_component(&components, &x)
         };
 
-        let verifying_key = VerifyingKey::from_components(components, y);
-        let signing_key = SigningKey::from_components(verifying_key, x);
+        let verifying_key =
+            VerifyingKey::from_components(components, y).map_err(|_| pkcs8::Error::KeyMalformed)?;
 
-        if !signing_key.is_valid() {
-            return Err(pkcs8::Error::KeyMalformed);
-        }
-
-        Ok(signing_key)
+        SigningKey::from_components(verifying_key, x).map_err(|_| pkcs8::Error::KeyMalformed)
     }
 }
 

@@ -2,7 +2,7 @@
 //! Module containing the definition of the public key container
 //!
 
-use crate::{sig::Signature, two, Components, DSA_OID};
+use crate::{sig::Signature, two, Components, OID};
 use core::cmp::min;
 use digest::Digest;
 use num_bigint::{BigUint, ModInverse};
@@ -28,10 +28,12 @@ opaque_debug::implement!(VerifyingKey);
 
 impl VerifyingKey {
     /// Construct a new public key from the common components and the public component
-    ///
-    /// These values are not getting verified for validity
-    pub const fn from_components(components: Components, y: BigUint) -> Self {
-        Self { components, y }
+    pub fn from_components(components: Components, y: BigUint) -> signature::Result<Self> {
+        if y < two() || y.modpow(components.q(), components.p()) != BigUint::one() {
+            return Err(signature::Error::new());
+        }
+
+        Ok(Self { components, y })
     }
 
     /// DSA common components
@@ -45,29 +47,17 @@ impl VerifyingKey {
         &self.y
     }
 
-    /// Check whether the public key is valid
-    #[must_use]
-    pub fn is_valid(&self) -> bool {
-        let components = self.components();
-        if !components.is_valid() {
-            return false;
-        }
-
-        *self.y() >= two() && self.y().modpow(components.q(), components.p()) == BigUint::one()
-    }
-
     /// Verify some prehashed data
     #[must_use]
     fn verify_prehashed(&self, hash: &[u8], signature: &Signature) -> Option<bool> {
-        // Refuse to verify with an invalid key
-        if !self.is_valid() {
-            return None;
-        }
-
         let components = self.components();
         let (p, q, g) = (components.p(), components.q(), components.g());
         let (r, s) = (signature.r(), signature.s());
         let y = self.y();
+
+        if !signature.r_s_valid(q) {
+            return Some(false);
+        }
 
         let w = s.mod_inverse(q)?.to_biguint().unwrap();
 
@@ -109,7 +99,7 @@ impl EncodePublicKey for VerifyingKey {
         let parameters = self.components.to_vec()?;
         let parameters = AnyRef::from_der(&parameters)?;
         let algorithm = AlgorithmIdentifier {
-            oid: DSA_OID,
+            oid: OID,
             parameters: Some(parameters),
         };
 
@@ -129,7 +119,7 @@ impl<'a> TryFrom<SubjectPublicKeyInfo<'a>> for VerifyingKey {
     type Error = spki::Error;
 
     fn try_from(value: SubjectPublicKeyInfo<'a>) -> Result<Self, Self::Error> {
-        value.algorithm.assert_algorithm_oid(DSA_OID)?;
+        value.algorithm.assert_algorithm_oid(OID)?;
 
         let parameters = value.algorithm.parameters_any()?;
         let components = parameters.decode_into()?;
@@ -137,7 +127,7 @@ impl<'a> TryFrom<SubjectPublicKeyInfo<'a>> for VerifyingKey {
         let y = UIntRef::from_der(value.subject_public_key)?;
         let y = BigUint::from_bytes_be(y.as_bytes());
 
-        Ok(Self::from_components(components, y))
+        Self::from_components(components, y).map_err(|_| spki::Error::KeyMalformed)
     }
 }
 

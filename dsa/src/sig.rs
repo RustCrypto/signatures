@@ -4,6 +4,7 @@
 
 use alloc::vec::Vec;
 use num_bigint::BigUint;
+use num_traits::Zero;
 use pkcs8::der::{self, asn1::UIntRef, Decode, Encode, Reader, Sequence};
 
 /// Container of the DSA signature
@@ -33,6 +34,15 @@ impl Signature {
         signature.der_repr = signature.to_vec().unwrap();
 
         signature
+    }
+
+    /// Verify signature component validity
+    pub(crate) fn r_s_valid(&self, q: &BigUint) -> bool {
+        if self.r().is_zero() || self.s().is_zero() || self.r() > q || self.s() > q {
+            return false;
+        }
+
+        true
     }
 
     /// Signature part r

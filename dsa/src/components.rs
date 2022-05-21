@@ -2,10 +2,10 @@
 //! Module containing the definition of the common components container
 //!
 
-use crate::two;
+use crate::{size::KeySize, two};
 use num_bigint::BigUint;
-use num_traits::One;
-use pkcs8::der::{self, asn1::UIntRef, DecodeValue, Encode, Header, Reader, Sequence};
+use num_traits::Zero;
+use pkcs8::der::{self, asn1::UIntRef, DecodeValue, Encode, Header, Reader, Sequence, Tag};
 use rand::{CryptoRng, RngCore};
 
 /// The common components of an DSA keypair
@@ -28,19 +28,21 @@ opaque_debug::implement!(Components);
 
 impl Components {
     /// Construct the common components container from its inner values (p, q and g)
-    ///
-    /// These values are not getting verified for validity
-    pub const fn from_components(p: BigUint, q: BigUint, g: BigUint) -> Self {
-        Self { p, q, g }
+    pub fn from_components(p: BigUint, q: BigUint, g: BigUint) -> signature::Result<Self> {
+        if p < two() || q < two() || g.is_zero() || g > p {
+            return Err(signature::Error::new());
+        }
+
+        Ok(Self { p, q, g })
     }
 
     /// Generate a new pair of common components
-    ///
-    /// Please only use the parameter sizes defined by NIST.
-    /// We allow you to plug in any numbers you want but just because you can doesn't mean you should!
-    pub fn generate<R: CryptoRng + RngCore + ?Sized>(rng: &mut R, size_param: (u32, u32)) -> Self {
-        let (p, q, g) = crate::generate::common_components(rng, size_param);
-        Self::from_components(p, q, g)
+    pub fn generate<R>(rng: &mut R, key_size: KeySize) -> Self
+    where
+        R: CryptoRng + RngCore + ?Sized,
+    {
+        let (p, q, g) = crate::generate::common_components(rng, key_size);
+        Self::from_components(p, q, g).expect("[Bug] Newly generated components considered invalid")
     }
 
     /// DSA prime p
@@ -60,15 +62,6 @@ impl Components {
     pub const fn g(&self) -> &BigUint {
         &self.g
     }
-
-    /// Check whether the components are valid
-    #[must_use]
-    pub fn is_valid(&self) -> bool {
-        *self.p() >= two()
-            && *self.q() >= two()
-            && *self.g() >= BigUint::one()
-            && self.g() < self.p()
-    }
 }
 
 impl<'a> DecodeValue<'a> for Components {
@@ -81,7 +74,7 @@ impl<'a> DecodeValue<'a> for Components {
         let q = BigUint::from_bytes_be(q.as_bytes());
         let g = BigUint::from_bytes_be(g.as_bytes());
 
-        Ok(Self::from_components(p, q, g))
+        Self::from_components(p, q, g).map_err(|_| Tag::Integer.value_error())
     }
 }
 

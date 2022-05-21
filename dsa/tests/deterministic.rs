@@ -44,10 +44,11 @@ fn dsa_1024_signing_key() -> SigningKey {
     )
     .unwrap();
 
-    let components = Components::from_components(p, q, g);
-    let verifying_key = VerifyingKey::from_components(components, y);
+    let components = Components::from_components(p, q, g).expect("Invalid components");
+    let verifying_key =
+        VerifyingKey::from_components(components, y).expect("Invalid verifying key");
 
-    SigningKey::from_components(verifying_key, x)
+    SigningKey::from_components(verifying_key, x).expect("Invalid signing key")
 }
 
 fn dsa_2048_signing_key() -> SigningKey {
@@ -99,10 +100,11 @@ fn dsa_2048_signing_key() -> SigningKey {
     )
     .unwrap();
 
-    let components = Components::from_components(p, q, g);
-    let verifying_key = VerifyingKey::from_components(components, y);
+    let components = Components::from_components(p, q, g).expect("Invalid components");
+    let verifying_key =
+        VerifyingKey::from_components(components, y).expect("Invalid verifying key");
 
-    SigningKey::from_components(verifying_key, x)
+    SigningKey::from_components(verifying_key, x).expect("Invalid signing key")
 }
 
 /// Generate a signature given the unhashed message and a private key
