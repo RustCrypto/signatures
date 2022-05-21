@@ -5,9 +5,7 @@
 use crate::{size::KeySize, two};
 use num_bigint::BigUint;
 use num_traits::One;
-use pkcs8::der::{
-    self, asn1::UIntRef, DecodeValue, Encode, ErrorKind, Header, Reader, Sequence, Tag,
-};
+use pkcs8::der::{self, asn1::UIntRef, DecodeValue, Encode, Header, Reader, Sequence, Tag};
 use rand::{CryptoRng, RngCore};
 
 /// The common components of an DSA keypair
@@ -86,9 +84,7 @@ impl<'a> DecodeValue<'a> for Components {
         let q = BigUint::from_bytes_be(q.as_bytes());
         let g = BigUint::from_bytes_be(g.as_bytes());
 
-        // TODO: Using this error doesn't seem right
-        Self::from_components(p, q, g)
-            .map_err(|_| der::Error::new(ErrorKind::Value { tag: Tag::Integer }, reader.position()))
+        Self::from_components(p, q, g).map_err(|_| Tag::Integer.value_error())
     }
 }
 
