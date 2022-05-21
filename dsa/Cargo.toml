@@ -19,7 +19,6 @@ digest = "0.10.3"
 num-bigint = { package = "num-bigint-dig", version = "0.8.1", default-features = false, features = ["prime", "rand", "zeroize"] }
 num-traits = { version = "0.2.15", default-features = false }
 opaque-debug = "0.3.0"
-paste = "1.0.7"
 pkcs8 = { version = "0.9.0", default-features = false, features = ["alloc"] }
 rand = { version = "0.8.5", default-features = false }
 rfc6979 = { version = "0.2.0", path = "../rfc6979" }

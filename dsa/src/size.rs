@@ -1,19 +1,3 @@
-macro_rules! define_param_size {
-    ($l:literal, $n:literal) => {
-        ::paste::paste! {
-            #[doc = "DSA parameter size constant; L = " $l ", N = " $n]
-            pub const [<DSA_ $l _ $n>]: Self = Self::custom($l, $n);
-        }
-    };
-    (deprecated: $l:literal, $n:literal) => {
-        ::paste::paste! {
-            #[deprecated(note="This size constant has a security strength of under 112 bits per SP 800-57 Part 1 Rev. 5")]
-            #[doc = "DSA parameter size constant; L = " $l ", N = " $n]
-            pub const [<DSA_ $l _ $n>]: Self = Self::custom($l, $n);
-        }
-    };
-}
-
 /// DSA key size
 pub struct KeySize {
     /// Bit size of p
@@ -24,10 +8,20 @@ pub struct KeySize {
 }
 
 impl KeySize {
-    define_param_size!(deprecated: 1024, 160);
-    define_param_size!(2048, 224);
-    define_param_size!(2048, 256);
-    define_param_size!(3072, 256);
+    /// DSA parameter size constant: L = 1024, N = 160
+    #[deprecated(
+        note = "This size constant has a security strength of under 112 bits per SP 800-57 Part 1 Rev. 5"
+    )]
+    pub const DSA_1024_160: Self = Self { l: 1024, n: 160 };
+
+    /// DSA parameter size constant: L = 2048, N = 224
+    pub const DSA_2048_224: Self = Self { l: 2048, n: 224 };
+
+    /// DSA parameter size constant: L = 2048, N = 256
+    pub const DSA_2048_256: Self = Self { l: 2048, n: 256 };
+
+    /// DSA parameter size constant: L = 3072, N = 256
+    pub const DSA_3072_256: Self = Self { l: 3072, n: 256 };
 
     /// Define a custom parameter size
     ///
