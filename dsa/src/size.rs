@@ -22,11 +22,4 @@ impl KeySize {
 
     /// DSA parameter size constant: L = 3072, N = 256
     pub const DSA_3072_256: Self = Self { l: 3072, n: 256 };
-
-    /// Define a custom parameter size
-    ///
-    /// **⚠ YOU MOST LIKELY DO NOT NEED TO AND SHOULD NOT USE THIS!**
-    pub const fn custom(l: u32, n: u32) -> Self {
-        Self { l, n }
-    }
 }
