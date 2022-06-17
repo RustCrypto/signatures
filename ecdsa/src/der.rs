@@ -16,6 +16,9 @@ use elliptic_curve::{
 #[cfg(feature = "alloc")]
 use alloc::boxed::Box;
 
+#[cfg(feature = "serde")]
+use serdect::serde::{de, ser, Deserialize, Serialize};
+
 /// Maximum overhead of an ASN.1 DER-encoded ECDSA signature for a given curve:
 /// 9-bytes.
 ///
@@ -198,19 +201,53 @@ where
     }
 }
 
+#[cfg(feature = "serde")]
+#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
+impl<C> Serialize for Signature<C>
+where
+    C: PrimeCurve,
+    MaxSize<C>: ArrayLength<u8>,
+    <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+{
+    fn serialize<S>(&self, serializer: S) -> core::result::Result<S::Ok, S::Error>
+    where
+        S: ser::Serializer,
+    {
+        serdect::slice::serialize_hex_upper_or_bin(&self.as_bytes(), serializer)
+    }
+}
+
+#[cfg(feature = "serde")]
+#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
+impl<'de, C> Deserialize<'de> for Signature<C>
+where
+    C: PrimeCurve,
+    MaxSize<C>: ArrayLength<u8>,
+    <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+{
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
+    where
+        D: de::Deserializer<'de>,
+    {
+        let mut buf = SignatureBytes::<C>::default();
+        let slice = serdect::slice::deserialize_hex_or_bin(&mut buf, deserializer)?;
+        Self::try_from(slice).map_err(de::Error::custom)
+    }
+}
+
 /// Decode the `r` and `s` components of a DER-encoded ECDSA signature.
 fn decode_der(der_bytes: &[u8]) -> der::Result<(UIntRef<'_>, UIntRef<'_>)> {
     let mut reader = der::SliceReader::new(der_bytes)?;
     let header = der::Header::decode(&mut reader)?;
     header.tag.assert_eq(der::Tag::Sequence)?;
 
-    let (r, s) = reader.read_nested(header.length, |reader| {
+    let ret = reader.read_nested(header.length, |reader| {
         let r = UIntRef::decode(reader)?;
         let s = UIntRef::decode(reader)?;
         Ok((r, s))
     })?;
 
-    reader.finish((r, s))
+    reader.finish(ret)
 }
 
 /// Locate the range within a slice at which a particular subslice is located

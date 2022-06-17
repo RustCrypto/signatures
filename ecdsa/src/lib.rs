@@ -98,11 +98,7 @@ use {
 };
 
 #[cfg(feature = "serde")]
-use serdect::serde::{ser, Serialize};
-
-// TODO(tarcieri): support deserialization with the `arithmetic` feature disabled
-#[cfg(all(feature = "arithmetic", feature = "serde"))]
-use serdect::serde::{de, Deserialize};
+use serdect::serde::{de, ser, Deserialize, Serialize};
 
 /// Size of a fixed sized signature for the given elliptic curve.
 pub type SignatureSize<C> = <FieldSize<C> as Add>::Output;
@@ -353,6 +349,7 @@ where
             return Err(Error::new());
         }
 
+        // This check is mainly to ensure `hex.split_at` below won't panic
         if !hex
             .as_bytes()
             .iter()
@@ -382,59 +379,27 @@ where
     C: PrimeCurve,
     SignatureSize<C>: ArrayLength<u8>,
 {
-    #[cfg(not(feature = "alloc"))]
     fn serialize<S>(&self, serializer: S) -> core::result::Result<S::Ok, S::Error>
     where
         S: ser::Serializer,
     {
-        self.as_ref().serialize(serializer)
-    }
-
-    #[cfg(feature = "alloc")]
-    fn serialize<S>(&self, serializer: S) -> core::result::Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        use alloc::string::ToString;
-        if serializer.is_human_readable() {
-            self.to_string().serialize(serializer)
-        } else {
-            self.as_ref().serialize(serializer)
-        }
+        serdect::array::serialize_hex_upper_or_bin(&self.bytes, serializer)
     }
 }
 
-// TODO(tarcieri): support deserialization with the `arithmetic` feature disabled
-#[cfg(all(feature = "arithmetic", feature = "serde"))]
-#[cfg_attr(docsrs, doc(cfg(all(feature = "arithmetic", feature = "serde"))))]
+#[cfg(feature = "serde")]
+#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 impl<'de, C> Deserialize<'de> for Signature<C>
 where
-    C: PrimeCurve + ScalarArithmetic,
+    C: PrimeCurve,
     SignatureSize<C>: ArrayLength<u8>,
 {
-    #[cfg(not(feature = "alloc"))]
     fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
     where
         D: de::Deserializer<'de>,
     {
-        use de::Error;
-        <&[u8]>::deserialize(deserializer)
-            .and_then(|bytes| Self::try_from(bytes).map_err(D::Error::custom))
-    }
-
-    #[cfg(feature = "alloc")]
-    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        use de::Error;
-        if deserializer.is_human_readable() {
-            <&str>::deserialize(deserializer)?
-                .parse()
-                .map_err(D::Error::custom)
-        } else {
-            <&[u8]>::deserialize(deserializer)
-                .and_then(|bytes| Self::try_from(bytes).map_err(D::Error::custom))
-        }
+        let mut bytes = SignatureBytes::<C>::default();
+        serdect::array::deserialize_hex_or_bin(&mut bytes, deserializer)?;
+        Self::try_from(bytes.as_slice()).map_err(de::Error::custom)
     }
 }
