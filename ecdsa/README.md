@@ -88,6 +88,6 @@ dual licensed as above, without any additional terms or conditions.
 [`ecdsa::Signature`]: https://docs.rs/ecdsa/latest/ecdsa/struct.Signature.html
 [`k256`]: https://docs.rs/k256
 [`p256`]: https://docs.rs/p256
-[`p384`]: https://docs.rs/p256
+[`p384`]: https://docs.rs/p384
 [`signature::Signer`]: https://docs.rs/signature/latest/signature/trait.Signer.html
 [`signature::Verifier`]: https://docs.rs/signature/latest/signature/trait.Verifier.html
