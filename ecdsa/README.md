@@ -20,6 +20,7 @@ ways:
 - Generic implementation of ECDSA usable with the following crates:
   - [`k256`] (secp256k1)
   - [`p256`] (NIST P-256)
+  - [`p384`] (NIST P-384)
 - Other crates which provide their own complete implementations of ECDSA can
   also leverage the types from this crate to export ECDSA functionality in a
   generic, interoperable way by leveraging [`ecdsa::Signature`] with the
@@ -49,8 +50,8 @@ version bump.
 
 All crates licensed under either of
 
- * [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)
- * [MIT license](http://opensource.org/licenses/MIT)
+- [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)
+- [MIT license](http://opensource.org/licenses/MIT)
 
 at your option.
 
@@ -87,5 +88,6 @@ dual licensed as above, without any additional terms or conditions.
 [`ecdsa::Signature`]: https://docs.rs/ecdsa/latest/ecdsa/struct.Signature.html
 [`k256`]: https://docs.rs/k256
 [`p256`]: https://docs.rs/p256
+[`p384`]: https://docs.rs/p256
 [`signature::Signer`]: https://docs.rs/signature/latest/signature/trait.Signer.html
 [`signature::Verifier`]: https://docs.rs/signature/latest/signature/trait.Verifier.html
