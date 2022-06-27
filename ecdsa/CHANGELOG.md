@@ -4,7 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.14.2 (2022-06-17)
+## 0.14.3 (2022-06-26)
+### Changed
+- Simplified digest trait bounds ([#499])
+- Bump `rfc6979` dependency to v0.3 ([#500])
+
+[#499]: https://github.com/RustCrypto/signatures/pull/499
+[#500]: https://github.com/RustCrypto/signatures/pull/500
+
+## 0.14.2 (2022-06-17) [YANKED]
 ### Added
 - Security warning in README.md ([#486])
 
