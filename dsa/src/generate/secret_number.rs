@@ -5,13 +5,7 @@
 use crate::{Components, SigningKey};
 use alloc::{vec, vec::Vec};
 use core::cmp::min;
-use digest::{
-    block_buffer::Eager,
-    consts::U256,
-    core_api::{BlockSizeUser, BufferKindUser, CoreProxy, FixedOutputCore},
-    typenum::{IsLess, Le, NonZero},
-    FixedOutput, HashMarker, OutputSizeUser,
-};
+use digest::{core_api::BlockSizeUser, Digest, FixedOutputReset};
 use num_bigint::{BigUint, ModInverse, RandBigInt};
 use num_traits::{One, Zero};
 use rand::{CryptoRng, RngCore};
@@ -44,16 +38,7 @@ fn reduce_hash(q: &BigUint, hash: &[u8]) -> Vec<u8> {
 #[inline]
 pub fn secret_number_rfc6979<D>(signing_key: &SigningKey, hash: &[u8]) -> (BigUint, BigUint)
 where
-    D: CoreProxy + FixedOutput,
-    D::Core: BlockSizeUser
-        + BufferKindUser<BufferKind = Eager>
-        + Clone
-        + Default
-        + FixedOutputCore
-        + HashMarker
-        + OutputSizeUser<OutputSize = D::OutputSize>,
-    <D::Core as BlockSizeUser>::BlockSize: IsLess<U256>,
-    Le<<D::Core as BlockSizeUser>::BlockSize, U256>: NonZero,
+    D: Digest + BlockSizeUser + FixedOutputReset,
 {
     let q = signing_key.verifying_key().components().q();
     let k_size = q.bits() / 8;

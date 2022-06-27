@@ -16,12 +16,7 @@ use elliptic_curve::{
     FieldBytes, FieldSize, NonZeroScalar, PrimeCurve, ProjectiveArithmetic, Scalar, SecretKey,
 };
 use signature::{
-    digest::{
-        block_buffer::Eager,
-        core_api::{BlockSizeUser, BufferKindUser, CoreProxy, FixedOutputCore},
-        generic_array::typenum::{IsLess, Le, NonZero, U256},
-        Digest, FixedOutput, HashMarker, OutputSizeUser,
-    },
+    digest::{core_api::BlockSizeUser, Digest, FixedOutput, FixedOutputReset},
     rand_core::{CryptoRng, RngCore},
     DigestSigner, RandomizedDigestSigner, RandomizedSigner, Signer,
 };
@@ -173,16 +168,7 @@ impl<C, D> DigestSigner<D, Signature<C>> for SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
     C::UInt: for<'a> From<&'a Scalar<C>>,
-    D: CoreProxy + Digest + FixedOutput<OutputSize = FieldSize<C>>,
-    D::Core: BlockSizeUser
-        + BufferKindUser<BufferKind = Eager>
-        + Clone
-        + Default
-        + FixedOutputCore
-        + HashMarker
-        + OutputSizeUser<OutputSize = D::OutputSize>,
-    <D::Core as BlockSizeUser>::BlockSize: IsLess<U256>,
-    Le<<D::Core as BlockSizeUser>::BlockSize, U256>: NonZero,
+    D: Digest + BlockSizeUser + FixedOutput<OutputSize = FieldSize<C>> + FixedOutputReset,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -211,16 +197,7 @@ impl<C, D> RandomizedDigestSigner<D, Signature<C>> for SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
     C::UInt: for<'a> From<&'a Scalar<C>>,
-    D: CoreProxy + Digest + FixedOutput<OutputSize = FieldSize<C>>,
-    D::Core: BlockSizeUser
-        + BufferKindUser<BufferKind = Eager>
-        + Clone
-        + Default
-        + FixedOutputCore
-        + HashMarker
-        + OutputSizeUser<OutputSize = D::OutputSize>,
-    <D::Core as BlockSizeUser>::BlockSize: IsLess<U256>,
-    Le<<D::Core as BlockSizeUser>::BlockSize, U256>: NonZero,
+    D: Digest + BlockSizeUser + FixedOutput<OutputSize = FieldSize<C>> + FixedOutputReset,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {

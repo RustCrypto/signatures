@@ -142,7 +142,7 @@ dependencies = [
 
 [[package]]
 name = "dsa"
-version = "0.3.0"
+version = "0.4.0-pre"
 dependencies = [
  "digest 0.10.3",
  "num-bigint-dig",
@@ -160,7 +160,7 @@ dependencies = [
 
 [[package]]
 name = "ecdsa"
-version = "0.14.1"
+version = "0.14.2"
 dependencies = [
  "der",
  "elliptic-curve",
@@ -490,7 +490,7 @@ dependencies = [
 
 [[package]]
 name = "rfc6979"
-version = "0.2.0"
+version = "0.3.0-pre"
 dependencies = [
  "crypto-bigint",
  "hmac",

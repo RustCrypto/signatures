@@ -1,6 +1,6 @@
 [package]
 name = "ecdsa"
-version = "0.14.1"
+version = "0.14.2"
 description = """
 Pure Rust implementation of the Elliptic Curve Digital Signature Algorithm
 (ECDSA) as specified in FIPS 186-4 (Digital Signature Standard), providing
@@ -21,7 +21,7 @@ signature = { version = "1.5", default-features = false, features = ["rand-previ
 
 # optional dependencies
 der = { version = "0.6", optional = true }
-rfc6979 = { version = "0.2", optional = true, path = "../rfc6979" }
+rfc6979 = { version = "=0.3.0-pre", optional = true, path = "../rfc6979" }
 serdect = { version = "0.1", optional = true, default-features = false, features = ["alloc"] }
 
 [dev-dependencies]
