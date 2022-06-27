@@ -490,7 +490,7 @@ dependencies = [
 
 [[package]]
 name = "rfc6979"
-version = "0.3.0-pre"
+version = "0.3.0"
 dependencies = [
  "crypto-bigint",
  "hmac",
