@@ -4,13 +4,7 @@
 
 use crate::{sig::Signature, Components, VerifyingKey, OID};
 use core::cmp::min;
-use digest::{
-    block_buffer::Eager,
-    consts::U256,
-    core_api::{BlockSizeUser, BufferKindUser, CoreProxy, FixedOutputCore},
-    typenum::{IsLess, Le, NonZero},
-    Digest, FixedOutput, HashMarker, OutputSizeUser,
-};
+use digest::{core_api::BlockSizeUser, Digest, FixedOutputReset};
 use num_bigint::BigUint;
 use num_traits::Zero;
 use pkcs8::{
@@ -100,16 +94,7 @@ impl SigningKey {
 
 impl<D> DigestSigner<D, Signature> for SigningKey
 where
-    D: Digest + CoreProxy + FixedOutput,
-    D::Core: BlockSizeUser
-        + BufferKindUser<BufferKind = Eager>
-        + Clone
-        + Default
-        + FixedOutputCore
-        + HashMarker
-        + OutputSizeUser<OutputSize = D::OutputSize>,
-    <D::Core as BlockSizeUser>::BlockSize: IsLess<U256>,
-    Le<<D::Core as BlockSizeUser>::BlockSize, U256>: NonZero,
+    D: Digest + BlockSizeUser + FixedOutputReset,
 {
     fn try_sign_digest(&self, digest: D) -> Result<Signature, signature::Error> {
         let hash = digest.finalize_fixed();

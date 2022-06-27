@@ -41,12 +41,7 @@ use signature::digest::FixedOutput;
 #[cfg(all(feature = "rfc6979"))]
 use {
     elliptic_curve::ScalarCore,
-    signature::digest::{
-        block_buffer::Eager,
-        core_api::{BlockSizeUser, BufferKindUser, CoreProxy, FixedOutputCore},
-        generic_array::typenum::{IsLess, Le, NonZero, U256},
-        HashMarker, OutputSizeUser,
-    },
+    signature::digest::{core_api::BlockSizeUser, FixedOutputReset},
 };
 
 /// Try to sign the given prehashed message using ECDSA.
@@ -126,16 +121,7 @@ where
     where
         Self: From<ScalarCore<C>>,
         C::UInt: for<'a> From<&'a Self>,
-        D: CoreProxy + FixedOutput<OutputSize = FieldSize<C>>,
-        D::Core: BlockSizeUser
-            + BufferKindUser<BufferKind = Eager>
-            + Clone
-            + Default
-            + FixedOutputCore
-            + HashMarker
-            + OutputSizeUser<OutputSize = D::OutputSize>,
-        <D::Core as BlockSizeUser>::BlockSize: IsLess<U256>,
-        Le<<D::Core as BlockSizeUser>::BlockSize, U256>: NonZero,
+        D: Digest + BlockSizeUser + FixedOutput<OutputSize = FieldSize<C>> + FixedOutputReset,
     {
         let x = C::UInt::from(self);
         let k = rfc6979::generate_k::<D, C::UInt>(&x, &C::ORDER, &z, ad);
@@ -157,16 +143,7 @@ where
     where
         Self: From<ScalarCore<C>>,
         C::UInt: for<'a> From<&'a Self>,
-        D: CoreProxy + FixedOutput<OutputSize = FieldSize<C>>,
-        D::Core: BlockSizeUser
-            + BufferKindUser<BufferKind = Eager>
-            + Clone
-            + Default
-            + FixedOutputCore
-            + HashMarker
-            + OutputSizeUser<OutputSize = D::OutputSize>,
-        <D::Core as BlockSizeUser>::BlockSize: IsLess<U256>,
-        Le<<D::Core as BlockSizeUser>::BlockSize, U256>: NonZero,
+        D: Digest + BlockSizeUser + FixedOutput<OutputSize = FieldSize<C>> + FixedOutputReset,
     {
         self.try_sign_prehashed_rfc6979::<D>(msg_digest.finalize_fixed(), ad)
     }

@@ -1,10 +1,4 @@
-use digest::{
-    block_buffer::Eager,
-    consts::U256,
-    core_api::{BlockSizeUser, BufferKindUser, CoreProxy, FixedOutputCore},
-    typenum::{IsLess, Le, NonZero},
-    Digest, FixedOutput, HashMarker, OutputSizeUser,
-};
+use digest::{core_api::BlockSizeUser, Digest, FixedOutputReset};
 use dsa::{Components, Signature, SigningKey, VerifyingKey};
 use num_bigint::BigUint;
 use num_traits::Num;
@@ -110,16 +104,7 @@ fn dsa_2048_signing_key() -> SigningKey {
 /// Generate a signature given the unhashed message and a private key
 fn generate_signature<D>(signing_key: SigningKey, data: &[u8]) -> Signature
 where
-    D: Digest + CoreProxy + FixedOutput,
-    D::Core: BlockSizeUser
-        + BufferKindUser<BufferKind = Eager>
-        + Clone
-        + Default
-        + FixedOutputCore
-        + HashMarker
-        + OutputSizeUser<OutputSize = D::OutputSize>,
-    <D::Core as BlockSizeUser>::BlockSize: IsLess<U256>,
-    Le<<D::Core as BlockSizeUser>::BlockSize, U256>: NonZero,
+    D: Digest + BlockSizeUser + FixedOutputReset,
 {
     signing_key.sign_digest(<D as Digest>::new().chain_update(data))
 }
@@ -127,16 +112,7 @@ where
 /// Generate a signature using the 1024-bit DSA key
 fn generate_1024_signature<D>(data: &[u8]) -> Signature
 where
-    D: Digest + CoreProxy + FixedOutput,
-    D::Core: BlockSizeUser
-        + BufferKindUser<BufferKind = Eager>
-        + Clone
-        + Default
-        + FixedOutputCore
-        + HashMarker
-        + OutputSizeUser<OutputSize = D::OutputSize>,
-    <D::Core as BlockSizeUser>::BlockSize: IsLess<U256>,
-    Le<<D::Core as BlockSizeUser>::BlockSize, U256>: NonZero,
+    D: Digest + BlockSizeUser + FixedOutputReset,
 {
     generate_signature::<D>(dsa_1024_signing_key(), data)
 }
@@ -144,16 +120,7 @@ where
 /// Generate a signature using the 2048-bit DSA key
 fn generate_2048_signature<D>(data: &[u8]) -> Signature
 where
-    D: Digest + CoreProxy + FixedOutput,
-    D::Core: BlockSizeUser
-        + BufferKindUser<BufferKind = Eager>
-        + Clone
-        + Default
-        + FixedOutputCore
-        + HashMarker
-        + OutputSizeUser<OutputSize = D::OutputSize>,
-    <D::Core as BlockSizeUser>::BlockSize: IsLess<U256>,
-    Le<<D::Core as BlockSizeUser>::BlockSize, U256>: NonZero,
+    D: Digest + BlockSizeUser + FixedOutputReset,
 {
     generate_signature::<D>(dsa_2048_signing_key(), data)
 }
