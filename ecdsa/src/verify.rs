@@ -18,6 +18,9 @@ use signature::{DigestVerifier, Verifier};
 use elliptic_curve::pkcs8::{self, AssociatedOid, DecodePublicKey};
 
 #[cfg(feature = "pem")]
+use elliptic_curve::pkcs8::EncodePublicKey;
+
+#[cfg(feature = "pem")]
 use core::str::FromStr;
 
 #[cfg(all(feature = "pem", feature = "serde"))]
@@ -227,6 +230,19 @@ where
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldSize<C>: sec1::ModulusSize,
 {
+}
+
+#[cfg(feature = "pem")]
+#[cfg_attr(docsrs, doc(cfg(feature = "pem")))]
+impl<C> EncodePublicKey for VerifyingKey<C>
+where
+    C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic + PointCompression,
+    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    FieldSize<C>: sec1::ModulusSize,
+{
+    fn to_public_key_der(&self) -> pkcs8::spki::Result<pkcs8::PublicKeyDocument> {
+        self.inner.to_public_key_der()
+    }
 }
 
 #[cfg(feature = "pem")]
