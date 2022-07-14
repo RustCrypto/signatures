@@ -236,11 +236,11 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "pem")))]
 impl<C> EncodePublicKey for VerifyingKey<C>
 where
-    C: PrimeCurve + AlgorithmParameters + ProjectiveArithmetic + PointCompression,
+    C: PrimeCurve + AssociatedOid + ProjectiveArithmetic + PointCompression,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldSize<C>: sec1::ModulusSize,
 {
-    fn to_public_key_der(&self) -> pkcs8::spki::Result<pkcs8::PublicKeyDocument> {
+    fn to_public_key_der(&self) -> pkcs8::spki::Result<pkcs8::Document> {
         self.inner.to_public_key_der()
     }
 }
