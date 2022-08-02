@@ -12,7 +12,7 @@ use elliptic_curve::{
     group::ff::PrimeField,
     ops::{Invert, Reduce},
     subtle::{Choice, ConstantTimeEq, CtOption},
-    zeroize::Zeroize,
+    zeroize::{Zeroize, ZeroizeOnDrop},
     FieldBytes, FieldSize, NonZeroScalar, PrimeCurve, ProjectiveArithmetic, Scalar, SecretKey,
 };
 use signature::{
@@ -117,6 +117,14 @@ where
     fn drop(&mut self) {
         self.inner.zeroize();
     }
+}
+
+impl<C> ZeroizeOnDrop for SigningKey<C>
+where
+    C: PrimeCurve + ProjectiveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
 }
 
 /// Constant-time comparison
