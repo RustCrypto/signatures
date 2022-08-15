@@ -22,7 +22,7 @@ opaque-debug = "0.3"
 pkcs8 = { version = "0.9", default-features = false, features = ["alloc"] }
 rand = { version = "0.8", default-features = false }
 rfc6979 = { version = "0.3", path = "../rfc6979" }
-signature = { version = ">= 1.5, < 1.6", default-features = false, features = ["digest-preview", "rand-preview"] }
+signature = { version = ">= 1.5, < 1.7", default-features = false, features = ["digest-preview", "rand-preview"] }
 zeroize = { version = "1.5", default-features = false }
 
 [dev-dependencies]
