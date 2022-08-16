@@ -4,7 +4,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.14.3 (2022-06-26)
+## 0.14.4 (2022-08-15)
+### Added
+- Impl `EncodePublicKey` for `VerifyingKey` ([#505])
+- ZeroizeOnDrop marker for SigningKey ([#509])
+
+### Changed
+- Restrict `signature` version to v1.5-v1.6 ([#508], [#512])
+
+[#505]: https://github.com/RustCrypto/signatures/pull/505
+[#508]: https://github.com/RustCrypto/signatures/pull/508
+[#509]: https://github.com/RustCrypto/signatures/pull/509
+[#512]: https://github.com/RustCrypto/signatures/pull/512
+
+## 0.14.3 (2022-06-26) [YANKED]
 ### Changed
 - Simplified digest trait bounds ([#499])
 - Bump `rfc6979` dependency to v0.3 ([#500])
