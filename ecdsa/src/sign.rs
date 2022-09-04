@@ -26,13 +26,16 @@ use {crate::verify::VerifyingKey, elliptic_curve::PublicKey};
 
 #[cfg(feature = "pkcs8")]
 use crate::elliptic_curve::{
-    pkcs8::{self, AssociatedOid, DecodePrivateKey, EncodePrivateKey, SecretDocument},
+    pkcs8::{self, AssociatedOid, DecodePrivateKey},
     sec1::{self, FromEncodedPoint, ToEncodedPoint},
     AffinePoint,
 };
 
 #[cfg(feature = "pem")]
-use core::str::FromStr;
+use {
+    crate::elliptic_curve::pkcs8::{EncodePrivateKey, SecretDocument},
+    core::str::FromStr,
+};
 
 /// ECDSA signing key. Generic over elliptic curves.
 ///
