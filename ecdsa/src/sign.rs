@@ -26,7 +26,7 @@ use {crate::verify::VerifyingKey, elliptic_curve::PublicKey};
 
 #[cfg(feature = "pkcs8")]
 use crate::elliptic_curve::{
-    pkcs8::{self, AssociatedOid, DecodePrivateKey},
+    pkcs8::{self, AssociatedOid, DecodePrivateKey, EncodePrivateKey, SecretDocument},
     sec1::{self, FromEncodedPoint, ToEncodedPoint},
     AffinePoint,
 };
@@ -287,6 +287,22 @@ where
 
     fn try_from(private_key_info: pkcs8::PrivateKeyInfo<'_>) -> pkcs8::Result<Self> {
         SecretKey::try_from(private_key_info).map(Into::into)
+    }
+}
+
+#[cfg(feature = "pem")]
+#[cfg_attr(docsrs, doc(cfg(feature = "pem")))]
+impl<C> EncodePrivateKey for SigningKey<C>
+where
+    C: AssociatedOid + PrimeCurve + ProjectiveArithmetic,
+    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    FieldSize<C>: sec1::ModulusSize,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn to_pkcs8_der(&self) -> pkcs8::Result<SecretDocument> {
+        let secret_key = SecretKey::new(self.inner.into());
+        secret_key.to_pkcs8_der()
     }
 }
 
