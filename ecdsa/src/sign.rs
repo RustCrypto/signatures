@@ -304,8 +304,7 @@ where
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn to_pkcs8_der(&self) -> pkcs8::Result<SecretDocument> {
-        let secret_key = SecretKey::new(self.inner.into());
-        secret_key.to_pkcs8_der()
+        SecretKey::from(self.inner).to_pkcs8_der()
     }
 }
 
