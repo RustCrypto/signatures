@@ -35,7 +35,7 @@ rand_core = { version = "0.5", features = ["std"] }
 [features]
 default = ["std"]
 alloc = ["pkcs8/alloc"]
-pem = ["pkcs8/pem"]
+pem = ["alloc", "pkcs8/pem"]
 serde_bytes = ["serde", "serde_bytes_crate", "std"]
 std = ["signature/std"]
 
