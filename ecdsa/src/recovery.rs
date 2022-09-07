@@ -26,23 +26,23 @@ impl RecoveryId {
     ///
     /// - `is_y_odd`: is the affine y-coordinate of 𝑘×𝑮 odd?
     /// - `is_x_reduced`: did the affine x-coordinate of 𝑘×𝑮 overflow the curve order?
-    pub fn new(is_y_odd: bool, is_x_reduced: bool) -> Self {
+    pub const fn new(is_y_odd: bool, is_x_reduced: bool) -> Self {
         Self((is_x_reduced as u8) << 1 | (is_y_odd as u8))
     }
 
     /// Did the affine x-coordinate of 𝑘×𝑮 overflow the curve order?
-    pub fn is_x_reduced(self) -> bool {
+    pub const fn is_x_reduced(self) -> bool {
         (self.0 & 0b10) != 0
     }
 
     /// Is the affine y-coordinate of 𝑘×𝑮 odd?
-    pub fn is_y_odd(self) -> bool {
+    pub const fn is_y_odd(self) -> bool {
         (self.0 & 1) != 0
     }
 
     /// Convert this [`RecoveryId`] into a `u8`.
-    pub fn to_byte(self) -> u8 {
-        self.into()
+    pub const fn to_byte(self) -> u8 {
+        self.0
     }
 }
 
