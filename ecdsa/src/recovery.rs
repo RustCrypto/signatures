@@ -40,6 +40,15 @@ impl RecoveryId {
         (self.0 & 1) != 0
     }
 
+    /// Convert a `u8` into a [`RecoveryId`].
+    pub const fn from_byte(byte: u8) -> Option<Self> {
+        if byte <= Self::MAX {
+            Some(Self(byte))
+        } else {
+            None
+        }
+    }
+
     /// Convert this [`RecoveryId`] into a `u8`.
     pub const fn to_byte(self) -> u8 {
         self.0
@@ -50,11 +59,7 @@ impl TryFrom<u8> for RecoveryId {
     type Error = Error;
 
     fn try_from(byte: u8) -> Result<Self> {
-        if byte <= Self::MAX {
-            Ok(Self(byte))
-        } else {
-            Err(Error::new())
-        }
+        Self::from_byte(byte).ok_or_else(Error::new)
     }
 }
 
