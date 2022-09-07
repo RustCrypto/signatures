@@ -84,6 +84,22 @@ where
     pub fn to_encoded_point(&self, compress: bool) -> EncodedPoint<C> {
         self.inner.to_encoded_point(compress)
     }
+
+    /// Borrow the inner [`AffinePoint`] for this public key.
+    pub fn as_affine(&self) -> &AffinePoint<C> {
+        self.inner.as_affine()
+    }
+}
+
+impl<C> AsRef<AffinePoint<C>> for VerifyingKey<C>
+where
+    C: PrimeCurve + ProjectiveArithmetic,
+    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    FieldSize<C>: sec1::ModulusSize,
+{
+    fn as_ref(&self) -> &AffinePoint<C> {
+        self.as_affine()
+    }
 }
 
 impl<C> Copy for VerifyingKey<C> where C: PrimeCurve + ProjectiveArithmetic {}
