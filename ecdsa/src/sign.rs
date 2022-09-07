@@ -74,6 +74,22 @@ where
         Ok(Self { inner })
     }
 
+    /// Serialize this [`SigningKey`] as bytes
+    pub fn to_bytes(&self) -> FieldBytes<C> {
+        self.inner.to_repr()
+    }
+
+    /// Borrow the secret [`NonZeroScalar`] value for this key.
+    ///
+    /// # ⚠️ Warning
+    ///
+    /// This value is key material.
+    ///
+    /// Please treat it with the care it deserves!
+    pub fn as_nonzero_scalar(&self) -> &NonZeroScalar<C> {
+        &self.inner
+    }
+
     /// Get the [`VerifyingKey`] which corresponds to this [`SigningKey`]
     #[cfg(feature = "verify")]
     #[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
@@ -81,11 +97,6 @@ where
         VerifyingKey {
             inner: PublicKey::from_secret_scalar(&self.inner),
         }
-    }
-
-    /// Serialize this [`SigningKey`] as bytes
-    pub fn to_bytes(&self) -> FieldBytes<C> {
-        self.inner.to_repr()
     }
 }
 
