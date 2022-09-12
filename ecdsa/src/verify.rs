@@ -11,8 +11,11 @@ use elliptic_curve::{
     sec1::{self, EncodedPoint, FromEncodedPoint, ToEncodedPoint},
     AffinePoint, FieldSize, PointCompression, PrimeCurve, ProjectiveArithmetic, PublicKey, Scalar,
 };
-use signature::digest::{Digest, FixedOutput};
-use signature::{DigestVerifier, Verifier};
+use signature::{
+    digest::{Digest, FixedOutput},
+    hazmat::PrehashVerifier,
+    DigestVerifier, Verifier,
+};
 
 #[cfg(feature = "pkcs8")]
 use elliptic_curve::pkcs8::{self, AssociatedOid, DecodePublicKey};
@@ -114,6 +117,19 @@ where
 {
     fn verify_digest(&self, msg_digest: D, signature: &Signature<C>) -> Result<()> {
         self.inner.as_affine().verify_digest(msg_digest, signature)
+    }
+}
+
+impl<C> PrehashVerifier<Signature<C>> for VerifyingKey<C>
+where
+    C: PrimeCurve + ProjectiveArithmetic + DigestPrimitive,
+    AffinePoint<C>: VerifyPrimitive<C>,
+    Scalar<C>: Reduce<C::UInt>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn verify_prehash(&self, prehash: &[u8], signature: &Signature<C>) -> Result<()> {
+        let prehash = C::prehash_to_field_bytes(prehash)?;
+        self.inner.as_affine().verify_prehashed(prehash, signature)
     }
 }
 

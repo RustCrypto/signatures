@@ -17,6 +17,7 @@ use elliptic_curve::{
 };
 use signature::{
     digest::{core_api::BlockSizeUser, Digest, FixedOutput, FixedOutputReset},
+    hazmat::PrehashSigner,
     rand_core::{CryptoRng, RngCore},
     DigestSigner, RandomizedDigestSigner, RandomizedSigner, Signer,
 };
@@ -192,6 +193,7 @@ where
     C::UInt: for<'a> From<&'a Scalar<C>>,
     D: Digest + BlockSizeUser + FixedOutput<OutputSize = FieldSize<C>> + FixedOutputReset,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Sign message digest using a deterministic ephemeral scalar (`k`)
@@ -200,6 +202,24 @@ where
     /// [RFC6979 § 3.2]: https://tools.ietf.org/html/rfc6979#section-3
     fn try_sign_digest(&self, msg_digest: D) -> Result<Signature<C>> {
         Ok(self.inner.try_sign_digest_rfc6979::<D>(msg_digest, &[])?.0)
+    }
+}
+
+impl<C> PrehashSigner<Signature<C>> for SigningKey<C>
+where
+    C: PrimeCurve + ProjectiveArithmetic + DigestPrimitive,
+    C::Digest: BlockSizeUser + FixedOutput<OutputSize = FieldSize<C>> + FixedOutputReset,
+    C::UInt: for<'a> From<&'a Scalar<C>>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn sign_prehash(&self, prehash: &[u8]) -> Result<Signature<C>> {
+        let prehash = C::prehash_to_field_bytes(prehash)?;
+
+        Ok(self
+            .inner
+            .try_sign_prehashed_rfc6979::<C::Digest>(prehash, &[])?
+            .0)
     }
 }
 
