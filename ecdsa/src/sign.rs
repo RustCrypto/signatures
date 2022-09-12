@@ -22,20 +22,23 @@ use signature::{
     DigestSigner, RandomizedDigestSigner, RandomizedSigner, Signer,
 };
 
-#[cfg(feature = "verify")]
-use {crate::verify::VerifyingKey, elliptic_curve::PublicKey};
+#[cfg(feature = "pem")]
+use {
+    crate::elliptic_curve::pkcs8::{EncodePrivateKey, SecretDocument},
+    core::str::FromStr,
+};
 
 #[cfg(feature = "pkcs8")]
 use crate::elliptic_curve::{
     pkcs8::{self, AssociatedOid, DecodePrivateKey},
     sec1::{self, FromEncodedPoint, ToEncodedPoint},
-    AffinePoint,
 };
 
-#[cfg(feature = "pem")]
+#[cfg(feature = "verify")]
 use {
-    crate::elliptic_curve::pkcs8::{EncodePrivateKey, SecretDocument},
-    core::str::FromStr,
+    crate::{hazmat::VerifyPrimitive, verify::VerifyingKey},
+    elliptic_curve::{AffinePoint, PublicKey},
+    signature::Keypair,
 };
 
 /// ECDSA signing key. Generic over elliptic curves.
@@ -50,7 +53,12 @@ where
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
-    inner: NonZeroScalar<C>,
+    /// ECDSA signing keys are non-zero elements of a given curve's scalar field.
+    secret_scalar: NonZeroScalar<C>,
+
+    /// Verifying key which corresponds to this signing key.
+    #[cfg(feature = "verify")]
+    verifying_key: VerifyingKey<C>,
 }
 
 impl<C> SigningKey<C>
@@ -61,23 +69,19 @@ where
 {
     /// Generate a cryptographically random [`SigningKey`].
     pub fn random(rng: impl CryptoRng + RngCore) -> Self {
-        Self {
-            inner: NonZeroScalar::random(rng),
-        }
+        NonZeroScalar::<C>::random(rng).into()
     }
 
     /// Initialize signing key from a raw scalar serialized as a byte slice.
     pub fn from_bytes(bytes: &[u8]) -> Result<Self> {
-        let inner = SecretKey::from_be_bytes(bytes)
-            .map(|sk| sk.to_nonzero_scalar())
-            .map_err(|_| Error::new())?;
-
-        Ok(Self { inner })
+        SecretKey::<C>::from_be_bytes(bytes)
+            .map(|sk| sk.to_nonzero_scalar().into())
+            .map_err(|_| Error::new())
     }
 
     /// Serialize this [`SigningKey`] as bytes
     pub fn to_bytes(&self) -> FieldBytes<C> {
-        self.inner.to_repr()
+        self.secret_scalar.to_repr()
     }
 
     /// Borrow the secret [`NonZeroScalar`] value for this key.
@@ -88,16 +92,28 @@ where
     ///
     /// Please treat it with the care it deserves!
     pub fn as_nonzero_scalar(&self) -> &NonZeroScalar<C> {
-        &self.inner
+        &self.secret_scalar
     }
 
     /// Get the [`VerifyingKey`] which corresponds to this [`SigningKey`]
+    // TODO(tarcieri): make this return `&VerifyingKey<C>` in the next breaking release
     #[cfg(feature = "verify")]
     #[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
     pub fn verifying_key(&self) -> VerifyingKey<C> {
-        VerifyingKey {
-            inner: PublicKey::from_secret_scalar(&self.inner),
-        }
+        self.verifying_key
+    }
+}
+
+#[cfg(feature = "verify")]
+#[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
+impl<C> AsRef<VerifyingKey<C>> for SigningKey<C>
+where
+    C: PrimeCurve + ProjectiveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn as_ref(&self) -> &VerifyingKey<C> {
+        &self.verifying_key
     }
 }
 
@@ -108,7 +124,7 @@ where
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn ct_eq(&self, other: &Self) -> Choice {
-        self.inner.ct_eq(&other.inner)
+        self.secret_scalar.ct_eq(&other.secret_scalar)
     }
 }
 
@@ -130,7 +146,7 @@ where
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn drop(&mut self) {
-        self.inner.zeroize();
+        self.secret_scalar.zeroize();
     }
 }
 
@@ -181,9 +197,7 @@ where
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn from(secret_key: &SecretKey<C>) -> Self {
-        Self {
-            inner: secret_key.to_nonzero_scalar(),
-        }
+        secret_key.to_nonzero_scalar().into()
     }
 }
 
@@ -201,8 +215,26 @@ where
     ///
     /// [RFC6979 § 3.2]: https://tools.ietf.org/html/rfc6979#section-3
     fn try_sign_digest(&self, msg_digest: D) -> Result<Signature<C>> {
-        Ok(self.inner.try_sign_digest_rfc6979::<D>(msg_digest, &[])?.0)
+        Ok(self
+            .secret_scalar
+            .try_sign_digest_rfc6979::<D>(msg_digest, &[])?
+            .0)
     }
+}
+
+#[cfg(feature = "verify")]
+#[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
+impl<C> Keypair<Signature<C>> for SigningKey<C>
+where
+    C: PrimeCurve + ProjectiveArithmetic + DigestPrimitive,
+    C::Digest: BlockSizeUser + FixedOutput<OutputSize = FieldSize<C>> + FixedOutputReset,
+    C::UInt: for<'a> From<&'a Scalar<C>>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    AffinePoint<C>: VerifyPrimitive<C>,
+    Scalar<C>: Reduce<C::UInt>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    type VerifyingKey = VerifyingKey<C>;
 }
 
 impl<C> PrehashSigner<Signature<C>> for SigningKey<C>
@@ -217,7 +249,7 @@ where
         let prehash = C::prehash_to_field_bytes(prehash)?;
 
         Ok(self
-            .inner
+            .secret_scalar
             .try_sign_prehashed_rfc6979::<C::Digest>(prehash, &[])?
             .0)
     }
@@ -253,7 +285,10 @@ where
     ) -> Result<Signature<C>> {
         let mut ad = FieldBytes::<C>::default();
         rng.fill_bytes(&mut ad);
-        Ok(self.inner.try_sign_digest_rfc6979::<D>(msg_digest, &ad)?.0)
+        Ok(self
+            .secret_scalar
+            .try_sign_digest_rfc6979::<D>(msg_digest, &ad)?
+            .0)
     }
 }
 
@@ -276,8 +311,13 @@ where
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn from(secret_scalar: NonZeroScalar<C>) -> Self {
+        #[cfg(feature = "verify")]
+        let public_key = PublicKey::from_secret_scalar(&secret_scalar);
+
         Self {
-            inner: secret_scalar,
+            secret_scalar,
+            #[cfg(feature = "verify")]
+            verifying_key: public_key.into(),
         }
     }
 }
@@ -335,7 +375,7 @@ where
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn to_pkcs8_der(&self) -> pkcs8::Result<SecretDocument> {
-        SecretKey::from(self.inner).to_pkcs8_der()
+        SecretKey::from(self.secret_scalar).to_pkcs8_der()
     }
 }
 
