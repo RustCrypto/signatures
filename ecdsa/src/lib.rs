@@ -279,12 +279,13 @@ where
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "ecdsa::Signature<{:?}>({:?})",
-            C::default(),
-            self.as_ref()
-        )
+        write!(f, "ecdsa::Signature<{:?}>(", C::default())?;
+
+        for &byte in self.as_ref() {
+            write!(f, "{:02X}", byte)?;
+        }
+
+        write!(f, ")")
     }
 }
 

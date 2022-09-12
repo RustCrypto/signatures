@@ -143,10 +143,13 @@ where
     <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("asn1::Signature")
-            .field("r", &self.r())
-            .field("s", &self.s())
-            .finish()
+        write!(f, "ecdsa::der::Signature<{:?}>(", C::default())?;
+
+        for &byte in self.as_ref() {
+            write!(f, "{:02X}", byte)?;
+        }
+
+        write!(f, ")")
     }
 }
 
