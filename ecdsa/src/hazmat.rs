@@ -12,27 +12,28 @@
 
 #[cfg(feature = "arithmetic")]
 use {
-    crate::{Error, RecoveryId, Result, SignatureSize},
+    crate::{RecoveryId, SignatureSize},
     core::borrow::Borrow,
     elliptic_curve::{
         group::Curve as _,
         ops::{Invert, LinearCombination, Reduce},
         subtle::CtOption,
-        AffineArithmetic, AffineXCoordinate, Field, FieldBytes, Group, ProjectiveArithmetic,
-        ProjectivePoint, Scalar, ScalarArithmetic,
+        AffineArithmetic, AffineXCoordinate, Field, Group, ProjectiveArithmetic, ProjectivePoint,
+        Scalar, ScalarArithmetic,
     },
 };
 
 #[cfg(feature = "digest")]
 use {
-    elliptic_curve::FieldSize,
+    core::cmp,
+    elliptic_curve::{bigint::Encoding, FieldSize},
     signature::{digest::Digest, PrehashSignature},
 };
 
 #[cfg(any(feature = "arithmetic", feature = "digest"))]
 use crate::{
-    elliptic_curve::{generic_array::ArrayLength, PrimeCurve},
-    Signature,
+    elliptic_curve::{generic_array::ArrayLength, FieldBytes, PrimeCurve},
+    Error, Result, Signature,
 };
 
 #[cfg(all(feature = "arithmetic", feature = "digest"))]
@@ -216,8 +217,35 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "digest")))]
 pub trait DigestPrimitive: PrimeCurve {
     /// Preferred digest to use when computing ECDSA signatures for this
-    /// elliptic curve. This should be a member of the SHA-2 family.
+    /// elliptic curve. This is typically a member of the SHA-2 family.
+    // TODO(tarcieri): add BlockSizeUser + FixedOutput(Reset) bounds in next breaking release
+    // These bounds ensure the digest algorithm can be used for HMAC-DRBG for RFC6979
     type Digest: Digest;
+
+    /// Compute field bytes for a prehash (message digest), either zero-padding
+    /// or truncating if the prehash size does not match the field size.
+    fn prehash_to_field_bytes(prehash: &[u8]) -> Result<FieldBytes<Self>> {
+        // Minimum allowed prehash size is half the field size
+        if prehash.len() < Self::UInt::BYTE_SIZE / 2 {
+            return Err(Error::new());
+        }
+
+        let mut field_bytes = FieldBytes::<Self>::default();
+
+        match prehash.len().cmp(&Self::UInt::BYTE_SIZE) {
+            cmp::Ordering::Equal => field_bytes.copy_from_slice(prehash),
+            cmp::Ordering::Less => {
+                // If prehash is smaller than the field size, pad with zeroes
+                field_bytes[..prehash.len()].copy_from_slice(prehash);
+            }
+            cmp::Ordering::Greater => {
+                // If prehash is larger than the field size, truncate
+                field_bytes.copy_from_slice(&prehash[..Self::UInt::BYTE_SIZE]);
+            }
+        }
+
+        Ok(field_bytes)
+    }
 }
 
 #[cfg(feature = "digest")]
