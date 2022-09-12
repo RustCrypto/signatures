@@ -136,7 +136,7 @@ where
 impl<C> Verifier<Signature<C>> for VerifyingKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic + DigestPrimitive,
-    C::Digest: Digest + FixedOutput<OutputSize = FieldSize<C>>,
+    C::Digest: FixedOutput<OutputSize = FieldSize<C>>,
     AffinePoint<C>: VerifyPrimitive<C>,
     Scalar<C>: Reduce<C::UInt>,
     SignatureSize<C>: ArrayLength<u8>,
