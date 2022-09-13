@@ -2,6 +2,7 @@ name: ecdsa
 on:
   pull_request:
     paths:
+      - ".github/workflows/ecdsa.yml"
       - "ecdsa/**"
       - "rfc6979/**"
       - "Cargo.*"
@@ -17,7 +18,7 @@ env:
   RUSTFLAGS: "-Dwarnings"
 
 jobs:
-  build:
+  no_std:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -35,19 +36,8 @@ jobs:
           toolchain: ${{ matrix.rust }}
           target: ${{ matrix.target }}
           override: true
-      - run: cargo build --no-default-features --release --target ${{ matrix.target }}
-      - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features arithmetic
-      - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features arithmetic,hazmat
-      - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features dev
-      - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features digest
-      - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features digest,hazmat
-      - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features hazmat
-      - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features pkcs8
-      - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features pem
-      - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features serde
-      - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features sign
-      - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features verify
-      - run: cargo build --no-default-features --release --target ${{ matrix.target }} --features arithmetic,dev,digest,hazmat,pkcs8,pem,serde,sign,verify
+      - uses: RustCrypto/actions/cargo-hack-install@master
+      - run: cargo hack build --target ${{ matrix.target }} --feature-powerset --exclude-features std
 
   test:
     runs-on: ubuntu-latest

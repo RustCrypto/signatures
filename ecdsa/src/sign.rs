@@ -37,9 +37,12 @@ use crate::elliptic_curve::{
 #[cfg(feature = "verify")]
 use {
     crate::{hazmat::VerifyPrimitive, verify::VerifyingKey},
-    elliptic_curve::{AffinePoint, PublicKey},
+    elliptic_curve::PublicKey,
     signature::Keypair,
 };
+
+#[cfg(any(feature = "pkcs8", feature = "verify"))]
+use elliptic_curve::AffinePoint;
 
 /// ECDSA signing key. Generic over elliptic curves.
 ///
