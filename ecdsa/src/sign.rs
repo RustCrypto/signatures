@@ -32,17 +32,11 @@ use {
 use crate::elliptic_curve::{
     pkcs8::{self, AssociatedOid, DecodePrivateKey},
     sec1::{self, FromEncodedPoint, ToEncodedPoint},
+    AffinePoint,
 };
 
 #[cfg(feature = "verify")]
-use {
-    crate::{hazmat::VerifyPrimitive, verify::VerifyingKey},
-    elliptic_curve::PublicKey,
-    signature::Keypair,
-};
-
-#[cfg(any(feature = "pkcs8", feature = "verify"))]
-use elliptic_curve::AffinePoint;
+use {crate::verify::VerifyingKey, elliptic_curve::PublicKey, signature::Keypair};
 
 /// ECDSA signing key. Generic over elliptic curves.
 ///
@@ -229,12 +223,8 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
 impl<C> Keypair<Signature<C>> for SigningKey<C>
 where
-    C: PrimeCurve + ProjectiveArithmetic + DigestPrimitive,
-    C::Digest: BlockSizeUser + FixedOutput<OutputSize = FieldSize<C>> + FixedOutputReset,
-    C::UInt: for<'a> From<&'a Scalar<C>>,
+    C: PrimeCurve + ProjectiveArithmetic,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
-    AffinePoint<C>: VerifyPrimitive<C>,
-    Scalar<C>: Reduce<C::UInt>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     type VerifyingKey = VerifyingKey<C>;
