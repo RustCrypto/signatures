@@ -17,7 +17,7 @@ rust-version = "1.57"
 
 [dependencies]
 elliptic-curve = { version = "0.12", default-features = false, features = ["digest", "sec1"] }
-signature = { version = ">=1.6.1, <1.7", default-features = false, features = ["hazmat-preview", "rand-preview"] }
+signature = { version = ">=1.6.2, <1.7", default-features = false, features = ["hazmat-preview", "rand-preview"] }
 
 # optional dependencies
 der = { version = "0.6", optional = true }
