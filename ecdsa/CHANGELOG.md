@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.14.7 (2022-09-15)
+### Changed
+- Relax `Keypair` bounds ([#539])
+
+[#539]: https://github.com/RustCrypto/signatures/pull/539
+
 ## 0.14.6 (2022-09-12)
 ### Added
 - Impl `signature::hazmat::{PrehashSigner, PrehashVerifier}` ([#534])
