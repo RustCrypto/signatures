@@ -198,6 +198,28 @@ where
     }
 }
 
+impl<C> From<SigningKey<C>> for SecretKey<C>
+where
+    C: PrimeCurve + ProjectiveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn from(key: SigningKey<C>) -> Self {
+        key.secret_scalar.into()
+    }
+}
+
+impl<C> From<&SigningKey<C>> for SecretKey<C>
+where
+    C: PrimeCurve + ProjectiveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn from(secret_key: &SigningKey<C>) -> Self {
+        secret_key.secret_scalar.into()
+    }
+}
+
 impl<C, D> DigestSigner<D, Signature<C>> for SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
