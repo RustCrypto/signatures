@@ -236,7 +236,7 @@ pub trait DigestPrimitive: PrimeCurve {
             cmp::Ordering::Equal => field_bytes.copy_from_slice(prehash),
             cmp::Ordering::Less => {
                 // If prehash is smaller than the field size, pad with zeroes
-                field_bytes[..prehash.len()].copy_from_slice(prehash);
+                field_bytes[(Self::UInt::BYTE_SIZE - prehash.len())..].copy_from_slice(prehash);
             }
             cmp::Ordering::Greater => {
                 // If prehash is larger than the field size, truncate
