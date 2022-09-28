@@ -232,11 +232,14 @@ pub trait DigestPrimitive: PrimeCurve {
 
         let mut field_bytes = FieldBytes::<Self>::default();
 
+        // This is a operation according to RFC6979 Section 2.3.2. and SEC1 Section 2.3.8.
+        // https://datatracker.ietf.org/doc/html/rfc6979#section-2.3.2
+        // https://www.secg.org/sec1-v2.pdf
         match prehash.len().cmp(&Self::UInt::BYTE_SIZE) {
             cmp::Ordering::Equal => field_bytes.copy_from_slice(prehash),
             cmp::Ordering::Less => {
-                // If prehash is smaller than the field size, pad with zeroes
-                field_bytes[..prehash.len()].copy_from_slice(prehash);
+                // If prehash is smaller than the field size, pad with zeroes on the left
+                field_bytes[(Self::UInt::BYTE_SIZE - prehash.len())..].copy_from_slice(prehash);
             }
             cmp::Ordering::Greater => {
                 // If prehash is larger than the field size, truncate
