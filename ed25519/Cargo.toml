@@ -30,7 +30,7 @@ bincode = "1"
 ed25519-dalek = "1"
 hex-literal = "0.3"
 #ring-compat = "0.4" # TODO(tarcieri): re-enable after bumping deps in `ring-compat`
-rand_core = { version = "0.5", features = ["std"] }
+rand_core = { version = "0.6", features = ["std"] }
 
 [features]
 default = ["std"]
