@@ -46,15 +46,15 @@
 
 extern crate alloc;
 
-pub use self::{
+pub use crate::{
     components::Components, sig::Signature, signing_key::SigningKey, size::KeySize,
     verifying_key::VerifyingKey,
 };
 
+pub use num_bigint::BigUint;
 pub use pkcs8;
 pub use signature;
 
-use num_bigint::BigUint;
 use pkcs8::spki::ObjectIdentifier;
 
 mod components;
