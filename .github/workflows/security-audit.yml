@@ -19,10 +19,10 @@ jobs:
           toolchain: stable
           override: true
           profile: minimal
-      - uses: actions/cache@v1
+      - uses: actions/cache@v3
         with:
           path: ~/.cargo/bin
-          key: ${{ runner.os }}-cargo-audit-v0.15.2
+          key: ${{ runner.os }}-cargo-audit-v0.17.2
       - uses: actions-rs/audit-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
