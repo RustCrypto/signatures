@@ -27,7 +27,7 @@ jobs:
           - 1.57.0 # MSRV
           - stable
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
           target: ${{ matrix.target }}
@@ -51,7 +51,7 @@ jobs:
           - stable
     runs-on: ${{ matrix.platform }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ matrix.toolchain }}
