@@ -47,6 +47,12 @@ impl VerifyingKey {
         &self.y
     }
 
+    /// `verify_hash` verifies a pre-hashed value using the provided signature.
+    #[must_use]
+    pub fn verify_hash(&self, hash: &[u8], signature: &Signature) -> Option<bool> {
+        self.verify_prehashed(hash, signature)
+    }
+
     /// Verify some prehashed data
     #[must_use]
     fn verify_prehashed(&self, hash: &[u8], signature: &Signature) -> Option<bool> {

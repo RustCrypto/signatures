@@ -66,6 +66,16 @@ impl SigningKey {
         &self.x
     }
 
+    /// `sign_hash` signs a pre-hashed value.
+    #[must_use]
+    pub fn sign_hash<D>(&self, hash: &[u8]) -> Option<Signature>
+    where
+        D: Digest + BlockSizeUser + FixedOutputReset,
+    {
+        let k_kinv = crate::generate::secret_number_rfc6979::<D>(&self, hash);
+        self.sign_prehashed(k_kinv, hash)
+    }
+
     /// Sign some pre-hashed data
     fn sign_prehashed(&self, (k, inv_k): (BigUint, BigUint), hash: &[u8]) -> Option<Signature> {
         let components = self.verifying_key().components();
