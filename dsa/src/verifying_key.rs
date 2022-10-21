@@ -11,7 +11,7 @@ use pkcs8::{
     der::{asn1::UIntRef, AnyRef, Decode, Encode},
     spki, AlgorithmIdentifier, DecodePublicKey, EncodePublicKey, SubjectPublicKeyInfo,
 };
-use signature::DigestVerifier;
+use signature::{hazmat::PrehashVerifier, DigestVerifier};
 
 /// DSA public key.
 #[derive(Clone, PartialEq, PartialOrd)]
@@ -47,12 +47,6 @@ impl VerifyingKey {
         &self.y
     }
 
-    /// `verify_hash` verifies a pre-hashed value using the provided signature.
-    #[must_use]
-    pub fn verify_hash(&self, hash: &[u8], signature: &Signature) -> Option<bool> {
-        self.verify_prehashed(hash, signature)
-    }
-
     /// Verify some prehashed data
     #[must_use]
     fn verify_prehashed(&self, hash: &[u8], signature: &Signature) -> Option<bool> {
@@ -78,6 +72,20 @@ impl VerifyingKey {
         let v = (g.modpow(&u1, p) * y.modpow(&u2, p) % p) % q;
 
         Some(v == *r)
+    }
+}
+
+impl PrehashVerifier<Signature> for VerifyingKey {
+    fn verify_prehash(
+        &self,
+        prehash: &[u8],
+        signature: &Signature,
+    ) -> Result<(), signature::Error> {
+        if let Some(true) = self.verify_prehashed(prehash, signature) {
+            Ok(())
+        } else {
+            Err(signature::Error::new())
+        }
     }
 }
 
