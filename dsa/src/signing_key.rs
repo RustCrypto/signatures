@@ -77,16 +77,8 @@ impl SigningKey {
 
         let r = g.modpow(&k, p) % q;
 
-        let n = q.bits() / 8;
+        let n = (q.bits() / 8) as usize;
         let block_size = hash.len(); // Hash function output size
-
-        // FIPS 186-4: "An approved hash function, [..], the length in bits of the hash function
-        // output block shall meet or exceed the security strength associated with the bit length of
-        // the modulus n (see SP 800-57)."
-        assert!(
-            block_size >= n,
-            "The block size of the hash function must be at least as strong as the modulus"
-        );
 
         let z_len = min(n, block_size);
         let z = BigUint::from_bytes_be(&hash[..z_len]);
