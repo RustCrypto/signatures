@@ -77,7 +77,7 @@ impl SigningKey {
 
         let r = g.modpow(&k, p) % q;
 
-        let n = (q.bits() / 8) as usize;
+        let n = q.bits() / 8;
         let block_size = hash.len(); // Hash function output size
 
         let z_len = min(n, block_size);
