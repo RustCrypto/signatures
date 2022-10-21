@@ -86,6 +86,7 @@ impl SigningKey {
 
         let n = (q.bits() / 8) as usize;
         let block_size = hash.len(); // Hash function output size
+        // FIXME shouldn't `hash.len() < n` be a hard error (bad API use)? According to DSA documentation: "An approved hash function, as specified in FIPS 180, shall be used during the generation of key pairs and digital signatures. When used during the generation of an RSA key pair (as specified in this Standard), the length in bits of the hash function output block shall meet or exceed the security strength associated with the bit length of the modulus n (see SP 800-57)."
 
         let z_len = min(n, block_size);
         let z = BigUint::from_bytes_be(&hash[..z_len]);
