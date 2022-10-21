@@ -12,7 +12,10 @@ use pkcs8::{
     AlgorithmIdentifier, DecodePrivateKey, EncodePrivateKey, PrivateKeyInfo, SecretDocument,
 };
 use rand::{CryptoRng, RngCore};
-use signature::{hazmat::PrehashSigner, DigestSigner, RandomizedDigestSigner};
+use signature::{
+    hazmat::{PrehashSigner, RandomizedPrehashSigner},
+    DigestSigner, RandomizedDigestSigner,
+};
 use zeroize::{Zeroize, Zeroizing};
 
 /// DSA private key.
@@ -76,10 +79,14 @@ impl SigningKey {
 
         let n = q.bits() / 8;
         let block_size = hash.len(); // Hash function output size
+
         // FIPS 186-4: "An approved hash function, [..], the length in bits of the hash function
         // output block shall meet or exceed the security strength associated with the bit length of
         // the modulus n (see SP 800-57)."
-        assert!(block_size >= n, "The block size of the hash function must be at least as strong as the modulus");
+        assert!(
+            block_size >= n,
+            "The block size of the hash function must be at least as strong as the modulus"
+        );
 
         let z_len = min(n, block_size);
         let z = BigUint::from_bytes_be(&hash[..z_len]);
@@ -96,6 +103,30 @@ impl SigningKey {
     }
 }
 
+impl PrehashSigner<Signature> for SigningKey {
+    fn sign_prehash(&self, prehash: &[u8]) -> Result<Signature, signature::Error> {
+        let k_kinv = crate::generate::secret_number_rfc6979::<D>(&self, prehash);
+        self.sign_prehashed(k_kinv, prehash)
+            .ok_or_else(signature::Error::new)
+    }
+}
+
+impl RandomizedPrehashSigner<Signature> for SigningKey {
+    fn sign_prehash_with_rng(
+        &self,
+        rng: impl CryptoRng + RngCore,
+        prehash: &[u8],
+    ) -> Result<Signature, signature::Error> {
+        let components = self.verifying_key.components();
+        if let Some(k_kinv) = crate::generate::secret_number(&mut rng, components) {
+            self.sign_prehashed(k_kinv, prehash)
+                .ok_or_else(signature::Error::new)
+        } else {
+            Err(signature::Error::new())
+        }
+    }
+}
+
 impl<D> DigestSigner<D, Signature> for SigningKey
 where
     D: Digest + BlockSizeUser + FixedOutputReset,
@@ -105,14 +136,6 @@ where
         let ks = crate::generate::secret_number_rfc6979::<D>(self, &hash);
 
         self.sign_prehashed(ks, &hash)
-            .ok_or_else(signature::Error::new)
-    }
-}
-
-impl PrehashSigner<Signature> for SigningKey {
-    fn sign_prehash(&self, prehash: &[u8]) -> Result<Signature, signature::Error> {
-        let k_kinv = crate::generate::secret_number_rfc6979::<D>(&self, prehash);
-        self.sign_prehashed(k_kinv, prehash)
             .ok_or_else(signature::Error::new)
     }
 }
