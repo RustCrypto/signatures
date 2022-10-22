@@ -97,7 +97,7 @@ impl SigningKey {
 
 impl PrehashSigner<Signature> for SigningKey {
     fn sign_prehash(&self, prehash: &[u8]) -> Result<Signature, signature::Error> {
-        let k_kinv = crate::generate::secret_number_rfc6979::<D>(&self, prehash);
+        let k_kinv = crate::generate::secret_number_rfc6979::<sha2::Sha256>(&self, prehash);
         self.sign_prehashed(k_kinv, prehash)
             .ok_or_else(signature::Error::new)
     }
@@ -106,7 +106,7 @@ impl PrehashSigner<Signature> for SigningKey {
 impl RandomizedPrehashSigner<Signature> for SigningKey {
     fn sign_prehash_with_rng(
         &self,
-        rng: impl CryptoRng + RngCore,
+        mut rng: impl CryptoRng + RngCore,
         prehash: &[u8],
     ) -> Result<Signature, signature::Error> {
         let components = self.verifying_key.components();
