@@ -12,7 +12,10 @@ use pkcs8::{
     AlgorithmIdentifier, DecodePrivateKey, EncodePrivateKey, PrivateKeyInfo, SecretDocument,
 };
 use rand::{CryptoRng, RngCore};
-use signature::{DigestSigner, RandomizedDigestSigner};
+use signature::{
+    hazmat::{PrehashSigner, RandomizedPrehashSigner},
+    DigestSigner, RandomizedDigestSigner,
+};
 use zeroize::{Zeroize, Zeroizing};
 
 /// DSA private key.
@@ -74,7 +77,7 @@ impl SigningKey {
 
         let r = g.modpow(&k, p) % q;
 
-        let n = (q.bits() / 8) as usize;
+        let n = q.bits() / 8;
         let block_size = hash.len(); // Hash function output size
 
         let z_len = min(n, block_size);
@@ -89,6 +92,30 @@ impl SigningKey {
         }
 
         Some(signature)
+    }
+}
+
+impl PrehashSigner<Signature> for SigningKey {
+    fn sign_prehash(&self, prehash: &[u8]) -> Result<Signature, signature::Error> {
+        let k_kinv = crate::generate::secret_number_rfc6979::<sha2::Sha256>(self, prehash);
+        self.sign_prehashed(k_kinv, prehash)
+            .ok_or_else(signature::Error::new)
+    }
+}
+
+impl RandomizedPrehashSigner<Signature> for SigningKey {
+    fn sign_prehash_with_rng(
+        &self,
+        mut rng: impl CryptoRng + RngCore,
+        prehash: &[u8],
+    ) -> Result<Signature, signature::Error> {
+        let components = self.verifying_key.components();
+        if let Some(k_kinv) = crate::generate::secret_number(&mut rng, components) {
+            self.sign_prehashed(k_kinv, prehash)
+                .ok_or_else(signature::Error::new)
+        } else {
+            Err(signature::Error::new())
+        }
     }
 }
 
