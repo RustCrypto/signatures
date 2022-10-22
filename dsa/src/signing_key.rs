@@ -97,7 +97,7 @@ impl SigningKey {
 
 impl PrehashSigner<Signature> for SigningKey {
     fn sign_prehash(&self, prehash: &[u8]) -> Result<Signature, signature::Error> {
-        let k_kinv = crate::generate::secret_number_rfc6979::<sha2::Sha256>(&self, prehash);
+        let k_kinv = crate::generate::secret_number_rfc6979::<sha2::Sha256>(self, prehash);
         self.sign_prehashed(k_kinv, prehash)
             .ok_or_else(signature::Error::new)
     }
