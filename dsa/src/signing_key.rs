@@ -14,7 +14,7 @@ use pkcs8::{
 use rand::{CryptoRng, RngCore};
 use signature::{
     hazmat::{PrehashSigner, RandomizedPrehashSigner},
-    DigestSigner, RandomizedDigestSigner,
+    DigestSigner, RandomizedDigestSigner, Signer,
 };
 use zeroize::{Zeroize, Zeroizing};
 
@@ -114,6 +114,15 @@ where
         }
 
         Some(signature)
+    }
+}
+
+impl<D> Signer<Signature> for SigningKey<D>
+where
+    D: Digest + BlockSizeUser + FixedOutputReset,
+{
+    fn try_sign(&self, msg: &[u8]) -> Result<Signature, signature::Error> {
+        self.try_sign_digest(D::new_with_prefix(msg))
     }
 }
 

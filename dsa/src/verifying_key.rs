@@ -12,7 +12,7 @@ use pkcs8::{
     der::{asn1::UIntRef, AnyRef, Decode, Encode},
     spki, AlgorithmIdentifier, DecodePublicKey, EncodePublicKey, SubjectPublicKeyInfo,
 };
-use signature::{hazmat::PrehashVerifier, DigestVerifier};
+use signature::{hazmat::PrehashVerifier, DigestVerifier, Verifier};
 
 /// DSA public key.
 #[derive(Clone, PartialOrd)]
@@ -102,6 +102,15 @@ where
         let v = (g.modpow(&u1, p) * y.modpow(&u2, p) % p) % q;
 
         Some(v == *r)
+    }
+}
+
+impl<D> Verifier<Signature> for VerifyingKey<D>
+where
+    D: Digest,
+{
+    fn verify(&self, msg: &[u8], signature: &Signature) -> Result<(), signature::Error> {
+        self.verify_digest(D::new_with_prefix(msg), signature)
     }
 }
 
