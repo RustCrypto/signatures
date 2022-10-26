@@ -14,7 +14,7 @@ use pkcs8::{
 use rand::{CryptoRng, RngCore};
 use signature::{
     hazmat::{PrehashSigner, RandomizedPrehashSigner},
-    DigestSigner, RandomizedDigestSigner,
+    DigestSigner, RandomizedDigestSigner, Signer,
 };
 use zeroize::{Zeroize, Zeroizing};
 
@@ -92,6 +92,13 @@ impl SigningKey {
         }
 
         Some(signature)
+    }
+}
+
+impl Signer<Signature> for SigningKey {
+    fn try_sign(&self, msg: &[u8]) -> Result<Signature, signature::Error> {
+        let digest = sha2::Sha256::new_with_prefix(msg);
+        self.try_sign_digest(digest)
     }
 }
 

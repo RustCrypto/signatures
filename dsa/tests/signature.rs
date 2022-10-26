@@ -6,7 +6,10 @@ use pkcs8::der::{Decode, Encode};
 use rand::{CryptoRng, RngCore, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 use sha2::Sha256;
-use signature::{DigestVerifier, RandomizedDigestSigner};
+use signature::{
+    hazmat::{PrehashSigner, PrehashVerifier},
+    DigestVerifier, RandomizedDigestSigner, Signer, Verifier,
+};
 
 /// Seed used for the ChaCha8 RNG
 const SEED: u64 = 0x2103_1949;
@@ -86,4 +89,29 @@ fn verify_signature() {
     assert!(verifying_key
         .verify_digest(Sha256::new().chain_update(MESSAGE), &signature)
         .is_ok());
+}
+
+#[test]
+fn signer_verifier_signature() {
+    let signing_key = generate_deterministic_keypair();
+    let verifying_key = signing_key.verifying_key();
+    let message = b"Hello world! This is the message signed as part of the testing process.";
+
+    // construct signature manually and by `Signer` defaults. Ensure results are identical.
+    let manual_digest = Sha256::new_with_prefix(message).finalize();
+    let manual_signature = signing_key.sign_prehash(&manual_digest).unwrap();
+    let signer_signature = signing_key.sign(message);
+    verifying_key.verify(message, &manual_signature).unwrap();
+    verifying_key.verify(message, &signer_signature).unwrap();
+    assert_eq!(manual_signature, signer_signature);
+
+    // verify signature manually and by `Verifier` defaults. Ensure signatures can be applied interchangeably.
+    verifying_key
+        .verify_prehash(&manual_digest, &manual_signature)
+        .unwrap();
+    verifying_key
+        .verify_prehash(&manual_digest, &signer_signature)
+        .unwrap();
+    verifying_key.verify(message, &manual_signature).unwrap();
+    verifying_key.verify(message, &signer_signature).unwrap();
 }
