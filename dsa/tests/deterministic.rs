@@ -9,7 +9,10 @@ use signature::DigestSigner;
 const MESSAGE: &[u8] = b"sample";
 const MESSAGE_2: &[u8] = b"test";
 
-fn dsa_1024_signing_key() -> SigningKey {
+fn dsa_1024_signing_key<D>() -> SigningKey<D>
+where
+    D: Digest,
+{
     let p = BigUint::from_str_radix(
         "86F5CA03DCFEB225063FF830A0C769B9DD9D6153AD91D7CE27F787C43278B447\
                 E6533B86B18BED6E8A48B784A14C252C5BE0DBF60B86D6385BD2F12FB763ED88\
@@ -45,7 +48,10 @@ fn dsa_1024_signing_key() -> SigningKey {
     SigningKey::from_components(verifying_key, x).expect("Invalid signing key")
 }
 
-fn dsa_2048_signing_key() -> SigningKey {
+fn dsa_2048_signing_key<D>() -> SigningKey<D>
+where
+    D: Digest,
+{
     let p = BigUint::from_str_radix(
         "9DB6FB5951B66BB6FE1E140F1D2CE5502374161FD6538DF1648218642F0B5C48\
         C8F7A41AADFA187324B87674FA1822B00F1ECF8136943D7C55757264E5A1A44F\
@@ -102,7 +108,7 @@ fn dsa_2048_signing_key() -> SigningKey {
 }
 
 /// Generate a signature given the unhashed message and a private key
-fn generate_signature<D>(signing_key: SigningKey, data: &[u8]) -> Signature
+fn generate_signature<D>(signing_key: SigningKey<D>, data: &[u8]) -> Signature
 where
     D: Digest + BlockSizeUser + FixedOutputReset,
 {
@@ -114,7 +120,7 @@ fn generate_1024_signature<D>(data: &[u8]) -> Signature
 where
     D: Digest + BlockSizeUser + FixedOutputReset,
 {
-    generate_signature::<D>(dsa_1024_signing_key(), data)
+    generate_signature(dsa_1024_signing_key::<D>(), data)
 }
 
 /// Generate a signature using the 2048-bit DSA key
@@ -122,7 +128,7 @@ fn generate_2048_signature<D>(data: &[u8]) -> Signature
 where
     D: Digest + BlockSizeUser + FixedOutputReset,
 {
-    generate_signature::<D>(dsa_2048_signing_key(), data)
+    generate_signature(dsa_2048_signing_key::<D>(), data)
 }
 
 /// Create a signature container from the two components in their textual hexadecimal form

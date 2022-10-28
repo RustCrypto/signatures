@@ -16,7 +16,7 @@
 //! # use dsa::{KeySize, Components, SigningKey};
 //! let mut csprng = rand::thread_rng();
 //! let components = Components::generate(&mut csprng, KeySize::DSA_2048_256);
-//! let signing_key = SigningKey::generate(&mut csprng, components);
+//! let signing_key: SigningKey = SigningKey::generate(&mut csprng, components);
 //! let verifying_key = signing_key.verifying_key();
 //! ```
 //!
@@ -34,7 +34,7 @@
 //! let components = Components::from_components(p, q, g)?;
 //!
 //! let x = read_public_component();
-//! let verifying_key = VerifyingKey::from_components(components, x)?;
+//! let verifying_key: VerifyingKey = VerifyingKey::from_components(components, x)?;
 //!
 //! let y = read_private_component();
 //! let signing_key = SigningKey::from_components(verifying_key, y)?;

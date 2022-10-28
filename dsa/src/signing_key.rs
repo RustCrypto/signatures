@@ -22,21 +22,43 @@ use zeroize::{Zeroize, Zeroizing};
 ///
 /// The [`(try_)sign_digest_with_rng`](::signature::RandomizedDigestSigner) API uses regular non-deterministic signatures,
 /// while the [`(try_)sign_digest`](::signature::DigestSigner) API uses deterministic signatures as described in RFC 6979
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 #[must_use]
-pub struct SigningKey {
+pub struct SigningKey<D = sha2::Sha256>
+where
+    D: Digest,
+{
     /// Public key
-    verifying_key: VerifyingKey,
+    verifying_key: VerifyingKey<D>,
 
     /// Private component x
     x: Zeroizing<BigUint>,
 }
 
-opaque_debug::implement!(SigningKey);
+impl<D> PartialEq for SigningKey<D>
+where
+    D: Digest,
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.verifying_key == other.verifying_key && self.x == other.x
+    }
+}
 
-impl SigningKey {
+impl<D> core::fmt::Debug for SigningKey<D>
+where
+    D: Digest,
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
+        write!(f, concat!("SigningKey<", stringify!(D), "> {{ ... }}"))
+    }
+}
+
+impl<D> SigningKey<D>
+where
+    D: Digest,
+{
     /// Construct a new private key from the public key and private component
-    pub fn from_components(verifying_key: VerifyingKey, x: BigUint) -> signature::Result<Self> {
+    pub fn from_components(verifying_key: VerifyingKey<D>, x: BigUint) -> signature::Result<Self> {
         if x.is_zero() || x > *verifying_key.components().q() {
             return Err(signature::Error::new());
         }
@@ -49,7 +71,7 @@ impl SigningKey {
 
     /// Generate a new DSA keypair
     #[inline]
-    pub fn generate<R>(rng: &mut R, components: Components) -> SigningKey
+    pub fn generate<R>(rng: &mut R, components: Components) -> Self
     where
         R: CryptoRng + RngCore + ?Sized,
     {
@@ -57,7 +79,7 @@ impl SigningKey {
     }
 
     /// DSA public key
-    pub const fn verifying_key(&self) -> &VerifyingKey {
+    pub const fn verifying_key(&self) -> &VerifyingKey<D> {
         &self.verifying_key
     }
 
@@ -95,15 +117,21 @@ impl SigningKey {
     }
 }
 
-impl PrehashSigner<Signature> for SigningKey {
+impl<D> PrehashSigner<Signature> for SigningKey<D>
+where
+    D: Digest,
+{
     fn sign_prehash(&self, prehash: &[u8]) -> Result<Signature, signature::Error> {
-        let k_kinv = crate::generate::secret_number_rfc6979::<sha2::Sha256>(self, prehash);
+        let k_kinv = crate::generate::secret_number_rfc6979::<sha2::Sha256, D>(self, prehash);
         self.sign_prehashed(k_kinv, prehash)
             .ok_or_else(signature::Error::new)
     }
 }
 
-impl RandomizedPrehashSigner<Signature> for SigningKey {
+impl<D> RandomizedPrehashSigner<Signature> for SigningKey<D>
+where
+    D: Digest,
+{
     fn sign_prehash_with_rng(
         &self,
         mut rng: impl CryptoRng + RngCore,
@@ -119,20 +147,20 @@ impl RandomizedPrehashSigner<Signature> for SigningKey {
     }
 }
 
-impl<D> DigestSigner<D, Signature> for SigningKey
+impl<D> DigestSigner<D, Signature> for SigningKey<D>
 where
     D: Digest + BlockSizeUser + FixedOutputReset,
 {
     fn try_sign_digest(&self, digest: D) -> Result<Signature, signature::Error> {
         let hash = digest.finalize_fixed();
-        let ks = crate::generate::secret_number_rfc6979::<D>(self, &hash);
+        let ks = crate::generate::secret_number_rfc6979::<D, D>(self, &hash);
 
         self.sign_prehashed(ks, &hash)
             .ok_or_else(signature::Error::new)
     }
 }
 
-impl<D> RandomizedDigestSigner<D, Signature> for SigningKey
+impl<D> RandomizedDigestSigner<D, Signature> for SigningKey<D>
 where
     D: Digest,
 {
@@ -150,7 +178,10 @@ where
     }
 }
 
-impl EncodePrivateKey for SigningKey {
+impl<D> EncodePrivateKey for SigningKey<D>
+where
+    D: Digest,
+{
     fn to_pkcs8_der(&self) -> pkcs8::Result<SecretDocument> {
         let parameters = self.verifying_key().components().to_vec()?;
         let parameters = AnyRef::from_der(&parameters)?;
@@ -173,7 +204,10 @@ impl EncodePrivateKey for SigningKey {
     }
 }
 
-impl<'a> TryFrom<PrivateKeyInfo<'a>> for SigningKey {
+impl<'a, D> TryFrom<PrivateKeyInfo<'a>> for SigningKey<D>
+where
+    D: Digest,
+{
     type Error = pkcs8::Error;
 
     fn try_from(value: PrivateKeyInfo<'a>) -> Result<Self, Self::Error> {
@@ -199,4 +233,4 @@ impl<'a> TryFrom<PrivateKeyInfo<'a>> for SigningKey {
     }
 }
 
-impl DecodePrivateKey for SigningKey {}
+impl<D> DecodePrivateKey for SigningKey<D> where D: Digest {}

@@ -36,9 +36,13 @@ fn reduce_hash(q: &BigUint, hash: &[u8]) -> Vec<u8> {
 ///
 /// Secret number k and its modular multiplicative inverse with q
 #[inline]
-pub fn secret_number_rfc6979<D>(signing_key: &SigningKey, hash: &[u8]) -> (BigUint, BigUint)
+pub fn secret_number_rfc6979<D, SKD>(
+    signing_key: &SigningKey<SKD>,
+    hash: &[u8],
+) -> (BigUint, BigUint)
 where
     D: Digest + BlockSizeUser + FixedOutputReset,
+    SKD: Digest,
 {
     let q = signing_key.verifying_key().components().q();
     let k_size = q.bits() / 8;

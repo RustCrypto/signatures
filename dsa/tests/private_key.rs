@@ -12,7 +12,10 @@ use signature::{DigestVerifier, RandomizedDigestSigner};
 
 const OPENSSL_PEM_PRIVATE_KEY: &str = include_str!("pems/private.pem");
 
-fn generate_keypair() -> SigningKey {
+fn generate_keypair<D>() -> SigningKey<D>
+where
+    D: Digest,
+{
     let mut rng = rand::thread_rng();
     let components = Components::generate(&mut rng, KeySize::DSA_1024_160);
     SigningKey::generate(&mut rng, components)
@@ -20,7 +23,7 @@ fn generate_keypair() -> SigningKey {
 
 #[test]
 fn decode_encode_openssl_signing_key() {
-    let signing_key = SigningKey::from_pkcs8_pem(OPENSSL_PEM_PRIVATE_KEY)
+    let signing_key: SigningKey = SigningKey::from_pkcs8_pem(OPENSSL_PEM_PRIVATE_KEY)
         .expect("Failed to decode PEM encoded OpenSSL key");
 
     let reencoded_signing_key = signing_key
@@ -32,7 +35,7 @@ fn decode_encode_openssl_signing_key() {
 
 #[test]
 fn encode_decode_signing_key() {
-    let signing_key = generate_keypair();
+    let signing_key = generate_keypair::<Sha1>();
     let encoded_signing_key = signing_key.to_pkcs8_pem(LineEnding::LF).unwrap();
     let decoded_signing_key = SigningKey::from_pkcs8_pem(&encoded_signing_key).unwrap();
 
@@ -43,7 +46,7 @@ fn encode_decode_signing_key() {
 fn sign_and_verify() {
     const DATA: &[u8] = b"SIGN AND VERIFY THOSE BYTES";
 
-    let signing_key = generate_keypair();
+    let signing_key = generate_keypair::<Sha1>();
     let verifying_key = signing_key.verifying_key();
 
     let signature =
@@ -56,7 +59,7 @@ fn sign_and_verify() {
 
 #[test]
 fn verify_validity() {
-    let signing_key = generate_keypair();
+    let signing_key = generate_keypair::<Sha1>();
     let components = signing_key.verifying_key().components();
 
     assert!(

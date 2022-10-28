@@ -4,6 +4,7 @@
 
 use crate::{sig::Signature, two, Components, OID};
 use core::cmp::min;
+use core::marker::PhantomData;
 use digest::Digest;
 use num_bigint::{BigUint, ModInverse};
 use num_traits::One;
@@ -14,26 +15,55 @@ use pkcs8::{
 use signature::{hazmat::PrehashVerifier, DigestVerifier};
 
 /// DSA public key.
-#[derive(Clone, PartialEq, PartialOrd)]
+#[derive(Clone, PartialOrd)]
 #[must_use]
-pub struct VerifyingKey {
+pub struct VerifyingKey<D = sha2::Sha256>
+where
+    D: Digest,
+{
     /// common components
     components: Components,
 
     /// Public component y
     y: BigUint,
+
+    /// Phantom marker
+    phantom: PhantomData<D>,
 }
 
-opaque_debug::implement!(VerifyingKey);
+impl<D> PartialEq for VerifyingKey<D>
+where
+    D: Digest,
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.components == other.components && self.y == other.y
+    }
+}
 
-impl VerifyingKey {
+impl<D> core::fmt::Debug for VerifyingKey<D>
+where
+    D: Digest,
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
+        write!(f, concat!("VerifyingKey<", stringify!(D), "> {{ ... }}"))
+    }
+}
+
+impl<D> VerifyingKey<D>
+where
+    D: Digest,
+{
     /// Construct a new public key from the common components and the public component
     pub fn from_components(components: Components, y: BigUint) -> signature::Result<Self> {
         if y < two() || y.modpow(components.q(), components.p()) != BigUint::one() {
             return Err(signature::Error::new());
         }
 
-        Ok(Self { components, y })
+        Ok(Self {
+            components,
+            y,
+            phantom: Default::default(),
+        })
     }
 
     /// DSA common components
@@ -75,7 +105,10 @@ impl VerifyingKey {
     }
 }
 
-impl PrehashVerifier<Signature> for VerifyingKey {
+impl<D> PrehashVerifier<Signature> for VerifyingKey<D>
+where
+    D: Digest,
+{
     fn verify_prehash(
         &self,
         prehash: &[u8],
@@ -89,7 +122,7 @@ impl PrehashVerifier<Signature> for VerifyingKey {
     }
 }
 
-impl<D> DigestVerifier<D, Signature> for VerifyingKey
+impl<D> DigestVerifier<D, Signature> for VerifyingKey<D>
 where
     D: Digest,
 {
@@ -108,7 +141,10 @@ where
     }
 }
 
-impl EncodePublicKey for VerifyingKey {
+impl<D> EncodePublicKey for VerifyingKey<D>
+where
+    D: Digest,
+{
     fn to_public_key_der(&self) -> spki::Result<spki::Document> {
         let parameters = self.components.to_vec()?;
         let parameters = AnyRef::from_der(&parameters)?;
@@ -129,7 +165,10 @@ impl EncodePublicKey for VerifyingKey {
     }
 }
 
-impl<'a> TryFrom<SubjectPublicKeyInfo<'a>> for VerifyingKey {
+impl<'a, D> TryFrom<SubjectPublicKeyInfo<'a>> for VerifyingKey<D>
+where
+    D: Digest,
+{
     type Error = spki::Error;
 
     fn try_from(value: SubjectPublicKeyInfo<'a>) -> Result<Self, Self::Error> {
@@ -145,4 +184,4 @@ impl<'a> TryFrom<SubjectPublicKeyInfo<'a>> for VerifyingKey {
     }
 }
 
-impl DecodePublicKey for VerifyingKey {}
+impl<D> DecodePublicKey for VerifyingKey<D> where D: Digest {}
