@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.4.2 (2022-10-29)
+### Added
+- Expose signing and verifying of prehashed hash value ([#558])
+- Implement `Signer` and `Verifier` using SHA-256 as default ([#559])
+
+[#558]: https://github.com/RustCrypto/signatures/pull/558
+[#559]: https://github.com/RustCrypto/signatures/pull/559
+
 ## 0.4.1 (2022-10-11)
 ### Added
 - Re-export `BigUint` ([#553])
