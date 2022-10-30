@@ -55,7 +55,7 @@ impl VerifyingKey {
         let (r, s) = (signature.r(), signature.s());
         let y = self.y();
 
-        if !signature.r_s_valid(q) {
+        if signature.r() >= q || signature.s() >= q {
             return Some(false);
         }
 

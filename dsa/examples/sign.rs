@@ -2,7 +2,7 @@ use digest::Digest;
 use dsa::{Components, KeySize, SigningKey};
 use pkcs8::{EncodePrivateKey, EncodePublicKey, LineEnding};
 use sha1::Sha1;
-use signature::{RandomizedDigestSigner, Signature};
+use signature::{RandomizedDigestSigner, SignatureEncoding};
 use std::{fs::File, io::Write};
 
 fn main() {
@@ -22,7 +22,7 @@ fn main() {
     file.flush().unwrap();
 
     let mut file = File::create("signature.der").unwrap();
-    file.write_all(signature.as_bytes()).unwrap();
+    file.write_all(&signature.to_bytes()).unwrap();
     file.flush().unwrap();
 
     let mut file = File::create("private.pem").unwrap();

@@ -131,6 +131,7 @@ fn from_str_signature(r: &str, s: &str) -> Signature {
         BigUint::from_str_radix(r, 16).unwrap(),
         BigUint::from_str_radix(s, 16).unwrap(),
     )
+    .unwrap()
 }
 
 /// Return the RFC 6979 test cases

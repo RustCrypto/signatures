@@ -1,6 +1,6 @@
 [package]
 name = "dsa"
-version = "0.4.2"
+version = "0.5.0-pre"
 description = """
 Pure Rust implementation of the Digital Signature Algorithm (DSA) as specified
 in FIPS 186-4 (Digital Signature Standard), providing RFC6979 deterministic
@@ -23,7 +23,7 @@ pkcs8 = { version = "0.9", default-features = false, features = ["alloc"] }
 rand = { version = "0.8", default-features = false }
 rfc6979 = { version = "0.3", path = "../rfc6979" }
 sha2 = { version = "0.10", default-features = false }
-signature = { version = ">= 1.6.4, < 1.7", default-features = false, features = ["digest-preview", "rand-preview", "hazmat-preview"] }
+signature = { version = "=2.0.0-pre.0", default-features = false, features = ["alloc", "digest-preview", "rand-preview"] }
 zeroize = { version = "1.5", default-features = false }
 
 [dev-dependencies]
@@ -31,3 +31,6 @@ pkcs8 = { version = "0.9", default-features = false, features = ["pem"] }
 rand = "0.8"
 rand_chacha = "0.3"
 sha1 = "0.10"
+
+[features]
+std = []
