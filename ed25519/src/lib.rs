@@ -78,67 +78,68 @@
 //! instantiate and use the previously defined `HelloSigner` and `HelloVerifier`
 //! types with [`ed25519-dalek`] as the signing/verification provider:
 //!
-//! ```
-//! use ed25519_dalek::{Signer, Verifier, Signature};
-//! #
-//! # pub struct HelloSigner<S>
-//! # where
-//! #     S: Signer<Signature>
-//! # {
-//! #     pub signing_key: S
-//! # }
-//! #
-//! # impl<S> HelloSigner<S>
-//! # where
-//! #     S: Signer<Signature>
-//! # {
-//! #     pub fn sign(&self, person: &str) -> Signature {
-//! #         // NOTE: use `try_sign` if you'd like to be able to handle
-//! #         // errors from external signing services/devices (e.g. HSM/KMS)
-//! #         // <https://docs.rs/signature/latest/signature/trait.Signer.html#tymethod.try_sign>
-//! #         self.signing_key.sign(format_message(person).as_bytes())
-//! #     }
-//! # }
-//! #
-//! # pub struct HelloVerifier<V> {
-//! #     pub verify_key: V
-//! # }
-//! #
-//! # impl<V> HelloVerifier<V>
-//! # where
-//! #     V: Verifier<Signature>
-//! # {
-//! #     pub fn verify(
-//! #         &self,
-//! #         person: &str,
-//! #         signature: &Signature
-//! #     ) -> Result<(), ed25519::Error> {
-//! #         self.verify_key.verify(format_message(person).as_bytes(), signature)
-//! #     }
-//! # }
-//! #
-//! # fn format_message(person: &str) -> String {
-//! #     format!("Hello, {}!", person)
-//! # }
-//! use rand_core::OsRng; // Requires the `std` feature of `rand_core`
-//!
-//! /// `HelloSigner` defined above instantiated with `ed25519-dalek` as
-//! /// the signing provider.
-//! pub type DalekHelloSigner = HelloSigner<ed25519_dalek::Keypair>;
-//!
-//! let signing_key = ed25519_dalek::Keypair::generate(&mut OsRng);
-//! let signer = DalekHelloSigner { signing_key };
-//! let person = "Joe"; // Message to sign
-//! let signature = signer.sign(person);
-//!
-//! /// `HelloVerifier` defined above instantiated with `ed25519-dalek`
-//! /// as the signature verification provider.
-//! pub type DalekHelloVerifier = HelloVerifier<ed25519_dalek::PublicKey>;
-//!
-//! let verify_key: ed25519_dalek::PublicKey = signer.signing_key.public;
-//! let verifier = DalekHelloVerifier { verify_key };
-//! assert!(verifier.verify(person, &signature).is_ok());
-//! ```
+// TODO(tarcieri): re-enable when `ed25519-dalek` 2.0 has been released
+// //! ```
+// //! use ed25519_dalek::{Signer, Verifier, Signature};
+// //! #
+// //! # pub struct HelloSigner<S>
+// //! # where
+// //! #     S: Signer<Signature>
+// //! # {
+// //! #     pub signing_key: S
+// //! # }
+// //! #
+// //! # impl<S> HelloSigner<S>
+// //! # where
+// //! #     S: Signer<Signature>
+// //! # {
+// //! #     pub fn sign(&self, person: &str) -> Signature {
+// //! #         // NOTE: use `try_sign` if you'd like to be able to handle
+// //! #         // errors from external signing services/devices (e.g. HSM/KMS)
+// //! #         // <https://docs.rs/signature/latest/signature/trait.Signer.html#tymethod.try_sign>
+// //! #         self.signing_key.sign(format_message(person).as_bytes())
+// //! #     }
+// //! # }
+// //! #
+// //! # pub struct HelloVerifier<V> {
+// //! #     pub verify_key: V
+// //! # }
+// //! #
+// //! # impl<V> HelloVerifier<V>
+// //! # where
+// //! #     V: Verifier<Signature>
+// //! # {
+// //! #     pub fn verify(
+// //! #         &self,
+// //! #         person: &str,
+// //! #         signature: &Signature
+// //! #     ) -> Result<(), ed25519::Error> {
+// //! #         self.verify_key.verify(format_message(person).as_bytes(), signature)
+// //! #     }
+// //! # }
+// //! #
+// //! # fn format_message(person: &str) -> String {
+// //! #     format!("Hello, {}!", person)
+// //! # }
+// //! use rand_core::OsRng; // Requires the `std` feature of `rand_core`
+// //!
+// //! /// `HelloSigner` defined above instantiated with `ed25519-dalek` as
+// //! /// the signing provider.
+// //! pub type DalekHelloSigner = HelloSigner<ed25519_dalek::Keypair>;
+// //!
+// //! let signing_key = ed25519_dalek::Keypair::generate(&mut OsRng);
+// //! let signer = DalekHelloSigner { signing_key };
+// //! let person = "Joe"; // Message to sign
+// //! let signature = signer.sign(person);
+// //!
+// //! /// `HelloVerifier` defined above instantiated with `ed25519-dalek`
+// //! /// as the signature verification provider.
+// //! pub type DalekHelloVerifier = HelloVerifier<ed25519_dalek::PublicKey>;
+// //!
+// //! let verify_key: ed25519_dalek::PublicKey = signer.signing_key.public;
+// //! let verifier = DalekHelloVerifier { verify_key };
+// //! assert!(verifier.verify(person, &signature).is_ok());
+// //! ```
 //!
 //! ## Using above example with `ring-compat`
 //!
@@ -265,7 +266,7 @@ pub mod pkcs8;
 #[cfg(feature = "serde")]
 mod serde;
 
-pub use signature::{self, Error};
+pub use signature::{self, Error, SignatureEncoding};
 
 #[cfg(feature = "pkcs8")]
 pub use crate::pkcs8::KeypairBytes;
@@ -279,9 +280,12 @@ use alloc::vec::Vec;
 #[deprecated(since = "1.3.0", note = "use ed25519::Signature::BYTE_SIZE instead")]
 pub const SIGNATURE_LENGTH: usize = Signature::BYTE_SIZE;
 
+/// Ed25519 signature serialized as a byte array.
+pub type SignatureBytes = [u8; Signature::BYTE_SIZE];
+
 /// Ed25519 signature.
 #[derive(Copy, Clone, Eq, PartialEq)]
-pub struct Signature([u8; Signature::BYTE_SIZE]);
+pub struct Signature(SignatureBytes);
 
 impl Signature {
     /// Size of an encoded Ed25519 signature in bytes.
@@ -332,9 +336,11 @@ impl Signature {
     }
 }
 
-impl signature::Signature for Signature {
-    fn from_bytes(bytes: &[u8]) -> signature::Result<Self> {
-        Self::from_bytes(bytes)
+impl SignatureEncoding for Signature {
+    type Repr = SignatureBytes;
+
+    fn to_bytes(&self) -> SignatureBytes {
+        self.0
     }
 }
 

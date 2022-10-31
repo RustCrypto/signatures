@@ -83,7 +83,7 @@ pub use crate::recovery::RecoveryId;
 pub use elliptic_curve::{self, sec1::EncodedPoint, PrimeCurve};
 
 // Re-export the `signature` crate (and select types)
-pub use signature::{self, Error, Result};
+pub use signature::{self, Error, Result, SignatureEncoding};
 
 #[cfg(feature = "sign")]
 #[cfg_attr(docsrs, doc(cfg(feature = "sign")))]
@@ -245,16 +245,6 @@ where
     }
 }
 
-impl<C> signature::Signature for Signature<C>
-where
-    C: PrimeCurve,
-    SignatureSize<C>: ArrayLength<u8>,
-{
-    fn from_bytes(bytes: &[u8]) -> Result<Self> {
-        Self::try_from(bytes)
-    }
-}
-
 impl<C> AsRef<[u8]> for Signature<C>
 where
     C: PrimeCurve,
@@ -287,6 +277,24 @@ where
 
         write!(f, ")")
     }
+}
+
+impl<C> From<Signature<C>> for SignatureBytes<C>
+where
+    C: PrimeCurve,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn from(signature: Signature<C>) -> SignatureBytes<C> {
+        signature.bytes
+    }
+}
+
+impl<C> SignatureEncoding for Signature<C>
+where
+    C: PrimeCurve,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    type Repr = SignatureBytes<C>;
 }
 
 impl<C> TryFrom<&[u8]> for Signature<C>

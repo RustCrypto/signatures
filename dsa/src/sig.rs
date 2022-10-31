@@ -2,18 +2,16 @@
 //! Module containing the definition of the Signature container
 //!
 
-use alloc::vec::Vec;
+use alloc::{boxed::Box, vec::Vec};
 use num_bigint::BigUint;
 use num_traits::Zero;
 use pkcs8::der::{self, asn1::UIntRef, Decode, Encode, Reader, Sequence};
+use signature::SignatureEncoding;
 
 /// Container of the DSA signature
 #[derive(Clone)]
 #[must_use]
 pub struct Signature {
-    /// Internally cached DER representation of the signature
-    der_repr: Vec<u8>,
-
     /// Signature part r
     r: BigUint,
 
@@ -25,24 +23,12 @@ opaque_debug::implement!(Signature);
 
 impl Signature {
     /// Create a new Signature container from its components
-    pub fn from_components(r: BigUint, s: BigUint) -> Self {
-        let mut signature = Self {
-            der_repr: Vec::with_capacity(0),
-            r,
-            s,
-        };
-        signature.der_repr = signature.to_vec().unwrap();
-
-        signature
-    }
-
-    /// Verify signature component validity
-    pub(crate) fn r_s_valid(&self, q: &BigUint) -> bool {
-        if self.r().is_zero() || self.s().is_zero() || self.r() > q || self.s() > q {
-            return false;
+    pub fn from_components(r: BigUint, s: BigUint) -> signature::Result<Self> {
+        if r.is_zero() || s.is_zero() {
+            return Err(signature::Error::new());
         }
 
-        true
+        Ok(Self { r, s })
     }
 
     /// Signature part r
@@ -58,12 +44,6 @@ impl Signature {
     }
 }
 
-impl AsRef<[u8]> for Signature {
-    fn as_ref(&self) -> &[u8] {
-        &self.der_repr
-    }
-}
-
 impl<'a> Decode<'a> for Signature {
     fn decode<R: Reader<'a>>(reader: &mut R) -> der::Result<Self> {
         reader.sequence(|sequence| {
@@ -73,8 +53,14 @@ impl<'a> Decode<'a> for Signature {
             let r = BigUint::from_bytes_be(r.as_bytes());
             let s = BigUint::from_bytes_be(s.as_bytes());
 
-            Ok(Self::from_components(r, s))
+            Self::from_components(r, s).map_err(|_| der::Tag::Integer.value_error())
         })
+    }
+}
+
+impl From<Signature> for Box<[u8]> {
+    fn from(sig: Signature) -> Box<[u8]> {
+        sig.to_bytes()
     }
 }
 
@@ -105,8 +91,23 @@ impl<'a> Sequence<'a> for Signature {
     }
 }
 
-impl signature::Signature for Signature {
-    fn from_bytes(bytes: &[u8]) -> Result<Self, signature::Error> {
-        Signature::from_der(bytes).map_err(|_| signature::Error::new())
+impl SignatureEncoding for Signature {
+    type Repr = Box<[u8]>;
+
+    fn to_bytes(&self) -> Box<[u8]> {
+        self.to_boxed_slice()
+    }
+
+    fn to_vec(&self) -> Vec<u8> {
+        Encode::to_vec(self).expect("DER encoding error")
+    }
+}
+
+impl TryFrom<&[u8]> for Signature {
+    type Error = signature::Error;
+
+    fn try_from(bytes: &[u8]) -> signature::Result<Self> {
+        // TODO(tarcieri): capture error source when `std` feature enabled
+        Self::from_der(bytes).map_err(|_| signature::Error::new())
     }
 }

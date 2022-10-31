@@ -70,7 +70,11 @@ impl SigningKey {
     }
 
     /// Sign some pre-hashed data
-    fn sign_prehashed(&self, (k, inv_k): (BigUint, BigUint), hash: &[u8]) -> Option<Signature> {
+    fn sign_prehashed(
+        &self,
+        (k, inv_k): (BigUint, BigUint),
+        hash: &[u8],
+    ) -> signature::Result<Signature> {
         let components = self.verifying_key().components();
         let (p, q, g) = (components.p(), components.q(), components.g());
         let x = self.x();
@@ -85,13 +89,13 @@ impl SigningKey {
 
         let s = (inv_k * (z + x * &r)) % q;
 
-        let signature = Signature::from_components(r, s);
-        // r or s might be 0 (very unlikely but possible)
-        if !signature.r_s_valid(q) {
-            return None;
-        }
+        let signature = Signature::from_components(r, s)?;
 
-        Some(signature)
+        if signature.r() < q && signature.s() < q {
+            Ok(signature)
+        } else {
+            Err(signature::Error::new())
+        }
     }
 }
 
@@ -106,7 +110,6 @@ impl PrehashSigner<Signature> for SigningKey {
     fn sign_prehash(&self, prehash: &[u8]) -> Result<Signature, signature::Error> {
         let k_kinv = crate::generate::secret_number_rfc6979::<sha2::Sha256>(self, prehash);
         self.sign_prehashed(k_kinv, prehash)
-            .ok_or_else(signature::Error::new)
     }
 }
 
@@ -119,7 +122,6 @@ impl RandomizedPrehashSigner<Signature> for SigningKey {
         let components = self.verifying_key.components();
         if let Some(k_kinv) = crate::generate::secret_number(&mut rng, components) {
             self.sign_prehashed(k_kinv, prehash)
-                .ok_or_else(signature::Error::new)
         } else {
             Err(signature::Error::new())
         }
@@ -135,7 +137,6 @@ where
         let ks = crate::generate::secret_number_rfc6979::<D>(self, &hash);
 
         self.sign_prehashed(ks, &hash)
-            .ok_or_else(signature::Error::new)
     }
 }
 
@@ -153,7 +154,6 @@ where
         let hash = digest.finalize();
 
         self.sign_prehashed(ks, &hash)
-            .ok_or_else(signature::Error::new)
     }
 }
 

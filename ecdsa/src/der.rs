@@ -2,7 +2,7 @@
 
 use crate::{Error, Result};
 use core::{
-    fmt,
+    fmt::{self, Debug},
     ops::{Add, Range},
 };
 use der::{asn1::UIntRef, Decode, Encode, Reader};
@@ -14,7 +14,10 @@ use elliptic_curve::{
 };
 
 #[cfg(feature = "alloc")]
-use alloc::boxed::Box;
+use {
+    alloc::{boxed::Box, vec::Vec},
+    signature::SignatureEncoding,
+};
 
 #[cfg(feature = "serde")]
 use serdect::serde::{de, ser, Deserialize, Serialize};
@@ -58,18 +61,6 @@ where
 
     /// Range of the `s` value within the signature
     s_range: Range<usize>,
-}
-
-impl<C> signature::Signature for Signature<C>
-where
-    C: PrimeCurve,
-    MaxSize<C>: ArrayLength<u8>,
-    <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
-{
-    /// Parse an ASN.1 DER-encoded ECDSA signature from a byte slice
-    fn from_bytes(bytes: &[u8]) -> Result<Self> {
-        bytes.try_into()
-    }
 }
 
 #[allow(clippy::len_without_is_empty)]
@@ -136,7 +127,22 @@ where
     }
 }
 
-impl<C> fmt::Debug for Signature<C>
+impl<C> Clone for Signature<C>
+where
+    C: PrimeCurve,
+    MaxSize<C>: ArrayLength<u8>,
+    <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+{
+    fn clone(&self) -> Self {
+        Self {
+            bytes: self.bytes.clone(),
+            r_range: self.r_range.clone(),
+            s_range: self.s_range.clone(),
+        }
+    }
+}
+
+impl<C> Debug for Signature<C>
 where
     C: PrimeCurve,
     MaxSize<C>: ArrayLength<u8>,
@@ -201,6 +207,34 @@ where
         bytes[r_begin..C::UInt::BYTE_SIZE].copy_from_slice(sig.r());
         bytes[s_begin..].copy_from_slice(sig.s());
         Self::try_from(bytes.as_slice())
+    }
+}
+
+#[cfg(feature = "alloc")]
+#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
+impl<C> From<Signature<C>> for Box<[u8]>
+where
+    C: PrimeCurve,
+    MaxSize<C>: ArrayLength<u8>,
+    <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+{
+    fn from(signature: Signature<C>) -> Box<[u8]> {
+        signature.to_boxed_slice()
+    }
+}
+
+#[cfg(feature = "alloc")]
+#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
+impl<C> SignatureEncoding for Signature<C>
+where
+    C: PrimeCurve,
+    MaxSize<C>: ArrayLength<u8>,
+    <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+{
+    type Repr = Box<[u8]>;
+
+    fn to_vec(&self) -> Vec<u8> {
+        self.as_bytes().into()
     }
 }
 
@@ -277,7 +311,6 @@ where
 #[cfg(all(test, feature = "arithmetic"))]
 mod tests {
     use elliptic_curve::dev::MockCurve;
-    use signature::Signature as _;
 
     type Signature = crate::Signature<MockCurve>;
 
@@ -291,7 +324,7 @@ mod tests {
 
     #[test]
     fn test_fixed_to_asn1_signature_roundtrip() {
-        let signature1 = Signature::from_bytes(&EXAMPLE_SIGNATURE).unwrap();
+        let signature1 = Signature::try_from(EXAMPLE_SIGNATURE.as_ref()).unwrap();
 
         // Convert to ASN.1 DER and back
         let asn1_signature = signature1.to_der();

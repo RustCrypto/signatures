@@ -36,7 +36,7 @@ use crate::elliptic_curve::{
 };
 
 #[cfg(feature = "verify")]
-use {crate::verify::VerifyingKey, elliptic_curve::PublicKey, signature::Keypair};
+use {crate::verify::VerifyingKey, elliptic_curve::PublicKey, signature::KeypairRef};
 
 /// ECDSA signing key. Generic over elliptic curves.
 ///
@@ -243,7 +243,7 @@ where
 
 #[cfg(feature = "verify")]
 #[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
-impl<C> Keypair<Signature<C>> for SigningKey<C>
+impl<C> KeypairRef for SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
