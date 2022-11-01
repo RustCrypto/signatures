@@ -109,7 +109,7 @@ use alloc::vec::Vec;
 #[cfg(feature = "arithmetic")]
 use {
     core::str,
-    elliptic_curve::{ff::PrimeField, IsHigh, NonZeroScalar, ScalarArithmetic},
+    elliptic_curve::{IsHigh, NonZeroScalar, ScalarArithmetic},
 };
 
 #[cfg(feature = "serde")]
@@ -144,11 +144,9 @@ pub type SignatureBytes<C> = GenericArray<u8, SignatureSize<C>>;
 /// The serialization uses a 64-byte fixed encoding when used with binary
 /// formats, and a hexadecimal encoding when used with text formats.
 #[derive(Clone, Eq, PartialEq)]
-pub struct Signature<C: PrimeCurve>
-where
-    SignatureSize<C>: ArrayLength<u8>,
-{
-    bytes: SignatureBytes<C>,
+pub struct Signature<C: PrimeCurve> {
+    r: ScalarCore<C>,
+    s: ScalarCore<C>,
 }
 
 impl<C> Signature<C>
@@ -175,15 +173,19 @@ where
 
     /// Split the signature into its `r` and `s` components, represented as bytes.
     pub fn split_bytes(&self) -> (FieldBytes<C>, FieldBytes<C>) {
-        let (r_bytes, s_bytes) = self.bytes.split_at(C::UInt::BYTE_SIZE);
-
-        (
-            GenericArray::clone_from_slice(r_bytes),
-            GenericArray::clone_from_slice(s_bytes),
-        )
+        (self.r.to_be_bytes(), self.s.to_be_bytes())
     }
 
-    /// Serialize this signature as ASN.1 DER
+    /// Serialize this signature as bytes.
+    pub fn to_bytes(&self) -> SignatureBytes<C> {
+        let mut bytes = SignatureBytes::<C>::default();
+        let (r_bytes, s_bytes) = bytes.split_at_mut(C::UInt::BYTE_SIZE);
+        r_bytes.copy_from_slice(&self.r.to_be_bytes());
+        s_bytes.copy_from_slice(&self.s.to_be_bytes());
+        bytes
+    }
+
+    /// Serialize this signature as ASN.1 DER.
     #[cfg(feature = "der")]
     #[cfg_attr(docsrs, doc(cfg(feature = "der")))]
     pub fn to_der(&self) -> der::Signature<C>
@@ -191,15 +193,15 @@ where
         der::MaxSize<C>: ArrayLength<u8>,
         <FieldSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
     {
-        let (r, s) = self.bytes.split_at(C::UInt::BYTE_SIZE);
-        der::Signature::from_scalar_bytes(r, s).expect("DER encoding error")
+        let (r, s) = self.split_bytes();
+        der::Signature::from_scalar_bytes(&r, &s).expect("DER encoding error")
     }
 
     /// Convert this signature into a byte vector.
     #[cfg(feature = "alloc")]
     #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
     pub fn to_vec(&self) -> Vec<u8> {
-        self.bytes.to_vec()
+        self.to_bytes().to_vec()
     }
 }
 
@@ -212,14 +214,12 @@ where
 {
     /// Get the `r` component of this signature
     pub fn r(&self) -> NonZeroScalar<C> {
-        NonZeroScalar::try_from(self.split_bytes().0.as_slice())
-            .expect("r-component ensured valid in constructor")
+        NonZeroScalar::new(self.r.into()).unwrap()
     }
 
     /// Get the `s` component of this signature
     pub fn s(&self) -> NonZeroScalar<C> {
-        NonZeroScalar::try_from(self.split_bytes().1.as_slice())
-            .expect("s-component ensured valid in constructor")
+        NonZeroScalar::new(self.s.into()).unwrap()
     }
 
     /// Split the signature into its `r` and `s` scalars.
@@ -235,23 +235,12 @@ where
         let s = self.s();
 
         if s.is_high().into() {
-            let neg_s = -s;
             let mut result = self.clone();
-            result.bytes[C::UInt::BYTE_SIZE..].copy_from_slice(&neg_s.to_repr());
+            result.s = ScalarCore::from(-s);
             Some(result)
         } else {
             None
         }
-    }
-}
-
-impl<C> AsRef<[u8]> for Signature<C>
-where
-    C: PrimeCurve,
-    SignatureSize<C>: ArrayLength<u8>,
-{
-    fn as_ref(&self) -> &[u8] {
-        self.bytes.as_slice()
     }
 }
 
@@ -271,7 +260,7 @@ where
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "ecdsa::Signature<{:?}>(", C::default())?;
 
-        for &byte in self.as_ref() {
+        for byte in self.to_bytes() {
             write!(f, "{:02X}", byte)?;
         }
 
@@ -285,7 +274,7 @@ where
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn from(signature: Signature<C>) -> SignatureBytes<C> {
-        signature.bytes
+        signature.to_bytes()
     }
 }
 
@@ -309,17 +298,15 @@ where
             return Err(Error::new());
         }
 
-        for scalar_bytes in bytes.chunks_exact(C::UInt::BYTE_SIZE) {
-            let scalar = ScalarCore::<C>::from_be_slice(scalar_bytes).map_err(|_| Error::new())?;
+        let (r_bytes, s_bytes) = bytes.split_at(C::UInt::BYTE_SIZE);
+        let r = ScalarCore::from_be_slice(r_bytes).map_err(|_| Error::new())?;
+        let s = ScalarCore::from_be_slice(s_bytes).map_err(|_| Error::new())?;
 
-            if scalar.is_zero().into() {
-                return Err(Error::new());
-            }
+        if r.is_zero().into() || s.is_zero().into() {
+            return Err(Error::new());
         }
 
-        Ok(Self {
-            bytes: GenericArray::clone_from_slice(bytes),
-        })
+        Ok(Self { r, s })
     }
 }
 
@@ -339,7 +326,7 @@ where
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for byte in &self.bytes {
+        for byte in self.to_bytes() {
             write!(f, "{:02x}", byte)?;
         }
         Ok(())
@@ -352,7 +339,7 @@ where
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for byte in &self.bytes {
+        for byte in self.to_bytes() {
             write!(f, "{:02X}", byte)?;
         }
         Ok(())
@@ -407,7 +394,7 @@ where
     where
         S: ser::Serializer,
     {
-        serdect::array::serialize_hex_upper_or_bin(&self.bytes, serializer)
+        serdect::array::serialize_hex_upper_or_bin(&self.to_bytes(), serializer)
     }
 }
 
