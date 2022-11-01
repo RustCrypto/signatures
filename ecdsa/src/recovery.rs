@@ -69,6 +69,191 @@ impl From<RecoveryId> for u8 {
     }
 }
 
+#[cfg(all(feature = "arithmetic", feature = "verify"))]
+mod signature {
+    use core::ops::Add;
+
+    use crate::{
+        hazmat::{DigestPrimitive, VerifyPrimitive},
+        RecoveryId, SignatureSize, VerifyingKey,
+    };
+    use elliptic_curve::{
+        generic_array::{
+            typenum::{Add1, Unsigned, B1},
+            ArrayLength, GenericArray,
+        },
+        ops::Reduce,
+        ops::{Invert, LinearCombination},
+        sec1::{self, FromEncodedPoint, ToEncodedPoint},
+        AffinePoint, DecompressPoint, FieldBytes, FieldSize, Group, PrimeCurve, PrimeField,
+        ProjectiveArithmetic, ProjectivePoint, Scalar,
+    };
+    use signature::{digest::Digest, hazmat::PrehashVerifier, Error, Result, SignatureEncoding};
+
+    /// ECDSA signature with Ethereum-style "recoverable signatures" support
+    #[derive(Clone, Eq, PartialEq)]
+    pub struct Signature<C>
+    where
+        C: PrimeCurve,
+    {
+        inner: crate::Signature<C>,
+        recovery_id: RecoveryId,
+    }
+
+    impl<C> Signature<C>
+    where
+        C: PrimeCurve,
+    {
+        /// Create a new signature with recovery support
+        pub fn new(inner: crate::Signature<C>, recovery_id: RecoveryId) -> Self {
+            Self { inner, recovery_id }
+        }
+    }
+
+    impl<C> Signature<C>
+    where
+        C: DigestPrimitive + ProjectiveArithmetic + PrimeCurve,
+        SignatureSize<C>: ArrayLength<u8>,
+        Scalar<C>: Reduce<C::UInt>,
+        AffinePoint<C>: DecompressPoint<C>
+            + From<ProjectivePoint<C>>
+            + FromEncodedPoint<C>
+            + ToEncodedPoint<C>
+            + VerifyPrimitive<C>,
+        FieldSize<C>: sec1::ModulusSize,
+    {
+        /// Attempt to create a recoverable signature from a verifying key, message and its signature
+        ///
+        /// Uses the curve associated digest for hashing the message
+        pub fn from_trail_recovery(
+            verifying_key: &VerifyingKey<C>,
+            message: &[u8],
+            signature: crate::Signature<C>,
+        ) -> Result<Self>
+        where
+            <C as DigestPrimitive>::Digest: Digest<OutputSize = FieldSize<C>>,
+        {
+            Self::from_digest_trial_recovery(
+                verifying_key,
+                <<C as DigestPrimitive>::Digest>::new_with_prefix(message),
+                signature,
+            )
+        }
+
+        /// Attempt to create a recoverable signature from a verifying key, processed message and its signature
+        #[allow(clippy::unwrap_used)]
+        pub fn from_digest_trial_recovery<D>(
+            verifying_key: &VerifyingKey<C>,
+            digest: D,
+            signature: crate::Signature<C>,
+        ) -> Result<Self>
+        where
+            D: Digest<OutputSize = FieldSize<C>>,
+        {
+            let hash = digest.finalize();
+
+            for i in 0..=1 {
+                let recoverable_signature =
+                    Self::new(signature.clone(), RecoveryId::from_byte(i).unwrap());
+
+                if let Ok(recovered_key) =
+                    recoverable_signature.recover_verifying_key_from_digest_bytes(hash.clone())
+                {
+                    if recovered_key == *verifying_key
+                        && recovered_key.verify_prehash(&hash, &signature).is_ok()
+                    {
+                        return Ok(recoverable_signature);
+                    }
+                }
+            }
+
+            Err(Error::new())
+        }
+
+        /// Recover the verifying key via the digest
+        pub fn recover_verifying_key_from_digest<D>(&self, digest: D) -> Result<VerifyingKey<C>>
+        where
+            D: Digest<OutputSize = FieldSize<C>>,
+        {
+            self.recover_verifying_key_from_digest_bytes(digest.finalize())
+        }
+
+        /// Recover the verifying key via the digest bytes
+        #[allow(non_snake_case)]
+        pub fn recover_verifying_key_from_digest_bytes(
+            &self,
+            digest_bytes: FieldBytes<C>,
+        ) -> Result<VerifyingKey<C>> {
+            let r = self.inner.r();
+            let s = self.inner.s();
+            let z = <Scalar<C> as Reduce<C::UInt>>::from_be_bytes_reduced(digest_bytes);
+            let R = AffinePoint::<C>::decompress(
+                &r.to_repr(),
+                u8::from(self.recovery_id.is_y_odd()).into(),
+            );
+
+            if R.is_none().into() {
+                return Err(Error::new());
+            }
+
+            let R = ProjectivePoint::<C>::from(R.unwrap());
+            let r_inv = *r.invert();
+            let u1 = -(r_inv * z);
+            let u2 = r_inv * *s;
+            let pk =
+                ProjectivePoint::<C>::lincomb(&ProjectivePoint::<C>::generator(), &u1, &R, &u2)
+                    .into();
+
+            VerifyingKey::from_affine(pk)
+        }
+    }
+
+    impl<C> SignatureEncoding for Signature<C>
+    where
+        C: PrimeCurve,
+        SignatureSize<C>: Add<B1> + ArrayLength<u8>,
+        <SignatureSize<C> as Add<B1>>::Output: ArrayLength<u8>,
+    {
+        type Repr = GenericArray<u8, Add1<SignatureSize<C>>>;
+    }
+
+    impl<C> From<Signature<C>> for GenericArray<u8, Add1<SignatureSize<C>>>
+    where
+        C: PrimeCurve,
+        SignatureSize<C>: Add<B1> + ArrayLength<u8>,
+        <SignatureSize<C> as Add<B1>>::Output: ArrayLength<u8>,
+    {
+        fn from(sig: Signature<C>) -> Self {
+            let mut serialised_array = <Signature<C> as SignatureEncoding>::Repr::default();
+            let mut_serialised_array = serialised_array.as_mut_slice();
+            let inner_sig = sig.inner.to_bytes();
+
+            mut_serialised_array[..inner_sig.len()].copy_from_slice(&inner_sig);
+            mut_serialised_array[inner_sig.len()] = sig.recovery_id.to_byte();
+            serialised_array
+        }
+    }
+
+    impl<C> TryFrom<&[u8]> for Signature<C>
+    where
+        C: PrimeCurve,
+        SignatureSize<C>: Add<B1> + ArrayLength<u8>,
+        <SignatureSize<C> as Add<B1>>::Output: ArrayLength<u8>,
+    {
+        type Error = Error;
+
+        fn try_from(value: &[u8]) -> Result<Self> {
+            let signature = crate::Signature::try_from(&value[..SignatureSize::<C>::to_usize()])?;
+            let recovery_id = RecoveryId::from_byte(value[SignatureSize::<C>::to_usize()])
+                .ok_or_else(Error::new)?;
+            Ok(Self::new(signature, recovery_id))
+        }
+    }
+}
+
+#[cfg(all(feature = "arithmetic", feature = "verify"))]
+pub use self::signature::Signature as RecoverySignature;
+
 #[cfg(test)]
 mod tests {
     use super::RecoveryId;
