@@ -69,21 +69,19 @@ impl From<RecoveryId> for u8 {
     }
 }
 
-#[cfg(all(feature = "arithmetic", feature = "verify"))]
+#[cfg(feature = "verify")]
 mod signature {
-    use core::ops::Add;
-
     use crate::{
         hazmat::{DigestPrimitive, VerifyPrimitive},
         RecoveryId, SignatureSize, VerifyingKey,
     };
+    use core::ops::Add;
     use elliptic_curve::{
         generic_array::{
             typenum::{Add1, Unsigned, B1},
             ArrayLength, GenericArray,
         },
-        ops::Reduce,
-        ops::{Invert, LinearCombination},
+        ops::{Invert, LinearCombination, Reduce},
         sec1::{self, FromEncodedPoint, ToEncodedPoint},
         AffinePoint, DecompressPoint, FieldBytes, FieldSize, Group, PrimeCurve, PrimeField,
         ProjectiveArithmetic, ProjectivePoint, Scalar,
@@ -251,7 +249,7 @@ mod signature {
     }
 }
 
-#[cfg(all(feature = "arithmetic", feature = "verify"))]
+#[cfg(feature = "verify")]
 pub use self::signature::Signature as RecoverySignature;
 
 #[cfg(test)]
