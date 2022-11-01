@@ -321,19 +321,6 @@ impl Signature {
     pub fn to_vec(&self) -> Vec<u8> {
         self.0.to_vec()
     }
-
-    /// DEPRECATED: Create a new signature from a byte array.
-    ///
-    /// # Panics
-    ///
-    /// This method will panic if an invalid signature is encountered.
-    ///
-    /// Use [`Signature::from_bytes`] or [`Signature::try_from`] instead for
-    /// a fallible conversion.
-    #[deprecated(since = "1.3.0", note = "use ed25519::Signature::from_bytes instead")]
-    pub fn new(bytes: [u8; Self::BYTE_SIZE]) -> Self {
-        Self::from_bytes(&bytes[..]).expect("invalid signature")
-    }
 }
 
 impl SignatureEncoding for Signature {
@@ -359,19 +346,6 @@ impl From<Signature> for [u8; Signature::BYTE_SIZE] {
 impl From<&Signature> for [u8; Signature::BYTE_SIZE] {
     fn from(sig: &Signature) -> [u8; Signature::BYTE_SIZE] {
         sig.0
-    }
-}
-
-/// DEPRECATED: use `TryFrom<&[u8]>` instead.
-///
-/// # Warning
-///
-/// This conversion will panic if a signature is invalid.
-// TODO(tarcieri): remove this in the next breaking release
-impl From<[u8; Signature::BYTE_SIZE]> for Signature {
-    fn from(bytes: [u8; Signature::BYTE_SIZE]) -> Signature {
-        #[allow(deprecated)]
-        Signature::new(bytes)
     }
 }
 
