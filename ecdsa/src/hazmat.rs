@@ -10,6 +10,10 @@
 //! Failure to use them correctly can lead to catastrophic failures including
 //! FULL PRIVATE KEY RECOVERY!
 
+use crate::{Error, Result};
+use core::cmp;
+use elliptic_curve::{bigint::Encoding, FieldBytes, PrimeCurve};
+
 #[cfg(feature = "arithmetic")]
 use {
     crate::{RecoveryId, SignatureSize},
@@ -25,8 +29,7 @@ use {
 
 #[cfg(feature = "digest")]
 use {
-    core::cmp,
-    elliptic_curve::{bigint::Encoding, FieldSize},
+    elliptic_curve::FieldSize,
     signature::{
         digest::{core_api::BlockSizeUser, Digest, FixedOutputReset},
         PrehashSignature,
@@ -34,10 +37,7 @@ use {
 };
 
 #[cfg(any(feature = "arithmetic", feature = "digest"))]
-use crate::{
-    elliptic_curve::{generic_array::ArrayLength, FieldBytes, PrimeCurve},
-    Error, Result, Signature,
-};
+use crate::{elliptic_curve::generic_array::ArrayLength, Signature};
 
 #[cfg(all(feature = "arithmetic", feature = "digest"))]
 use signature::digest::FixedOutput;
@@ -219,34 +219,6 @@ pub trait DigestPrimitive: PrimeCurve {
     /// Preferred digest to use when computing ECDSA signatures for this
     /// elliptic curve. This is typically a member of the SHA-2 family.
     type Digest: BlockSizeUser + Digest + FixedOutputReset;
-
-    /// Compute field bytes for a prehash (message digest), either zero-padding
-    /// or truncating if the prehash size does not match the field size.
-    fn prehash_to_field_bytes(prehash: &[u8]) -> Result<FieldBytes<Self>> {
-        // Minimum allowed prehash size is half the field size
-        if prehash.len() < Self::UInt::BYTE_SIZE / 2 {
-            return Err(Error::new());
-        }
-
-        let mut field_bytes = FieldBytes::<Self>::default();
-
-        // This is a operation according to RFC6979 Section 2.3.2. and SEC1 Section 2.3.8.
-        // https://datatracker.ietf.org/doc/html/rfc6979#section-2.3.2
-        // https://www.secg.org/sec1-v2.pdf
-        match prehash.len().cmp(&Self::UInt::BYTE_SIZE) {
-            cmp::Ordering::Equal => field_bytes.copy_from_slice(prehash),
-            cmp::Ordering::Less => {
-                // If prehash is smaller than the field size, pad with zeroes on the left
-                field_bytes[(Self::UInt::BYTE_SIZE - prehash.len())..].copy_from_slice(prehash);
-            }
-            cmp::Ordering::Greater => {
-                // If prehash is larger than the field size, truncate
-                field_bytes.copy_from_slice(&prehash[..Self::UInt::BYTE_SIZE]);
-            }
-        }
-
-        Ok(field_bytes)
-    }
 }
 
 #[cfg(feature = "digest")]
@@ -256,4 +228,36 @@ where
     <FieldSize<C> as core::ops::Add>::Output: ArrayLength<u8>,
 {
     type Digest = C::Digest;
+}
+
+/// Partial implementation of the `bits2int` function as defined in
+/// [RFC6979 § 2.3.2] as well as [SEC1] § 2.3.8.
+///
+/// This is used to convert a message digest whose size may be smaller or
+/// larger than the size of the curve's scalar field into a serialized
+/// (unreduced) field element.
+///
+/// [RFC6979 § 2.3.2]: https://datatracker.ietf.org/doc/html/rfc6979#section-2.3.2
+/// [SEC1]: https://www.secg.org/sec1-v2.pdf
+pub fn bits2field<C: PrimeCurve>(bits: &[u8]) -> Result<FieldBytes<C>> {
+    // Minimum allowed bits size is half the field size
+    if bits.len() < C::UInt::BYTE_SIZE / 2 {
+        return Err(Error::new());
+    }
+
+    let mut field_bytes = FieldBytes::<C>::default();
+
+    match bits.len().cmp(&C::UInt::BYTE_SIZE) {
+        cmp::Ordering::Equal => field_bytes.copy_from_slice(bits),
+        cmp::Ordering::Less => {
+            // If bits is smaller than the field size, pad with zeroes on the left
+            field_bytes[(C::UInt::BYTE_SIZE - bits.len())..].copy_from_slice(bits);
+        }
+        cmp::Ordering::Greater => {
+            // If bits is larger than the field size, truncate
+            field_bytes.copy_from_slice(&bits[..C::UInt::BYTE_SIZE]);
+        }
+    }
+
+    Ok(field_bytes)
 }
