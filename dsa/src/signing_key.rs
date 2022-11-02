@@ -2,7 +2,7 @@
 //! Module containing the definition of the private key container
 //!
 
-use crate::{sig::Signature, Components, VerifyingKey, OID};
+use crate::{Components, Signature, VerifyingKey, OID};
 use core::cmp::min;
 use digest::{core_api::BlockSizeUser, Digest, FixedOutputReset};
 use num_bigint::BigUint;

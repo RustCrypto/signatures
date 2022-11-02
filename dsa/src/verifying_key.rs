@@ -2,7 +2,7 @@
 //! Module containing the definition of the public key container
 //!
 
-use crate::{sig::Signature, two, Components, OID};
+use crate::{two, Components, Signature, OID};
 use core::cmp::min;
 use digest::Digest;
 use num_bigint::{BigUint, ModInverse};
