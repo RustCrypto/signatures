@@ -73,7 +73,7 @@ pub struct KeypairBytes {
     /// Ed25519 public key (if available).
     ///
     /// Compressed Edwards-y encoded curve point.
-    pub public_key: Option<[u8; Self::BYTE_SIZE / 2]>,
+    pub public_key: Option<PublicKeyBytes>,
 }
 
 impl KeypairBytes {
@@ -83,9 +83,12 @@ impl KeypairBytes {
     /// Parse raw keypair from a 64-byte input.
     pub fn from_bytes(bytes: &[u8; Self::BYTE_SIZE]) -> Self {
         let (sk, pk) = bytes.split_at(Self::BYTE_SIZE / 2);
+
         Self {
             secret_key: sk.try_into().expect("secret key size error"),
-            public_key: Some(pk.try_into().expect("public key size error")),
+            public_key: Some(PublicKeyBytes(
+                pk.try_into().expect("public key size error"),
+            )),
         }
     }
 
@@ -100,7 +103,7 @@ impl KeypairBytes {
             let mut result = [0u8; Self::BYTE_SIZE];
             let (sk, pk) = result.split_at_mut(Self::BYTE_SIZE / 2);
             sk.copy_from_slice(&self.secret_key);
-            pk.copy_from_slice(public_key);
+            pk.copy_from_slice(public_key.as_ref());
             Some(result)
         } else {
             None
@@ -130,7 +133,7 @@ impl EncodePrivateKey for KeypairBytes {
         let private_key_info = pkcs8::PrivateKeyInfo {
             algorithm: ALGORITHM_ID,
             private_key: &private_key,
-            public_key: self.public_key.as_ref().map(AsRef::as_ref),
+            public_key: self.public_key.as_ref().map(|pk| pk.0.as_slice()),
         };
 
         let result = SecretDocument::encode_msg(&private_key_info)?;
@@ -169,7 +172,8 @@ impl TryFrom<pkcs8::PrivateKeyInfo<'_>> for KeypairBytes {
         let public_key = private_key
             .public_key
             .map(|bytes| bytes.try_into().map_err(|_| pkcs8::Error::KeyMalformed))
-            .transpose()?;
+            .transpose()?
+            .map(PublicKeyBytes);
 
         Ok(Self {
             secret_key,
@@ -220,6 +224,7 @@ impl str::FromStr for KeypairBytes {
 ///
 /// Note that this type operates on raw bytes and performs no validation that
 /// public keys represent valid compressed Ed25519 y-coordinates.
+#[derive(Clone, Copy, Eq, PartialEq)]
 pub struct PublicKeyBytes(pub [u8; Self::BYTE_SIZE]);
 
 impl PublicKeyBytes {
@@ -289,10 +294,7 @@ impl TryFrom<&KeypairBytes> for PublicKeyBytes {
     type Error = pkcs8::spki::Error;
 
     fn try_from(keypair: &KeypairBytes) -> pkcs8::spki::Result<PublicKeyBytes> {
-        keypair
-            .public_key
-            .map(PublicKeyBytes)
-            .ok_or(pkcs8::spki::Error::KeyMalformed)
+        keypair.public_key.ok_or(pkcs8::spki::Error::KeyMalformed)
     }
 }
 
@@ -331,7 +333,7 @@ impl ToString for PublicKeyBytes {
 #[cfg_attr(docsrs, doc(cfg(feature = "pem")))]
 #[cfg(test)]
 mod tests {
-    use super::KeypairBytes;
+    use super::{KeypairBytes, PublicKeyBytes};
     use hex_literal::hex;
 
     const SECRET_KEY_BYTES: [u8; 32] =
@@ -344,7 +346,7 @@ mod tests {
     fn to_bytes() {
         let valid_keypair = KeypairBytes {
             secret_key: SECRET_KEY_BYTES,
-            public_key: Some(PUBLIC_KEY_BYTES),
+            public_key: Some(PublicKeyBytes(PUBLIC_KEY_BYTES)),
         };
 
         assert_eq!(
