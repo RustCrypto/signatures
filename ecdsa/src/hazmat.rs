@@ -27,7 +27,10 @@ use {
 use {
     core::cmp,
     elliptic_curve::{bigint::Encoding, FieldSize},
-    signature::{digest::Digest, PrehashSignature},
+    signature::{
+        digest::{core_api::BlockSizeUser, Digest, FixedOutputReset},
+        PrehashSignature,
+    },
 };
 
 #[cfg(any(feature = "arithmetic", feature = "digest"))]
@@ -39,11 +42,8 @@ use crate::{
 #[cfg(all(feature = "arithmetic", feature = "digest"))]
 use signature::digest::FixedOutput;
 
-#[cfg(all(feature = "rfc6979"))]
-use {
-    elliptic_curve::ScalarCore,
-    signature::digest::{core_api::BlockSizeUser, FixedOutputReset},
-};
+#[cfg(feature = "rfc6979")]
+use elliptic_curve::ScalarCore;
 
 /// Try to sign the given prehashed message using ECDSA.
 ///
@@ -218,9 +218,7 @@ where
 pub trait DigestPrimitive: PrimeCurve {
     /// Preferred digest to use when computing ECDSA signatures for this
     /// elliptic curve. This is typically a member of the SHA-2 family.
-    // TODO(tarcieri): add BlockSizeUser + FixedOutput(Reset) bounds in next breaking release
-    // These bounds ensure the digest algorithm can be used for HMAC-DRBG for RFC6979
-    type Digest: Digest;
+    type Digest: BlockSizeUser + Digest + FixedOutputReset;
 
     /// Compute field bytes for a prehash (message digest), either zero-padding
     /// or truncating if the prehash size does not match the field size.
