@@ -3,7 +3,10 @@
 //!
 
 use crate::{Components, Signature, VerifyingKey, OID};
-use core::cmp::min;
+use core::{
+    cmp::min,
+    fmt::{self, Debug},
+};
 use digest::{core_api::BlockSizeUser, Digest, FixedOutputReset};
 use num_bigint::BigUint;
 use num_traits::Zero;
@@ -31,8 +34,6 @@ pub struct SigningKey {
     /// Private component x
     x: Zeroizing<BigUint>,
 }
-
-opaque_debug::implement!(SigningKey);
 
 impl SigningKey {
     /// Construct a new private key from the public key and private component
@@ -207,3 +208,11 @@ impl<'a> TryFrom<PrivateKeyInfo<'a>> for SigningKey {
 }
 
 impl DecodePrivateKey for SigningKey {}
+
+impl Debug for SigningKey {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("SigningKey")
+            .field("verifying_key", &self.verifying_key)
+            .finish_non_exhaustive()
+    }
+}

@@ -11,7 +11,7 @@ use rand::{CryptoRng, RngCore};
 /// The common components of an DSA keypair
 ///
 /// (the prime p, quotient q and generator g)
-#[derive(Clone, PartialEq, PartialOrd)]
+#[derive(Clone, Debug, PartialEq, PartialOrd)]
 #[must_use]
 pub struct Components {
     /// Prime p
@@ -23,8 +23,6 @@ pub struct Components {
     /// Generator g
     g: BigUint,
 }
-
-opaque_debug::implement!(Components);
 
 impl Components {
     /// Construct the common components container from its inner values (p, q and g)
