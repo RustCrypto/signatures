@@ -43,7 +43,7 @@ fn decode_pkcs8_v2() {
     );
 
     assert_eq!(
-        keypair.public_key.unwrap(),
+        keypair.public_key.unwrap().0,
         hex!("19BF44096984CDFE8541BAC167DC3B96C85086AA30B6B6CB0C5C38AD703166E1")
     );
 }
