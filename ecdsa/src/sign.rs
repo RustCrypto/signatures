@@ -92,12 +92,11 @@ where
         &self.secret_scalar
     }
 
-    /// Get the [`VerifyingKey`] which corresponds to this [`SigningKey`]
-    // TODO(tarcieri): make this return `&VerifyingKey<C>` in the next breaking release
+    /// Get the [`VerifyingKey`] which corresponds to this [`SigningKey`].
     #[cfg(feature = "verify")]
     #[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
-    pub fn verifying_key(&self) -> VerifyingKey<C> {
-        self.verifying_key
+    pub fn verifying_key(&self) -> &VerifyingKey<C> {
+        &self.verifying_key
     }
 }
 
@@ -351,6 +350,18 @@ where
 }
 
 #[cfg(feature = "verify")]
+impl<C> From<SigningKey<C>> for VerifyingKey<C>
+where
+    C: PrimeCurve + ProjectiveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn from(signing_key: SigningKey<C>) -> VerifyingKey<C> {
+        signing_key.verifying_key
+    }
+}
+
+#[cfg(feature = "verify")]
 impl<C> From<&SigningKey<C>> for VerifyingKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
@@ -358,7 +369,7 @@ where
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn from(signing_key: &SigningKey<C>) -> VerifyingKey<C> {
-        signing_key.verifying_key()
+        signing_key.verifying_key
     }
 }
 
