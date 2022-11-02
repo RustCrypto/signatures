@@ -254,7 +254,7 @@ where
 impl<C> PrehashSigner<Signature<C>> for SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic + DigestPrimitive,
-    C::Digest: BlockSizeUser + FixedOutput<OutputSize = FieldSize<C>> + FixedOutputReset,
+    C::Digest: FixedOutput<OutputSize = FieldSize<C>>,
     C::UInt: for<'a> From<&'a Scalar<C>>,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
