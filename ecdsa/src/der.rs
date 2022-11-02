@@ -159,6 +159,17 @@ where
     }
 }
 
+impl<C> From<crate::Signature<C>> for Signature<C>
+where
+    C: PrimeCurve,
+    MaxSize<C>: ArrayLength<u8>,
+    <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+{
+    fn from(sig: crate::Signature<C>) -> Signature<C> {
+        sig.to_der()
+    }
+}
+
 impl<C> TryFrom<&[u8]> for Signature<C>
 where
     C: PrimeCurve,
@@ -192,7 +203,7 @@ where
     }
 }
 
-impl<C> TryFrom<Signature<C>> for super::Signature<C>
+impl<C> TryFrom<Signature<C>> for crate::Signature<C>
 where
     C: PrimeCurve,
     MaxSize<C>: ArrayLength<u8>,

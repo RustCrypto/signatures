@@ -17,6 +17,9 @@ use signature::{
     DigestVerifier, Verifier,
 };
 
+#[cfg(feature = "der")]
+use {crate::der, core::ops::Add};
+
 #[cfg(feature = "pkcs8")]
 use elliptic_curve::pkcs8::{self, AssociatedOid, DecodePublicKey};
 
@@ -94,18 +97,9 @@ where
     }
 }
 
-impl<C> AsRef<AffinePoint<C>> for VerifyingKey<C>
-where
-    C: PrimeCurve + ProjectiveArithmetic,
-    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
-    FieldSize<C>: sec1::ModulusSize,
-{
-    fn as_ref(&self) -> &AffinePoint<C> {
-        self.as_affine()
-    }
-}
-
-impl<C> Copy for VerifyingKey<C> where C: PrimeCurve + ProjectiveArithmetic {}
+//
+// `*Verifier` trait impls
+//
 
 impl<C, D> DigestVerifier<D, Signature<C>> for VerifyingKey<C>
 where
@@ -146,6 +140,76 @@ where
     }
 }
 
+#[cfg(feature = "der")]
+#[cfg_attr(docsrs, doc(cfg(feature = "der")))]
+impl<C, D> DigestVerifier<D, der::Signature<C>> for VerifyingKey<C>
+where
+    C: PrimeCurve + ProjectiveArithmetic,
+    D: Digest + FixedOutput<OutputSize = FieldSize<C>>,
+    AffinePoint<C>: VerifyPrimitive<C>,
+    Scalar<C>: Reduce<C::UInt>,
+    SignatureSize<C>: ArrayLength<u8>,
+    der::MaxSize<C>: ArrayLength<u8>,
+    <FieldSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
+{
+    fn verify_digest(&self, msg_digest: D, signature: &der::Signature<C>) -> Result<()> {
+        let signature = Signature::<C>::try_from(signature.clone())?;
+        DigestVerifier::<D, Signature<C>>::verify_digest(self, msg_digest, &signature)
+    }
+}
+
+#[cfg(feature = "der")]
+#[cfg_attr(docsrs, doc(cfg(feature = "der")))]
+impl<C> PrehashVerifier<der::Signature<C>> for VerifyingKey<C>
+where
+    C: PrimeCurve + ProjectiveArithmetic + DigestPrimitive,
+    AffinePoint<C>: VerifyPrimitive<C>,
+    Scalar<C>: Reduce<C::UInt>,
+    SignatureSize<C>: ArrayLength<u8>,
+    der::MaxSize<C>: ArrayLength<u8>,
+    <FieldSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
+{
+    fn verify_prehash(&self, prehash: &[u8], signature: &der::Signature<C>) -> Result<()> {
+        let signature = Signature::<C>::try_from(signature.clone())?;
+        PrehashVerifier::<Signature<C>>::verify_prehash(self, prehash, &signature)
+    }
+}
+
+#[cfg(feature = "der")]
+#[cfg_attr(docsrs, doc(cfg(feature = "der")))]
+impl<C> Verifier<der::Signature<C>> for VerifyingKey<C>
+where
+    C: PrimeCurve + ProjectiveArithmetic + DigestPrimitive,
+    C::Digest: FixedOutput<OutputSize = FieldSize<C>>,
+    AffinePoint<C>: VerifyPrimitive<C>,
+    Scalar<C>: Reduce<C::UInt>,
+    SignatureSize<C>: ArrayLength<u8>,
+    der::MaxSize<C>: ArrayLength<u8>,
+    <FieldSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
+{
+    fn verify(&self, msg: &[u8], signature: &der::Signature<C>) -> Result<()> {
+        let signature = Signature::<C>::try_from(signature.clone())?;
+        Verifier::<Signature<C>>::verify(self, msg, &signature)
+    }
+}
+
+//
+// Other trait impls
+//
+
+impl<C> AsRef<AffinePoint<C>> for VerifyingKey<C>
+where
+    C: PrimeCurve + ProjectiveArithmetic,
+    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    FieldSize<C>: sec1::ModulusSize,
+{
+    fn as_ref(&self) -> &AffinePoint<C> {
+        self.as_affine()
+    }
+}
+
+impl<C> Copy for VerifyingKey<C> where C: PrimeCurve + ProjectiveArithmetic {}
+
 impl<C> From<&VerifyingKey<C>> for EncodedPoint<C>
 where
     C: PrimeCurve + ProjectiveArithmetic + PointCompression,
@@ -154,6 +218,17 @@ where
 {
     fn from(verifying_key: &VerifyingKey<C>) -> EncodedPoint<C> {
         verifying_key.to_encoded_point(C::COMPRESS_POINTS)
+    }
+}
+
+impl<C> Eq for VerifyingKey<C> where C: PrimeCurve + ProjectiveArithmetic {}
+
+impl<C> PartialEq for VerifyingKey<C>
+where
+    C: PrimeCurve + ProjectiveArithmetic,
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.inner.eq(&other.inner)
     }
 }
 
@@ -190,17 +265,6 @@ where
 {
     fn from(verifying_key: &VerifyingKey<C>) -> PublicKey<C> {
         (*verifying_key).into()
-    }
-}
-
-impl<C> Eq for VerifyingKey<C> where C: PrimeCurve + ProjectiveArithmetic {}
-
-impl<C> PartialEq for VerifyingKey<C>
-where
-    C: PrimeCurve + ProjectiveArithmetic,
-{
-    fn eq(&self, other: &Self) -> bool {
-        self.inner.eq(&other.inner)
     }
 }
 
