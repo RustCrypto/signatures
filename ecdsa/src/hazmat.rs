@@ -261,3 +261,42 @@ pub fn bits2field<C: PrimeCurve>(bits: &[u8]) -> Result<FieldBytes<C>> {
 
     Ok(field_bytes)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::bits2field;
+    use elliptic_curve::dev::MockCurve;
+    use hex_literal::hex;
+
+    #[test]
+    fn bits2field_too_small() {
+        assert!(bits2field::<MockCurve>(b"").is_err());
+    }
+
+    #[test]
+    fn bits2field_size_less() {
+        let prehash = hex!("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+        let field_bytes = bits2field::<MockCurve>(&prehash).unwrap();
+        assert_eq!(
+            field_bytes.as_slice(),
+            &hex!("00000000000000000000000000000000AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+        );
+    }
+
+    #[test]
+    fn bits2field_size_eq() {
+        let prehash = hex!("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+        let field_bytes = bits2field::<MockCurve>(&prehash).unwrap();
+        assert_eq!(field_bytes.as_slice(), &prehash);
+    }
+
+    #[test]
+    fn bits2field_size_greater() {
+        let prehash = hex!("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
+        let field_bytes = bits2field::<MockCurve>(&prehash).unwrap();
+        assert_eq!(
+            field_bytes.as_slice(),
+            &hex!("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+        );
+    }
+}
