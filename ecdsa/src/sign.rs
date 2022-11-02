@@ -22,6 +22,9 @@ use signature::{
     DigestSigner, RandomizedDigestSigner, RandomizedSigner, Signer,
 };
 
+#[cfg(feature = "der")]
+use {crate::der, core::ops::Add};
+
 #[cfg(feature = "pem")]
 use {
     crate::elliptic_curve::pkcs8::{EncodePrivateKey, SecretDocument},
@@ -100,124 +103,9 @@ where
     }
 }
 
-#[cfg(feature = "verify")]
-#[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
-impl<C> AsRef<VerifyingKey<C>> for SigningKey<C>
-where
-    C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
-    SignatureSize<C>: ArrayLength<u8>,
-{
-    fn as_ref(&self) -> &VerifyingKey<C> {
-        &self.verifying_key
-    }
-}
-
-impl<C> ConstantTimeEq for SigningKey<C>
-where
-    C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
-    SignatureSize<C>: ArrayLength<u8>,
-{
-    fn ct_eq(&self, other: &Self) -> Choice {
-        self.secret_scalar.ct_eq(&other.secret_scalar)
-    }
-}
-
-impl<C> Debug for SigningKey<C>
-where
-    C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
-    SignatureSize<C>: ArrayLength<u8>,
-{
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("SigningKey").finish_non_exhaustive()
-    }
-}
-
-impl<C> Drop for SigningKey<C>
-where
-    C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
-    SignatureSize<C>: ArrayLength<u8>,
-{
-    fn drop(&mut self) {
-        self.secret_scalar.zeroize();
-    }
-}
-
-impl<C> ZeroizeOnDrop for SigningKey<C>
-where
-    C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
-    SignatureSize<C>: ArrayLength<u8>,
-{
-}
-
-/// Constant-time comparison
-impl<C> Eq for SigningKey<C>
-where
-    C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
-    SignatureSize<C>: ArrayLength<u8>,
-{
-}
-
-/// Constant-time comparison
-impl<C> PartialEq for SigningKey<C>
-where
-    C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
-    SignatureSize<C>: ArrayLength<u8>,
-{
-    fn eq(&self, other: &SigningKey<C>) -> bool {
-        self.ct_eq(other).into()
-    }
-}
-
-impl<C> From<SecretKey<C>> for SigningKey<C>
-where
-    C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
-    SignatureSize<C>: ArrayLength<u8>,
-{
-    fn from(secret_key: SecretKey<C>) -> Self {
-        Self::from(&secret_key)
-    }
-}
-
-impl<C> From<&SecretKey<C>> for SigningKey<C>
-where
-    C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
-    SignatureSize<C>: ArrayLength<u8>,
-{
-    fn from(secret_key: &SecretKey<C>) -> Self {
-        secret_key.to_nonzero_scalar().into()
-    }
-}
-
-impl<C> From<SigningKey<C>> for SecretKey<C>
-where
-    C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
-    SignatureSize<C>: ArrayLength<u8>,
-{
-    fn from(key: SigningKey<C>) -> Self {
-        key.secret_scalar.into()
-    }
-}
-
-impl<C> From<&SigningKey<C>> for SecretKey<C>
-where
-    C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
-    SignatureSize<C>: ArrayLength<u8>,
-{
-    fn from(secret_key: &SigningKey<C>) -> Self {
-        secret_key.secret_scalar.into()
-    }
-}
+//
+// `*Signer` trait impls
+//
 
 impl<C, D> DigestSigner<D, Signature<C>> for SigningKey<C>
 where
@@ -238,17 +126,6 @@ where
             .try_sign_digest_rfc6979::<D>(msg_digest, &[])?
             .0)
     }
-}
-
-#[cfg(feature = "verify")]
-#[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
-impl<C> KeypairRef for SigningKey<C>
-where
-    C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
-    SignatureSize<C>: ArrayLength<u8>,
-{
-    type VerifyingKey = VerifyingKey<C>;
 }
 
 impl<C> PrehashSigner<Signature<C>> for SigningKey<C>
@@ -318,6 +195,152 @@ where
     }
 }
 
+#[cfg(feature = "der")]
+#[cfg_attr(docsrs, doc(cfg(feature = "der")))]
+impl<C> PrehashSigner<der::Signature<C>> for SigningKey<C>
+where
+    C: PrimeCurve + ProjectiveArithmetic + DigestPrimitive,
+    C::Digest: BlockSizeUser + FixedOutput<OutputSize = FieldSize<C>> + FixedOutputReset,
+    C::UInt: for<'a> From<&'a Scalar<C>>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+    der::MaxSize<C>: ArrayLength<u8>,
+    <FieldSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
+{
+    fn sign_prehash(&self, prehash: &[u8]) -> Result<der::Signature<C>> {
+        PrehashSigner::<Signature<C>>::sign_prehash(self, prehash).map(Into::into)
+    }
+}
+
+#[cfg(feature = "der")]
+#[cfg_attr(docsrs, doc(cfg(feature = "der")))]
+impl<C> Signer<der::Signature<C>> for SigningKey<C>
+where
+    Self: DigestSigner<C::Digest, Signature<C>>,
+    C: PrimeCurve + ProjectiveArithmetic + DigestPrimitive,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+    der::MaxSize<C>: ArrayLength<u8>,
+    <FieldSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
+{
+    fn try_sign(&self, msg: &[u8]) -> Result<der::Signature<C>> {
+        Signer::<Signature<C>>::try_sign(self, msg).map(Into::into)
+    }
+}
+
+#[cfg(feature = "der")]
+#[cfg_attr(docsrs, doc(cfg(feature = "der")))]
+impl<C, D> RandomizedDigestSigner<D, der::Signature<C>> for SigningKey<C>
+where
+    C: PrimeCurve + ProjectiveArithmetic,
+    C::UInt: for<'a> From<&'a Scalar<C>>,
+    D: Digest + BlockSizeUser + FixedOutput<OutputSize = FieldSize<C>> + FixedOutputReset,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+    der::MaxSize<C>: ArrayLength<u8>,
+    <FieldSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
+{
+    fn try_sign_digest_with_rng(
+        &self,
+        rng: impl CryptoRng + RngCore,
+        msg_digest: D,
+    ) -> Result<der::Signature<C>> {
+        RandomizedDigestSigner::<D, Signature<C>>::try_sign_digest_with_rng(self, rng, msg_digest)
+            .map(Into::into)
+    }
+}
+
+#[cfg(feature = "der")]
+#[cfg_attr(docsrs, doc(cfg(feature = "der")))]
+impl<C> RandomizedSigner<der::Signature<C>> for SigningKey<C>
+where
+    Self: RandomizedDigestSigner<C::Digest, Signature<C>>,
+    C: PrimeCurve + ProjectiveArithmetic + DigestPrimitive,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+    der::MaxSize<C>: ArrayLength<u8>,
+    <FieldSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
+{
+    fn try_sign_with_rng(
+        &self,
+        rng: impl CryptoRng + RngCore,
+        msg: &[u8],
+    ) -> Result<der::Signature<C>> {
+        RandomizedSigner::<Signature<C>>::try_sign_with_rng(self, rng, msg).map(Into::into)
+    }
+}
+
+//
+// Other trait impls
+//
+
+#[cfg(feature = "verify")]
+#[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
+impl<C> AsRef<VerifyingKey<C>> for SigningKey<C>
+where
+    C: PrimeCurve + ProjectiveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn as_ref(&self) -> &VerifyingKey<C> {
+        &self.verifying_key
+    }
+}
+
+impl<C> ConstantTimeEq for SigningKey<C>
+where
+    C: PrimeCurve + ProjectiveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn ct_eq(&self, other: &Self) -> Choice {
+        self.secret_scalar.ct_eq(&other.secret_scalar)
+    }
+}
+
+impl<C> Debug for SigningKey<C>
+where
+    C: PrimeCurve + ProjectiveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("SigningKey").finish_non_exhaustive()
+    }
+}
+
+impl<C> Drop for SigningKey<C>
+where
+    C: PrimeCurve + ProjectiveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn drop(&mut self) {
+        self.secret_scalar.zeroize();
+    }
+}
+
+/// Constant-time comparison
+impl<C> Eq for SigningKey<C>
+where
+    C: PrimeCurve + ProjectiveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+}
+
+/// Constant-time comparison
+impl<C> PartialEq for SigningKey<C>
+where
+    C: PrimeCurve + ProjectiveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn eq(&self, other: &SigningKey<C>) -> bool {
+        self.ct_eq(other).into()
+    }
+}
+
 impl<C> From<NonZeroScalar<C>> for SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
@@ -336,6 +359,50 @@ where
     }
 }
 
+impl<C> From<SecretKey<C>> for SigningKey<C>
+where
+    C: PrimeCurve + ProjectiveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn from(secret_key: SecretKey<C>) -> Self {
+        Self::from(&secret_key)
+    }
+}
+
+impl<C> From<&SecretKey<C>> for SigningKey<C>
+where
+    C: PrimeCurve + ProjectiveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn from(secret_key: &SecretKey<C>) -> Self {
+        secret_key.to_nonzero_scalar().into()
+    }
+}
+
+impl<C> From<SigningKey<C>> for SecretKey<C>
+where
+    C: PrimeCurve + ProjectiveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn from(key: SigningKey<C>) -> Self {
+        key.secret_scalar.into()
+    }
+}
+
+impl<C> From<&SigningKey<C>> for SecretKey<C>
+where
+    C: PrimeCurve + ProjectiveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn from(secret_key: &SigningKey<C>) -> Self {
+        secret_key.secret_scalar.into()
+    }
+}
+
 impl<C> TryFrom<&[u8]> for SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
@@ -347,6 +414,14 @@ where
     fn try_from(bytes: &[u8]) -> Result<Self> {
         Self::from_bytes(bytes)
     }
+}
+
+impl<C> ZeroizeOnDrop for SigningKey<C>
+where
+    C: PrimeCurve + ProjectiveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
 }
 
 #[cfg(feature = "verify")]
@@ -371,6 +446,17 @@ where
     fn from(signing_key: &SigningKey<C>) -> VerifyingKey<C> {
         signing_key.verifying_key
     }
+}
+
+#[cfg(feature = "verify")]
+#[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
+impl<C> KeypairRef for SigningKey<C>
+where
+    C: PrimeCurve + ProjectiveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    type VerifyingKey = VerifyingKey<C>;
 }
 
 #[cfg(feature = "pkcs8")]
@@ -405,18 +491,6 @@ where
     }
 }
 
-#[cfg(feature = "pkcs8")]
-#[cfg_attr(docsrs, doc(cfg(feature = "pkcs8")))]
-impl<C> DecodePrivateKey for SigningKey<C>
-where
-    C: PrimeCurve + AssociatedOid + ProjectiveArithmetic,
-    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
-    FieldSize<C>: sec1::ModulusSize,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
-    SignatureSize<C>: ArrayLength<u8>,
-{
-}
-
 #[cfg(feature = "pem")]
 #[cfg_attr(docsrs, doc(cfg(feature = "pem")))]
 impl<C> FromStr for SigningKey<C>
@@ -432,4 +506,16 @@ where
     fn from_str(s: &str) -> Result<Self> {
         Self::from_pkcs8_pem(s).map_err(|_| Error::new())
     }
+}
+
+#[cfg(feature = "pkcs8")]
+#[cfg_attr(docsrs, doc(cfg(feature = "pkcs8")))]
+impl<C> DecodePrivateKey for SigningKey<C>
+where
+    C: PrimeCurve + AssociatedOid + ProjectiveArithmetic,
+    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    FieldSize<C>: sec1::ModulusSize,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
 }
