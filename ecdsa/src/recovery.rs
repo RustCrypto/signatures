@@ -2,6 +2,22 @@
 
 use crate::{Error, Result};
 
+#[cfg(feature = "verify")]
+use {
+    crate::{
+        hazmat::{bits2field, DigestPrimitive, VerifyPrimitive},
+        Signature, SignatureSize, VerifyingKey,
+    },
+    elliptic_curve::{
+        generic_array::ArrayLength,
+        ops::{Invert, LinearCombination, Reduce},
+        sec1::{self, FromEncodedPoint, ToEncodedPoint},
+        AffinePoint, DecompressPoint, FieldSize, Group, PrimeCurve, PrimeField,
+        ProjectiveArithmetic, ProjectivePoint, Scalar,
+    },
+    signature::{digest::Digest, hazmat::PrehashVerifier},
+};
+
 /// Recovery IDs, a.k.a. "recid".
 ///
 /// This is an integer value `0`, `1`, `2`, or `3` included along with a
@@ -66,6 +82,76 @@ impl TryFrom<u8> for RecoveryId {
 impl From<RecoveryId> for u8 {
     fn from(id: RecoveryId) -> u8 {
         id.0
+    }
+}
+
+#[cfg(feature = "verify")]
+#[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
+impl<C> VerifyingKey<C>
+where
+    C: PrimeCurve + ProjectiveArithmetic + DigestPrimitive,
+    AffinePoint<C>:
+        DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C> + VerifyPrimitive<C>,
+    FieldSize<C>: sec1::ModulusSize,
+    Scalar<C>: Reduce<C::UInt>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    /// Recover a [`VerifyingKey`] from the given message, signature, and
+    /// [`RecoveryId`].
+    ///
+    /// The message is first hashed using this curve's [`DigestPrimitive`].
+    pub fn recover_from_message(
+        msg: &[u8],
+        signature: &Signature<C>,
+        recovery_id: RecoveryId,
+    ) -> Result<Self> {
+        Self::recover_from_digest(C::Digest::new_with_prefix(msg), signature, recovery_id)
+    }
+
+    /// Recover a [`VerifyingKey`] from the given message [`Digest`],
+    /// signature, and [`RecoveryId`].
+    pub fn recover_from_digest<D>(
+        msg_digest: D,
+        signature: &Signature<C>,
+        recovery_id: RecoveryId,
+    ) -> Result<Self>
+    where
+        D: Digest,
+    {
+        Self::recover_from_prehash(&msg_digest.finalize(), signature, recovery_id)
+    }
+
+    /// Recover a [`VerifyingKey`] from the given `prehash` of a message, the
+    /// signature over that prehashed message, and a [`RecoveryId`].
+    // TODO(tarcieri): handle `is_x_reduced` case
+    #[allow(non_snake_case)]
+    pub fn recover_from_prehash(
+        prehash: &[u8],
+        signature: &Signature<C>,
+        recovery_id: RecoveryId,
+    ) -> Result<Self> {
+        let r = signature.r();
+        let s = signature.s();
+        let z = <Scalar<C> as Reduce<C::UInt>>::from_be_bytes_reduced(bits2field::<C>(prehash)?);
+        let R = AffinePoint::<C>::decompress(&r.to_repr(), u8::from(recovery_id.is_y_odd()).into());
+
+        if R.is_none().into() {
+            return Err(Error::new());
+        }
+
+        let R = ProjectivePoint::<C>::from(R.unwrap());
+        let r_inv = *r.invert();
+        let u1 = -(r_inv * z);
+        let u2 = r_inv * *s;
+        let pk =
+            ProjectivePoint::<C>::lincomb(&ProjectivePoint::<C>::generator(), &u1, &R, &u2).into();
+
+        let vk = Self::from_affine(pk)?;
+
+        // Ensure signature verifies with the recovered key
+        vk.verify_prehash(prehash, signature)?;
+
+        Ok(vk)
     }
 }
 
