@@ -73,7 +73,7 @@ use pkcs8::der::{self, asn1::UIntRef, Decode, Encode, Reader, Sequence};
 use signature::SignatureEncoding;
 
 /// Container of the DSA signature
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 #[must_use]
 pub struct Signature {
     /// Signature part r
@@ -82,8 +82,6 @@ pub struct Signature {
     /// Signature part s
     s: BigUint,
 }
-
-opaque_debug::implement!(Signature);
 
 impl Signature {
     /// Create a new Signature container from its components

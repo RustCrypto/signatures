@@ -14,7 +14,7 @@ use pkcs8::{
 use signature::{hazmat::PrehashVerifier, DigestVerifier, Verifier};
 
 /// DSA public key.
-#[derive(Clone, PartialEq, PartialOrd)]
+#[derive(Clone, Debug, PartialEq, PartialOrd)]
 #[must_use]
 pub struct VerifyingKey {
     /// common components
@@ -23,8 +23,6 @@ pub struct VerifyingKey {
     /// Public component y
     y: BigUint,
 }
-
-opaque_debug::implement!(VerifyingKey);
 
 impl VerifyingKey {
     /// Construct a new public key from the common components and the public component
