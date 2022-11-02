@@ -168,7 +168,6 @@ impl TryFrom<pkcs8::PrivateKeyInfo<'_>> for KeypairBytes {
             _ => Err(pkcs8::Error::KeyMalformed),
         }?;
 
-        // TODO(tarcieri): parse public key
         let public_key = private_key
             .public_key
             .map(|bytes| bytes.try_into().map_err(|_| pkcs8::Error::KeyMalformed))
