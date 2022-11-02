@@ -1,7 +1,7 @@
 //! ECDSA verification key.
 
 use crate::{
-    hazmat::{DigestPrimitive, VerifyPrimitive},
+    hazmat::{bits2field, DigestPrimitive, VerifyPrimitive},
     Error, Result, Signature, SignatureSize,
 };
 use core::{cmp::Ordering, fmt::Debug};
@@ -122,8 +122,8 @@ where
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn verify_prehash(&self, prehash: &[u8], signature: &Signature<C>) -> Result<()> {
-        let prehash = C::prehash_to_field_bytes(prehash)?;
-        self.inner.as_affine().verify_prehashed(prehash, signature)
+        let field = bits2field::<C>(prehash)?;
+        self.inner.as_affine().verify_prehashed(field, signature)
     }
 }
 

@@ -3,7 +3,7 @@
 // TODO(tarcieri): support for hardware crypto accelerators
 
 use crate::{
-    hazmat::{DigestPrimitive, SignPrimitive},
+    hazmat::{bits2field, DigestPrimitive, SignPrimitive},
     Error, Result, Signature, SignatureSize,
 };
 use core::fmt::{self, Debug};
@@ -137,11 +137,11 @@ where
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn sign_prehash(&self, prehash: &[u8]) -> Result<Signature<C>> {
-        let prehash = C::prehash_to_field_bytes(prehash)?;
+        let scalar = bits2field::<C>(prehash)?;
 
         Ok(self
             .secret_scalar
-            .try_sign_prehashed_rfc6979::<C::Digest>(prehash, &[])?
+            .try_sign_prehashed_rfc6979::<C::Digest>(scalar, &[])?
             .0)
     }
 }
