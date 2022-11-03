@@ -2,7 +2,32 @@
 
 //! ## Usage
 //!
-//! See the documentation for the [`generate_k`] function.
+//! See also: the documentation for the [`generate_k`] function.
+//!
+//! ```
+//! use crypto_bigint::{ArrayEncoding, U256};
+//! use sha2::{Digest, Sha256};
+//!
+//! // NIST P-256 field modulus
+//! const NIST_P256_MODULUS: U256 =
+//!     U256::from_be_hex("FFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551");
+//!
+//! // Public key for RFC6979 NIST P256/SHA256 test case
+//! const RFC6979_KEY: U256 =
+//!     U256::from_be_hex("C9AFA9D845BA75166B5C215767B1D6934E50C3DB36E89B127B8A622B120F6721");
+//!
+//! // Test message for RFC6979 NIST P256/SHA256 test case
+//! const RFC6979_MSG: &[u8; 6] = b"sample";
+//!
+//! // Expected K for RFC6979 NIST P256/SHA256 test case
+//! const RFC6979_EXPECTED_K: U256 =
+//!     U256::from_be_hex("A6E3C57DD01ABE90086538398355DD4C3B17AA873382B0F24D6129493D8AAD60");
+//!
+//! let h = Sha256::digest(RFC6979_MSG);
+//! let aad = b"";
+//! let k = rfc6979::generate_k::<Sha256, U256>(&RFC6979_KEY, &NIST_P256_MODULUS, &h, aad);
+//! assert_eq!(&k.to_be_byte_array(), &RFC6979_EXPECTED_K.to_be_byte_array());
+//! ```
 
 #![no_std]
 #![cfg_attr(docsrs, feature(doc_cfg))]

@@ -493,6 +493,7 @@ version = "0.3.0"
 dependencies = [
  "crypto-bigint",
  "hmac",
+ "sha2 0.10.6",
  "zeroize",
 ]
 
