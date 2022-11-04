@@ -11,8 +11,10 @@ fn main() {
     let signing_key = SigningKey::generate(&mut rng, components);
     let verifying_key = signing_key.verifying_key();
 
-    let signature = signing_key
-        .sign_digest_with_rng(rand::thread_rng(), Sha1::new().chain_update(b"hello world"));
+    let signature = signing_key.sign_digest_with_rng(
+        &mut rand::thread_rng(),
+        Sha1::new().chain_update(b"hello world"),
+    );
 
     let signing_key_bytes = signing_key.to_pkcs8_pem(LineEnding::LF).unwrap();
     let verifying_key_bytes = verifying_key.to_public_key_pem(LineEnding::LF).unwrap();

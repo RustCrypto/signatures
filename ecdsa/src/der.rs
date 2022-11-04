@@ -230,7 +230,7 @@ where
     <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
     fn from(signature: Signature<C>) -> Box<[u8]> {
-        signature.to_boxed_slice()
+        signature.to_vec().into_boxed_slice()
     }
 }
 

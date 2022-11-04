@@ -8,8 +8,8 @@ use core::cmp::min;
 use digest::{core_api::BlockSizeUser, Digest, FixedOutputReset};
 use num_bigint::{BigUint, ModInverse, RandBigInt};
 use num_traits::{One, Zero};
-use rand::{CryptoRng, RngCore};
 use rfc6979::HmacDrbg;
+use signature::rand_core::CryptoRngCore;
 use zeroize::Zeroize;
 
 /// Reduce the hash into an RFC-6979 appropriate form
@@ -69,10 +69,10 @@ where
 ///
 /// Secret number k and its modular multiplicative inverse with q
 #[inline]
-pub fn secret_number<R>(rng: &mut R, components: &Components) -> Option<(BigUint, BigUint)>
-where
-    R: CryptoRng + RngCore + ?Sized,
-{
+pub fn secret_number(
+    rng: &mut impl CryptoRngCore,
+    components: &Components,
+) -> Option<(BigUint, BigUint)> {
     let q = components.q();
     let n = q.bits();
 

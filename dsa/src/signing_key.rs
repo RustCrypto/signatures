@@ -14,9 +14,9 @@ use pkcs8::{
     der::{asn1::UIntRef, AnyRef, Decode, Encode},
     AlgorithmIdentifier, DecodePrivateKey, EncodePrivateKey, PrivateKeyInfo, SecretDocument,
 };
-use rand::{CryptoRng, RngCore};
 use signature::{
     hazmat::{PrehashSigner, RandomizedPrehashSigner},
+    rand_core::CryptoRngCore,
     DigestSigner, RandomizedDigestSigner, Signer,
 };
 use zeroize::{Zeroize, Zeroizing};
@@ -50,10 +50,7 @@ impl SigningKey {
 
     /// Generate a new DSA keypair
     #[inline]
-    pub fn generate<R>(rng: &mut R, components: Components) -> SigningKey
-    where
-        R: CryptoRng + RngCore + ?Sized,
-    {
+    pub fn generate(rng: &mut impl CryptoRngCore, components: Components) -> SigningKey {
         crate::generate::keypair(rng, components)
     }
 
@@ -117,7 +114,7 @@ impl PrehashSigner<Signature> for SigningKey {
 impl RandomizedPrehashSigner<Signature> for SigningKey {
     fn sign_prehash_with_rng(
         &self,
-        mut rng: impl CryptoRng + RngCore,
+        mut rng: &mut impl CryptoRngCore,
         prehash: &[u8],
     ) -> Result<Signature, signature::Error> {
         let components = self.verifying_key.components();
@@ -147,7 +144,7 @@ where
 {
     fn try_sign_digest_with_rng(
         &self,
-        mut rng: impl CryptoRng + RngCore,
+        mut rng: &mut impl CryptoRngCore,
         digest: D,
     ) -> Result<Signature, signature::Error> {
         let ks = crate::generate::secret_number(&mut rng, self.verifying_key().components())

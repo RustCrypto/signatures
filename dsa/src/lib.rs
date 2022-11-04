@@ -157,7 +157,7 @@ impl SignatureEncoding for Signature {
     type Repr = Box<[u8]>;
 
     fn to_bytes(&self) -> Box<[u8]> {
-        self.to_boxed_slice()
+        SignatureEncoding::to_vec(self).into_boxed_slice()
     }
 
     fn to_vec(&self) -> Vec<u8> {

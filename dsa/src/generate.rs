@@ -1,7 +1,7 @@
 use crate::two;
 use num_bigint::{BigUint, RandPrime};
 use num_traits::Pow;
-use rand::{CryptoRng, RngCore};
+use signature::rand_core::CryptoRngCore;
 
 mod components;
 mod keypair;
@@ -24,9 +24,6 @@ fn calculate_bounds(size: u32) -> (BigUint, BigUint) {
 ///
 /// This wrapper function mainly exists to enforce the [`CryptoRng`](rand::CryptoRng) requirement (I might otherwise forget it)
 #[inline]
-fn generate_prime<R>(bit_length: usize, rng: &mut R) -> BigUint
-where
-    R: CryptoRng + RngCore + ?Sized,
-{
+fn generate_prime(bit_length: usize, rng: &mut impl CryptoRngCore) -> BigUint {
     rng.gen_prime(bit_length)
 }
