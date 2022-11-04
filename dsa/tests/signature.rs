@@ -70,7 +70,7 @@ fn decode_encode_signature() {
 fn sign_message() {
     let signing_key = generate_deterministic_keypair();
     let generated_signature =
-        signing_key.sign_digest_with_rng(seeded_csprng(), Sha256::new().chain_update(MESSAGE));
+        signing_key.sign_digest_with_rng(&mut seeded_csprng(), Sha256::new().chain_update(MESSAGE));
 
     let expected_signature =
         Signature::from_der(MESSAGE_SIGNATURE_CRATE_ASN1).expect("Failed to decode signature");

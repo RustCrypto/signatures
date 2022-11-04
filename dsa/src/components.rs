@@ -6,7 +6,7 @@ use crate::{size::KeySize, two};
 use num_bigint::BigUint;
 use num_traits::Zero;
 use pkcs8::der::{self, asn1::UIntRef, DecodeValue, Encode, Header, Reader, Sequence, Tag};
-use rand::{CryptoRng, RngCore};
+use signature::rand_core::CryptoRngCore;
 
 /// The common components of an DSA keypair
 ///
@@ -35,10 +35,7 @@ impl Components {
     }
 
     /// Generate a new pair of common components
-    pub fn generate<R>(rng: &mut R, key_size: KeySize) -> Self
-    where
-        R: CryptoRng + RngCore + ?Sized,
-    {
+    pub fn generate(rng: &mut impl CryptoRngCore, key_size: KeySize) -> Self {
         let (p, q, g) = crate::generate::common_components(rng, key_size);
         Self::from_components(p, q, g).expect("[Bug] Newly generated components considered invalid")
     }

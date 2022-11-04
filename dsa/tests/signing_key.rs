@@ -47,7 +47,7 @@ fn sign_and_verify() {
     let verifying_key = signing_key.verifying_key();
 
     let signature =
-        signing_key.sign_digest_with_rng(rand::thread_rng(), Sha1::new().chain_update(DATA));
+        signing_key.sign_digest_with_rng(&mut rand::thread_rng(), Sha1::new().chain_update(DATA));
 
     assert!(verifying_key
         .verify_digest(Sha1::new().chain_update(DATA), &signature)

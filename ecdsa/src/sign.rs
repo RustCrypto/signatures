@@ -18,7 +18,7 @@ use elliptic_curve::{
 use signature::{
     digest::{core_api::BlockSizeUser, Digest, FixedOutput, FixedOutputReset},
     hazmat::PrehashSigner,
-    rand_core::{CryptoRng, RngCore},
+    rand_core::CryptoRngCore,
     DigestSigner, RandomizedDigestSigner, RandomizedSigner, Signer,
 };
 
@@ -68,7 +68,7 @@ where
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Generate a cryptographically random [`SigningKey`].
-    pub fn random(rng: impl CryptoRng + RngCore) -> Self {
+    pub fn random(rng: &mut impl CryptoRngCore) -> Self {
         NonZeroScalar::<C>::random(rng).into()
     }
 
@@ -171,7 +171,7 @@ where
     /// entropy from an RNG.
     fn try_sign_digest_with_rng(
         &self,
-        mut rng: impl CryptoRng + RngCore,
+        rng: &mut impl CryptoRngCore,
         msg_digest: D,
     ) -> Result<Signature<C>> {
         let mut ad = FieldBytes::<C>::default();
@@ -190,7 +190,7 @@ where
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
-    fn try_sign_with_rng(&self, rng: impl CryptoRng + RngCore, msg: &[u8]) -> Result<Signature<C>> {
+    fn try_sign_with_rng(&self, rng: &mut impl CryptoRngCore, msg: &[u8]) -> Result<Signature<C>> {
         self.try_sign_digest_with_rng(rng, C::Digest::new_with_prefix(msg))
     }
 }
@@ -242,7 +242,7 @@ where
 {
     fn try_sign_digest_with_rng(
         &self,
-        rng: impl CryptoRng + RngCore,
+        rng: &mut impl CryptoRngCore,
         msg_digest: D,
     ) -> Result<der::Signature<C>> {
         RandomizedDigestSigner::<D, Signature<C>>::try_sign_digest_with_rng(self, rng, msg_digest)
@@ -263,7 +263,7 @@ where
 {
     fn try_sign_with_rng(
         &self,
-        rng: impl CryptoRng + RngCore,
+        rng: &mut impl CryptoRngCore,
         msg: &[u8],
     ) -> Result<der::Signature<C>> {
         RandomizedSigner::<Signature<C>>::try_sign_with_rng(self, rng, msg).map(Into::into)

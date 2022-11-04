@@ -9,7 +9,7 @@ use crate::{
 };
 use num_bigint::{prime::probably_prime, BigUint, RandBigInt};
 use num_traits::One;
-use rand::{CryptoRng, RngCore};
+use signature::rand_core::CryptoRngCore;
 
 /// Numbers of miller-rabin rounds performed to determine primality
 const MR_ROUNDS: usize = 64;
@@ -19,10 +19,10 @@ const MR_ROUNDS: usize = 64;
 /// # Returns
 ///
 /// Tuple of three `BigUint`s. Ordered like this `(p, q, g)`
-pub fn common<R>(rng: &mut R, KeySize { l, n }: KeySize) -> (BigUint, BigUint, BigUint)
-where
-    R: CryptoRng + RngCore + ?Sized,
-{
+pub fn common(
+    rng: &mut impl CryptoRngCore,
+    KeySize { l, n }: KeySize,
+) -> (BigUint, BigUint, BigUint) {
     // Calculate the lower and upper bounds of p and q
     let (p_min, p_max) = calculate_bounds(l);
     let (q_min, q_max) = calculate_bounds(n);
