@@ -218,10 +218,8 @@ where
         let r_inv = *r.invert();
         let u1 = -(r_inv * z);
         let u2 = r_inv * *s;
-        let pk =
-            ProjectivePoint::<C>::lincomb(&ProjectivePoint::<C>::generator(), &u1, &R, &u2).into();
-
-        let vk = Self::from_affine(pk)?;
+        let pk = ProjectivePoint::<C>::lincomb(&ProjectivePoint::<C>::generator(), &u1, &R, &u2);
+        let vk = Self::from_affine(pk.into())?;
 
         // Ensure signature verifies with the recovered key
         vk.verify_prehash(prehash, signature)?;
