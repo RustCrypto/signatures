@@ -205,8 +205,7 @@ where
         signature: &Signature<C>,
         recovery_id: RecoveryId,
     ) -> Result<Self> {
-        let r = signature.r();
-        let s = signature.s();
+        let (r, s) = signature.split_scalars();
         let z = <Scalar<C> as Reduce<C::UInt>>::from_be_bytes_reduced(bits2field::<C>(prehash)?);
         let R = AffinePoint::<C>::decompress(&r.to_repr(), u8::from(recovery_id.is_y_odd()).into());
 
