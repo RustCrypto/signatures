@@ -116,7 +116,7 @@ where
 
 impl<C> PrehashVerifier<Signature<C>> for VerifyingKey<C>
 where
-    C: PrimeCurve + ProjectiveArithmetic + DigestPrimitive,
+    C: PrimeCurve + ProjectiveArithmetic,
     AffinePoint<C>: VerifyPrimitive<C>,
     Scalar<C>: Reduce<C::UInt>,
     SignatureSize<C>: ArrayLength<u8>,

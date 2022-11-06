@@ -71,6 +71,78 @@ impl RecoveryId {
     }
 }
 
+#[cfg(feature = "verify")]
+#[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
+impl RecoveryId {
+    /// Given a public key, message, and signature, use trial recovery
+    /// to determine if a suitable recovery ID exists, or return an error
+    /// otherwise.
+    pub fn trial_recovery_from_msg<C>(
+        verifying_key: &VerifyingKey<C>,
+        msg: &[u8],
+        signature: &Signature<C>,
+    ) -> Result<Self>
+    where
+        C: DigestPrimitive + PrimeCurve + ProjectiveArithmetic,
+        AffinePoint<C>:
+            DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C> + VerifyPrimitive<C>,
+        FieldSize<C>: sec1::ModulusSize,
+        Scalar<C>: Reduce<C::UInt>,
+        SignatureSize<C>: ArrayLength<u8>,
+    {
+        Self::trial_recovery_from_digest(verifying_key, C::Digest::new_with_prefix(msg), signature)
+    }
+
+    /// Given a public key, message digest, and signature, use trial recovery
+    /// to determine if a suitable recovery ID exists, or return an error
+    /// otherwise.
+    pub fn trial_recovery_from_digest<C, D>(
+        verifying_key: &VerifyingKey<C>,
+        digest: D,
+        signature: &Signature<C>,
+    ) -> Result<Self>
+    where
+        C: PrimeCurve + ProjectiveArithmetic,
+        D: Digest,
+        AffinePoint<C>:
+            DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C> + VerifyPrimitive<C>,
+        FieldSize<C>: sec1::ModulusSize,
+        Scalar<C>: Reduce<C::UInt>,
+        SignatureSize<C>: ArrayLength<u8>,
+    {
+        Self::trial_recovery_from_prehash(verifying_key, &digest.finalize(), signature)
+    }
+
+    /// Given a public key, message digest, and signature, use trial recovery
+    /// to determine if a suitable recovery ID exists, or return an error
+    /// otherwise.
+    pub fn trial_recovery_from_prehash<C>(
+        verifying_key: &VerifyingKey<C>,
+        prehash: &[u8],
+        signature: &Signature<C>,
+    ) -> Result<Self>
+    where
+        C: PrimeCurve + ProjectiveArithmetic,
+        AffinePoint<C>:
+            DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C> + VerifyPrimitive<C>,
+        FieldSize<C>: sec1::ModulusSize,
+        Scalar<C>: Reduce<C::UInt>,
+        SignatureSize<C>: ArrayLength<u8>,
+    {
+        for id in 0..=Self::MAX {
+            let recovery_id = RecoveryId(id);
+
+            if let Ok(vk) = VerifyingKey::recover_from_prehash(prehash, signature, recovery_id) {
+                if verifying_key == &vk {
+                    return Ok(recovery_id);
+                }
+            }
+        }
+
+        Err(Error::new())
+    }
+}
+
 impl TryFrom<u8> for RecoveryId {
     type Error = Error;
 
@@ -89,7 +161,7 @@ impl From<RecoveryId> for u8 {
 #[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
 impl<C> VerifyingKey<C>
 where
-    C: PrimeCurve + ProjectiveArithmetic + DigestPrimitive,
+    C: PrimeCurve + ProjectiveArithmetic,
     AffinePoint<C>:
         DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C> + VerifyPrimitive<C>,
     FieldSize<C>: sec1::ModulusSize,
@@ -100,11 +172,14 @@ where
     /// [`RecoveryId`].
     ///
     /// The message is first hashed using this curve's [`DigestPrimitive`].
-    pub fn recover_from_message(
+    pub fn recover_from_msg(
         msg: &[u8],
         signature: &Signature<C>,
         recovery_id: RecoveryId,
-    ) -> Result<Self> {
+    ) -> Result<Self>
+    where
+        C: DigestPrimitive,
+    {
         Self::recover_from_digest(C::Digest::new_with_prefix(msg), signature, recovery_id)
     }
 
