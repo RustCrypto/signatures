@@ -100,7 +100,7 @@ where
             return Err(Error::new());
         }
 
-        // TODO(tarcieri): support for computing recovery ID
+        // TODO(tarcieri): support for computing recovery ID (RustCrypto/signatures#581)
         Ok((Signature::from_scalars(r, s)?, None))
     }
 
