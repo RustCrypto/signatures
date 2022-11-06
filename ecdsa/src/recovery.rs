@@ -198,7 +198,7 @@ where
 
     /// Recover a [`VerifyingKey`] from the given `prehash` of a message, the
     /// signature over that prehashed message, and a [`RecoveryId`].
-    // TODO(tarcieri): handle `is_x_reduced` case
+    // TODO(tarcieri): handle `is_x_reduced` case (RustCrypto/signatures#583)
     #[allow(non_snake_case)]
     pub fn recover_from_prehash(
         prehash: &[u8],
