@@ -28,18 +28,10 @@ Ed25519 implementations, including HSMs or Cloud KMS services.
 
 This crate requires **Rust 1.57** at a minimum.
 
-Previous 1.x releases of this crate supported an MSRV of 1.47. If you would
-like to use this crate with earlier releases of Rust, add the following version
-constraint in your project's Cargo.toml to constrain it to the supported
-version range:
-
-```toml
-[dependencies]
-ed25519 = ">=1, <1.4" # ed25519 1.4 requires MSRV 1.57
-```
-
-Note that is our policy that we may change the MSRV in the future, but it will
-be accompanied by a minor version bump.
+Our policy is to allow MSRV to be raised in future released without that
+qualifing as a SemVer-breaking change, but it will be accompanied by a minor
+version bump, ensuring if you lock to a minor version MSRV will be preserved
+for the default feature set.
 
 ## SemVer Policy
 
