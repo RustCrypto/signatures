@@ -14,7 +14,7 @@
 //! Please lock to a specific minor version of the `ed25519` crate to avoid
 //! breaking changes when using this module.
 
-pub use pkcs8::{DecodePrivateKey, DecodePublicKey};
+pub use pkcs8::{DecodePrivateKey, DecodePublicKey, Error, Result};
 
 #[cfg(feature = "alloc")]
 pub use pkcs8::{spki::EncodePublicKey, EncodePrivateKey};
@@ -123,7 +123,7 @@ impl Drop for KeypairBytes {
 #[cfg(feature = "alloc")]
 #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 impl EncodePrivateKey for KeypairBytes {
-    fn to_pkcs8_der(&self) -> pkcs8::Result<SecretDocument> {
+    fn to_pkcs8_der(&self) -> Result<SecretDocument> {
         // Serialize private key as nested OCTET STRING
         let mut private_key = [0u8; 2 + (Self::BYTE_SIZE / 2)];
         private_key[0] = 0x04;
@@ -146,13 +146,13 @@ impl EncodePrivateKey for KeypairBytes {
 }
 
 impl TryFrom<pkcs8::PrivateKeyInfo<'_>> for KeypairBytes {
-    type Error = pkcs8::Error;
+    type Error = Error;
 
-    fn try_from(private_key: pkcs8::PrivateKeyInfo<'_>) -> pkcs8::Result<Self> {
+    fn try_from(private_key: pkcs8::PrivateKeyInfo<'_>) -> Result<Self> {
         private_key.algorithm.assert_algorithm_oid(ALGORITHM_OID)?;
 
         if private_key.algorithm.parameters.is_some() {
-            return Err(pkcs8::Error::ParametersMalformed);
+            return Err(Error::ParametersMalformed);
         }
 
         // Ed25519 PKCS#8 keys are represented as a nested OCTET STRING
@@ -164,13 +164,13 @@ impl TryFrom<pkcs8::PrivateKeyInfo<'_>> for KeypairBytes {
         // - 0x04: OCTET STRING tag
         // - 0x20: 32-byte length
         let secret_key = match private_key.private_key {
-            [0x04, 0x20, rest @ ..] => rest.try_into().map_err(|_| pkcs8::Error::KeyMalformed),
-            _ => Err(pkcs8::Error::KeyMalformed),
+            [0x04, 0x20, rest @ ..] => rest.try_into().map_err(|_| Error::KeyMalformed),
+            _ => Err(Error::KeyMalformed),
         }?;
 
         let public_key = private_key
             .public_key
-            .map(|bytes| bytes.try_into().map_err(|_| pkcs8::Error::KeyMalformed))
+            .map(|bytes| bytes.try_into().map_err(|_| Error::KeyMalformed))
             .transpose()?
             .map(PublicKeyBytes);
 
@@ -182,9 +182,9 @@ impl TryFrom<pkcs8::PrivateKeyInfo<'_>> for KeypairBytes {
 }
 
 impl TryFrom<&[u8]> for KeypairBytes {
-    type Error = pkcs8::Error;
+    type Error = Error;
 
-    fn try_from(der_bytes: &[u8]) -> pkcs8::Result<Self> {
+    fn try_from(der_bytes: &[u8]) -> Result<Self> {
         Self::from_pkcs8_der(der_bytes)
     }
 }
@@ -200,9 +200,9 @@ impl fmt::Debug for KeypairBytes {
 #[cfg(feature = "pem")]
 #[cfg_attr(docsrs, doc(cfg(feature = "pem")))]
 impl str::FromStr for KeypairBytes {
-    type Err = pkcs8::Error;
+    type Err = Error;
 
-    fn from_str(pem: &str) -> pkcs8::Result<Self> {
+    fn from_str(pem: &str) -> Result<Self> {
         Self::from_pkcs8_pem(pem)
     }
 }
