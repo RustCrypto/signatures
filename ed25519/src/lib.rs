@@ -269,7 +269,7 @@ mod serde;
 pub use signature::{self, Error, SignatureEncoding};
 
 #[cfg(feature = "pkcs8")]
-pub use crate::pkcs8::KeypairBytes;
+pub use crate::pkcs8::{KeypairBytes, PublicKeyBytes};
 
 use core::{fmt, str};
 
