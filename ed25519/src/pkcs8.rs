@@ -19,11 +19,11 @@ pub use pkcs8::{DecodePrivateKey, DecodePublicKey, Error, PrivateKeyInfo, Result
 #[cfg(feature = "alloc")]
 pub use pkcs8::{spki::EncodePublicKey, EncodePrivateKey};
 
+#[cfg(feature = "alloc")]
+pub use pkcs8::der::{Document, SecretDocument};
+
 use core::fmt;
 use pkcs8::ObjectIdentifier;
-
-#[cfg(feature = "alloc")]
-use pkcs8::der::{Document, SecretDocument};
 
 #[cfg(feature = "pem")]
 use {
