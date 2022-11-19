@@ -14,7 +14,7 @@
 //! Please lock to a specific minor version of the `ed25519` crate to avoid
 //! breaking changes when using this module.
 
-pub use pkcs8::{DecodePrivateKey, DecodePublicKey, Error, Result};
+pub use pkcs8::{DecodePrivateKey, DecodePublicKey, Error, PrivateKeyInfo, Result};
 
 #[cfg(feature = "alloc")]
 pub use pkcs8::{spki::EncodePublicKey, EncodePrivateKey};
@@ -130,7 +130,7 @@ impl EncodePrivateKey for KeypairBytes {
         private_key[1] = 0x20;
         private_key[2..].copy_from_slice(&self.secret_key);
 
-        let private_key_info = pkcs8::PrivateKeyInfo {
+        let private_key_info = PrivateKeyInfo {
             algorithm: ALGORITHM_ID,
             private_key: &private_key,
             public_key: self.public_key.as_ref().map(|pk| pk.0.as_slice()),
@@ -145,10 +145,10 @@ impl EncodePrivateKey for KeypairBytes {
     }
 }
 
-impl TryFrom<pkcs8::PrivateKeyInfo<'_>> for KeypairBytes {
+impl TryFrom<PrivateKeyInfo<'_>> for KeypairBytes {
     type Error = Error;
 
-    fn try_from(private_key: pkcs8::PrivateKeyInfo<'_>) -> Result<Self> {
+    fn try_from(private_key: PrivateKeyInfo<'_>) -> Result<Self> {
         private_key.algorithm.assert_algorithm_oid(ALGORITHM_OID)?;
 
         if private_key.algorithm.parameters.is_some() {
