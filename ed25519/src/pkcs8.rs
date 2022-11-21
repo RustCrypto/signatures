@@ -14,7 +14,7 @@
 //! Please lock to a specific minor version of the `ed25519` crate to avoid
 //! breaking changes when using this module.
 
-pub use pkcs8::{DecodePrivateKey, DecodePublicKey, Error, PrivateKeyInfo, Result};
+pub use pkcs8::{spki, DecodePrivateKey, DecodePublicKey, Error, PrivateKeyInfo, Result};
 
 #[cfg(feature = "alloc")]
 pub use pkcs8::{spki::EncodePublicKey, EncodePrivateKey};
