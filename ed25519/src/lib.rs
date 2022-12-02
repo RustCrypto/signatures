@@ -292,9 +292,7 @@ impl Signature {
     pub const BYTE_SIZE: usize = 64;
 
     /// Parse an Ed25519 signature from a byte slice.
-    pub fn from_bytes(bytes: &[u8]) -> signature::Result<Self> {
-        let result = bytes.try_into().map(Self).map_err(|_| Error::new())?;
-
+    pub fn from_bytes(bytes: &[u8; Self::BYTE_SIZE]) -> signature::Result<Self> {
         // Perform a partial reduction check on the signature's `s` scalar.
         // When properly reduced, at least the three highest bits of the scalar
         // will be unset so as to fit within the order of ~2^(252.5).
@@ -303,11 +301,11 @@ impl Signature {
         // full reduction check in the event that the 4th most significant bit
         // is set), however it will catch a number of invalid signatures
         // relatively inexpensively.
-        if result.0[Signature::BYTE_SIZE - 1] & 0b1110_0000 != 0 {
+        if bytes[Signature::BYTE_SIZE - 1] & 0b1110_0000 != 0 {
             return Err(Error::new());
         }
 
-        Ok(result)
+        Ok(Self(*bytes))
     }
 
     /// Return the inner byte array.
@@ -353,7 +351,7 @@ impl TryFrom<&[u8]> for Signature {
     type Error = Error;
 
     fn try_from(bytes: &[u8]) -> signature::Result<Self> {
-        Self::from_bytes(bytes)
+        Self::from_bytes(bytes.try_into().map_err(|_| Error::new())?)
     }
 }
 
