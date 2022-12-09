@@ -1,6 +1,6 @@
 //! `serde` support.
 
-use crate::Signature;
+use crate::{Signature, SignatureBytes};
 use ::serde::{de, ser, Deserialize, Serialize};
 use core::fmt;
 
@@ -14,8 +14,8 @@ impl Serialize for Signature {
 
         let mut seq = serializer.serialize_tuple(Signature::BYTE_SIZE)?;
 
-        for byte in &self.0[..] {
-            seq.serialize_element(byte)?;
+        for byte in self.to_bytes() {
+            seq.serialize_element(&byte)?;
         }
 
         seq.end()
@@ -65,7 +65,7 @@ impl serde_bytes::Serialize for Signature {
     where
         S: serde::Serializer,
     {
-        serializer.serialize_bytes(&self.0)
+        serializer.serialize_bytes(&self.to_bytes())
     }
 }
 
@@ -79,7 +79,7 @@ impl<'de> serde_bytes::Deserialize<'de> for Signature {
         struct ByteArrayVisitor;
 
         impl<'de> de::Visitor<'de> for ByteArrayVisitor {
-            type Value = [u8; Signature::BYTE_SIZE];
+            type Value = SignatureBytes;
 
             fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
                 formatter.write_str("bytestring of length 64")
@@ -104,10 +104,10 @@ impl<'de> serde_bytes::Deserialize<'de> for Signature {
 
 #[cfg(test)]
 mod tests {
-    use crate::Signature;
+    use crate::{Signature, SignatureBytes};
     use hex_literal::hex;
 
-    const SIGNATURE_BYTES: [u8; Signature::BYTE_SIZE] = hex!(
+    const SIGNATURE_BYTES: SignatureBytes = hex!(
         "
         e5564300c360ac729086e2cc806e828a
         84877f1eb8e5d974d873e06522490155
