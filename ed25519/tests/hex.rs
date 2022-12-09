@@ -34,13 +34,13 @@ fn upper_hex() {
 #[test]
 fn from_str_lower() {
     let sig = Signature::from_str("e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b").unwrap();
-    assert_eq!(sig.as_ref(), TEST_1_SIGNATURE);
+    assert_eq!(sig.to_bytes(), TEST_1_SIGNATURE);
 }
 
 #[test]
 fn from_str_upper() {
     let sig = Signature::from_str("E5564300C360AC729086E2CC806E828A84877F1EB8E5D974D873E065224901555FB8821590A33BACC61E39701CF9B46BD25BF5F0595BBE24655141438E7A100B").unwrap();
-    assert_eq!(sig.as_ref(), TEST_1_SIGNATURE);
+    assert_eq!(sig.to_bytes(), TEST_1_SIGNATURE);
 }
 
 #[test]

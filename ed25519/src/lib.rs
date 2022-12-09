@@ -2,6 +2,7 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![doc = include_str!("../README.md")]
 #![doc(html_logo_url = "https://raw.githubusercontent.com/RustCrypto/meta/master/logo_small.png")]
+#![allow(non_snake_case)]
 #![forbid(unsafe_code)]
 #![warn(
     clippy::unwrap_used,
@@ -276,23 +277,32 @@ use core::{fmt, str};
 #[cfg(feature = "alloc")]
 use alloc::vec::Vec;
 
-/// Length of an Ed25519 signature in bytes.
-#[deprecated(since = "1.3.0", note = "use ed25519::Signature::BYTE_SIZE instead")]
-pub const SIGNATURE_LENGTH: usize = Signature::BYTE_SIZE;
-
 /// Ed25519 signature serialized as a byte array.
 pub type SignatureBytes = [u8; Signature::BYTE_SIZE];
 
+/// Size of an `R` or `s` component of an Ed25519 signature when serialized
+/// as bytes.
+pub type ComponentBytes = [u8; COMPONENT_SIZE];
+
+/// Size of a single component of an Ed25519 signature.
+const COMPONENT_SIZE: usize = 32;
+
 /// Ed25519 signature.
 #[derive(Copy, Clone, Eq, PartialEq)]
-pub struct Signature(SignatureBytes);
+#[repr(C)]
+pub struct Signature {
+    R: ComponentBytes,
+    s: ComponentBytes,
+}
 
 impl Signature {
     /// Size of an encoded Ed25519 signature in bytes.
-    pub const BYTE_SIZE: usize = 64;
+    pub const BYTE_SIZE: usize = COMPONENT_SIZE * 2;
 
     /// Parse an Ed25519 signature from a byte slice.
     pub fn from_bytes(bytes: &[u8; Self::BYTE_SIZE]) -> signature::Result<Self> {
+        let (R, s) = bytes.split_at(COMPONENT_SIZE);
+
         // Perform a partial reduction check on the signature's `s` scalar.
         // When properly reduced, at least the three highest bits of the scalar
         // will be unset so as to fit within the order of ~2^(252.5).
@@ -301,23 +311,40 @@ impl Signature {
         // full reduction check in the event that the 4th most significant bit
         // is set), however it will catch a number of invalid signatures
         // relatively inexpensively.
-        if bytes[Signature::BYTE_SIZE - 1] & 0b1110_0000 != 0 {
+        if s[COMPONENT_SIZE - 1] & 0b1110_0000 != 0 {
             return Err(Error::new());
         }
 
-        Ok(Self(*bytes))
+        Ok(Self {
+            R: R.try_into().map_err(|_| Error::new())?,
+            s: s.try_into().map_err(|_| Error::new())?,
+        })
+    }
+
+    /// Bytes for the `R` component of a signature.
+    pub fn r_bytes(&self) -> &ComponentBytes {
+        &self.R
+    }
+
+    /// Bytes for the `s` component of a signature.
+    pub fn s_bytes(&self) -> &ComponentBytes {
+        &self.s
     }
 
     /// Return the inner byte array.
-    pub fn to_bytes(self) -> [u8; Self::BYTE_SIZE] {
-        self.0
+    pub fn to_bytes(&self) -> SignatureBytes {
+        let mut ret = [0u8; Self::BYTE_SIZE];
+        let (R, s) = ret.split_at_mut(COMPONENT_SIZE);
+        R.copy_from_slice(&self.R);
+        s.copy_from_slice(&self.s);
+        ret
     }
 
     /// Convert this signature into a byte vector.
     #[cfg(feature = "alloc")]
     #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
     pub fn to_vec(&self) -> Vec<u8> {
-        self.0.to_vec()
+        self.to_bytes().to_vec()
     }
 }
 
@@ -325,25 +352,19 @@ impl SignatureEncoding for Signature {
     type Repr = SignatureBytes;
 
     fn to_bytes(&self) -> SignatureBytes {
-        self.0
+        self.to_bytes()
     }
 }
 
-impl AsRef<[u8]> for Signature {
-    fn as_ref(&self) -> &[u8] {
-        self.0.as_ref()
+impl From<Signature> for SignatureBytes {
+    fn from(sig: Signature) -> SignatureBytes {
+        sig.to_bytes()
     }
 }
 
-impl From<Signature> for [u8; Signature::BYTE_SIZE] {
-    fn from(sig: Signature) -> [u8; Signature::BYTE_SIZE] {
-        sig.0
-    }
-}
-
-impl From<&Signature> for [u8; Signature::BYTE_SIZE] {
-    fn from(sig: &Signature) -> [u8; Signature::BYTE_SIZE] {
-        sig.0
+impl From<&Signature> for SignatureBytes {
+    fn from(sig: &Signature) -> SignatureBytes {
+        sig.to_bytes()
     }
 }
 
@@ -357,7 +378,10 @@ impl TryFrom<&[u8]> for Signature {
 
 impl fmt::Debug for Signature {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "ed25519::Signature({})", self)
+        f.debug_struct("ed25519::Signature")
+            .field("R", self.r_bytes())
+            .field("s", self.s_bytes())
+            .finish()
     }
 }
 
@@ -369,8 +393,10 @@ impl fmt::Display for Signature {
 
 impl fmt::LowerHex for Signature {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for byte in &self.0 {
-            write!(f, "{:02x}", byte)?;
+        for component in [&self.R, &self.s] {
+            for byte in component {
+                write!(f, "{:02x}", byte)?;
+            }
         }
         Ok(())
     }
@@ -378,8 +404,10 @@ impl fmt::LowerHex for Signature {
 
 impl fmt::UpperHex for Signature {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for byte in &self.0 {
-            write!(f, "{:02X}", byte)?;
+        for component in [&self.R, &self.s] {
+            for byte in component {
+                write!(f, "{:02X}", byte)?;
+            }
         }
         Ok(())
     }
