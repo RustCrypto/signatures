@@ -169,9 +169,9 @@ where
     /// Sign message prehash using an ephemeral scalar (`k`) derived according
     /// to a variant of RFC 6979 (Section 3.6) which supplies additional
     /// entropy from an RNG.
-    fn try_sign_digest_with_rng(
+    fn try_sign_digest_with_rng<R: CryptoRngCore + ?Sized>(
         &self,
-        rng: &mut impl CryptoRngCore,
+        rng: &mut R,
         msg_digest: D,
     ) -> Result<Signature<C>> {
         let mut ad = FieldBytes::<C>::default();
@@ -190,7 +190,11 @@ where
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
-    fn try_sign_with_rng(&self, rng: &mut impl CryptoRngCore, msg: &[u8]) -> Result<Signature<C>> {
+    fn try_sign_with_rng<R: CryptoRngCore + ?Sized>(
+        &self,
+        rng: &mut R,
+        msg: &[u8],
+    ) -> Result<Signature<C>> {
         self.try_sign_digest_with_rng(rng, C::Digest::new_with_prefix(msg))
     }
 }
@@ -240,9 +244,9 @@ where
     der::MaxSize<C>: ArrayLength<u8>,
     <FieldSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
 {
-    fn try_sign_digest_with_rng(
+    fn try_sign_digest_with_rng<R: CryptoRngCore + ?Sized>(
         &self,
-        rng: &mut impl CryptoRngCore,
+        rng: &mut R,
         msg_digest: D,
     ) -> Result<der::Signature<C>> {
         RandomizedDigestSigner::<D, Signature<C>>::try_sign_digest_with_rng(self, rng, msg_digest)
@@ -261,9 +265,9 @@ where
     der::MaxSize<C>: ArrayLength<u8>,
     <FieldSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
 {
-    fn try_sign_with_rng(
+    fn try_sign_with_rng<R: CryptoRngCore + ?Sized>(
         &self,
-        rng: &mut impl CryptoRngCore,
+        rng: &mut R,
         msg: &[u8],
     ) -> Result<der::Signature<C>> {
         RandomizedSigner::<Signature<C>>::try_sign_with_rng(self, rng, msg).map(Into::into)
