@@ -373,6 +373,22 @@ impl From<&Signature> for SignatureBytes {
     }
 }
 
+impl TryFrom<SignatureBytes> for Signature {
+    type Error = Error;
+
+    fn try_from(bytes: SignatureBytes) -> signature::Result<Self> {
+        Signature::try_from(&bytes)
+    }
+}
+
+impl TryFrom<&SignatureBytes> for Signature {
+    type Error = Error;
+
+    fn try_from(bytes: &SignatureBytes) -> signature::Result<Self> {
+        Signature::from_bytes(bytes)
+    }
+}
+
 impl TryFrom<&[u8]> for Signature {
     type Error = Error;
 
