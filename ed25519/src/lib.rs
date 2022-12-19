@@ -300,9 +300,17 @@ impl Signature {
     pub const BYTE_SIZE: usize = COMPONENT_SIZE * 2;
 
     /// Parse an Ed25519 signature from a byte slice.
-    pub fn from_bytes(bytes: &[u8; Self::BYTE_SIZE]) -> signature::Result<Self> {
+    pub fn from_bytes(bytes: &SignatureBytes) -> signature::Result<Self> {
         let (R, s) = bytes.split_at(COMPONENT_SIZE);
 
+        Self::from_components(
+            R.try_into().map_err(|_| Error::new())?,
+            s.try_into().map_err(|_| Error::new())?,
+        )
+    }
+
+    /// Parse an Ed25519 signature from its `R` and `s` components.
+    pub fn from_components(R: ComponentBytes, s: ComponentBytes) -> signature::Result<Self> {
         // Perform a partial reduction check on the signature's `s` scalar.
         // When properly reduced, at least the three highest bits of the scalar
         // will be unset so as to fit within the order of ~2^(252.5).
@@ -315,10 +323,7 @@ impl Signature {
             return Err(Error::new());
         }
 
-        Ok(Self {
-            R: R.try_into().map_err(|_| Error::new())?,
-            s: s.try_into().map_err(|_| Error::new())?,
-        })
+        Ok(Self { R, s })
     }
 
     /// Bytes for the `R` component of a signature.
