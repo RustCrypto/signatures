@@ -39,7 +39,7 @@ use crate::elliptic_curve::{
 };
 
 #[cfg(feature = "verify")]
-use {crate::verify::VerifyingKey, elliptic_curve::PublicKey, signature::KeypairRef};
+use {crate::VerifyingKey, elliptic_curve::PublicKey, signature::KeypairRef};
 
 /// ECDSA signing key. Generic over elliptic curves.
 ///
