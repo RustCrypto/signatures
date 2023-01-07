@@ -46,7 +46,7 @@ use serdect::serde::{de, ser, Deserialize, Serialize};
 ///
 /// The serialization leverages the encoding used by the [`PublicKey`] type,
 /// which is a binary-oriented ASN.1 DER encoding.
-#[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
+#[cfg_attr(docsrs, doc(cfg(feature = "verifying")))]
 #[derive(Clone, Debug)]
 pub struct VerifyingKey<C>
 where

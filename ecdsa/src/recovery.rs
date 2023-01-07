@@ -2,7 +2,7 @@
 
 use crate::{Error, Result};
 
-#[cfg(feature = "verify")]
+#[cfg(feature = "verifying")]
 use {
     crate::{
         hazmat::{bits2field, DigestPrimitive, VerifyPrimitive},
@@ -71,8 +71,8 @@ impl RecoveryId {
     }
 }
 
-#[cfg(feature = "verify")]
-#[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
+#[cfg(feature = "verifying")]
+#[cfg_attr(docsrs, doc(cfg(feature = "verifying")))]
 impl RecoveryId {
     /// Given a public key, message, and signature, use trial recovery
     /// to determine if a suitable recovery ID exists, or return an error
@@ -157,8 +157,8 @@ impl From<RecoveryId> for u8 {
     }
 }
 
-#[cfg(feature = "verify")]
-#[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
+#[cfg(feature = "verifying")]
+#[cfg_attr(docsrs, doc(cfg(feature = "verifying")))]
 impl<C> VerifyingKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
