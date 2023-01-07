@@ -112,12 +112,13 @@ impl PrehashSigner<Signature> for SigningKey {
 }
 
 impl RandomizedPrehashSigner<Signature> for SigningKey {
-    fn sign_prehash_with_rng<R: CryptoRngCore + ?Sized>(
+    fn sign_prehash_with_rng(
         &self,
-        mut rng: &mut R,
+        mut rng: &mut impl CryptoRngCore,
         prehash: &[u8],
     ) -> Result<Signature, signature::Error> {
         let components = self.verifying_key.components();
+
         if let Some(k_kinv) = crate::generate::secret_number(&mut rng, components) {
             self.sign_prehashed(k_kinv, prehash)
         } else {
@@ -142,9 +143,9 @@ impl<D> RandomizedDigestSigner<D, Signature> for SigningKey
 where
     D: Digest,
 {
-    fn try_sign_digest_with_rng<R: CryptoRngCore + ?Sized>(
+    fn try_sign_digest_with_rng(
         &self,
-        mut rng: &mut R,
+        mut rng: &mut impl CryptoRngCore,
         digest: D,
     ) -> Result<Signature, signature::Error> {
         let ks = crate::generate::secret_number(&mut rng, self.verifying_key().components())
