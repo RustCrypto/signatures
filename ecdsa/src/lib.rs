@@ -72,10 +72,10 @@ pub mod dev;
 pub mod hazmat;
 
 #[cfg(feature = "sign")]
-mod sign;
+mod signing;
 
 #[cfg(feature = "verify")]
-mod verify;
+mod verifying;
 
 pub use crate::recovery::RecoveryId;
 
@@ -87,11 +87,11 @@ pub use signature::{self, Error, Result, SignatureEncoding};
 
 #[cfg(feature = "sign")]
 #[cfg_attr(docsrs, doc(cfg(feature = "sign")))]
-pub use crate::sign::SigningKey;
+pub use crate::signing::SigningKey;
 
 #[cfg(feature = "verify")]
 #[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
-pub use crate::verify::VerifyingKey;
+pub use crate::verifying::VerifyingKey;
 
 use core::{
     fmt::{self, Debug},
