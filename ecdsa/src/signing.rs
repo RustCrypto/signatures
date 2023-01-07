@@ -38,7 +38,7 @@ use crate::elliptic_curve::{
     AffinePoint,
 };
 
-#[cfg(feature = "verify")]
+#[cfg(feature = "verifying")]
 use {crate::VerifyingKey, elliptic_curve::PublicKey, signature::KeypairRef};
 
 /// ECDSA signing key. Generic over elliptic curves.
@@ -46,7 +46,7 @@ use {crate::VerifyingKey, elliptic_curve::PublicKey, signature::KeypairRef};
 /// Requires an [`elliptic_curve::ProjectiveArithmetic`] impl on the curve, and a
 /// [`SignPrimitive`] impl on its associated `Scalar` type.
 #[derive(Clone)]
-#[cfg_attr(docsrs, doc(cfg(feature = "sign")))]
+#[cfg_attr(docsrs, doc(cfg(feature = "signing")))]
 pub struct SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
@@ -57,7 +57,7 @@ where
     secret_scalar: NonZeroScalar<C>,
 
     /// Verifying key which corresponds to this signing key.
-    #[cfg(feature = "verify")]
+    #[cfg(feature = "verifying")]
     verifying_key: VerifyingKey<C>,
 }
 
@@ -96,8 +96,8 @@ where
     }
 
     /// Get the [`VerifyingKey`] which corresponds to this [`SigningKey`].
-    #[cfg(feature = "verify")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
+    #[cfg(feature = "verifying")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "verifying")))]
     pub fn verifying_key(&self) -> &VerifyingKey<C> {
         &self.verifying_key
     }
@@ -274,8 +274,8 @@ where
 // Other trait impls
 //
 
-#[cfg(feature = "verify")]
-#[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
+#[cfg(feature = "verifying")]
+#[cfg_attr(docsrs, doc(cfg(feature = "verifying")))]
 impl<C> AsRef<VerifyingKey<C>> for SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
@@ -348,12 +348,12 @@ where
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn from(secret_scalar: NonZeroScalar<C>) -> Self {
-        #[cfg(feature = "verify")]
+        #[cfg(feature = "verifying")]
         let public_key = PublicKey::from_secret_scalar(&secret_scalar);
 
         Self {
             secret_scalar,
-            #[cfg(feature = "verify")]
+            #[cfg(feature = "verifying")]
             verifying_key: public_key.into(),
         }
     }
@@ -424,7 +424,7 @@ where
 {
 }
 
-#[cfg(feature = "verify")]
+#[cfg(feature = "verifying")]
 impl<C> From<SigningKey<C>> for VerifyingKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
@@ -436,7 +436,7 @@ where
     }
 }
 
-#[cfg(feature = "verify")]
+#[cfg(feature = "verifying")]
 impl<C> From<&SigningKey<C>> for VerifyingKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
@@ -448,8 +448,8 @@ where
     }
 }
 
-#[cfg(feature = "verify")]
-#[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
+#[cfg(feature = "verifying")]
+#[cfg_attr(docsrs, doc(cfg(feature = "verifying")))]
 impl<C> KeypairRef for SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,

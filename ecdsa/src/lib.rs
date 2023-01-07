@@ -71,10 +71,10 @@ pub mod dev;
 #[cfg_attr(docsrs, doc(cfg(feature = "hazmat")))]
 pub mod hazmat;
 
-#[cfg(feature = "sign")]
+#[cfg(feature = "signing")]
 mod signing;
 
-#[cfg(feature = "verify")]
+#[cfg(feature = "verifying")]
 mod verifying;
 
 pub use crate::recovery::RecoveryId;
@@ -85,12 +85,12 @@ pub use elliptic_curve::{self, sec1::EncodedPoint, PrimeCurve};
 // Re-export the `signature` crate (and select types)
 pub use signature::{self, Error, Result, SignatureEncoding};
 
-#[cfg(feature = "sign")]
-#[cfg_attr(docsrs, doc(cfg(feature = "sign")))]
+#[cfg(feature = "signing")]
+#[cfg_attr(docsrs, doc(cfg(feature = "signing")))]
 pub use crate::signing::SigningKey;
 
-#[cfg(feature = "verify")]
-#[cfg_attr(docsrs, doc(cfg(feature = "verify")))]
+#[cfg(feature = "verifying")]
+#[cfg_attr(docsrs, doc(cfg(feature = "verifying")))]
 pub use crate::verifying::VerifyingKey;
 
 use core::{

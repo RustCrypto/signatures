@@ -32,6 +32,8 @@ sha2 = { version = "0.10", default-features = false }
 [features]
 default = ["digest"]
 alloc = ["signature/alloc"]
+std = ["alloc", "elliptic-curve/std", "signature/std"]
+
 arithmetic = ["elliptic-curve/arithmetic"]
 dev = ["arithmetic", "digest", "elliptic-curve/dev", "hazmat"]
 digest = ["signature/digest-preview"]
@@ -39,9 +41,8 @@ hazmat = []
 pkcs8 = ["elliptic-curve/pkcs8", "der"]
 pem = ["elliptic-curve/pem", "pkcs8"]
 serde = ["elliptic-curve/serde", "serdect"]
-sign = ["arithmetic", "digest", "hazmat", "rfc6979"]
-std = ["alloc", "elliptic-curve/std", "signature/std"]
-verify = ["arithmetic", "digest", "hazmat"]
+signing = ["arithmetic", "digest", "hazmat", "rfc6979"]
+verifying = ["arithmetic", "digest", "hazmat"]
 
 [package.metadata.docs.rs]
 all-features = true
