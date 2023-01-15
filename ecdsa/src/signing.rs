@@ -1,6 +1,4 @@
-//! ECDSA signing key.
-
-// TODO(tarcieri): support for hardware crypto accelerators
+//! ECDSA signing: producing signatures using a [`SigningKey`].
 
 use crate::{
     hazmat::{bits2field, DigestPrimitive, SignPrimitive},
@@ -46,7 +44,6 @@ use {crate::VerifyingKey, elliptic_curve::PublicKey, signature::KeypairRef};
 /// Requires an [`elliptic_curve::ProjectiveArithmetic`] impl on the curve, and a
 /// [`SignPrimitive`] impl on its associated `Scalar` type.
 #[derive(Clone)]
-#[cfg_attr(docsrs, doc(cfg(feature = "signing")))]
 pub struct SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
@@ -97,7 +94,6 @@ where
 
     /// Get the [`VerifyingKey`] which corresponds to this [`SigningKey`].
     #[cfg(feature = "verifying")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "verifying")))]
     pub fn verifying_key(&self) -> &VerifyingKey<C> {
         &self.verifying_key
     }
@@ -196,7 +192,6 @@ where
 }
 
 #[cfg(feature = "der")]
-#[cfg_attr(docsrs, doc(cfg(feature = "der")))]
 impl<C> PrehashSigner<der::Signature<C>> for SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic + DigestPrimitive,
@@ -213,7 +208,6 @@ where
 }
 
 #[cfg(feature = "der")]
-#[cfg_attr(docsrs, doc(cfg(feature = "der")))]
 impl<C> Signer<der::Signature<C>> for SigningKey<C>
 where
     Self: DigestSigner<C::Digest, Signature<C>>,
@@ -229,7 +223,6 @@ where
 }
 
 #[cfg(feature = "der")]
-#[cfg_attr(docsrs, doc(cfg(feature = "der")))]
 impl<C, D> RandomizedDigestSigner<D, der::Signature<C>> for SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
@@ -251,7 +244,6 @@ where
 }
 
 #[cfg(feature = "der")]
-#[cfg_attr(docsrs, doc(cfg(feature = "der")))]
 impl<C> RandomizedSigner<der::Signature<C>> for SigningKey<C>
 where
     Self: RandomizedDigestSigner<C::Digest, Signature<C>>,
@@ -275,7 +267,6 @@ where
 //
 
 #[cfg(feature = "verifying")]
-#[cfg_attr(docsrs, doc(cfg(feature = "verifying")))]
 impl<C> AsRef<VerifyingKey<C>> for SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
@@ -449,7 +440,6 @@ where
 }
 
 #[cfg(feature = "verifying")]
-#[cfg_attr(docsrs, doc(cfg(feature = "verifying")))]
 impl<C> KeypairRef for SigningKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
@@ -460,7 +450,6 @@ where
 }
 
 #[cfg(feature = "pkcs8")]
-#[cfg_attr(docsrs, doc(cfg(feature = "pkcs8")))]
 impl<C> TryFrom<pkcs8::PrivateKeyInfo<'_>> for SigningKey<C>
 where
     C: PrimeCurve + AssociatedOid + ProjectiveArithmetic,
@@ -477,7 +466,6 @@ where
 }
 
 #[cfg(feature = "pem")]
-#[cfg_attr(docsrs, doc(cfg(feature = "pem")))]
 impl<C> EncodePrivateKey for SigningKey<C>
 where
     C: AssociatedOid + PrimeCurve + ProjectiveArithmetic,
@@ -492,7 +480,6 @@ where
 }
 
 #[cfg(feature = "pem")]
-#[cfg_attr(docsrs, doc(cfg(feature = "pem")))]
 impl<C> FromStr for SigningKey<C>
 where
     C: PrimeCurve + AssociatedOid + ProjectiveArithmetic,
@@ -509,7 +496,6 @@ where
 }
 
 #[cfg(feature = "pkcs8")]
-#[cfg_attr(docsrs, doc(cfg(feature = "pkcs8")))]
 impl<C> DecodePrivateKey for SigningKey<C>
 where
     C: PrimeCurve + AssociatedOid + ProjectiveArithmetic,

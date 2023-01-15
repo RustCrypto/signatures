@@ -50,7 +50,6 @@ use elliptic_curve::ScalarCore;
 /// This trait is intended to be implemented on a type with access to the
 /// secret scalar via `&self`, such as particular curve's `Scalar` type.
 #[cfg(feature = "arithmetic")]
-#[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
 pub trait SignPrimitive<C>: Field + Into<FieldBytes<C>> + Reduce<C::UInt> + Sized
 where
     C: PrimeCurve + ProjectiveArithmetic + ScalarArithmetic<Scalar = Self>,
@@ -113,7 +112,6 @@ where
     ///
     /// [RFC6979]: https://datatracker.ietf.org/doc/html/rfc6979
     #[cfg(all(feature = "rfc6979"))]
-    #[cfg_attr(docsrs, doc(cfg(feature = "rfc6979")))]
     fn try_sign_prehashed_rfc6979<D>(
         &self,
         z: FieldBytes<C>,
@@ -135,7 +133,6 @@ where
     ///
     /// [RFC6979]: https://datatracker.ietf.org/doc/html/rfc6979
     #[cfg(all(feature = "rfc6979"))]
-    #[cfg_attr(docsrs, doc(cfg(feature = "rfc6979")))]
     fn try_sign_digest_rfc6979<D>(
         &self,
         msg_digest: D,
@@ -156,7 +153,6 @@ where
 /// the affine point represeting the public key via `&self`, such as a
 /// particular curve's `AffinePoint` type.
 #[cfg(feature = "arithmetic")]
-#[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
 pub trait VerifyPrimitive<C>: AffineXCoordinate<C> + Copy + Sized
 where
     C: PrimeCurve + AffineArithmetic<AffinePoint = Self> + ProjectiveArithmetic,
@@ -194,7 +190,6 @@ where
 
     /// Verify message digest against the provided signature.
     #[cfg(feature = "digest")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "digest")))]
     fn verify_digest<D>(&self, msg_digest: D, sig: &Signature<C>) -> Result<()>
     where
         D: FixedOutput<OutputSize = FieldSize<C>>,
@@ -214,7 +209,6 @@ where
 ///
 /// [1]: https://github.com/RustCrypto/traits/tree/master/signature/derive
 #[cfg(feature = "digest")]
-#[cfg_attr(docsrs, doc(cfg(feature = "digest")))]
 pub trait DigestPrimitive: PrimeCurve {
     /// Preferred digest to use when computing ECDSA signatures for this
     /// elliptic curve. This is typically a member of the SHA-2 family.

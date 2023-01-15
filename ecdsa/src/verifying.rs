@@ -1,4 +1,4 @@
-//! ECDSA verification key.
+//! ECDSA verifying: checking signatures are authentic using a [`VerifyingKey`].
 
 use crate::{
     hazmat::{bits2field, DigestPrimitive, VerifyPrimitive},
@@ -30,7 +30,6 @@ use elliptic_curve::pkcs8::EncodePublicKey;
 use core::str::FromStr;
 
 #[cfg(all(feature = "pem", feature = "serde"))]
-#[cfg_attr(docsrs, doc(cfg(all(feature = "pem", feature = "serde"))))]
 use serdect::serde::{de, ser, Deserialize, Serialize};
 
 /// ECDSA verification key (i.e. public key). Generic over elliptic curves.
@@ -46,7 +45,6 @@ use serdect::serde::{de, ser, Deserialize, Serialize};
 ///
 /// The serialization leverages the encoding used by the [`PublicKey`] type,
 /// which is a binary-oriented ASN.1 DER encoding.
-#[cfg_attr(docsrs, doc(cfg(feature = "verifying")))]
 #[derive(Clone, Debug)]
 pub struct VerifyingKey<C>
 where
@@ -141,7 +139,6 @@ where
 }
 
 #[cfg(feature = "der")]
-#[cfg_attr(docsrs, doc(cfg(feature = "der")))]
 impl<C, D> DigestVerifier<D, der::Signature<C>> for VerifyingKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,
@@ -159,7 +156,6 @@ where
 }
 
 #[cfg(feature = "der")]
-#[cfg_attr(docsrs, doc(cfg(feature = "der")))]
 impl<C> PrehashVerifier<der::Signature<C>> for VerifyingKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic + DigestPrimitive,
@@ -176,7 +172,6 @@ where
 }
 
 #[cfg(feature = "der")]
-#[cfg_attr(docsrs, doc(cfg(feature = "der")))]
 impl<C> Verifier<der::Signature<C>> for VerifyingKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic + DigestPrimitive,
@@ -304,7 +299,6 @@ where
 }
 
 #[cfg(feature = "pkcs8")]
-#[cfg_attr(docsrs, doc(cfg(feature = "pkcs8")))]
 impl<C> TryFrom<pkcs8::SubjectPublicKeyInfo<'_>> for VerifyingKey<C>
 where
     C: PrimeCurve + AssociatedOid + ProjectiveArithmetic + PointCompression,
@@ -319,7 +313,6 @@ where
 }
 
 #[cfg(feature = "pkcs8")]
-#[cfg_attr(docsrs, doc(cfg(feature = "pkcs8")))]
 impl<C> DecodePublicKey for VerifyingKey<C>
 where
     C: PrimeCurve + AssociatedOid + ProjectiveArithmetic + PointCompression,
@@ -329,7 +322,6 @@ where
 }
 
 #[cfg(feature = "pem")]
-#[cfg_attr(docsrs, doc(cfg(feature = "pem")))]
 impl<C> EncodePublicKey for VerifyingKey<C>
 where
     C: PrimeCurve + AssociatedOid + ProjectiveArithmetic + PointCompression,
@@ -342,7 +334,6 @@ where
 }
 
 #[cfg(feature = "pem")]
-#[cfg_attr(docsrs, doc(cfg(feature = "pem")))]
 impl<C> FromStr for VerifyingKey<C>
 where
     C: PrimeCurve + AssociatedOid + ProjectiveArithmetic + PointCompression,
@@ -357,7 +348,6 @@ where
 }
 
 #[cfg(all(feature = "pem", feature = "serde"))]
-#[cfg_attr(docsrs, doc(cfg(all(feature = "pem", feature = "serde"))))]
 impl<C> Serialize for VerifyingKey<C>
 where
     C: PrimeCurve + AssociatedOid + ProjectiveArithmetic + PointCompression,
@@ -373,7 +363,6 @@ where
 }
 
 #[cfg(all(feature = "pem", feature = "serde"))]
-#[cfg_attr(docsrs, doc(cfg(all(feature = "pem", feature = "serde"))))]
 impl<'de, C> Deserialize<'de> for VerifyingKey<C>
 where
     C: PrimeCurve + AssociatedOid + ProjectiveArithmetic + PointCompression,

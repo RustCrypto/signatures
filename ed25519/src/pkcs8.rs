@@ -121,7 +121,6 @@ impl Drop for KeypairBytes {
 }
 
 #[cfg(feature = "alloc")]
-#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 impl EncodePrivateKey for KeypairBytes {
     fn to_pkcs8_der(&self) -> Result<SecretDocument> {
         // Serialize private key as nested OCTET STRING
@@ -198,7 +197,6 @@ impl fmt::Debug for KeypairBytes {
 }
 
 #[cfg(feature = "pem")]
-#[cfg_attr(docsrs, doc(cfg(feature = "pem")))]
 impl str::FromStr for KeypairBytes {
     type Err = Error;
 
@@ -245,7 +243,6 @@ impl AsRef<[u8; Self::BYTE_SIZE]> for PublicKeyBytes {
 impl DecodePublicKey for PublicKeyBytes {}
 
 #[cfg(feature = "alloc")]
-#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 impl EncodePublicKey for PublicKeyBytes {
     fn to_public_key_der(&self) -> pkcs8::spki::Result<Document> {
         pkcs8::SubjectPublicKeyInfo {
@@ -310,7 +307,6 @@ impl fmt::Debug for PublicKeyBytes {
 }
 
 #[cfg(feature = "pem")]
-#[cfg_attr(docsrs, doc(cfg(feature = "pem")))]
 impl str::FromStr for PublicKeyBytes {
     type Err = pkcs8::spki::Error;
 
@@ -320,7 +316,6 @@ impl str::FromStr for PublicKeyBytes {
 }
 
 #[cfg(feature = "pem")]
-#[cfg_attr(docsrs, doc(cfg(feature = "pem")))]
 impl ToString for PublicKeyBytes {
     fn to_string(&self) -> String {
         self.to_public_key_pem(Default::default())
@@ -329,7 +324,6 @@ impl ToString for PublicKeyBytes {
 }
 
 #[cfg(feature = "pem")]
-#[cfg_attr(docsrs, doc(cfg(feature = "pem")))]
 #[cfg(test)]
 mod tests {
     use super::{KeypairBytes, PublicKeyBytes};
