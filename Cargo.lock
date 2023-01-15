@@ -153,7 +153,7 @@ dependencies = [
  "rfc6979",
  "sha1",
  "sha2 0.10.6",
- "signature 2.0.0-rc.1",
+ "signature 2.0.0",
  "zeroize",
 ]
 
@@ -167,7 +167,7 @@ dependencies = [
  "rfc6979",
  "serdect",
  "sha2 0.10.6",
- "signature 2.0.0-rc.1",
+ "signature 2.0.0",
 ]
 
 [[package]]
@@ -190,7 +190,7 @@ dependencies = [
  "rand_core 0.5.1",
  "serde",
  "serde_bytes",
- "signature 2.0.0-rc.1",
+ "signature 2.0.0",
  "zeroize",
 ]
 
@@ -580,9 +580,9 @@ checksum = "74233d3b3b2f6d4b006dc19dee745e73e2a6bfb6f93607cd3b02bd5b00797d7c"
 
 [[package]]
 name = "signature"
-version = "2.0.0-rc.1"
+version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a27af965d7572471973d1307767b3d7ecaff1b7a26674bbbe16877e5dc4cc60d"
+checksum = "8fe458c98333f9c8152221191a77e2a44e8325d0193484af2e9421a53019e57d"
 dependencies = [
  "digest 0.10.6",
  "rand_core 0.6.4",
