@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.5.0 (2023-01-15)
+### Changed
+- Use `&mut impl CryptoRngCore` ([#579])
+- Bump `signature` crate dependency to v2.0 ([#614])
+
+### Removed
+- Use of `opaque-debug` ([#572])
+
+[#572]: https://github.com/RustCrypto/signatures/pull/572
+[#579]: https://github.com/RustCrypto/signatures/pull/579
+[#614]: https://github.com/RustCrypto/signatures/pull/614
+
 ## 0.4.2 (2022-10-29)
 ### Added
 - Expose signing and verifying of prehashed hash value ([#558])
