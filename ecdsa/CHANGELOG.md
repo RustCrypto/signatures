@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.15.0 (2023-01-15)
+### Added
+- `DigestPrimitive::Digest` now has bounds that work with RFC6979 ([#568])
+- `*Signer`/`*Verifier` impls for `der::Signature` ([#569])
+- `VerifyingKey` recovery support ([#576])
+- Trial recovery support ([#580])
+
+### Changed
+- Signature now internally structured with `r` and `s` components ([#565])
+- `SigningKey::verifying_key` now returns a reference ([#567])
+- Refactor `prehash_to_field_bytes` to `bits2field` free function ([#574])
+- Rename `sign` feature to `signing` ([#610])
+- Rename `verify` feature to `verifying` features ([#610])
+- Bump `signature` crate dependency to v2.0 ([#614])
+
+[#565]: https://github.com/RustCrypto/signatures/pull/565
+[#567]: https://github.com/RustCrypto/signatures/pull/567
+[#574]: https://github.com/RustCrypto/signatures/pull/574
+[#580]: https://github.com/RustCrypto/signatures/pull/580
+[#568]: https://github.com/RustCrypto/signatures/pull/568
+[#569]: https://github.com/RustCrypto/signatures/pull/569
+[#576]: https://github.com/RustCrypto/signatures/pull/576
+[#580]: https://github.com/RustCrypto/signatures/pull/580
+[#610]: https://github.com/RustCrypto/signatures/pull/610
+[#614]: https://github.com/RustCrypto/signatures/pull/614
+
 ## 0.14.8 (2022-09-27)
 ### Added
 - Impl `From<SigningKey>` for `SecretKey` ([#548])
