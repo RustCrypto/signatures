@@ -4,25 +4,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 1.5.2 (2022-05-16)
+## 1.5.3 (2023-01-15)
+### Changed
+- Fix `signature` version requirement which accidentally matched v2 or above ([#616])
+
+[#616]: https://github.com/RustCrypto/signatures/pull/616
+
+## 1.5.2 (2022-05-16) [YANKED]
 ### Fixed
 - Overflow handling in `serde` deserializers ([#482])
 
 [#482]: https://github.com/RustCrypto/signatures/pull/482
 
-## 1.5.1 (2022-05-15)
+## 1.5.1 (2022-05-15) [YANKED]
 ### Fixed
 - Use `TryInto` in `serde` deserializers ([#479])
 
 [#479]: https://github.com/RustCrypto/signatures/pull/479
 
-## 1.5.0 (2022-05-09)
+## 1.5.0 (2022-05-09) [YANKED]
 ### Changed
 - Bump `pkcs8` dependency to v0.9 ([#473])
 
 [#473]: https://github.com/RustCrypto/signatures/pull/473
 
-## 1.4.1 (2022-03-18)
+## 1.4.1 (2022-03-18) [YANKED]
 ### Added
 - License files ([#447])
 - `pkcs8::PublicKeyBytes` type ([#455])
@@ -57,7 +63,7 @@ be accompanied by a minor version bump.
 [#412]: https://github.com/RustCrypto/signatures/pull/412
 [#428]: https://github.com/RustCrypto/signatures/pull/428
 
-## 1.3.0 (2021-11-18)
+## 1.3.0 (2021-11-18) [YANKED]
 ### Added
 - `Signature::BYTE_SIZE` constant ([#380])
 - PKCS#8 support via `KeypairBytes` type ([#381])
