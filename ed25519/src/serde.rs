@@ -7,7 +7,6 @@ use core::fmt;
 #[cfg(feature = "serde_bytes")]
 use serde_bytes_crate as serde_bytes;
 
-#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 impl Serialize for Signature {
     fn serialize<S: ser::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         use ser::SerializeTuple;
@@ -24,7 +23,6 @@ impl Serialize for Signature {
 
 // serde lacks support for deserializing arrays larger than 32-bytes
 // see: <https://github.com/serde-rs/serde/issues/631>
-#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 impl<'de> Deserialize<'de> for Signature {
     fn deserialize<D: de::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         struct ByteArrayVisitor;
@@ -59,7 +57,6 @@ impl<'de> Deserialize<'de> for Signature {
 }
 
 #[cfg(feature = "serde_bytes")]
-#[cfg_attr(docsrs, doc(cfg(feature = "serde_bytes")))]
 impl serde_bytes::Serialize for Signature {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -70,7 +67,6 @@ impl serde_bytes::Serialize for Signature {
 }
 
 #[cfg(feature = "serde_bytes")]
-#[cfg_attr(docsrs, doc(cfg(feature = "serde_bytes")))]
 impl<'de> serde_bytes::Deserialize<'de> for Signature {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where

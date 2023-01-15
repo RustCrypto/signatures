@@ -1,5 +1,5 @@
 #![no_std]
-#![cfg_attr(docsrs, feature(doc_cfg))]
+#![cfg_attr(docsrs, feature(doc_auto_cfg))]
 #![doc = include_str!("../README.md")]
 #![doc(
     html_logo_url = "https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg",
@@ -60,20 +60,13 @@ extern crate alloc;
 mod recovery;
 
 #[cfg(feature = "der")]
-#[cfg_attr(docsrs, doc(cfg(feature = "der")))]
 pub mod der;
-
 #[cfg(feature = "dev")]
-#[cfg_attr(docsrs, doc(cfg(feature = "dev")))]
 pub mod dev;
-
 #[cfg(feature = "hazmat")]
-#[cfg_attr(docsrs, doc(cfg(feature = "hazmat")))]
 pub mod hazmat;
-
 #[cfg(feature = "signing")]
 mod signing;
-
 #[cfg(feature = "verifying")]
 mod verifying;
 
@@ -86,11 +79,8 @@ pub use elliptic_curve::{self, sec1::EncodedPoint, PrimeCurve};
 pub use signature::{self, Error, Result, SignatureEncoding};
 
 #[cfg(feature = "signing")]
-#[cfg_attr(docsrs, doc(cfg(feature = "signing")))]
 pub use crate::signing::SigningKey;
-
 #[cfg(feature = "verifying")]
-#[cfg_attr(docsrs, doc(cfg(feature = "verifying")))]
 pub use crate::verifying::VerifyingKey;
 
 use core::{
@@ -156,7 +146,6 @@ where
 {
     /// Parse a signature from ASN.1 DER
     #[cfg(feature = "der")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "der")))]
     pub fn from_der(bytes: &[u8]) -> Result<Self>
     where
         der::MaxSize<C>: ArrayLength<u8>,
@@ -187,7 +176,6 @@ where
 
     /// Serialize this signature as ASN.1 DER.
     #[cfg(feature = "der")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "der")))]
     pub fn to_der(&self) -> der::Signature<C>
     where
         der::MaxSize<C>: ArrayLength<u8>,
@@ -199,14 +187,12 @@ where
 
     /// Convert this signature into a byte vector.
     #[cfg(feature = "alloc")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
     pub fn to_vec(&self) -> Vec<u8> {
         self.to_bytes().to_vec()
     }
 }
 
 #[cfg(feature = "arithmetic")]
-#[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
 impl<C> Signature<C>
 where
     C: PrimeCurve + ScalarArithmetic,
@@ -347,7 +333,6 @@ where
 }
 
 #[cfg(feature = "arithmetic")]
-#[cfg_attr(docsrs, doc(cfg(feature = "arithmetic")))]
 impl<C> str::FromStr for Signature<C>
 where
     C: PrimeCurve + ScalarArithmetic,
@@ -384,7 +369,6 @@ where
 }
 
 #[cfg(feature = "serde")]
-#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 impl<C> Serialize for Signature<C>
 where
     C: PrimeCurve,
@@ -399,7 +383,6 @@ where
 }
 
 #[cfg(feature = "serde")]
-#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 impl<'de, C> Deserialize<'de> for Signature<C>
 where
     C: PrimeCurve,

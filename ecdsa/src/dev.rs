@@ -29,7 +29,6 @@ pub struct TestVector {
 
 /// Define ECDSA signing test.
 #[macro_export]
-#[cfg_attr(docsrs, doc(cfg(feature = "dev")))]
 macro_rules! new_signing_test {
     ($curve:path, $vectors:expr) => {
         use $crate::{
@@ -65,7 +64,6 @@ macro_rules! new_signing_test {
 
 /// Define ECDSA verification test.
 #[macro_export]
-#[cfg_attr(docsrs, doc(cfg(feature = "dev")))]
 macro_rules! new_verification_test {
     ($curve:path, $vectors:expr) => {
         use $crate::{
@@ -133,7 +131,6 @@ macro_rules! new_verification_test {
 
 /// Define a Wycheproof verification test.
 #[macro_export]
-#[cfg_attr(docsrs, doc(cfg(feature = "dev")))]
 macro_rules! new_wycheproof_test {
     ($name:ident, $test_name: expr, $curve:path) => {
         use $crate::{elliptic_curve::sec1::EncodedPoint, signature::Verifier, Signature};

@@ -72,7 +72,6 @@ impl RecoveryId {
 }
 
 #[cfg(feature = "verifying")]
-#[cfg_attr(docsrs, doc(cfg(feature = "verifying")))]
 impl RecoveryId {
     /// Given a public key, message, and signature, use trial recovery
     /// to determine if a suitable recovery ID exists, or return an error
@@ -158,7 +157,6 @@ impl From<RecoveryId> for u8 {
 }
 
 #[cfg(feature = "verifying")]
-#[cfg_attr(docsrs, doc(cfg(feature = "verifying")))]
 impl<C> VerifyingKey<C>
 where
     C: PrimeCurve + ProjectiveArithmetic,

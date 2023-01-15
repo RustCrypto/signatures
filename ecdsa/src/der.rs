@@ -222,7 +222,6 @@ where
 }
 
 #[cfg(feature = "alloc")]
-#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 impl<C> From<Signature<C>> for Box<[u8]>
 where
     C: PrimeCurve,
@@ -235,7 +234,6 @@ where
 }
 
 #[cfg(feature = "alloc")]
-#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 impl<C> SignatureEncoding for Signature<C>
 where
     C: PrimeCurve,
@@ -250,7 +248,6 @@ where
 }
 
 #[cfg(feature = "serde")]
-#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 impl<C> Serialize for Signature<C>
 where
     C: PrimeCurve,
@@ -266,7 +263,6 @@ where
 }
 
 #[cfg(feature = "serde")]
-#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 impl<'de, C> Deserialize<'de> for Signature<C>
 where
     C: PrimeCurve,

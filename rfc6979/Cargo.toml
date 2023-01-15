@@ -21,7 +21,3 @@ zeroize = { version = "1", default-features = false }
 
 [dev-dependencies]
 sha2 = "0.10"
-
-[package.metadata.docs.rs]
-all-features = true
-rustdoc-args = ["--cfg", "docsrs"]
