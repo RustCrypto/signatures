@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.0.0 (2023-01-15)
+### Added
+- `pkcs8` re-exports ([#589], [#590], [#591], [#592])
+- `Signature::from_components` method ([#600])
+- Impl `TryFrom<SignatureBytes>` for `Signature` ([#601])
+
+### Changed
+- Use `PublicKeyBytes` as `KeypairBytes::public_key` ([#570])
+- `Signature::from_bytes` takes `SignatureBytes` as an argument ([#593])
+- Store `R` and `s` components separately ([#595])
+- Bump `signature` crate dependency to v2.0 ([#614])
+
+### Removed
+- Deprecated `From<[u8; 64]>` conversion for signature ([#564])
+- `AsRef<[u8]>` impl on `signature` ([#595])
+
+[#564]: https://github.com/RustCrypto/signatures/pull/564
+[#570]: https://github.com/RustCrypto/signatures/pull/570
+[#589]: https://github.com/RustCrypto/signatures/pull/589
+[#590]: https://github.com/RustCrypto/signatures/pull/590
+[#591]: https://github.com/RustCrypto/signatures/pull/591
+[#592]: https://github.com/RustCrypto/signatures/pull/592
+[#593]: https://github.com/RustCrypto/signatures/pull/593
+[#595]: https://github.com/RustCrypto/signatures/pull/595
+[#600]: https://github.com/RustCrypto/signatures/pull/600
+[#601]: https://github.com/RustCrypto/signatures/pull/601
+[#614]: https://github.com/RustCrypto/signatures/pull/614
+
 ## 1.5.3 (2023-01-15)
 ### Changed
 - Fix `signature` version requirement which accidentally matched v2 or above ([#616])
