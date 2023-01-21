@@ -59,7 +59,7 @@ impl VerifyingKey {
 
         let w = s.mod_inverse(q)?.to_biguint().unwrap();
 
-        let n = (q.bits() / 8) as usize;
+        let n = q.bits() / 8;
         let block_size = hash.len(); // Hash function output size
 
         let z_len = min(n, block_size);

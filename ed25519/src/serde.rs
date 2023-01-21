@@ -4,9 +4,6 @@ use crate::{Signature, SignatureBytes};
 use ::serde::{de, ser, Deserialize, Serialize};
 use core::fmt;
 
-#[cfg(feature = "serde_bytes")]
-use serde_bytes_crate as serde_bytes;
-
 impl Serialize for Signature {
     fn serialize<S: ser::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         use ser::SerializeTuple;
