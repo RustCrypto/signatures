@@ -48,7 +48,7 @@
 //! }
 //!
 //! pub struct HelloVerifier<V> {
-//!     pub verify_key: V
+//!     pub verifying_key: V
 //! }
 //!
 //! impl<V> HelloVerifier<V>
@@ -60,7 +60,7 @@
 //!         person: &str,
 //!         signature: &ed25519::Signature
 //!     ) -> Result<(), ed25519::Error> {
-//!         self.verify_key.verify(format_message(person).as_bytes(), signature)
+//!         self.verifying_key.verify(format_message(person).as_bytes(), signature)
 //!     }
 //! }
 //!
@@ -103,7 +103,7 @@
 // //! # }
 // //! #
 // //! # pub struct HelloVerifier<V> {
-// //! #     pub verify_key: V
+// //! #     pub verifying_key: V
 // //! # }
 // //! #
 // //! # impl<V> HelloVerifier<V>
@@ -115,7 +115,7 @@
 // //! #         person: &str,
 // //! #         signature: &Signature
 // //! #     ) -> Result<(), ed25519::Error> {
-// //! #         self.verify_key.verify(format_message(person).as_bytes(), signature)
+// //! #         self.verifying_key.verify(format_message(person).as_bytes(), signature)
 // //! #     }
 // //! # }
 // //! #
@@ -137,8 +137,8 @@
 // //! /// as the signature verification provider.
 // //! pub type DalekHelloVerifier = HelloVerifier<ed25519_dalek::PublicKey>;
 // //!
-// //! let verify_key: ed25519_dalek::PublicKey = signer.signing_key.public;
-// //! let verifier = DalekHelloVerifier { verify_key };
+// //! let verifying_key: ed25519_dalek::PublicKey = signer.signing_key.public;
+// //! let verifier = DalekHelloVerifier { verifying_key };
 // //! assert!(verifier.verify(person, &signature).is_ok());
 // //! ```
 //!
@@ -152,7 +152,7 @@
 //! instantiate and use the previously defined `HelloSigner` and `HelloVerifier`
 //! types with [`ring-compat`] as the signing/verification provider:
 //!
-//! ```ignore
+//! ```
 //! use ring_compat::signature::{
 //!     ed25519::{Signature, SigningKey, VerifyingKey},
 //!     Signer, Verifier
@@ -178,7 +178,7 @@
 //! # }
 //! #
 //! # pub struct HelloVerifier<V> {
-//! #     pub verify_key: V
+//! #     pub verifying_key: V
 //! # }
 //! #
 //! # impl<V> HelloVerifier<V>
@@ -190,7 +190,7 @@
 //! #         person: &str,
 //! #         signature: &Signature
 //! #     ) -> Result<(), ed25519::Error> {
-//! #         self.verify_key.verify(format_message(person).as_bytes(), signature)
+//! #         self.verifying_key.verify(format_message(person).as_bytes(), signature)
 //! #     }
 //! # }
 //! #
@@ -207,7 +207,7 @@
 //! OsRng.fill_bytes(&mut ed25519_seed);
 //!
 //! let signing_key = SigningKey::from_seed(&ed25519_seed).unwrap();
-//! let verify_key = signing_key.verify_key();
+//! let verifying_key = signing_key.verifying_key();
 //!
 //! let signer = RingHelloSigner { signing_key };
 //! let person = "Joe"; // Message to sign
@@ -217,7 +217,7 @@
 //! /// as the signature verification provider.
 //! pub type RingHelloVerifier = HelloVerifier<VerifyingKey>;
 //!
-//! let verifier = RingHelloVerifier { verify_key };
+//! let verifier = RingHelloVerifier { verifying_key };
 //! assert!(verifier.verify(person, &signature).is_ok());
 //! ```
 //!
