@@ -397,9 +397,7 @@ impl TryFrom<&[u8]> for Signature {
     type Error = Error;
 
     fn try_from(bytes: &[u8]) -> signature::Result<Self> {
-        SignatureBytes::try_from(bytes)
-            .map(Into::into)
-            .map_err(|_| Error::new())
+        Self::from_slice(bytes)
     }
 }
 
