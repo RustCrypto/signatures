@@ -14,7 +14,7 @@ readme = "README.md"
 categories = ["cryptography", "no-std"]
 keywords = ["crypto", "curve25519", "ecc", "signature", "signing"]
 edition = "2021"
-rust-version = "1.56"
+rust-version = "1.57"
 
 [dependencies]
 signature = { version = "2", default-features = false }
