@@ -301,30 +301,31 @@ impl Signature {
     pub const BYTE_SIZE: usize = COMPONENT_SIZE * 2;
 
     /// Parse an Ed25519 signature from a byte slice.
-    pub fn from_bytes(bytes: &SignatureBytes) -> signature::Result<Self> {
-        let (R, s) = bytes.split_at(COMPONENT_SIZE);
+    pub fn from_bytes(bytes: &SignatureBytes) -> Self {
+        let mut R = ComponentBytes::default();
+        let mut s = ComponentBytes::default();
 
-        Self::from_components(
-            R.try_into().map_err(|_| Error::new())?,
-            s.try_into().map_err(|_| Error::new())?,
-        )
+        let components = bytes.split_at(COMPONENT_SIZE);
+        R.copy_from_slice(components.0);
+        s.copy_from_slice(components.1);
+
+        Self { R, s }
     }
 
     /// Parse an Ed25519 signature from its `R` and `s` components.
-    pub fn from_components(R: ComponentBytes, s: ComponentBytes) -> signature::Result<Self> {
-        // Perform a partial reduction check on the signature's `s` scalar.
-        // When properly reduced, at least the three highest bits of the scalar
-        // will be unset so as to fit within the order of ~2^(252.5).
-        //
-        // This doesn't ensure that `s` is fully reduced (which would require a
-        // full reduction check in the event that the 4th most significant bit
-        // is set), however it will catch a number of invalid signatures
-        // relatively inexpensively.
-        if s[COMPONENT_SIZE - 1] & 0b1110_0000 != 0 {
-            return Err(Error::new());
-        }
+    pub fn from_components(R: ComponentBytes, s: ComponentBytes) -> Self {
+        Self { R, s }
+    }
 
-        Ok(Self { R, s })
+    /// Parse an Ed25519 signature from a byte slice.
+    ///
+    /// # Returns
+    /// - `Ok` on success
+    /// - `Err` if the input byte slice is not 64-bytes
+    pub fn from_slice(bytes: &[u8]) -> signature::Result<Self> {
+        SignatureBytes::try_from(bytes)
+            .map(Into::into)
+            .map_err(|_| Error::new())
     }
 
     /// Bytes for the `R` component of a signature.
@@ -373,18 +374,14 @@ impl From<&Signature> for SignatureBytes {
     }
 }
 
-impl TryFrom<SignatureBytes> for Signature {
-    type Error = Error;
-
-    fn try_from(bytes: SignatureBytes) -> signature::Result<Self> {
-        Signature::try_from(&bytes)
+impl From<SignatureBytes> for Signature {
+    fn from(bytes: SignatureBytes) -> Self {
+        Signature::from_bytes(&bytes)
     }
 }
 
-impl TryFrom<&SignatureBytes> for Signature {
-    type Error = Error;
-
-    fn try_from(bytes: &SignatureBytes) -> signature::Result<Self> {
+impl From<&SignatureBytes> for Signature {
+    fn from(bytes: &SignatureBytes) -> Self {
         Signature::from_bytes(bytes)
     }
 }
@@ -393,7 +390,9 @@ impl TryFrom<&[u8]> for Signature {
     type Error = Error;
 
     fn try_from(bytes: &[u8]) -> signature::Result<Self> {
-        Self::from_bytes(bytes.try_into().map_err(|_| Error::new())?)
+        SignatureBytes::try_from(bytes)
+            .map(Into::into)
+            .map_err(|_| Error::new())
     }
 }
 

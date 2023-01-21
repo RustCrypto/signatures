@@ -51,8 +51,9 @@ impl<'de> Deserialize<'de> for Signature {
             }
         }
 
-        let bytes = deserializer.deserialize_tuple(Signature::BYTE_SIZE, ByteArrayVisitor)?;
-        Self::from_bytes(&bytes).map_err(de::Error::custom)
+        deserializer
+            .deserialize_tuple(Signature::BYTE_SIZE, ByteArrayVisitor)
+            .map(Into::into)
     }
 }
 
@@ -93,8 +94,9 @@ impl<'de> serde_bytes::Deserialize<'de> for Signature {
             }
         }
 
-        let bytes = deserializer.deserialize_bytes(ByteArrayVisitor)?;
-        Self::from_bytes(&bytes).map_err(de::Error::custom)
+        deserializer
+            .deserialize_bytes(ByteArrayVisitor)
+            .map(Into::into)
     }
 }
 
@@ -114,15 +116,9 @@ mod tests {
 
     #[test]
     fn round_trip() {
-        let signature = Signature::from_bytes(&SIGNATURE_BYTES).unwrap();
+        let signature = Signature::from_bytes(&SIGNATURE_BYTES);
         let serialized = bincode::serialize(&signature).unwrap();
         let deserialized = bincode::deserialize(&serialized).unwrap();
         assert_eq!(signature, deserialized);
-    }
-
-    #[test]
-    fn overflow() {
-        let bytes = hex!("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-        assert!(bincode::deserialize::<Signature>(&bytes).is_err());
     }
 }
