@@ -289,6 +289,13 @@ pub type ComponentBytes = [u8; COMPONENT_SIZE];
 pub type SignatureBytes = [u8; Signature::BYTE_SIZE];
 
 /// Ed25519 signature.
+///
+/// This type represents a container for the byte serialization of an Ed25519
+/// signature, and does not necessarily represent well-formed elements of the
+/// respective elliptic curve fields.
+///
+/// Signature verification libraries are expected to reject invalid field
+/// elements at the time a signature is verified.
 #[derive(Copy, Clone, Eq, PartialEq)]
 #[repr(C)]
 pub struct Signature {
