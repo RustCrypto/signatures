@@ -1,6 +1,6 @@
 [package]
 name = "dsa"
-version = "0.5.0"
+version = "0.6.0-pre"
 description = """
 Pure Rust implementation of the Digital Signature Algorithm (DSA) as specified
 in FIPS 186-4 (Digital Signature Standard), providing RFC6979 deterministic
@@ -12,14 +12,14 @@ readme = "README.md"
 repository = "https://github.com/RustCrypto/signatures/tree/master/dsa"
 categories = ["cryptography", "no-std"]
 keywords = ["crypto", "nist", "signature"]
-rust-version = "1.57"
+rust-version = "1.60"
 
 [dependencies]
 digest = "0.10"
 num-bigint = { package = "num-bigint-dig", version = "0.8", default-features = false, features = ["prime", "rand", "zeroize"] }
 num-traits = { version = "0.2", default-features = false }
 pkcs8 = { version = "0.9", default-features = false, features = ["alloc"] }
-rfc6979 = { version = "0.3", path = "../rfc6979" }
+rfc6979 = { version = "=0.4.0-pre", path = "../rfc6979" }
 sha2 = { version = "0.10", default-features = false }
 signature = { version = "2.0, <2.1", default-features = false, features = ["alloc", "digest", "rand_core"] }
 zeroize = { version = "1.5", default-features = false }
