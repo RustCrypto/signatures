@@ -17,12 +17,12 @@ use elliptic_curve::{bigint::Integer, FieldBytes, PrimeCurve};
 #[cfg(feature = "arithmetic")]
 use {
     crate::{RecoveryId, SignatureSize},
-    core::borrow::Borrow,
     elliptic_curve::{
         group::Curve as _,
-        ops::{Invert, LinearCombination, Reduce},
+        ops::{Invert, LinearCombination, MulByGenerator, Reduce},
         subtle::CtOption,
-        AffineXCoordinate, CurveArithmetic, Field, Group, ProjectivePoint, Scalar,
+        AffineXCoordinate, AffineYIsOdd, CurveArithmetic, Field, Group, IsHigh, ProjectivePoint,
+        Scalar,
     },
 };
 
@@ -49,7 +49,8 @@ use elliptic_curve::ScalarPrimitive;
 /// This trait is intended to be implemented on a type with access to the
 /// secret scalar via `&self`, such as particular curve's `Scalar` type.
 #[cfg(feature = "arithmetic")]
-pub trait SignPrimitive<C>: Field + Into<FieldBytes<C>> + Reduce<C::Uint> + Sized
+pub trait SignPrimitive<C>:
+    AsRef<Self> + Field + Into<FieldBytes<C>> + IsHigh + Reduce<C::Uint> + Sized
 where
     C: PrimeCurve + CurveArithmetic + CurveArithmetic<Scalar = Self>,
     SignatureSize<C>: ArrayLength<u8>,
@@ -73,9 +74,9 @@ where
         z: FieldBytes<C>,
     ) -> Result<(Signature<C>, Option<RecoveryId>)>
     where
-        K: Borrow<Self> + Invert<Output = CtOption<Self>>,
+        K: AsRef<Self> + Invert<Output = CtOption<Self>>,
     {
-        if k.borrow().is_zero().into() {
+        if k.as_ref().is_zero().into() {
             return Err(Error::new());
         }
 
@@ -85,7 +86,7 @@ where
         let k_inv = Option::<Scalar<C>>::from(k.invert()).ok_or_else(Error::new)?;
 
         // Compute 𝑹 = 𝑘×𝑮
-        let R = (C::ProjectivePoint::generator() * k.borrow()).to_affine();
+        let R = ProjectivePoint::<C>::mul_by_generator(k.as_ref()).to_affine();
 
         // Lift x-coordinate of 𝑹 (element of base field) into a serialized big
         // integer, then reduce it into an element of the scalar field
@@ -98,8 +99,15 @@ where
             return Err(Error::new());
         }
 
-        // TODO(tarcieri): support for computing recovery ID (RustCrypto/signatures#581)
-        Ok((Signature::from_scalars(r, s)?, None))
+        let signature = Signature::from_scalars(r, s)?;
+        let is_r_odd = R.y_is_odd();
+        let is_s_high = s.is_high();
+        let is_y_odd = is_r_odd ^ is_s_high;
+
+        // TODO(tarcieri): handle `is_x_reduced` case (currently hardcoded to `false`)
+        let recovery_id = RecoveryId::new(is_y_odd.into(), false);
+
+        Ok((signature, Some(recovery_id)))
     }
 
     /// Try to sign the given message digest deterministically using the method
