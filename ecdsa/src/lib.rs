@@ -88,9 +88,9 @@ use core::{
     ops::Add,
 };
 use elliptic_curve::{
-    bigint::Encoding as _,
+    bigint::Integer,
     generic_array::{sequence::Concat, ArrayLength, GenericArray},
-    FieldBytes, FieldSize, ScalarCore,
+    FieldBytes, FieldSize, ScalarPrimitive,
 };
 
 #[cfg(feature = "alloc")]
@@ -99,7 +99,7 @@ use alloc::vec::Vec;
 #[cfg(feature = "arithmetic")]
 use {
     core::str,
-    elliptic_curve::{IsHigh, NonZeroScalar, ScalarArithmetic},
+    elliptic_curve::{CurveArithmetic, IsHigh, NonZeroScalar},
 };
 
 #[cfg(feature = "serde")]
@@ -135,8 +135,8 @@ pub type SignatureBytes<C> = GenericArray<u8, SignatureSize<C>>;
 /// formats, and a hexadecimal encoding when used with text formats.
 #[derive(Clone, Eq, PartialEq)]
 pub struct Signature<C: PrimeCurve> {
-    r: ScalarCore<C>,
-    s: ScalarCore<C>,
+    r: ScalarPrimitive<C>,
+    s: ScalarPrimitive<C>,
 }
 
 impl<C> Signature<C>
@@ -168,7 +168,7 @@ where
     /// Serialize this signature as bytes.
     pub fn to_bytes(&self) -> SignatureBytes<C> {
         let mut bytes = SignatureBytes::<C>::default();
-        let (r_bytes, s_bytes) = bytes.split_at_mut(C::UInt::BYTE_SIZE);
+        let (r_bytes, s_bytes) = bytes.split_at_mut(C::Uint::BYTES);
         r_bytes.copy_from_slice(&self.r.to_be_bytes());
         s_bytes.copy_from_slice(&self.s.to_be_bytes());
         bytes
@@ -195,7 +195,7 @@ where
 #[cfg(feature = "arithmetic")]
 impl<C> Signature<C>
 where
-    C: PrimeCurve + ScalarArithmetic,
+    C: PrimeCurve + CurveArithmetic,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Get the `r` component of this signature
@@ -222,7 +222,7 @@ where
 
         if s.is_high().into() {
             let mut result = self.clone();
-            result.s = ScalarCore::from(-s);
+            result.s = ScalarPrimitive::from(-s);
             Some(result)
         } else {
             None
@@ -280,13 +280,13 @@ where
     type Error = Error;
 
     fn try_from(bytes: &[u8]) -> Result<Self> {
-        if bytes.len() != C::UInt::BYTE_SIZE * 2 {
+        if bytes.len() != C::Uint::BYTES * 2 {
             return Err(Error::new());
         }
 
-        let (r_bytes, s_bytes) = bytes.split_at(C::UInt::BYTE_SIZE);
-        let r = ScalarCore::from_be_slice(r_bytes).map_err(|_| Error::new())?;
-        let s = ScalarCore::from_be_slice(s_bytes).map_err(|_| Error::new())?;
+        let (r_bytes, s_bytes) = bytes.split_at(C::Uint::BYTES);
+        let r = ScalarPrimitive::from_be_slice(r_bytes).map_err(|_| Error::new())?;
+        let s = ScalarPrimitive::from_be_slice(s_bytes).map_err(|_| Error::new())?;
 
         if r.is_zero().into() || s.is_zero().into() {
             return Err(Error::new());
@@ -335,13 +335,13 @@ where
 #[cfg(feature = "arithmetic")]
 impl<C> str::FromStr for Signature<C>
 where
-    C: PrimeCurve + ScalarArithmetic,
+    C: PrimeCurve + CurveArithmetic,
     SignatureSize<C>: ArrayLength<u8>,
 {
     type Err = Error;
 
     fn from_str(hex: &str) -> Result<Self> {
-        if hex.as_bytes().len() != C::UInt::BYTE_SIZE * 4 {
+        if hex.as_bytes().len() != C::Uint::BYTES * 4 {
             return Err(Error::new());
         }
 
@@ -354,7 +354,7 @@ where
             return Err(Error::new());
         }
 
-        let (r_hex, s_hex) = hex.split_at(C::UInt::BYTE_SIZE * 2);
+        let (r_hex, s_hex) = hex.split_at(C::Uint::BYTES * 2);
 
         let r = r_hex
             .parse::<NonZeroScalar<C>>()

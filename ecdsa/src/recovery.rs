@@ -12,8 +12,8 @@ use {
         generic_array::ArrayLength,
         ops::{Invert, LinearCombination, Reduce},
         sec1::{self, FromEncodedPoint, ToEncodedPoint},
-        AffinePoint, DecompressPoint, FieldSize, Group, PrimeCurve, PrimeField,
-        ProjectiveArithmetic, ProjectivePoint, Scalar,
+        AffinePoint, CurveArithmetic, DecompressPoint, FieldSize, Group, PrimeCurve, PrimeField,
+        ProjectivePoint, Scalar,
     },
     signature::{digest::Digest, hazmat::PrehashVerifier},
 };
@@ -82,11 +82,11 @@ impl RecoveryId {
         signature: &Signature<C>,
     ) -> Result<Self>
     where
-        C: DigestPrimitive + PrimeCurve + ProjectiveArithmetic,
+        C: DigestPrimitive + PrimeCurve + CurveArithmetic,
         AffinePoint<C>:
             DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C> + VerifyPrimitive<C>,
         FieldSize<C>: sec1::ModulusSize,
-        Scalar<C>: Reduce<C::UInt>,
+        Scalar<C>: Reduce<C::Uint>,
         SignatureSize<C>: ArrayLength<u8>,
     {
         Self::trial_recovery_from_digest(verifying_key, C::Digest::new_with_prefix(msg), signature)
@@ -101,12 +101,12 @@ impl RecoveryId {
         signature: &Signature<C>,
     ) -> Result<Self>
     where
-        C: PrimeCurve + ProjectiveArithmetic,
+        C: PrimeCurve + CurveArithmetic,
         D: Digest,
         AffinePoint<C>:
             DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C> + VerifyPrimitive<C>,
         FieldSize<C>: sec1::ModulusSize,
-        Scalar<C>: Reduce<C::UInt>,
+        Scalar<C>: Reduce<C::Uint>,
         SignatureSize<C>: ArrayLength<u8>,
     {
         Self::trial_recovery_from_prehash(verifying_key, &digest.finalize(), signature)
@@ -121,11 +121,11 @@ impl RecoveryId {
         signature: &Signature<C>,
     ) -> Result<Self>
     where
-        C: PrimeCurve + ProjectiveArithmetic,
+        C: PrimeCurve + CurveArithmetic,
         AffinePoint<C>:
             DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C> + VerifyPrimitive<C>,
         FieldSize<C>: sec1::ModulusSize,
-        Scalar<C>: Reduce<C::UInt>,
+        Scalar<C>: Reduce<C::Uint>,
         SignatureSize<C>: ArrayLength<u8>,
     {
         for id in 0..=Self::MAX {
@@ -159,11 +159,11 @@ impl From<RecoveryId> for u8 {
 #[cfg(feature = "verifying")]
 impl<C> VerifyingKey<C>
 where
-    C: PrimeCurve + ProjectiveArithmetic,
+    C: PrimeCurve + CurveArithmetic,
     AffinePoint<C>:
         DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C> + VerifyPrimitive<C>,
     FieldSize<C>: sec1::ModulusSize,
-    Scalar<C>: Reduce<C::UInt>,
+    Scalar<C>: Reduce<C::Uint>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Recover a [`VerifyingKey`] from the given message, signature, and
@@ -204,7 +204,7 @@ where
         recovery_id: RecoveryId,
     ) -> Result<Self> {
         let (r, s) = signature.split_scalars();
-        let z = <Scalar<C> as Reduce<C::UInt>>::from_be_bytes_reduced(bits2field::<C>(prehash)?);
+        let z = <Scalar<C> as Reduce<C::Uint>>::from_be_bytes_reduced(bits2field::<C>(prehash)?);
         let R = AffinePoint::<C>::decompress(&r.to_repr(), u8::from(recovery_id.is_y_odd()).into());
 
         if R.is_none().into() {

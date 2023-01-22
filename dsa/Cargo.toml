@@ -12,7 +12,7 @@ readme = "README.md"
 repository = "https://github.com/RustCrypto/signatures/tree/master/dsa"
 categories = ["cryptography", "no-std"]
 keywords = ["crypto", "nist", "signature"]
-rust-version = "1.60"
+rust-version = "1.61"
 
 [dependencies]
 digest = "0.10"

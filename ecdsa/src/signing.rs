@@ -11,7 +11,7 @@ use elliptic_curve::{
     ops::{Invert, Reduce},
     subtle::{Choice, ConstantTimeEq, CtOption},
     zeroize::{Zeroize, ZeroizeOnDrop},
-    FieldBytes, FieldSize, NonZeroScalar, PrimeCurve, ProjectiveArithmetic, Scalar, SecretKey,
+    CurveArithmetic, FieldBytes, FieldSize, NonZeroScalar, PrimeCurve, Scalar, SecretKey,
 };
 use signature::{
     digest::{core_api::BlockSizeUser, Digest, FixedOutput, FixedOutputReset},
@@ -41,13 +41,13 @@ use {crate::VerifyingKey, elliptic_curve::PublicKey, signature::KeypairRef};
 
 /// ECDSA signing key. Generic over elliptic curves.
 ///
-/// Requires an [`elliptic_curve::ProjectiveArithmetic`] impl on the curve, and a
+/// Requires an [`elliptic_curve::CurveArithmetic`] impl on the curve, and a
 /// [`SignPrimitive`] impl on its associated `Scalar` type.
 #[derive(Clone)]
 pub struct SigningKey<C>
 where
-    C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    C: PrimeCurve + CurveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// ECDSA signing keys are non-zero elements of a given curve's scalar field.
@@ -60,8 +60,8 @@ where
 
 impl<C> SigningKey<C>
 where
-    C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    C: PrimeCurve + CurveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Generate a cryptographically random [`SigningKey`].
@@ -105,10 +105,10 @@ where
 
 impl<C, D> DigestSigner<D, Signature<C>> for SigningKey<C>
 where
-    C: PrimeCurve + ProjectiveArithmetic,
-    C::UInt: for<'a> From<&'a Scalar<C>>,
+    C: PrimeCurve + CurveArithmetic,
+    C::Uint: for<'a> From<&'a Scalar<C>>,
     D: Digest + BlockSizeUser + FixedOutput<OutputSize = FieldSize<C>> + FixedOutputReset,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
 
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -126,10 +126,10 @@ where
 
 impl<C> PrehashSigner<Signature<C>> for SigningKey<C>
 where
-    C: PrimeCurve + ProjectiveArithmetic + DigestPrimitive,
+    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
     C::Digest: FixedOutput<OutputSize = FieldSize<C>>,
-    C::UInt: for<'a> From<&'a Scalar<C>>,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    C::Uint: for<'a> From<&'a Scalar<C>>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn sign_prehash(&self, prehash: &[u8]) -> Result<Signature<C>> {
@@ -145,8 +145,8 @@ where
 impl<C> Signer<Signature<C>> for SigningKey<C>
 where
     Self: DigestSigner<C::Digest, Signature<C>>,
-    C: PrimeCurve + ProjectiveArithmetic + DigestPrimitive,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn try_sign(&self, msg: &[u8]) -> Result<Signature<C>> {
@@ -156,10 +156,10 @@ where
 
 impl<C, D> RandomizedDigestSigner<D, Signature<C>> for SigningKey<C>
 where
-    C: PrimeCurve + ProjectiveArithmetic,
-    C::UInt: for<'a> From<&'a Scalar<C>>,
+    C: PrimeCurve + CurveArithmetic,
+    C::Uint: for<'a> From<&'a Scalar<C>>,
     D: Digest + BlockSizeUser + FixedOutput<OutputSize = FieldSize<C>> + FixedOutputReset,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Sign message prehash using an ephemeral scalar (`k`) derived according
@@ -182,8 +182,8 @@ where
 impl<C> RandomizedSigner<Signature<C>> for SigningKey<C>
 where
     Self: RandomizedDigestSigner<C::Digest, Signature<C>>,
-    C: PrimeCurve + ProjectiveArithmetic + DigestPrimitive,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn try_sign_with_rng(&self, rng: &mut impl CryptoRngCore, msg: &[u8]) -> Result<Signature<C>> {
@@ -194,10 +194,10 @@ where
 #[cfg(feature = "der")]
 impl<C> PrehashSigner<der::Signature<C>> for SigningKey<C>
 where
-    C: PrimeCurve + ProjectiveArithmetic + DigestPrimitive,
+    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
     C::Digest: FixedOutput<OutputSize = FieldSize<C>>,
-    C::UInt: for<'a> From<&'a Scalar<C>>,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    C::Uint: for<'a> From<&'a Scalar<C>>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
     der::MaxSize<C>: ArrayLength<u8>,
     <FieldSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
@@ -211,8 +211,8 @@ where
 impl<C> Signer<der::Signature<C>> for SigningKey<C>
 where
     Self: DigestSigner<C::Digest, Signature<C>>,
-    C: PrimeCurve + ProjectiveArithmetic + DigestPrimitive,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
     der::MaxSize<C>: ArrayLength<u8>,
     <FieldSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
@@ -225,10 +225,10 @@ where
 #[cfg(feature = "der")]
 impl<C, D> RandomizedDigestSigner<D, der::Signature<C>> for SigningKey<C>
 where
-    C: PrimeCurve + ProjectiveArithmetic,
-    C::UInt: for<'a> From<&'a Scalar<C>>,
+    C: PrimeCurve + CurveArithmetic,
+    C::Uint: for<'a> From<&'a Scalar<C>>,
     D: Digest + BlockSizeUser + FixedOutput<OutputSize = FieldSize<C>> + FixedOutputReset,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
     der::MaxSize<C>: ArrayLength<u8>,
     <FieldSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
@@ -247,8 +247,8 @@ where
 impl<C> RandomizedSigner<der::Signature<C>> for SigningKey<C>
 where
     Self: RandomizedDigestSigner<C::Digest, Signature<C>>,
-    C: PrimeCurve + ProjectiveArithmetic + DigestPrimitive,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
     der::MaxSize<C>: ArrayLength<u8>,
     <FieldSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
@@ -269,8 +269,8 @@ where
 #[cfg(feature = "verifying")]
 impl<C> AsRef<VerifyingKey<C>> for SigningKey<C>
 where
-    C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    C: PrimeCurve + CurveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn as_ref(&self) -> &VerifyingKey<C> {
@@ -280,8 +280,8 @@ where
 
 impl<C> ConstantTimeEq for SigningKey<C>
 where
-    C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    C: PrimeCurve + CurveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn ct_eq(&self, other: &Self) -> Choice {
@@ -291,8 +291,8 @@ where
 
 impl<C> Debug for SigningKey<C>
 where
-    C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    C: PrimeCurve + CurveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -302,8 +302,8 @@ where
 
 impl<C> Drop for SigningKey<C>
 where
-    C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    C: PrimeCurve + CurveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn drop(&mut self) {
@@ -314,8 +314,8 @@ where
 /// Constant-time comparison
 impl<C> Eq for SigningKey<C>
 where
-    C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    C: PrimeCurve + CurveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
 }
@@ -323,8 +323,8 @@ where
 /// Constant-time comparison
 impl<C> PartialEq for SigningKey<C>
 where
-    C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    C: PrimeCurve + CurveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn eq(&self, other: &SigningKey<C>) -> bool {
@@ -334,8 +334,8 @@ where
 
 impl<C> From<NonZeroScalar<C>> for SigningKey<C>
 where
-    C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    C: PrimeCurve + CurveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn from(secret_scalar: NonZeroScalar<C>) -> Self {
@@ -352,8 +352,8 @@ where
 
 impl<C> From<SecretKey<C>> for SigningKey<C>
 where
-    C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    C: PrimeCurve + CurveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn from(secret_key: SecretKey<C>) -> Self {
@@ -363,8 +363,8 @@ where
 
 impl<C> From<&SecretKey<C>> for SigningKey<C>
 where
-    C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    C: PrimeCurve + CurveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn from(secret_key: &SecretKey<C>) -> Self {
@@ -374,8 +374,8 @@ where
 
 impl<C> From<SigningKey<C>> for SecretKey<C>
 where
-    C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    C: PrimeCurve + CurveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn from(key: SigningKey<C>) -> Self {
@@ -385,8 +385,8 @@ where
 
 impl<C> From<&SigningKey<C>> for SecretKey<C>
 where
-    C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    C: PrimeCurve + CurveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn from(secret_key: &SigningKey<C>) -> Self {
@@ -396,8 +396,8 @@ where
 
 impl<C> TryFrom<&[u8]> for SigningKey<C>
 where
-    C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    C: PrimeCurve + CurveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     type Error = Error;
@@ -409,8 +409,8 @@ where
 
 impl<C> ZeroizeOnDrop for SigningKey<C>
 where
-    C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    C: PrimeCurve + CurveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
 }
@@ -418,8 +418,8 @@ where
 #[cfg(feature = "verifying")]
 impl<C> From<SigningKey<C>> for VerifyingKey<C>
 where
-    C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    C: PrimeCurve + CurveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn from(signing_key: SigningKey<C>) -> VerifyingKey<C> {
@@ -430,8 +430,8 @@ where
 #[cfg(feature = "verifying")]
 impl<C> From<&SigningKey<C>> for VerifyingKey<C>
 where
-    C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    C: PrimeCurve + CurveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn from(signing_key: &SigningKey<C>) -> VerifyingKey<C> {
@@ -442,8 +442,8 @@ where
 #[cfg(feature = "verifying")]
 impl<C> KeypairRef for SigningKey<C>
 where
-    C: PrimeCurve + ProjectiveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    C: PrimeCurve + CurveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     type VerifyingKey = VerifyingKey<C>;
@@ -452,10 +452,10 @@ where
 #[cfg(feature = "pkcs8")]
 impl<C> TryFrom<pkcs8::PrivateKeyInfo<'_>> for SigningKey<C>
 where
-    C: PrimeCurve + AssociatedOid + ProjectiveArithmetic,
+    C: PrimeCurve + AssociatedOid + CurveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldSize<C>: sec1::ModulusSize,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     type Error = pkcs8::Error;
@@ -468,10 +468,10 @@ where
 #[cfg(feature = "pem")]
 impl<C> EncodePrivateKey for SigningKey<C>
 where
-    C: AssociatedOid + PrimeCurve + ProjectiveArithmetic,
+    C: AssociatedOid + PrimeCurve + CurveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldSize<C>: sec1::ModulusSize,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn to_pkcs8_der(&self) -> pkcs8::Result<SecretDocument> {
@@ -482,10 +482,10 @@ where
 #[cfg(feature = "pem")]
 impl<C> FromStr for SigningKey<C>
 where
-    C: PrimeCurve + AssociatedOid + ProjectiveArithmetic,
+    C: PrimeCurve + AssociatedOid + CurveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldSize<C>: sec1::ModulusSize,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     type Err = Error;
@@ -498,10 +498,10 @@ where
 #[cfg(feature = "pkcs8")]
 impl<C> DecodePrivateKey for SigningKey<C>
 where
-    C: PrimeCurve + AssociatedOid + ProjectiveArithmetic,
+    C: PrimeCurve + AssociatedOid + CurveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldSize<C>: sec1::ModulusSize,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
 }
