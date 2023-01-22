@@ -226,15 +226,6 @@ dependencies = [
 
 [[package]]
 name = "ed25519"
-version = "2.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b313941b79fa8f26c1967e351fa7f48a144e2dbeadb6a6fe0ccdfd61ef8ad600"
-dependencies = [
- "signature 2.0.0",
-]
-
-[[package]]
-name = "ed25519"
 version = "2.1.0"
 dependencies = [
  "bincode",
@@ -247,6 +238,15 @@ dependencies = [
  "serde_bytes",
  "signature 2.0.0",
  "zeroize",
+]
+
+[[package]]
+name = "ed25519"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3cf420a7ec85d98495b0c34aa4a58ca117f982ffbece111aeb545160148d7010"
+dependencies = [
+ "signature 2.0.0",
 ]
 
 [[package]]
@@ -539,9 +539,9 @@ checksum = "5b40af805b3121feab8a3c29f04d8ad262fa8e0561883e7653e024ae4479e6de"
 
 [[package]]
 name = "primeorder"
-version = "0.12.0"
+version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "49b7e10b3a364b1c813238b1c9a749336cbe51fd4265cd99f57cf29302c90af7"
+checksum = "0b54f7131b3dba65a2f414cf5bd25b66d4682e4608610668eae785750ba4c5b2"
 dependencies = [
  "elliptic-curve 0.12.3",
 ]
@@ -669,7 +669,7 @@ dependencies = [
  "aead",
  "digest 0.10.6",
  "ecdsa 0.15.0",
- "ed25519 2.0.1",
+ "ed25519 2.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "generic-array",
  "opaque-debug",
  "p256",
