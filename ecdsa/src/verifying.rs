@@ -32,7 +32,8 @@ use core::str::FromStr;
 #[cfg(all(feature = "pem", feature = "serde"))]
 use serdect::serde::{de, ser, Deserialize, Serialize};
 
-/// ECDSA verification key (i.e. public key). Generic over elliptic curves.
+/// ECDSA public key used for verifying signatures. Generic over prime order
+/// elliptic curves (e.g. NIST P-curves)
 ///
 /// Requires an [`elliptic_curve::CurveArithmetic`] impl on the curve, and a
 /// [`VerifyPrimitive`] impl on its associated `AffinePoint` type.
