@@ -12,7 +12,7 @@
 
 use crate::{Error, Result};
 use core::cmp;
-use elliptic_curve::{bigint::Encoding, FieldBytes, PrimeCurve};
+use elliptic_curve::{bigint::Integer, FieldBytes, PrimeCurve};
 
 #[cfg(feature = "arithmetic")]
 use {
@@ -22,8 +22,7 @@ use {
         group::Curve as _,
         ops::{Invert, LinearCombination, Reduce},
         subtle::CtOption,
-        AffineArithmetic, AffineXCoordinate, Field, Group, ProjectiveArithmetic, ProjectivePoint,
-        Scalar, ScalarArithmetic,
+        AffineXCoordinate, CurveArithmetic, Field, Group, ProjectivePoint, Scalar,
     },
 };
 
@@ -43,16 +42,16 @@ use crate::{elliptic_curve::generic_array::ArrayLength, Signature};
 use signature::digest::FixedOutput;
 
 #[cfg(feature = "rfc6979")]
-use elliptic_curve::ScalarCore;
+use elliptic_curve::ScalarPrimitive;
 
 /// Try to sign the given prehashed message using ECDSA.
 ///
 /// This trait is intended to be implemented on a type with access to the
 /// secret scalar via `&self`, such as particular curve's `Scalar` type.
 #[cfg(feature = "arithmetic")]
-pub trait SignPrimitive<C>: Field + Into<FieldBytes<C>> + Reduce<C::UInt> + Sized
+pub trait SignPrimitive<C>: Field + Into<FieldBytes<C>> + Reduce<C::Uint> + Sized
 where
-    C: PrimeCurve + ProjectiveArithmetic + ScalarArithmetic<Scalar = Self>,
+    C: PrimeCurve + CurveArithmetic + CurveArithmetic<Scalar = Self>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Try to sign the prehashed message.
@@ -118,13 +117,13 @@ where
         ad: &[u8],
     ) -> Result<(Signature<C>, Option<RecoveryId>)>
     where
-        Self: From<ScalarCore<C>>,
-        C::UInt: for<'a> From<&'a Self>,
+        Self: From<ScalarPrimitive<C>>,
+        C::Uint: for<'a> From<&'a Self>,
         D: Digest + BlockSizeUser + FixedOutput<OutputSize = FieldSize<C>> + FixedOutputReset,
     {
-        let x = C::UInt::from(self);
-        let k = rfc6979::generate_k::<D, C::UInt>(&x, &C::ORDER, &z, ad);
-        let k = Self::from(ScalarCore::<C>::new(*k).unwrap());
+        let x = C::Uint::from(self);
+        let k = rfc6979::generate_k::<D, C::Uint>(&x, &C::ORDER, &z, ad);
+        let k = Self::from(ScalarPrimitive::<C>::new(*k).unwrap());
         self.try_sign_prehashed(k, z)
     }
 
@@ -139,8 +138,8 @@ where
         ad: &[u8],
     ) -> Result<(Signature<C>, Option<RecoveryId>)>
     where
-        Self: From<ScalarCore<C>>,
-        C::UInt: for<'a> From<&'a Self>,
+        Self: From<ScalarPrimitive<C>>,
+        C::Uint: for<'a> From<&'a Self>,
         D: Digest + BlockSizeUser + FixedOutput<OutputSize = FieldSize<C>> + FixedOutputReset,
     {
         self.try_sign_prehashed_rfc6979::<D>(msg_digest.finalize_fixed(), ad)
@@ -153,10 +152,10 @@ where
 /// the affine point represeting the public key via `&self`, such as a
 /// particular curve's `AffinePoint` type.
 #[cfg(feature = "arithmetic")]
-pub trait VerifyPrimitive<C>: AffineXCoordinate<C> + Copy + Sized
+pub trait VerifyPrimitive<C>: AffineXCoordinate<FieldRepr = FieldBytes<C>> + Copy + Sized
 where
-    C: PrimeCurve + AffineArithmetic<AffinePoint = Self> + ProjectiveArithmetic,
-    Scalar<C>: Reduce<C::UInt>,
+    C: PrimeCurve + CurveArithmetic<AffinePoint = Self> + CurveArithmetic,
+    Scalar<C>: Reduce<C::Uint>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Verify the prehashed message against the provided signature
@@ -235,21 +234,21 @@ where
 /// [SEC1]: https://www.secg.org/sec1-v2.pdf
 pub fn bits2field<C: PrimeCurve>(bits: &[u8]) -> Result<FieldBytes<C>> {
     // Minimum allowed bits size is half the field size
-    if bits.len() < C::UInt::BYTE_SIZE / 2 {
+    if bits.len() < C::Uint::BYTES / 2 {
         return Err(Error::new());
     }
 
     let mut field_bytes = FieldBytes::<C>::default();
 
-    match bits.len().cmp(&C::UInt::BYTE_SIZE) {
+    match bits.len().cmp(&C::Uint::BYTES) {
         cmp::Ordering::Equal => field_bytes.copy_from_slice(bits),
         cmp::Ordering::Less => {
             // If bits is smaller than the field size, pad with zeroes on the left
-            field_bytes[(C::UInt::BYTE_SIZE - bits.len())..].copy_from_slice(bits);
+            field_bytes[(C::Uint::BYTES - bits.len())..].copy_from_slice(bits);
         }
         cmp::Ordering::Greater => {
             // If bits is larger than the field size, truncate
-            field_bytes.copy_from_slice(&bits[..C::UInt::BYTE_SIZE]);
+            field_bytes.copy_from_slice(&bits[..C::Uint::BYTES]);
         }
     }
 

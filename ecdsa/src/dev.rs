@@ -34,13 +34,13 @@ macro_rules! new_signing_test {
         use $crate::{
             elliptic_curve::{
                 bigint::Encoding, generic_array::GenericArray, group::ff::PrimeField, Curve,
-                ProjectiveArithmetic, Scalar,
+                CurveArithmetic, Scalar,
             },
             hazmat::SignPrimitive,
         };
 
         fn decode_scalar(bytes: &[u8]) -> Option<Scalar<$curve>> {
-            if bytes.len() == <$curve as Curve>::UInt::BYTE_SIZE {
+            if bytes.len() == <$curve as Curve>::Uint::BYTES {
                 Scalar::<$curve>::from_repr(GenericArray::clone_from_slice(bytes)).into()
             } else {
                 None
@@ -71,7 +71,7 @@ macro_rules! new_verification_test {
                 generic_array::GenericArray,
                 group::ff::PrimeField,
                 sec1::{EncodedPoint, FromEncodedPoint},
-                AffinePoint, ProjectiveArithmetic, Scalar,
+                AffinePoint, CurveArithmetic, Scalar,
             },
             hazmat::VerifyPrimitive,
             Signature,
@@ -145,7 +145,7 @@ macro_rules! new_wycheproof_test {
             fn element_from_padded_slice<C: elliptic_curve::Curve>(
                 data: &[u8],
             ) -> elliptic_curve::FieldBytes<C> {
-                let point_len = C::UInt::BYTE_SIZE;
+                let point_len = C::Uint::BYTES;
                 if data.len() >= point_len {
                     let offset = data.len() - point_len;
                     for v in data.iter().take(offset) {
