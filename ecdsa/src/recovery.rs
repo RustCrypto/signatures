@@ -6,6 +6,7 @@ use crate::{Error, Result};
 use {
     crate::{hazmat::SignPrimitive, SigningKey},
     elliptic_curve::subtle::CtOption,
+    signature::{hazmat::PrehashSigner, DigestSigner, Signer},
 };
 
 #[cfg(feature = "verifying")]
@@ -201,6 +202,46 @@ where
     /// function, and returning a signature and recovery ID.
     pub fn sign_recoverable(&self, msg: &[u8]) -> Result<(Signature<C>, RecoveryId)> {
         self.sign_digest_recoverable(C::Digest::new_with_prefix(msg))
+    }
+}
+
+#[cfg(feature = "signing")]
+impl<C, D> DigestSigner<D, (Signature<C>, RecoveryId)> for SigningKey<C>
+where
+    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    C::Uint: for<'a> From<&'a Scalar<C>>,
+    D: Digest,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn try_sign_digest(&self, msg_digest: D) -> Result<(Signature<C>, RecoveryId)> {
+        self.sign_digest_recoverable(msg_digest)
+    }
+}
+
+#[cfg(feature = "signing")]
+impl<C> PrehashSigner<(Signature<C>, RecoveryId)> for SigningKey<C>
+where
+    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    C::Uint: for<'a> From<&'a Scalar<C>>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn sign_prehash(&self, prehash: &[u8]) -> Result<(Signature<C>, RecoveryId)> {
+        self.sign_prehash_recoverable(prehash)
+    }
+}
+
+#[cfg(feature = "signing")]
+impl<C> Signer<(Signature<C>, RecoveryId)> for SigningKey<C>
+where
+    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    C::Uint: for<'a> From<&'a Scalar<C>>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn try_sign(&self, msg: &[u8]) -> Result<(Signature<C>, RecoveryId)> {
+        self.sign_recoverable(msg)
     }
 }
 
