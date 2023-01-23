@@ -129,7 +129,6 @@ where
 impl<C> Verifier<Signature<C>> for VerifyingKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
-    C::Digest: FixedOutput<OutputSize = FieldSize<C>>,
     AffinePoint<C>: VerifyPrimitive<C>,
     Scalar<C>: Reduce<C::Uint>,
     SignatureSize<C>: ArrayLength<u8>,
@@ -176,7 +175,6 @@ where
 impl<C> Verifier<der::Signature<C>> for VerifyingKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
-    C::Digest: FixedOutput<OutputSize = FieldSize<C>>,
     AffinePoint<C>: VerifyPrimitive<C>,
     Scalar<C>: Reduce<C::Uint>,
     SignatureSize<C>: ArrayLength<u8>,
