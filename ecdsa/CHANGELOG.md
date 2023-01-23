@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.15.1 (2023-01-23)
+### Added
+- `SigningKey::*_recoverable` methods ([#635])
+
+[#635]: https://github.com/RustCrypto/signatures/pull/635
+
 ## 0.15.0 (2023-01-15)
 ### Added
 - `DigestPrimitive::Digest` now has bounds that work with RFC6979 ([#568])
