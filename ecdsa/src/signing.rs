@@ -104,6 +104,10 @@ where
 // `*Signer` trait impls
 //
 
+/// Sign message digest using a deterministic ephemeral scalar (`k`)
+/// computed using the algorithm described in [RFC6979 § 3.2].
+///
+/// [RFC6979 § 3.2]: https://tools.ietf.org/html/rfc6979#section-3
 impl<C, D> DigestSigner<D, Signature<C>> for SigningKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
@@ -112,15 +116,15 @@ where
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
-    /// Sign message digest using a deterministic ephemeral scalar (`k`)
-    /// computed using the algorithm described in [RFC6979 § 3.2].
-    ///
-    /// [RFC6979 § 3.2]: https://tools.ietf.org/html/rfc6979#section-3
     fn try_sign_digest(&self, msg_digest: D) -> Result<Signature<C>> {
         self.sign_prehash(&msg_digest.finalize_fixed())
     }
 }
 
+/// Sign message prehash using a deterministic ephemeral scalar (`k`)
+/// computed using the algorithm described in [RFC6979 § 3.2].
+///
+/// [RFC6979 § 3.2]: https://tools.ietf.org/html/rfc6979#section-3
 impl<C> PrehashSigner<Signature<C>> for SigningKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
@@ -137,6 +141,10 @@ where
     }
 }
 
+/// Sign message using a deterministic ephemeral scalar (`k`)
+/// computed using the algorithm described in [RFC6979 § 3.2].
+///
+/// [RFC6979 § 3.2]: https://tools.ietf.org/html/rfc6979#section-3
 impl<C> Signer<Signature<C>> for SigningKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
@@ -157,9 +165,6 @@ where
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
-    /// Sign message prehash using an ephemeral scalar (`k`) derived according
-    /// to a variant of RFC 6979 (Section 3.6) which supplies additional
-    /// entropy from an RNG.
     fn try_sign_digest_with_rng(
         &self,
         rng: &mut impl CryptoRngCore,
