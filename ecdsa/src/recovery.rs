@@ -2,20 +2,36 @@
 
 use crate::{Error, Result};
 
+#[cfg(feature = "signing")]
+use {
+    crate::{hazmat::SignPrimitive, SigningKey},
+    elliptic_curve::subtle::CtOption,
+    signature::digest::FixedOutput,
+};
+
 #[cfg(feature = "verifying")]
 use {
+    crate::{hazmat::VerifyPrimitive, VerifyingKey},
+    elliptic_curve::{
+        ops::LinearCombination,
+        sec1::{self, FromEncodedPoint, ToEncodedPoint},
+        AffinePoint, DecompressPoint, Group, PrimeField, ProjectivePoint,
+    },
+    signature::hazmat::PrehashVerifier,
+};
+
+#[cfg(any(feature = "signing", feature = "verifying"))]
+use {
     crate::{
-        hazmat::{bits2field, DigestPrimitive, VerifyPrimitive},
-        Signature, SignatureSize, VerifyingKey,
+        hazmat::{bits2field, DigestPrimitive},
+        Signature, SignatureSize,
     },
     elliptic_curve::{
         generic_array::ArrayLength,
-        ops::{Invert, LinearCombination, Reduce},
-        sec1::{self, FromEncodedPoint, ToEncodedPoint},
-        AffinePoint, DecompressPoint, FieldSize, Group, PrimeCurve, PrimeField,
-        ProjectiveArithmetic, ProjectivePoint, Scalar,
+        ops::{Invert, Reduce},
+        FieldSize, PrimeCurve, ProjectiveArithmetic, Scalar,
     },
-    signature::{digest::Digest, hazmat::PrehashVerifier},
+    signature::digest::Digest,
 };
 
 /// Recovery IDs, a.k.a. "recid".
@@ -153,6 +169,40 @@ impl TryFrom<u8> for RecoveryId {
 impl From<RecoveryId> for u8 {
     fn from(id: RecoveryId) -> u8 {
         id.0
+    }
+}
+
+#[cfg(feature = "signing")]
+impl<C> SigningKey<C>
+where
+    C: PrimeCurve + ProjectiveArithmetic + DigestPrimitive,
+    C::Digest: FixedOutput<OutputSize = FieldSize<C>>,
+    C::UInt: for<'a> From<&'a Scalar<C>>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::UInt> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    /// Sign the given message prehash, returning a signature and recovery ID.
+    pub fn sign_prehash_recoverable(&self, prehash: &[u8]) -> Result<(Signature<C>, RecoveryId)> {
+        let z = bits2field::<C>(prehash)?;
+        let (sig, recid) = self
+            .as_nonzero_scalar()
+            .try_sign_prehashed_rfc6979::<C::Digest>(z, &[])?;
+
+        Ok((sig, recid.ok_or_else(Error::new)?))
+    }
+
+    /// Sign the given message digest, returning a signature and recovery ID.
+    pub fn sign_digest_recoverable<D>(&self, msg_digest: D) -> Result<(Signature<C>, RecoveryId)>
+    where
+        D: Digest,
+    {
+        self.sign_prehash_recoverable(&msg_digest.finalize())
+    }
+
+    /// Sign the given message, hashing it with the curve's default digest
+    /// function, and returning a signature and recovery ID.
+    pub fn sign_recoverable(&self, msg: &[u8]) -> Result<(Signature<C>, RecoveryId)> {
+        self.sign_digest_recoverable(C::Digest::new_with_prefix(msg))
     }
 }
 
