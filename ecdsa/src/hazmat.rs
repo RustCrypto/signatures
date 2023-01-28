@@ -18,11 +18,11 @@ use elliptic_curve::{bigint::Integer, FieldBytes, PrimeCurve};
 use {
     crate::{RecoveryId, SignatureSize},
     elliptic_curve::{
-        group::Curve as _,
+        ff::PrimeField,
+        group::{Curve as _, Group},
         ops::{Invert, LinearCombination, MulByGenerator, Reduce},
         subtle::CtOption,
-        AffineXCoordinate, AffineYIsOdd, CurveArithmetic, Field, Group, IsHigh, ProjectivePoint,
-        Scalar,
+        AffineXCoordinate, AffineYIsOdd, CurveArithmetic, IsHigh, ProjectivePoint, Scalar,
     },
 };
 
@@ -39,7 +39,7 @@ use {
 use crate::{elliptic_curve::generic_array::ArrayLength, Signature};
 
 #[cfg(feature = "rfc6979")]
-use elliptic_curve::ScalarPrimitive;
+use elliptic_curve::{bigint::ArrayEncoding, ScalarPrimitive};
 
 /// Try to sign the given prehashed message using ECDSA.
 ///
@@ -47,7 +47,12 @@ use elliptic_curve::ScalarPrimitive;
 /// secret scalar via `&self`, such as particular curve's `Scalar` type.
 #[cfg(feature = "arithmetic")]
 pub trait SignPrimitive<C>:
-    AsRef<Self> + Field + Into<FieldBytes<C>> + IsHigh + Reduce<C::Uint> + Sized
+    AsRef<Self>
+    + Into<FieldBytes<C>>
+    + IsHigh
+    + PrimeField<Repr = FieldBytes<C>>
+    + Reduce<C::Uint>
+    + Sized
 where
     C: PrimeCurve + CurveArithmetic + CurveArithmetic<Scalar = Self>,
     SignatureSize<C>: ArrayLength<u8>,
@@ -123,12 +128,15 @@ where
     ) -> Result<(Signature<C>, Option<RecoveryId>)>
     where
         Self: From<ScalarPrimitive<C>>,
-        C::Uint: for<'a> From<&'a Self>,
         D: Digest + BlockSizeUser + FixedOutput<OutputSize = FieldSize<C>> + FixedOutputReset,
     {
-        let x = C::Uint::from(self);
-        let k = rfc6979::generate_k::<D, C::Uint>(&x, &C::ORDER, &z, ad);
-        let k = Self::from(ScalarPrimitive::<C>::new(*k).unwrap());
+        let k = C::Uint::from_be_byte_array(rfc6979::generate_k::<D, FieldSize<C>>(
+            &self.to_repr(),
+            &C::ORDER.to_be_byte_array(),
+            &z,
+            ad,
+        ));
+        let k = Self::from(ScalarPrimitive::<C>::new(k).unwrap());
         self.try_sign_prehashed(k, z)
     }
 }
