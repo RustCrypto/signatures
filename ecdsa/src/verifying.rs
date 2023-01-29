@@ -8,8 +8,9 @@ use core::{cmp::Ordering, fmt::Debug};
 use elliptic_curve::{
     generic_array::ArrayLength,
     ops::Reduce,
+    point::PointCompression,
     sec1::{self, EncodedPoint, FromEncodedPoint, ToEncodedPoint},
-    AffinePoint, CurveArithmetic, FieldSize, PointCompression, PrimeCurve, PublicKey, Scalar,
+    AffinePoint, CurveArithmetic, FieldBytesSize, PrimeCurve, PublicKey, Scalar,
 };
 use signature::{
     digest::{Digest, FixedOutput},
@@ -58,7 +59,7 @@ impl<C> VerifyingKey<C>
 where
     C: PrimeCurve + CurveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
-    FieldSize<C>: sec1::ModulusSize,
+    FieldBytesSize<C>: sec1::ModulusSize,
 {
     /// Initialize [`VerifyingKey`] from a SEC1-encoded public key.
     pub fn from_sec1_bytes(bytes: &[u8]) -> Result<Self> {
@@ -103,7 +104,7 @@ where
 impl<C, D> DigestVerifier<D, Signature<C>> for VerifyingKey<C>
 where
     C: PrimeCurve + CurveArithmetic,
-    D: Digest + FixedOutput<OutputSize = FieldSize<C>>,
+    D: Digest + FixedOutput<OutputSize = FieldBytesSize<C>>,
     AffinePoint<C>: VerifyPrimitive<C>,
     Scalar<C>: Reduce<C::Uint>,
     SignatureSize<C>: ArrayLength<u8>,
@@ -142,12 +143,12 @@ where
 impl<C, D> DigestVerifier<D, der::Signature<C>> for VerifyingKey<C>
 where
     C: PrimeCurve + CurveArithmetic,
-    D: Digest + FixedOutput<OutputSize = FieldSize<C>>,
+    D: Digest + FixedOutput<OutputSize = FieldBytesSize<C>>,
     AffinePoint<C>: VerifyPrimitive<C>,
     Scalar<C>: Reduce<C::Uint>,
     SignatureSize<C>: ArrayLength<u8>,
     der::MaxSize<C>: ArrayLength<u8>,
-    <FieldSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
+    <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
 {
     fn verify_digest(&self, msg_digest: D, signature: &der::Signature<C>) -> Result<()> {
         let signature = Signature::<C>::try_from(signature.clone())?;
@@ -163,7 +164,7 @@ where
     Scalar<C>: Reduce<C::Uint>,
     SignatureSize<C>: ArrayLength<u8>,
     der::MaxSize<C>: ArrayLength<u8>,
-    <FieldSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
+    <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
 {
     fn verify_prehash(&self, prehash: &[u8], signature: &der::Signature<C>) -> Result<()> {
         let signature = Signature::<C>::try_from(signature.clone())?;
@@ -179,7 +180,7 @@ where
     Scalar<C>: Reduce<C::Uint>,
     SignatureSize<C>: ArrayLength<u8>,
     der::MaxSize<C>: ArrayLength<u8>,
-    <FieldSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
+    <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
 {
     fn verify(&self, msg: &[u8], signature: &der::Signature<C>) -> Result<()> {
         let signature = Signature::<C>::try_from(signature.clone())?;
@@ -195,7 +196,7 @@ impl<C> AsRef<AffinePoint<C>> for VerifyingKey<C>
 where
     C: PrimeCurve + CurveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
-    FieldSize<C>: sec1::ModulusSize,
+    FieldBytesSize<C>: sec1::ModulusSize,
 {
     fn as_ref(&self) -> &AffinePoint<C> {
         self.as_affine()
@@ -208,7 +209,7 @@ impl<C> From<&VerifyingKey<C>> for EncodedPoint<C>
 where
     C: PrimeCurve + CurveArithmetic + PointCompression,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
-    FieldSize<C>: sec1::ModulusSize,
+    FieldBytesSize<C>: sec1::ModulusSize,
 {
     fn from(verifying_key: &VerifyingKey<C>) -> EncodedPoint<C> {
         verifying_key.to_encoded_point(C::COMPRESS_POINTS)
@@ -266,7 +267,7 @@ impl<C> PartialOrd for VerifyingKey<C>
 where
     C: PrimeCurve + CurveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
-    FieldSize<C>: sec1::ModulusSize,
+    FieldBytesSize<C>: sec1::ModulusSize,
 {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         self.inner.partial_cmp(&other.inner)
@@ -277,7 +278,7 @@ impl<C> Ord for VerifyingKey<C>
 where
     C: PrimeCurve + CurveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
-    FieldSize<C>: sec1::ModulusSize,
+    FieldBytesSize<C>: sec1::ModulusSize,
 {
     fn cmp(&self, other: &Self) -> Ordering {
         self.inner.cmp(&other.inner)
@@ -288,7 +289,7 @@ impl<C> TryFrom<&[u8]> for VerifyingKey<C>
 where
     C: PrimeCurve + CurveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
-    FieldSize<C>: sec1::ModulusSize,
+    FieldBytesSize<C>: sec1::ModulusSize,
 {
     type Error = Error;
 
@@ -302,7 +303,7 @@ impl<C> TryFrom<pkcs8::SubjectPublicKeyInfo<'_>> for VerifyingKey<C>
 where
     C: PrimeCurve + AssociatedOid + CurveArithmetic + PointCompression,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
-    FieldSize<C>: sec1::ModulusSize,
+    FieldBytesSize<C>: sec1::ModulusSize,
 {
     type Error = pkcs8::spki::Error;
 
@@ -316,7 +317,7 @@ impl<C> DecodePublicKey for VerifyingKey<C>
 where
     C: PrimeCurve + AssociatedOid + CurveArithmetic + PointCompression,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
-    FieldSize<C>: sec1::ModulusSize,
+    FieldBytesSize<C>: sec1::ModulusSize,
 {
 }
 
@@ -325,7 +326,7 @@ impl<C> EncodePublicKey for VerifyingKey<C>
 where
     C: PrimeCurve + AssociatedOid + CurveArithmetic + PointCompression,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
-    FieldSize<C>: sec1::ModulusSize,
+    FieldBytesSize<C>: sec1::ModulusSize,
 {
     fn to_public_key_der(&self) -> pkcs8::spki::Result<pkcs8::Document> {
         self.inner.to_public_key_der()
@@ -337,7 +338,7 @@ impl<C> FromStr for VerifyingKey<C>
 where
     C: PrimeCurve + AssociatedOid + CurveArithmetic + PointCompression,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
-    FieldSize<C>: sec1::ModulusSize,
+    FieldBytesSize<C>: sec1::ModulusSize,
 {
     type Err = Error;
 
@@ -351,7 +352,7 @@ impl<C> Serialize for VerifyingKey<C>
 where
     C: PrimeCurve + AssociatedOid + CurveArithmetic + PointCompression,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
-    FieldSize<C>: sec1::ModulusSize,
+    FieldBytesSize<C>: sec1::ModulusSize,
 {
     fn serialize<S>(&self, serializer: S) -> core::result::Result<S::Ok, S::Error>
     where
@@ -366,7 +367,7 @@ impl<'de, C> Deserialize<'de> for VerifyingKey<C>
 where
     C: PrimeCurve + AssociatedOid + CurveArithmetic + PointCompression,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
-    FieldSize<C>: sec1::ModulusSize,
+    FieldBytesSize<C>: sec1::ModulusSize,
 {
     fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
     where

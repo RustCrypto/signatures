@@ -90,7 +90,7 @@ use core::{
 use elliptic_curve::{
     bigint::Integer,
     generic_array::{sequence::Concat, ArrayLength, GenericArray},
-    FieldBytes, FieldSize, ScalarPrimitive,
+    FieldBytes, FieldBytesSize, ScalarPrimitive,
 };
 
 #[cfg(feature = "alloc")]
@@ -99,14 +99,14 @@ use alloc::vec::Vec;
 #[cfg(feature = "arithmetic")]
 use {
     core::str,
-    elliptic_curve::{CurveArithmetic, IsHigh, NonZeroScalar},
+    elliptic_curve::{scalar::IsHigh, CurveArithmetic, NonZeroScalar},
 };
 
 #[cfg(feature = "serde")]
 use serdect::serde::{de, ser, Deserialize, Serialize};
 
 /// Size of a fixed sized signature for the given elliptic curve.
-pub type SignatureSize<C> = <FieldSize<C> as Add>::Output;
+pub type SignatureSize<C> = <FieldBytesSize<C> as Add>::Output;
 
 /// Fixed-size byte array containing an ECDSA signature
 pub type SignatureBytes<C> = GenericArray<u8, SignatureSize<C>>;
@@ -149,7 +149,7 @@ where
     pub fn from_der(bytes: &[u8]) -> Result<Self>
     where
         der::MaxSize<C>: ArrayLength<u8>,
-        <FieldSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
+        <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
     {
         der::Signature::<C>::try_from(bytes).and_then(Self::try_from)
     }
@@ -162,15 +162,15 @@ where
 
     /// Split the signature into its `r` and `s` components, represented as bytes.
     pub fn split_bytes(&self) -> (FieldBytes<C>, FieldBytes<C>) {
-        (self.r.to_be_bytes(), self.s.to_be_bytes())
+        (self.r.to_bytes(), self.s.to_bytes())
     }
 
     /// Serialize this signature as bytes.
     pub fn to_bytes(&self) -> SignatureBytes<C> {
         let mut bytes = SignatureBytes::<C>::default();
         let (r_bytes, s_bytes) = bytes.split_at_mut(C::Uint::BYTES);
-        r_bytes.copy_from_slice(&self.r.to_be_bytes());
-        s_bytes.copy_from_slice(&self.s.to_be_bytes());
+        r_bytes.copy_from_slice(&self.r.to_bytes());
+        s_bytes.copy_from_slice(&self.s.to_bytes());
         bytes
     }
 
@@ -179,7 +179,7 @@ where
     pub fn to_der(&self) -> der::Signature<C>
     where
         der::MaxSize<C>: ArrayLength<u8>,
-        <FieldSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
+        <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
     {
         let (r, s) = self.split_bytes();
         der::Signature::from_scalar_bytes(&r, &s).expect("DER encoding error")
@@ -285,8 +285,8 @@ where
         }
 
         let (r_bytes, s_bytes) = bytes.split_at(C::Uint::BYTES);
-        let r = ScalarPrimitive::from_be_slice(r_bytes).map_err(|_| Error::new())?;
-        let s = ScalarPrimitive::from_be_slice(s_bytes).map_err(|_| Error::new())?;
+        let r = ScalarPrimitive::from_slice(r_bytes).map_err(|_| Error::new())?;
+        let s = ScalarPrimitive::from_slice(s_bytes).map_err(|_| Error::new())?;
 
         if r.is_zero().into() || s.is_zero().into() {
             return Err(Error::new());
