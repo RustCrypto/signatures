@@ -14,8 +14,9 @@ use {
     crate::{hazmat::VerifyPrimitive, VerifyingKey},
     elliptic_curve::{
         ops::LinearCombination,
+        point::DecompressPoint,
         sec1::{self, FromEncodedPoint, ToEncodedPoint},
-        AffinePoint, DecompressPoint, FieldSize, Group, PrimeField, ProjectivePoint,
+        AffinePoint, FieldBytesSize, Group, PrimeField, ProjectivePoint,
     },
     signature::hazmat::PrehashVerifier,
 };
@@ -101,7 +102,7 @@ impl RecoveryId {
         C: DigestPrimitive + PrimeCurve + CurveArithmetic,
         AffinePoint<C>:
             DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C> + VerifyPrimitive<C>,
-        FieldSize<C>: sec1::ModulusSize,
+        FieldBytesSize<C>: sec1::ModulusSize,
         Scalar<C>: Reduce<C::Uint>,
         SignatureSize<C>: ArrayLength<u8>,
     {
@@ -121,7 +122,7 @@ impl RecoveryId {
         D: Digest,
         AffinePoint<C>:
             DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C> + VerifyPrimitive<C>,
-        FieldSize<C>: sec1::ModulusSize,
+        FieldBytesSize<C>: sec1::ModulusSize,
         Scalar<C>: Reduce<C::Uint>,
         SignatureSize<C>: ArrayLength<u8>,
     {
@@ -140,7 +141,7 @@ impl RecoveryId {
         C: PrimeCurve + CurveArithmetic,
         AffinePoint<C>:
             DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C> + VerifyPrimitive<C>,
-        FieldSize<C>: sec1::ModulusSize,
+        FieldBytesSize<C>: sec1::ModulusSize,
         Scalar<C>: Reduce<C::Uint>,
         SignatureSize<C>: ArrayLength<u8>,
     {
@@ -247,7 +248,7 @@ where
     C: PrimeCurve + CurveArithmetic,
     AffinePoint<C>:
         DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C> + VerifyPrimitive<C>,
-    FieldSize<C>: sec1::ModulusSize,
+    FieldBytesSize<C>: sec1::ModulusSize,
     Scalar<C>: Reduce<C::Uint>,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -289,7 +290,9 @@ where
         recovery_id: RecoveryId,
     ) -> Result<Self> {
         let (r, s) = signature.split_scalars();
-        let z = <Scalar<C> as Reduce<C::Uint>>::from_be_bytes_reduced(bits2field::<C>(prehash)?);
+        let z = <Scalar<C> as Reduce<C::Uint>>::reduce(C::decode_field_bytes(&bits2field::<C>(
+            prehash,
+        )?));
         let R = AffinePoint::<C>::decompress(&r.to_repr(), u8::from(recovery_id.is_y_odd()).into());
 
         if R.is_none().into() {

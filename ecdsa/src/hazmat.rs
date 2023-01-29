@@ -21,14 +21,16 @@ use {
         ff::PrimeField,
         group::{Curve as _, Group},
         ops::{Invert, LinearCombination, MulByGenerator, Reduce},
+        point::{AffineXCoordinate, AffineYIsOdd},
+        scalar::IsHigh,
         subtle::CtOption,
-        AffineXCoordinate, AffineYIsOdd, CurveArithmetic, IsHigh, ProjectivePoint, Scalar,
+        CurveArithmetic, ProjectivePoint, Scalar,
     },
 };
 
 #[cfg(feature = "digest")]
 use {
-    elliptic_curve::FieldSize,
+    elliptic_curve::FieldBytesSize,
     signature::{
         digest::{core_api::BlockSizeUser, Digest, FixedOutput, FixedOutputReset},
         PrehashSignature,
@@ -39,7 +41,7 @@ use {
 use crate::{elliptic_curve::generic_array::ArrayLength, Signature};
 
 #[cfg(feature = "rfc6979")]
-use elliptic_curve::{bigint::ArrayEncoding, ScalarPrimitive};
+use elliptic_curve::ScalarPrimitive;
 
 /// Try to sign the given prehashed message using ECDSA.
 ///
@@ -73,7 +75,7 @@ where
     fn try_sign_prehashed<K>(
         &self,
         k: K,
-        z: FieldBytes<C>,
+        z: &FieldBytes<C>,
     ) -> Result<(Signature<C>, Option<RecoveryId>)>
     where
         K: AsRef<Self> + Invert<Output = CtOption<Self>>,
@@ -82,7 +84,7 @@ where
             return Err(Error::new());
         }
 
-        let z = Self::from_be_bytes_reduced(z);
+        let z = <Self as Reduce<C::Uint>>::reduce(C::decode_field_bytes(z));
 
         // Compute scalar inversion of 𝑘
         let k_inv = Option::<Scalar<C>>::from(k.invert()).ok_or_else(Error::new)?;
@@ -92,7 +94,7 @@ where
 
         // Lift x-coordinate of 𝑹 (element of base field) into a serialized big
         // integer, then reduce it into an element of the scalar field
-        let r = Self::from_be_bytes_reduced(R.x());
+        let r = Self::reduce(C::decode_field_bytes(&R.x()));
 
         // Compute 𝒔 as a signature over 𝒓 and 𝒛.
         let s = k_inv * (z + (r * self));
@@ -128,16 +130,16 @@ where
     ) -> Result<(Signature<C>, Option<RecoveryId>)>
     where
         Self: From<ScalarPrimitive<C>>,
-        D: Digest + BlockSizeUser + FixedOutput<OutputSize = FieldSize<C>> + FixedOutputReset,
+        D: Digest + BlockSizeUser + FixedOutput<OutputSize = FieldBytesSize<C>> + FixedOutputReset,
     {
-        let k = C::Uint::from_be_byte_array(rfc6979::generate_k::<D, FieldSize<C>>(
+        let k = rfc6979::generate_k::<D, FieldBytesSize<C>>(
             &self.to_repr(),
-            &C::ORDER.to_be_byte_array(),
+            &C::encode_field_bytes(&C::ORDER),
             &z,
             ad,
-        ));
-        let k = Self::from(ScalarPrimitive::<C>::new(k).unwrap());
-        self.try_sign_prehashed(k, z)
+        );
+        let k = ScalarPrimitive::<C>::new(C::decode_field_bytes(&k)).unwrap();
+        self.try_sign_prehashed::<Self>(k.into(), &z)
     }
 }
 
@@ -161,7 +163,7 @@ where
     ///        CRYPTOGRAPHICALLY SECURE DIGEST ALGORITHM!!!
     /// - `sig`: signature to be verified against the key and message
     fn verify_prehashed(&self, z: FieldBytes<C>, sig: &Signature<C>) -> Result<()> {
-        let z = Scalar::<C>::from_be_bytes_reduced(z);
+        let z = Scalar::<C>::reduce(C::decode_field_bytes(&z));
         let (r, s) = sig.split_scalars();
         let s_inv = *s.invert();
         let u1 = z * s_inv;
@@ -175,7 +177,7 @@ where
         .to_affine()
         .x();
 
-        if Scalar::<C>::from_be_bytes_reduced(x) == *r {
+        if *r == Scalar::<C>::reduce(C::decode_field_bytes(&x)) {
             Ok(())
         } else {
             Err(Error::new())
@@ -186,7 +188,7 @@ where
     #[cfg(feature = "digest")]
     fn verify_digest<D>(&self, msg_digest: D, sig: &Signature<C>) -> Result<()>
     where
-        D: FixedOutput<OutputSize = FieldSize<C>>,
+        D: FixedOutput<OutputSize = FieldBytesSize<C>>,
     {
         self.verify_prehashed(msg_digest.finalize_fixed(), sig)
     }
@@ -208,7 +210,7 @@ pub trait DigestPrimitive: PrimeCurve {
     /// elliptic curve. This is typically a member of the SHA-2 family.
     type Digest: BlockSizeUser
         + Digest
-        + FixedOutput<OutputSize = FieldSize<Self>>
+        + FixedOutput<OutputSize = FieldBytesSize<Self>>
         + FixedOutputReset;
 }
 
@@ -216,7 +218,7 @@ pub trait DigestPrimitive: PrimeCurve {
 impl<C> PrehashSignature for Signature<C>
 where
     C: DigestPrimitive,
-    <FieldSize<C> as core::ops::Add>::Output: ArrayLength<u8>,
+    <FieldBytesSize<C> as core::ops::Add>::Output: ArrayLength<u8>,
 {
     type Digest = C::Digest;
 }

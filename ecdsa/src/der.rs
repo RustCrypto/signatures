@@ -10,7 +10,7 @@ use elliptic_curve::{
     bigint::Integer,
     consts::U9,
     generic_array::{ArrayLength, GenericArray},
-    FieldSize, PrimeCurve,
+    FieldBytesSize, PrimeCurve,
 };
 
 #[cfg(feature = "alloc")]
@@ -39,7 +39,7 @@ use serdect::serde::{de, ser, Deserialize, Serialize};
 pub type MaxOverhead = U9;
 
 /// Maximum size of an ASN.1 DER encoded signature for the given elliptic curve.
-pub type MaxSize<C> = <<FieldSize<C> as Add>::Output as Add<MaxOverhead>>::Output;
+pub type MaxSize<C> = <<FieldBytesSize<C> as Add>::Output as Add<MaxOverhead>>::Output;
 
 /// Byte array containing a serialized ASN.1 signature
 type SignatureBytes<C> = GenericArray<u8, MaxSize<C>>;
@@ -51,7 +51,7 @@ pub struct Signature<C>
 where
     C: PrimeCurve,
     MaxSize<C>: ArrayLength<u8>,
-    <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+    <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
     /// ASN.1 DER-encoded signature data
     bytes: SignatureBytes<C>,
@@ -68,7 +68,7 @@ impl<C> Signature<C>
 where
     C: PrimeCurve,
     MaxSize<C>: ArrayLength<u8>,
-    <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+    <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
     /// Get the length of the signature in bytes
     pub fn len(&self) -> usize {
@@ -120,7 +120,7 @@ impl<C> AsRef<[u8]> for Signature<C>
 where
     C: PrimeCurve,
     MaxSize<C>: ArrayLength<u8>,
-    <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+    <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
     fn as_ref(&self) -> &[u8] {
         self.as_bytes()
@@ -131,7 +131,7 @@ impl<C> Clone for Signature<C>
 where
     C: PrimeCurve,
     MaxSize<C>: ArrayLength<u8>,
-    <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+    <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
     fn clone(&self) -> Self {
         Self {
@@ -146,7 +146,7 @@ impl<C> Debug for Signature<C>
 where
     C: PrimeCurve,
     MaxSize<C>: ArrayLength<u8>,
-    <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+    <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "ecdsa::der::Signature<{:?}>(", C::default())?;
@@ -163,7 +163,7 @@ impl<C> From<crate::Signature<C>> for Signature<C>
 where
     C: PrimeCurve,
     MaxSize<C>: ArrayLength<u8>,
-    <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+    <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
     fn from(sig: crate::Signature<C>) -> Signature<C> {
         sig.to_der()
@@ -174,7 +174,7 @@ impl<C> TryFrom<&[u8]> for Signature<C>
 where
     C: PrimeCurve,
     MaxSize<C>: ArrayLength<u8>,
-    <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+    <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
     type Error = Error;
 
@@ -207,7 +207,7 @@ impl<C> TryFrom<Signature<C>> for crate::Signature<C>
 where
     C: PrimeCurve,
     MaxSize<C>: ArrayLength<u8>,
-    <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+    <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
     type Error = Error;
 
@@ -226,7 +226,7 @@ impl<C> From<Signature<C>> for Box<[u8]>
 where
     C: PrimeCurve,
     MaxSize<C>: ArrayLength<u8>,
-    <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+    <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
     fn from(signature: Signature<C>) -> Box<[u8]> {
         signature.to_vec().into_boxed_slice()
@@ -238,7 +238,7 @@ impl<C> SignatureEncoding for Signature<C>
 where
     C: PrimeCurve,
     MaxSize<C>: ArrayLength<u8>,
-    <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+    <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
     type Repr = Box<[u8]>;
 
@@ -252,7 +252,7 @@ impl<C> Serialize for Signature<C>
 where
     C: PrimeCurve,
     MaxSize<C>: ArrayLength<u8>,
-    <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+    <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
     fn serialize<S>(&self, serializer: S) -> core::result::Result<S::Ok, S::Error>
     where
@@ -267,7 +267,7 @@ impl<'de, C> Deserialize<'de> for Signature<C>
 where
     C: PrimeCurve,
     MaxSize<C>: ArrayLength<u8>,
-    <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+    <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
     fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
     where
@@ -310,7 +310,7 @@ impl<C> signature::PrehashSignature for Signature<C>
 where
     C: PrimeCurve + crate::hazmat::DigestPrimitive,
     MaxSize<C>: ArrayLength<u8>,
-    <FieldSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+    <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
     type Digest = C::Digest;
 }
