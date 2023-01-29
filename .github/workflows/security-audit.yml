@@ -9,21 +9,20 @@ on:
     - cron: "0 0 * * *"
 
 jobs:
-# TODO(tarcieri): re-enable when elliptic-curve has been bumped
-#  security_audit:
-#    name: Security Audit
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: actions/checkout@v3
-#      - uses: actions-rs/toolchain@v1
-#        with:
-#          toolchain: stable
-#          override: true
-#          profile: minimal
-#      - uses: actions/cache@v3
-#        with:
-#          path: ~/.cargo/bin
-#          key: ${{ runner.os }}-cargo-audit-v0.17.2
-#      - uses: actions-rs/audit-check@v1
-#        with:
-#          token: ${{ secrets.GITHUB_TOKEN }}
+  security_audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          profile: minimal
+      - uses: actions/cache@v3
+        with:
+          path: ~/.cargo/bin
+          key: ${{ runner.os }}-cargo-audit-v0.17.4
+      - uses: actions-rs/audit-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
