@@ -176,7 +176,6 @@ impl From<RecoveryId> for u8 {
 impl<C> SigningKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
-    C::Uint: for<'a> From<&'a Scalar<C>>,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -209,7 +208,6 @@ where
 impl<C, D> DigestSigner<D, (Signature<C>, RecoveryId)> for SigningKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
-    C::Uint: for<'a> From<&'a Scalar<C>>,
     D: Digest,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
@@ -223,7 +221,6 @@ where
 impl<C> PrehashSigner<(Signature<C>, RecoveryId)> for SigningKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
-    C::Uint: for<'a> From<&'a Scalar<C>>,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -236,7 +233,6 @@ where
 impl<C> Signer<(Signature<C>, RecoveryId)> for SigningKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
-    C::Uint: for<'a> From<&'a Scalar<C>>,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {

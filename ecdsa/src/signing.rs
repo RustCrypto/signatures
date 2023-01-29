@@ -111,7 +111,6 @@ where
 impl<C, D> DigestSigner<D, Signature<C>> for SigningKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
-    C::Uint: for<'a> From<&'a Scalar<C>>,
     D: Digest + FixedOutput<OutputSize = FieldSize<C>>,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
@@ -128,7 +127,6 @@ where
 impl<C> PrehashSigner<Signature<C>> for SigningKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
-    C::Uint: for<'a> From<&'a Scalar<C>>,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -148,7 +146,6 @@ where
 impl<C> Signer<Signature<C>> for SigningKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
-    C::Uint: for<'a> From<&'a Scalar<C>>,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -160,7 +157,6 @@ where
 impl<C, D> RandomizedDigestSigner<D, Signature<C>> for SigningKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
-    C::Uint: for<'a> From<&'a Scalar<C>>,
     D: Digest + FixedOutput<OutputSize = FieldSize<C>>,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
@@ -177,7 +173,6 @@ where
 impl<C> RandomizedPrehashSigner<Signature<C>> for SigningKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
-    C::Uint: for<'a> From<&'a Scalar<C>>,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
@@ -212,7 +207,6 @@ where
 impl<C> PrehashSigner<der::Signature<C>> for SigningKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
-    C::Uint: for<'a> From<&'a Scalar<C>>,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
     der::MaxSize<C>: ArrayLength<u8>,
@@ -227,7 +221,6 @@ where
 impl<C> Signer<der::Signature<C>> for SigningKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
-    C::Uint: for<'a> From<&'a Scalar<C>>,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
     der::MaxSize<C>: ArrayLength<u8>,
@@ -242,7 +235,6 @@ where
 impl<C, D> RandomizedDigestSigner<D, der::Signature<C>> for SigningKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
-    C::Uint: for<'a> From<&'a Scalar<C>>,
     D: Digest + FixedOutput<OutputSize = FieldSize<C>>,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
@@ -263,7 +255,6 @@ where
 impl<C> RandomizedPrehashSigner<der::Signature<C>> for SigningKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
-    C::Uint: for<'a> From<&'a Scalar<C>>,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
     der::MaxSize<C>: ArrayLength<u8>,
@@ -283,7 +274,6 @@ where
 impl<C> RandomizedSigner<der::Signature<C>> for SigningKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
-    C::Uint: for<'a> From<&'a Scalar<C>>,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
     der::MaxSize<C>: ArrayLength<u8>,
