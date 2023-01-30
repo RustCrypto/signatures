@@ -125,7 +125,7 @@ where
     #[cfg(all(feature = "rfc6979"))]
     fn try_sign_prehashed_rfc6979<D>(
         &self,
-        z: FieldBytes<C>,
+        z: &FieldBytes<C>,
         ad: &[u8],
     ) -> Result<(Signature<C>, Option<RecoveryId>)>
     where
@@ -135,11 +135,11 @@ where
         let k = rfc6979::generate_k::<D, FieldBytesSize<C>>(
             &self.to_repr(),
             &C::encode_field_bytes(&C::ORDER),
-            &z,
+            z,
             ad,
         );
         let k = ScalarPrimitive::<C>::new(C::decode_field_bytes(&k)).unwrap();
-        self.try_sign_prehashed::<Self>(k.into(), &z)
+        self.try_sign_prehashed::<Self>(k.into(), z)
     }
 }
 
@@ -162,8 +162,8 @@ where
     /// - `z`: message digest to be verified. MUST BE OUTPUT OF A
     ///        CRYPTOGRAPHICALLY SECURE DIGEST ALGORITHM!!!
     /// - `sig`: signature to be verified against the key and message
-    fn verify_prehashed(&self, z: FieldBytes<C>, sig: &Signature<C>) -> Result<()> {
-        let z = Scalar::<C>::reduce(C::decode_field_bytes(&z));
+    fn verify_prehashed(&self, z: &FieldBytes<C>, sig: &Signature<C>) -> Result<()> {
+        let z = Scalar::<C>::reduce(C::decode_field_bytes(z));
         let (r, s) = sig.split_scalars();
         let s_inv = *s.invert();
         let u1 = z * s_inv;
@@ -190,7 +190,7 @@ where
     where
         D: FixedOutput<OutputSize = FieldBytesSize<C>>,
     {
-        self.verify_prehashed(msg_digest.finalize_fixed(), sig)
+        self.verify_prehashed(&msg_digest.finalize_fixed(), sig)
     }
 }
 
