@@ -141,7 +141,7 @@ where
         let z = bits2field::<C>(prehash)?;
         Ok(self
             .secret_scalar
-            .try_sign_prehashed_rfc6979::<C::Digest>(z, &[])?
+            .try_sign_prehashed_rfc6979::<C::Digest>(&z, &[])?
             .0)
     }
 }
@@ -193,7 +193,7 @@ where
         rng.fill_bytes(&mut ad);
         Ok(self
             .secret_scalar
-            .try_sign_prehashed_rfc6979::<C::Digest>(z, &ad)?
+            .try_sign_prehashed_rfc6979::<C::Digest>(&z, &ad)?
             .0)
     }
 }

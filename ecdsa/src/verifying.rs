@@ -123,7 +123,7 @@ where
 {
     fn verify_prehash(&self, prehash: &[u8], signature: &Signature<C>) -> Result<()> {
         let field = bits2field::<C>(prehash)?;
-        self.inner.as_affine().verify_prehashed(field, signature)
+        self.inner.as_affine().verify_prehashed(&field, signature)
     }
 }
 

@@ -185,7 +185,7 @@ where
         let z = bits2field::<C>(prehash)?;
         let (sig, recid) = self
             .as_nonzero_scalar()
-            .try_sign_prehashed_rfc6979::<C::Digest>(z, &[])?;
+            .try_sign_prehashed_rfc6979::<C::Digest>(&z, &[])?;
 
         Ok((sig, recid.ok_or_else(Error::new)?))
     }
