@@ -285,8 +285,7 @@ dependencies = [
 [[package]]
 name = "elliptic-curve"
 version = "0.13.0-pre.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bbb7effce4b08a32c6550a49a6dd7b4cd5534c6478d2099cbd0a8918008adb52"
+source = "git+https://github.com/RustCrypto/traits.git#a3844beacdd24ca914fb094317a426aaca348024"
 dependencies = [
  "base16ct",
  "crypto-bigint 0.5.0-pre.2",

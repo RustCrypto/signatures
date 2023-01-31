@@ -13,7 +13,7 @@ use {
 use {
     crate::{hazmat::VerifyPrimitive, VerifyingKey},
     elliptic_curve::{
-        ops::LinearCombination,
+        ops::{LinearCombination, Reduce},
         point::DecompressPoint,
         sec1::{self, FromEncodedPoint, ToEncodedPoint},
         AffinePoint, FieldBytesSize, Group, PrimeField, ProjectivePoint,
@@ -28,9 +28,7 @@ use {
         Signature, SignatureSize,
     },
     elliptic_curve::{
-        generic_array::ArrayLength,
-        ops::{Invert, Reduce},
-        CurveArithmetic, PrimeCurve, Scalar,
+        generic_array::ArrayLength, ops::Invert, CurveArithmetic, PrimeCurve, Scalar,
     },
     signature::digest::Digest,
 };
@@ -103,7 +101,6 @@ impl RecoveryId {
         AffinePoint<C>:
             DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C> + VerifyPrimitive<C>,
         FieldBytesSize<C>: sec1::ModulusSize,
-        Scalar<C>: Reduce<C::Uint>,
         SignatureSize<C>: ArrayLength<u8>,
     {
         Self::trial_recovery_from_digest(verifying_key, C::Digest::new_with_prefix(msg), signature)
@@ -123,7 +120,6 @@ impl RecoveryId {
         AffinePoint<C>:
             DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C> + VerifyPrimitive<C>,
         FieldBytesSize<C>: sec1::ModulusSize,
-        Scalar<C>: Reduce<C::Uint>,
         SignatureSize<C>: ArrayLength<u8>,
     {
         Self::trial_recovery_from_prehash(verifying_key, &digest.finalize(), signature)
@@ -142,7 +138,6 @@ impl RecoveryId {
         AffinePoint<C>:
             DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C> + VerifyPrimitive<C>,
         FieldBytesSize<C>: sec1::ModulusSize,
-        Scalar<C>: Reduce<C::Uint>,
         SignatureSize<C>: ArrayLength<u8>,
     {
         for id in 0..=Self::MAX {
@@ -177,7 +172,7 @@ impl From<RecoveryId> for u8 {
 impl<C> SigningKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Sign the given message prehash, returning a signature and recovery ID.
@@ -210,7 +205,7 @@ impl<C, D> DigestSigner<D, (Signature<C>, RecoveryId)> for SigningKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
     D: Digest,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn try_sign_digest(&self, msg_digest: D) -> Result<(Signature<C>, RecoveryId)> {
@@ -222,7 +217,7 @@ where
 impl<C> PrehashSigner<(Signature<C>, RecoveryId)> for SigningKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn sign_prehash(&self, prehash: &[u8]) -> Result<(Signature<C>, RecoveryId)> {
@@ -234,7 +229,7 @@ where
 impl<C> Signer<(Signature<C>, RecoveryId)> for SigningKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + Reduce<C::Uint> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn try_sign(&self, msg: &[u8]) -> Result<(Signature<C>, RecoveryId)> {
@@ -249,7 +244,6 @@ where
     AffinePoint<C>:
         DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C> + VerifyPrimitive<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
-    Scalar<C>: Reduce<C::Uint>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Recover a [`VerifyingKey`] from the given message, signature, and
@@ -290,9 +284,7 @@ where
         recovery_id: RecoveryId,
     ) -> Result<Self> {
         let (r, s) = signature.split_scalars();
-        let z = <Scalar<C> as Reduce<C::Uint>>::reduce(C::decode_field_bytes(&bits2field::<C>(
-            prehash,
-        )?));
+        let z = <Scalar<C> as Reduce<C::Uint>>::reduce_bytes(&bits2field::<C>(prehash)?);
         let R = AffinePoint::<C>::decompress(&r.to_repr(), u8::from(recovery_id.is_y_odd()).into());
 
         if R.is_none().into() {
