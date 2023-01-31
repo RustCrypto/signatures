@@ -37,11 +37,11 @@ use {
     },
 };
 
+#[cfg(feature = "rfc6979")]
+use elliptic_curve::scalar::FromUintUnchecked;
+
 #[cfg(any(feature = "arithmetic", feature = "digest"))]
 use crate::{elliptic_curve::generic_array::ArrayLength, Signature};
-
-#[cfg(feature = "rfc6979")]
-use elliptic_curve::ScalarPrimitive;
 
 /// Try to sign the given prehashed message using ECDSA.
 ///
@@ -129,12 +129,12 @@ where
         ad: &[u8],
     ) -> Result<(Signature<C>, Option<RecoveryId>)>
     where
-        Self: From<ScalarPrimitive<C>>,
+        Self: FromUintUnchecked<Uint = C::Uint>,
         D: Digest + BlockSizeUser + FixedOutput<OutputSize = FieldBytesSize<C>> + FixedOutputReset,
     {
         let k = Scalar::<C>::from_repr(rfc6979::generate_k::<D, _>(
             &self.to_repr(),
-            &C::encode_field_bytes(&C::ORDER),
+            &Scalar::<C>::from_uint_unchecked(C::ORDER).to_repr(),
             z,
             ad,
         ))
