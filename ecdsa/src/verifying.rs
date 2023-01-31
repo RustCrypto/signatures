@@ -7,10 +7,9 @@ use crate::{
 use core::{cmp::Ordering, fmt::Debug};
 use elliptic_curve::{
     generic_array::ArrayLength,
-    ops::Reduce,
     point::PointCompression,
     sec1::{self, EncodedPoint, FromEncodedPoint, ToEncodedPoint},
-    AffinePoint, CurveArithmetic, FieldBytesSize, PrimeCurve, PublicKey, Scalar,
+    AffinePoint, CurveArithmetic, FieldBytesSize, PrimeCurve, PublicKey,
 };
 use signature::{
     digest::{Digest, FixedOutput},
@@ -106,7 +105,6 @@ where
     C: PrimeCurve + CurveArithmetic,
     D: Digest + FixedOutput<OutputSize = FieldBytesSize<C>>,
     AffinePoint<C>: VerifyPrimitive<C>,
-    Scalar<C>: Reduce<C::Uint>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn verify_digest(&self, msg_digest: D, signature: &Signature<C>) -> Result<()> {
@@ -118,7 +116,6 @@ impl<C> PrehashVerifier<Signature<C>> for VerifyingKey<C>
 where
     C: PrimeCurve + CurveArithmetic,
     AffinePoint<C>: VerifyPrimitive<C>,
-    Scalar<C>: Reduce<C::Uint>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn verify_prehash(&self, prehash: &[u8], signature: &Signature<C>) -> Result<()> {
@@ -131,7 +128,6 @@ impl<C> Verifier<Signature<C>> for VerifyingKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
     AffinePoint<C>: VerifyPrimitive<C>,
-    Scalar<C>: Reduce<C::Uint>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     fn verify(&self, msg: &[u8], signature: &Signature<C>) -> Result<()> {
@@ -145,7 +141,6 @@ where
     C: PrimeCurve + CurveArithmetic,
     D: Digest + FixedOutput<OutputSize = FieldBytesSize<C>>,
     AffinePoint<C>: VerifyPrimitive<C>,
-    Scalar<C>: Reduce<C::Uint>,
     SignatureSize<C>: ArrayLength<u8>,
     der::MaxSize<C>: ArrayLength<u8>,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
@@ -161,7 +156,6 @@ impl<C> PrehashVerifier<der::Signature<C>> for VerifyingKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
     AffinePoint<C>: VerifyPrimitive<C>,
-    Scalar<C>: Reduce<C::Uint>,
     SignatureSize<C>: ArrayLength<u8>,
     der::MaxSize<C>: ArrayLength<u8>,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
@@ -177,7 +171,6 @@ impl<C> Verifier<der::Signature<C>> for VerifyingKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
     AffinePoint<C>: VerifyPrimitive<C>,
-    Scalar<C>: Reduce<C::Uint>,
     SignatureSize<C>: ArrayLength<u8>,
     der::MaxSize<C>: ArrayLength<u8>,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,

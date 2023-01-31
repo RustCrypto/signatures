@@ -53,7 +53,7 @@ pub trait SignPrimitive<C>:
     + Into<FieldBytes<C>>
     + IsHigh
     + PrimeField<Repr = FieldBytes<C>>
-    + Reduce<C::Uint>
+    + Reduce<C::Uint, Bytes = FieldBytes<C>>
     + Sized
 where
     C: PrimeCurve + CurveArithmetic + CurveArithmetic<Scalar = Self>,
@@ -84,7 +84,7 @@ where
             return Err(Error::new());
         }
 
-        let z = <Self as Reduce<C::Uint>>::reduce(C::decode_field_bytes(z));
+        let z = <Self as Reduce<C::Uint>>::reduce_bytes(z);
 
         // Compute scalar inversion of 𝑘
         let k_inv = Option::<Scalar<C>>::from(k.invert()).ok_or_else(Error::new)?;
@@ -94,7 +94,7 @@ where
 
         // Lift x-coordinate of 𝑹 (element of base field) into a serialized big
         // integer, then reduce it into an element of the scalar field
-        let r = Self::reduce(C::decode_field_bytes(&R.x()));
+        let r = Self::reduce_bytes(&R.x());
 
         // Compute 𝒔 as a signature over 𝒓 and 𝒛.
         let s = k_inv * (z + (r * self));
@@ -132,14 +132,15 @@ where
         Self: From<ScalarPrimitive<C>>,
         D: Digest + BlockSizeUser + FixedOutput<OutputSize = FieldBytesSize<C>> + FixedOutputReset,
     {
-        let k = rfc6979::generate_k::<D, FieldBytesSize<C>>(
+        let k = Scalar::<C>::from_repr(rfc6979::generate_k::<D, _>(
             &self.to_repr(),
             &C::encode_field_bytes(&C::ORDER),
             z,
             ad,
-        );
-        let k = ScalarPrimitive::<C>::new(C::decode_field_bytes(&k)).unwrap();
-        self.try_sign_prehashed::<Self>(k.into(), z)
+        ))
+        .unwrap();
+
+        self.try_sign_prehashed::<Self>(k, z)
     }
 }
 
@@ -152,7 +153,6 @@ where
 pub trait VerifyPrimitive<C>: AffineXCoordinate<FieldRepr = FieldBytes<C>> + Copy + Sized
 where
     C: PrimeCurve + CurveArithmetic<AffinePoint = Self> + CurveArithmetic,
-    Scalar<C>: Reduce<C::Uint>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Verify the prehashed message against the provided signature
@@ -163,7 +163,7 @@ where
     ///        CRYPTOGRAPHICALLY SECURE DIGEST ALGORITHM!!!
     /// - `sig`: signature to be verified against the key and message
     fn verify_prehashed(&self, z: &FieldBytes<C>, sig: &Signature<C>) -> Result<()> {
-        let z = Scalar::<C>::reduce(C::decode_field_bytes(z));
+        let z = Scalar::<C>::reduce_bytes(z);
         let (r, s) = sig.split_scalars();
         let s_inv = *s.invert();
         let u1 = z * s_inv;
@@ -177,7 +177,7 @@ where
         .to_affine()
         .x();
 
-        if *r == Scalar::<C>::reduce(C::decode_field_bytes(&x)) {
+        if *r == Scalar::<C>::reduce_bytes(&x) {
             Ok(())
         } else {
             Err(Error::new())
