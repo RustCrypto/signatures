@@ -207,7 +207,7 @@ name = "ecdsa"
 version = "0.16.0-pre"
 dependencies = [
  "der",
- "elliptic-curve 0.13.0-pre.2",
+ "elliptic-curve 0.13.0-pre.3",
  "hex-literal",
  "rfc6979",
  "serdect",
@@ -284,9 +284,9 @@ dependencies = [
 
 [[package]]
 name = "elliptic-curve"
-version = "0.13.0-pre.2"
+version = "0.13.0-pre.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec134ae3361336f68d31a0f6f1f9d3cb20c6377156735a60e79fea8407e47978"
+checksum = "a583fbbbfde04e0ef9c8b84c3bf8e504155a1642f91bf5cc2d6e7355cfb6ac4f"
 dependencies = [
  "base16ct",
  "crypto-bigint 0.5.0-pre.3",
