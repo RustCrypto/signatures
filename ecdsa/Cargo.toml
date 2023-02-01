@@ -21,7 +21,7 @@ signature = { version = "2.0, <2.1", default-features = false, features = ["rand
 
 # optional dependencies
 der = { version = "0.6", optional = true }
-rfc6979 = { version = "=0.4.0-pre", optional = true, path = "../rfc6979" }
+rfc6979 = { version = "=0.4.0-pre.0", optional = true, path = "../rfc6979" }
 serdect = { version = "0.1", optional = true, default-features = false, features = ["alloc"] }
 
 [dev-dependencies]
