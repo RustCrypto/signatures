@@ -41,7 +41,7 @@ use {
 use crate::{elliptic_curve::generic_array::ArrayLength, Signature};
 
 #[cfg(feature = "rfc6979")]
-use elliptic_curve::ScalarPrimitive;
+use elliptic_curve::{FieldBytesEncoding, ScalarPrimitive};
 
 /// Try to sign the given prehashed message using ECDSA.
 ///
@@ -134,7 +134,7 @@ where
     {
         let k = Scalar::<C>::from_repr(rfc6979::generate_k::<D, _>(
             &self.to_repr(),
-            &C::encode_field_bytes(&C::ORDER),
+            &C::ORDER.encode_field_bytes(),
             z,
             ad,
         ))
