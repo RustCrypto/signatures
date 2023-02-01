@@ -204,7 +204,7 @@ dependencies = [
 
 [[package]]
 name = "ecdsa"
-version = "0.16.0-pre"
+version = "0.16.0-pre.0"
 dependencies = [
  "der",
  "elliptic-curve 0.13.0-pre.3",
