@@ -9,3 +9,6 @@ members = [
 
 [profile.dev]
 opt-level = 2
+
+[patch.crates-io.elliptic-curve]
+git = "https://github.com/rustcrypto/traits.git"

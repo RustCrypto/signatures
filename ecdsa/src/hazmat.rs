@@ -21,7 +21,7 @@ use {
         ff::PrimeField,
         group::{Curve as _, Group},
         ops::{Invert, LinearCombination, MulByGenerator, Reduce},
-        point::{AffineXCoordinate, AffineYIsOdd},
+        point::AffineCoordinates,
         scalar::IsHigh,
         subtle::CtOption,
         CurveArithmetic, ProjectivePoint, Scalar,
@@ -150,7 +150,7 @@ where
 /// the affine point represeting the public key via `&self`, such as a
 /// particular curve's `AffinePoint` type.
 #[cfg(feature = "arithmetic")]
-pub trait VerifyPrimitive<C>: AffineXCoordinate<FieldRepr = FieldBytes<C>> + Copy + Sized
+pub trait VerifyPrimitive<C>: AffineCoordinates<FieldRepr = FieldBytes<C>> + Copy + Sized
 where
     C: PrimeCurve + CurveArithmetic<AffinePoint = Self> + CurveArithmetic,
     SignatureSize<C>: ArrayLength<u8>,
