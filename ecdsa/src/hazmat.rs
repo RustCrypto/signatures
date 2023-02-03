@@ -165,7 +165,7 @@ where
     fn verify_prehashed(&self, z: &FieldBytes<C>, sig: &Signature<C>) -> Result<()> {
         let z = Scalar::<C>::reduce_bytes(z);
         let (r, s) = sig.split_scalars();
-        let s_inv = *s.invert();
+        let s_inv = *s.invert_vartime();
         let u1 = z * s_inv;
         let u2 = *r * s_inv;
         let x = ProjectivePoint::<C>::lincomb(
