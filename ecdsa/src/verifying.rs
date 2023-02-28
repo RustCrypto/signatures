@@ -20,14 +20,14 @@ use signature::{
 #[cfg(feature = "der")]
 use {crate::der, core::ops::Add};
 
+#[cfg(feature = "pem")]
+use {
+    core::str::FromStr,
+    elliptic_curve::pkcs8::{DecodePublicKey, EncodePublicKey},
+};
+
 #[cfg(feature = "pkcs8")]
-use elliptic_curve::pkcs8::{self, AssociatedOid, DecodePublicKey};
-
-#[cfg(feature = "pem")]
-use elliptic_curve::pkcs8::EncodePublicKey;
-
-#[cfg(feature = "pem")]
-use core::str::FromStr;
+use elliptic_curve::pkcs8::{self, AssociatedOid};
 
 #[cfg(all(feature = "pem", feature = "serde"))]
 use serdect::serde::{de, ser, Deserialize, Serialize};
@@ -292,7 +292,7 @@ where
 }
 
 #[cfg(feature = "pkcs8")]
-impl<C> TryFrom<pkcs8::SubjectPublicKeyInfo<'_>> for VerifyingKey<C>
+impl<C> TryFrom<pkcs8::SubjectPublicKeyInfoRef<'_>> for VerifyingKey<C>
 where
     C: PrimeCurve + AssociatedOid + CurveArithmetic + PointCompression,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
@@ -300,18 +300,9 @@ where
 {
     type Error = pkcs8::spki::Error;
 
-    fn try_from(spki: pkcs8::SubjectPublicKeyInfo<'_>) -> pkcs8::spki::Result<Self> {
+    fn try_from(spki: pkcs8::SubjectPublicKeyInfoRef<'_>) -> pkcs8::spki::Result<Self> {
         PublicKey::try_from(spki).map(|inner| Self { inner })
     }
-}
-
-#[cfg(feature = "pkcs8")]
-impl<C> DecodePublicKey for VerifyingKey<C>
-where
-    C: PrimeCurve + AssociatedOid + CurveArithmetic + PointCompression,
-    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
-    FieldBytesSize<C>: sec1::ModulusSize,
-{
 }
 
 #[cfg(feature = "pem")]

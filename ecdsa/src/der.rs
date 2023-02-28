@@ -5,7 +5,7 @@ use core::{
     fmt::{self, Debug},
     ops::{Add, Range},
 };
-use der::{asn1::UIntRef, Decode, Encode, Reader};
+use der::{asn1::UintRef, Decode, Encode, Reader};
 use elliptic_curve::{
     bigint::Integer,
     consts::U9,
@@ -88,8 +88,8 @@ where
 
     /// Create an ASN.1 DER encoded signature from big endian `r` and `s` scalars
     pub(crate) fn from_scalar_bytes(r: &[u8], s: &[u8]) -> der::Result<Self> {
-        let r = UIntRef::new(r)?;
-        let s = UIntRef::new(s)?;
+        let r = UintRef::new(r)?;
+        let s = UintRef::new(s)?;
 
         let mut bytes = SignatureBytes::<C>::default();
         let mut writer = der::SliceWriter::new(&mut bytes);
@@ -280,14 +280,14 @@ where
 }
 
 /// Decode the `r` and `s` components of a DER-encoded ECDSA signature.
-fn decode_der(der_bytes: &[u8]) -> der::Result<(UIntRef<'_>, UIntRef<'_>)> {
+fn decode_der(der_bytes: &[u8]) -> der::Result<(UintRef<'_>, UintRef<'_>)> {
     let mut reader = der::SliceReader::new(der_bytes)?;
     let header = der::Header::decode(&mut reader)?;
     header.tag.assert_eq(der::Tag::Sequence)?;
 
     let ret = reader.read_nested(header.length, |reader| {
-        let r = UIntRef::decode(reader)?;
-        let s = UIntRef::decode(reader)?;
+        let r = UintRef::decode(reader)?;
+        let s = UintRef::decode(reader)?;
         Ok((r, s))
     })?;
 
