@@ -25,13 +25,13 @@ use {crate::der, core::ops::Add};
 
 #[cfg(feature = "pem")]
 use {
-    crate::elliptic_curve::pkcs8::{EncodePrivateKey, SecretDocument},
+    crate::elliptic_curve::pkcs8::{DecodePrivateKey, EncodePrivateKey, SecretDocument},
     core::str::FromStr,
 };
 
 #[cfg(feature = "pkcs8")]
 use crate::elliptic_curve::{
-    pkcs8::{self, AssociatedOid, DecodePrivateKey},
+    pkcs8::{self, AssociatedOid},
     sec1::{self, FromEncodedPoint, ToEncodedPoint},
     AffinePoint,
 };
@@ -526,15 +526,4 @@ where
     fn from_str(s: &str) -> Result<Self> {
         Self::from_pkcs8_pem(s).map_err(|_| Error::new())
     }
-}
-
-#[cfg(feature = "pkcs8")]
-impl<C> DecodePrivateKey for SigningKey<C>
-where
-    C: PrimeCurve + AssociatedOid + CurveArithmetic,
-    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
-    FieldBytesSize<C>: sec1::ModulusSize,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
-    SignatureSize<C>: ArrayLength<u8>,
-{
 }
