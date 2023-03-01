@@ -156,7 +156,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f1a467a65c5e759bce6e65eaf91cc29f466cdc57cb65777bd646872a8a1fd4de"
 dependencies = [
  "const-oid",
- "pem-rfc7468 0.6.0",
  "zeroize",
 ]
 
@@ -167,7 +166,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bc302fd9b18d66834a6f092d10ea85489c0ca8ad6b7304092135fab171d853cd"
 dependencies = [
  "const-oid",
- "pem-rfc7468 0.7.0",
+ "pem-rfc7468",
  "zeroize",
 ]
 
@@ -248,7 +247,7 @@ dependencies = [
  "bincode",
  "ed25519-dalek",
  "hex-literal",
- "pkcs8 0.9.0",
+ "pkcs8 0.10.0",
  "rand_core 0.5.1",
  "ring-compat",
  "serde",
@@ -312,7 +311,7 @@ dependencies = [
  "generic-array",
  "group 0.13.0",
  "hex-literal",
- "pem-rfc7468 0.7.0",
+ "pem-rfc7468",
  "pkcs8 0.10.0",
  "rand_core 0.6.4",
  "sec1 0.7.1",
@@ -529,15 +528,6 @@ dependencies = [
  "ecdsa 0.15.0",
  "elliptic-curve 0.12.3",
  "primeorder",
-]
-
-[[package]]
-name = "pem-rfc7468"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "24d159833a9105500e0398934e205e0773f0b27529557134ecfc51c27646adac"
-dependencies = [
- "base64ct",
 ]
 
 [[package]]

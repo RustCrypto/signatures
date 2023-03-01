@@ -20,7 +20,7 @@ rust-version = "1.60"
 signature = { version = "2", default-features = false }
 
 # optional dependencies
-pkcs8 = { version = "0.9", optional = true }
+pkcs8 = { version = "0.10", optional = true }
 serde = { version = "1", optional = true, default-features = false }
 serde_bytes = { version = "0.11", optional = true }
 zeroize = { version = "1", optional = true, default-features = false }
