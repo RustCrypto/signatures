@@ -20,7 +20,7 @@ pub use pkcs8::{spki, DecodePrivateKey, DecodePublicKey, Error, PrivateKeyInfo, 
 pub use pkcs8::{spki::EncodePublicKey, EncodePrivateKey};
 
 #[cfg(feature = "alloc")]
-pub use pkcs8::der::{Document, SecretDocument};
+pub use pkcs8::der::{asn1::BitStringRef, Document, SecretDocument};
 
 use core::fmt;
 use pkcs8::ObjectIdentifier;
@@ -41,7 +41,7 @@ use zeroize::Zeroize;
 pub const ALGORITHM_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.3.101.112");
 
 /// Ed25519 Algorithm Identifier.
-pub const ALGORITHM_ID: pkcs8::AlgorithmIdentifier<'static> = pkcs8::AlgorithmIdentifier {
+pub const ALGORITHM_ID: pkcs8::AlgorithmIdentifierRef<'static> = pkcs8::AlgorithmIdentifierRef {
     oid: ALGORITHM_OID,
     parameters: None,
 };
@@ -110,8 +110,6 @@ impl KeypairBytes {
         }
     }
 }
-
-impl DecodePrivateKey for KeypairBytes {}
 
 impl Drop for KeypairBytes {
     fn drop(&mut self) {
@@ -240,57 +238,57 @@ impl AsRef<[u8; Self::BYTE_SIZE]> for PublicKeyBytes {
     }
 }
 
-impl DecodePublicKey for PublicKeyBytes {}
-
 #[cfg(feature = "alloc")]
 impl EncodePublicKey for PublicKeyBytes {
-    fn to_public_key_der(&self) -> pkcs8::spki::Result<Document> {
-        pkcs8::SubjectPublicKeyInfo {
+    fn to_public_key_der(&self) -> spki::Result<Document> {
+        pkcs8::SubjectPublicKeyInfoRef {
             algorithm: ALGORITHM_ID,
-            subject_public_key: &self.0,
+            subject_public_key: BitStringRef::new(0, &self.0)?,
         }
         .try_into()
     }
 }
 
-impl TryFrom<pkcs8::spki::SubjectPublicKeyInfo<'_>> for PublicKeyBytes {
-    type Error = pkcs8::spki::Error;
+impl TryFrom<spki::SubjectPublicKeyInfoRef<'_>> for PublicKeyBytes {
+    type Error = spki::Error;
 
-    fn try_from(spki: pkcs8::spki::SubjectPublicKeyInfo<'_>) -> pkcs8::spki::Result<Self> {
+    fn try_from(spki: spki::SubjectPublicKeyInfoRef<'_>) -> spki::Result<Self> {
         spki.algorithm.assert_algorithm_oid(ALGORITHM_OID)?;
 
         if spki.algorithm.parameters.is_some() {
-            return Err(pkcs8::spki::Error::KeyMalformed);
+            return Err(spki::Error::KeyMalformed);
         }
 
         spki.subject_public_key
+            .as_bytes()
+            .ok_or(spki::Error::KeyMalformed)?
             .try_into()
             .map(Self)
-            .map_err(|_| pkcs8::spki::Error::KeyMalformed)
+            .map_err(|_| spki::Error::KeyMalformed)
     }
 }
 
 impl TryFrom<&[u8]> for PublicKeyBytes {
-    type Error = pkcs8::spki::Error;
+    type Error = spki::Error;
 
-    fn try_from(der_bytes: &[u8]) -> pkcs8::spki::Result<Self> {
+    fn try_from(der_bytes: &[u8]) -> spki::Result<Self> {
         Self::from_public_key_der(der_bytes)
     }
 }
 
 impl TryFrom<KeypairBytes> for PublicKeyBytes {
-    type Error = pkcs8::spki::Error;
+    type Error = spki::Error;
 
-    fn try_from(keypair: KeypairBytes) -> pkcs8::spki::Result<PublicKeyBytes> {
+    fn try_from(keypair: KeypairBytes) -> spki::Result<PublicKeyBytes> {
         PublicKeyBytes::try_from(&keypair)
     }
 }
 
 impl TryFrom<&KeypairBytes> for PublicKeyBytes {
-    type Error = pkcs8::spki::Error;
+    type Error = spki::Error;
 
-    fn try_from(keypair: &KeypairBytes) -> pkcs8::spki::Result<PublicKeyBytes> {
-        keypair.public_key.ok_or(pkcs8::spki::Error::KeyMalformed)
+    fn try_from(keypair: &KeypairBytes) -> spki::Result<PublicKeyBytes> {
+        keypair.public_key.ok_or(spki::Error::KeyMalformed)
     }
 }
 
@@ -308,9 +306,9 @@ impl fmt::Debug for PublicKeyBytes {
 
 #[cfg(feature = "pem")]
 impl str::FromStr for PublicKeyBytes {
-    type Err = pkcs8::spki::Error;
+    type Err = spki::Error;
 
-    fn from_str(pem: &str) -> pkcs8::spki::Result<Self> {
+    fn from_str(pem: &str) -> spki::Result<Self> {
         Self::from_public_key_pem(pem)
     }
 }

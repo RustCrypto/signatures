@@ -156,7 +156,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f1a467a65c5e759bce6e65eaf91cc29f466cdc57cb65777bd646872a8a1fd4de"
 dependencies = [
  "const-oid",
- "pem-rfc7468 0.6.0",
  "zeroize",
 ]
 
@@ -167,7 +166,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bc302fd9b18d66834a6f092d10ea85489c0ca8ad6b7304092135fab171d853cd"
 dependencies = [
  "const-oid",
- "pem-rfc7468 0.7.0",
+ "pem-rfc7468",
  "zeroize",
 ]
 
@@ -244,26 +243,26 @@ dependencies = [
 [[package]]
 name = "ed25519"
 version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3cf420a7ec85d98495b0c34aa4a58ca117f982ffbece111aeb545160148d7010"
+dependencies = [
+ "signature 2.0.0",
+]
+
+[[package]]
+name = "ed25519"
+version = "2.2.0-pre"
 dependencies = [
  "bincode",
  "ed25519-dalek",
  "hex-literal",
- "pkcs8 0.9.0",
+ "pkcs8 0.10.0",
  "rand_core 0.5.1",
  "ring-compat",
  "serde",
  "serde_bytes",
  "signature 2.0.0",
  "zeroize",
-]
-
-[[package]]
-name = "ed25519"
-version = "2.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3cf420a7ec85d98495b0c34aa4a58ca117f982ffbece111aeb545160148d7010"
-dependencies = [
- "signature 2.0.0",
 ]
 
 [[package]]
@@ -312,7 +311,7 @@ dependencies = [
  "generic-array",
  "group 0.13.0",
  "hex-literal",
- "pem-rfc7468 0.7.0",
+ "pem-rfc7468",
  "pkcs8 0.10.0",
  "rand_core 0.6.4",
  "sec1 0.7.1",
@@ -533,15 +532,6 @@ dependencies = [
 
 [[package]]
 name = "pem-rfc7468"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "24d159833a9105500e0398934e205e0773f0b27529557134ecfc51c27646adac"
-dependencies = [
- "base64ct",
-]
-
-[[package]]
-name = "pem-rfc7468"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "88b39c9bfcfc231068454382784bb460aae594343fb030d46e9f50a645418412"
@@ -707,7 +697,7 @@ dependencies = [
  "aead",
  "digest 0.10.6",
  "ecdsa 0.15.0",
- "ed25519 2.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ed25519 2.1.0",
  "generic-array",
  "opaque-debug",
  "p256",

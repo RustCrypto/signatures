@@ -1,6 +1,6 @@
 [package]
 name = "ed25519"
-version = "2.1.0"
+version = "2.2.0-pre"
 authors = ["RustCrypto Developers"]
 license = "Apache-2.0 OR MIT"
 description = """
@@ -20,7 +20,7 @@ rust-version = "1.60"
 signature = { version = "2", default-features = false }
 
 # optional dependencies
-pkcs8 = { version = "0.9", optional = true }
+pkcs8 = { version = "0.10", optional = true }
 serde = { version = "1", optional = true, default-features = false }
 serde_bytes = { version = "0.11", optional = true }
 zeroize = { version = "1", optional = true, default-features = false }
@@ -34,7 +34,7 @@ rand_core = { version = "0.5", features = ["std"] }
 
 [features]
 default = ["std"]
-alloc = ["pkcs8/alloc"]
+alloc = ["pkcs8?/alloc"]
 pem = ["alloc", "pkcs8/pem"]
 serde_bytes = ["serde", "dep:serde_bytes"]
 std = ["signature/std"]
