@@ -35,21 +35,18 @@ jobs:
           override: true
       - run: cargo build --target ${{ matrix.target }} --release --no-default-features
       - run: cargo build --target ${{ matrix.target }} --release --no-default-features --features alloc
-      - run: cargo build --target ${{ matrix.target }} --release --no-default-features --features pem
-      - run: cargo build --target ${{ matrix.target }} --release --no-default-features --features pkcs8
-      - run: cargo build --target ${{ matrix.target }} --release --no-default-features --features alloc,pem,pkcs8
+      # TODO(tarcieri): re-enable the following when MSRV is 1.65
+      #- run: cargo build --target ${{ matrix.target }} --release --no-default-features --features pem
+      #- run: cargo build --target ${{ matrix.target }} --release --no-default-features --features pkcs8
+      #- run: cargo build --target ${{ matrix.target }} --release --no-default-features --features alloc,pem,pkcs8
 
   test:
     strategy:
       matrix:
-        platform:
-          - ubuntu-latest
-          - macos-latest
-          - windows-latest
         toolchain:
           - 1.60.0 # MSRV
           - stable
-    runs-on: ${{ matrix.platform }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
@@ -58,4 +55,24 @@ jobs:
           override: true
       - run: cargo test --release --no-default-features
       - run: cargo test --release
+      #- run: cargo test --release --all-features
+
+  # TODO(tarcieri): reunify with `test` when MSRV is 1.65
+  test-all-features:
+    strategy:
+      matrix:
+        platform:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+        toolchain:
+          - 1.65.0 # MSRV
+          - stable
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          override: true
       - run: cargo test --release --all-features
