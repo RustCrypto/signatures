@@ -192,7 +192,7 @@ dependencies = [
 
 [[package]]
 name = "dsa"
-version = "0.6.0-pre"
+version = "0.6.0"
 dependencies = [
  "digest 0.10.6",
  "num-bigint-dig",
