@@ -182,7 +182,7 @@ where
         <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
     {
         let (r, s) = self.split_bytes();
-        der::Signature::from_scalar_bytes(&r, &s).expect("DER encoding error")
+        der::Signature::from_components(&r, &s).expect("DER encoding error")
     }
 
     /// Convert this signature into a byte vector.
