@@ -11,8 +11,8 @@ use digest::{core_api::BlockSizeUser, Digest, FixedOutputReset};
 use num_bigint::BigUint;
 use num_traits::Zero;
 use pkcs8::{
-    der::{asn1::UIntRef, AnyRef, Decode, Encode},
-    AlgorithmIdentifier, DecodePrivateKey, EncodePrivateKey, PrivateKeyInfo, SecretDocument,
+    der::{asn1::UintRef, AnyRef, Decode, Encode},
+    AlgorithmIdentifierRef, EncodePrivateKey, PrivateKeyInfo, SecretDocument,
 };
 use signature::{
     hazmat::{PrehashSigner, RandomizedPrehashSigner},
@@ -158,16 +158,16 @@ where
 
 impl EncodePrivateKey for SigningKey {
     fn to_pkcs8_der(&self) -> pkcs8::Result<SecretDocument> {
-        let parameters = self.verifying_key().components().to_vec()?;
+        let parameters = self.verifying_key().components().to_der()?;
         let parameters = AnyRef::from_der(&parameters)?;
-        let algorithm = AlgorithmIdentifier {
+        let algorithm = AlgorithmIdentifierRef {
             oid: OID,
             parameters: Some(parameters),
         };
 
         let mut x_bytes = self.x().to_bytes_be();
-        let x = UIntRef::new(&x_bytes)?;
-        let mut signing_key = x.to_vec()?;
+        let x = UintRef::new(&x_bytes)?;
+        let mut signing_key = x.to_der()?;
 
         let signing_key_info = PrivateKeyInfo::new(algorithm, &signing_key);
         let secret_document = signing_key_info.try_into()?;
@@ -186,13 +186,13 @@ impl<'a> TryFrom<PrivateKeyInfo<'a>> for SigningKey {
         value.algorithm.assert_algorithm_oid(OID)?;
 
         let parameters = value.algorithm.parameters_any()?;
-        let components: Components = parameters.decode_into()?;
+        let components = parameters.decode_as::<Components>()?;
 
-        let x = UIntRef::from_der(value.private_key)?;
+        let x = UintRef::from_der(value.private_key)?;
         let x = BigUint::from_bytes_be(x.as_bytes());
 
         let y = if let Some(y_bytes) = value.public_key {
-            let y = UIntRef::from_der(y_bytes)?;
+            let y = UintRef::from_der(y_bytes)?;
             BigUint::from_bytes_be(y.as_bytes())
         } else {
             crate::generate::public_component(&components, &x)
@@ -204,8 +204,6 @@ impl<'a> TryFrom<PrivateKeyInfo<'a>> for SigningKey {
         SigningKey::from_components(verifying_key, x).map_err(|_| pkcs8::Error::KeyMalformed)
     }
 }
-
-impl DecodePrivateKey for SigningKey {}
 
 impl Debug for SigningKey {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

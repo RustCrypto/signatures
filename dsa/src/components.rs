@@ -5,7 +5,10 @@
 use crate::{size::KeySize, two};
 use num_bigint::BigUint;
 use num_traits::Zero;
-use pkcs8::der::{self, asn1::UIntRef, DecodeValue, Encode, Header, Reader, Sequence, Tag};
+use pkcs8::der::{
+    self, asn1::UintRef, DecodeValue, Encode, EncodeValue, Header, Length, Reader, Sequence, Tag,
+    Writer,
+};
 use signature::rand_core::CryptoRngCore;
 
 /// The common components of an DSA keypair
@@ -61,9 +64,9 @@ impl Components {
 
 impl<'a> DecodeValue<'a> for Components {
     fn decode_value<R: Reader<'a>>(reader: &mut R, _header: Header) -> der::Result<Self> {
-        let p = reader.decode::<UIntRef<'_>>()?;
-        let q = reader.decode::<UIntRef<'_>>()?;
-        let g = reader.decode::<UIntRef<'_>>()?;
+        let p = reader.decode::<UintRef<'_>>()?;
+        let q = reader.decode::<UintRef<'_>>()?;
+        let g = reader.decode::<UintRef<'_>>()?;
 
         let p = BigUint::from_bytes_be(p.as_bytes());
         let q = BigUint::from_bytes_be(q.as_bytes());
@@ -73,19 +76,19 @@ impl<'a> DecodeValue<'a> for Components {
     }
 }
 
-impl<'a> Sequence<'a> for Components {
-    fn fields<F, T>(&self, encoder: F) -> der::Result<T>
-    where
-        F: FnOnce(&[&dyn Encode]) -> der::Result<T>,
-    {
-        let p_bytes = self.p.to_bytes_be();
-        let q_bytes = self.q.to_bytes_be();
-        let g_bytes = self.g.to_bytes_be();
+impl EncodeValue for Components {
+    fn value_len(&self) -> der::Result<Length> {
+        UintRef::new(&self.p.to_bytes_be())?.encoded_len()?
+            + UintRef::new(&self.q.to_bytes_be())?.encoded_len()?
+            + UintRef::new(&self.g.to_bytes_be())?.encoded_len()?
+    }
 
-        let p = UIntRef::new(&p_bytes)?;
-        let q = UIntRef::new(&q_bytes)?;
-        let g = UIntRef::new(&g_bytes)?;
-
-        encoder(&[&p, &q, &g])
+    fn encode_value(&self, writer: &mut impl Writer) -> der::Result<()> {
+        UintRef::new(&self.p.to_bytes_be())?.encode(writer)?;
+        UintRef::new(&self.q.to_bytes_be())?.encode(writer)?;
+        UintRef::new(&self.g.to_bytes_be())?.encode(writer)?;
+        Ok(())
     }
 }
+
+impl<'a> Sequence<'a> for Components {}

@@ -8,8 +8,11 @@ use digest::Digest;
 use num_bigint::{BigUint, ModInverse};
 use num_traits::One;
 use pkcs8::{
-    der::{asn1::UIntRef, AnyRef, Decode, Encode},
-    spki, AlgorithmIdentifier, DecodePublicKey, EncodePublicKey, SubjectPublicKeyInfo,
+    der::{
+        asn1::{BitStringRef, UintRef},
+        AnyRef, Decode, Encode,
+    },
+    spki, AlgorithmIdentifierRef, EncodePublicKey, SubjectPublicKeyInfoRef,
 };
 use signature::{hazmat::PrehashVerifier, DigestVerifier, Verifier};
 
@@ -114,39 +117,41 @@ where
 
 impl EncodePublicKey for VerifyingKey {
     fn to_public_key_der(&self) -> spki::Result<spki::Document> {
-        let parameters = self.components.to_vec()?;
+        let parameters = self.components.to_der()?;
         let parameters = AnyRef::from_der(&parameters)?;
-        let algorithm = AlgorithmIdentifier {
+        let algorithm = AlgorithmIdentifierRef {
             oid: OID,
             parameters: Some(parameters),
         };
 
         let y_bytes = self.y.to_bytes_be();
-        let y = UIntRef::new(&y_bytes)?;
-        let public_key = y.to_vec()?;
+        let y = UintRef::new(&y_bytes)?;
+        let public_key = y.to_der()?;
 
-        SubjectPublicKeyInfo {
+        SubjectPublicKeyInfoRef {
             algorithm,
-            subject_public_key: &public_key,
+            subject_public_key: BitStringRef::new(0, &public_key)?,
         }
         .try_into()
     }
 }
 
-impl<'a> TryFrom<SubjectPublicKeyInfo<'a>> for VerifyingKey {
+impl<'a> TryFrom<SubjectPublicKeyInfoRef<'a>> for VerifyingKey {
     type Error = spki::Error;
 
-    fn try_from(value: SubjectPublicKeyInfo<'a>) -> Result<Self, Self::Error> {
+    fn try_from(value: SubjectPublicKeyInfoRef<'a>) -> Result<Self, Self::Error> {
         value.algorithm.assert_algorithm_oid(OID)?;
 
         let parameters = value.algorithm.parameters_any()?;
-        let components = parameters.decode_into()?;
+        let components = parameters.decode_as()?;
+        let y = UintRef::from_der(
+            value
+                .subject_public_key
+                .as_bytes()
+                .ok_or(spki::Error::KeyMalformed)?,
+        )?;
 
-        let y = UIntRef::from_der(value.subject_public_key)?;
-        let y = BigUint::from_bytes_be(y.as_bytes());
-
-        Self::from_components(components, y).map_err(|_| spki::Error::KeyMalformed)
+        Self::from_components(components, BigUint::from_bytes_be(y.as_bytes()))
+            .map_err(|_| spki::Error::KeyMalformed)
     }
 }
-
-impl DecodePublicKey for VerifyingKey {}

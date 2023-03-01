@@ -52,7 +52,7 @@ fn decode_encode_signature() {
     let signature_openssl =
         Signature::from_der(MESSAGE_SIGNATURE_OPENSSL_ASN1).expect("Failed to decode signature");
     let encoded_signature_openssl = signature_openssl
-        .to_vec()
+        .to_der()
         .expect("Failed to encode signature");
 
     assert_eq!(MESSAGE_SIGNATURE_OPENSSL_ASN1, encoded_signature_openssl);
@@ -60,7 +60,7 @@ fn decode_encode_signature() {
     let signature_crate =
         Signature::from_der(MESSAGE_SIGNATURE_CRATE_ASN1).expect("Failed to decode signature");
     let encoded_signature_crate = signature_crate
-        .to_vec()
+        .to_der()
         .expect("Failed to encode signature");
 
     assert_eq!(MESSAGE_SIGNATURE_CRATE_ASN1, encoded_signature_crate);

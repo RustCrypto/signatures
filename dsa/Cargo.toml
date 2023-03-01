@@ -12,20 +12,20 @@ readme = "README.md"
 repository = "https://github.com/RustCrypto/signatures/tree/master/dsa"
 categories = ["cryptography", "no-std"]
 keywords = ["crypto", "nist", "signature"]
-rust-version = "1.61"
+rust-version = "1.65"
 
 [dependencies]
 digest = "0.10"
 num-bigint = { package = "num-bigint-dig", version = "0.8", default-features = false, features = ["prime", "rand", "zeroize"] }
 num-traits = { version = "0.2", default-features = false }
-pkcs8 = { version = "0.9", default-features = false, features = ["alloc"] }
+pkcs8 = { version = "0.10", default-features = false, features = ["alloc"] }
 rfc6979 = { version = "0.4", path = "../rfc6979" }
 sha2 = { version = "0.10", default-features = false }
 signature = { version = "2.0, <2.1", default-features = false, features = ["alloc", "digest", "rand_core"] }
 zeroize = { version = "1.5", default-features = false }
 
 [dev-dependencies]
-pkcs8 = { version = "0.9", default-features = false, features = ["pem"] }
+pkcs8 = { version = "0.10", default-features = false, features = ["pem"] }
 rand = "0.8"
 rand_chacha = "0.3"
 sha1 = "0.10"

@@ -16,7 +16,7 @@ fn decode_encode_openssl_components() {
         Components::from_der(raw_components).expect("Failed to parse DER into component structure");
 
     let reencoded_components = components
-        .to_vec()
+        .to_der()
         .expect("Failed to encode components to DER");
 
     assert_eq!(raw_components, reencoded_components);
