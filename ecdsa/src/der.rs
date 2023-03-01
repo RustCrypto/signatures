@@ -5,7 +5,7 @@ use core::{
     fmt::{self, Debug},
     ops::{Add, Range},
 };
-use der::{asn1::UintRef, Decode, Encode, Reader};
+use der::{asn1::UintRef, Decode, Encode, FixedTag, Length, Reader, Tag, Writer};
 use elliptic_curve::{
     bigint::Integer,
     consts::U9,
@@ -70,24 +70,34 @@ where
     MaxSize<C>: ArrayLength<u8>,
     <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
 {
-    /// Get the length of the signature in bytes
-    pub fn len(&self) -> usize {
-        self.s_range.end
+    /// Parse signature from DER-encoded bytes.
+    pub fn from_bytes(input: &[u8]) -> Result<Self> {
+        let (r, s) = decode_der(input).map_err(|_| Error::new())?;
+
+        if r.as_bytes().len() > C::Uint::BYTES || s.as_bytes().len() > C::Uint::BYTES {
+            return Err(Error::new());
+        }
+
+        let r_range = find_scalar_range(input, r.as_bytes())?;
+        let s_range = find_scalar_range(input, s.as_bytes())?;
+
+        if s_range.end != input.len() {
+            return Err(Error::new());
+        }
+
+        let mut bytes = SignatureBytes::<C>::default();
+        bytes[..s_range.end].copy_from_slice(input);
+
+        Ok(Signature {
+            bytes,
+            r_range,
+            s_range,
+        })
     }
 
-    /// Borrow this signature as a byte slice
-    pub fn as_bytes(&self) -> &[u8] {
-        &self.bytes.as_slice()[..self.len()]
-    }
-
-    /// Serialize this signature as a boxed byte slice
-    #[cfg(feature = "alloc")]
-    pub fn to_bytes(&self) -> Box<[u8]> {
-        self.as_bytes().to_vec().into_boxed_slice()
-    }
-
-    /// Create an ASN.1 DER encoded signature from big endian `r` and `s` scalars
-    pub(crate) fn from_scalar_bytes(r: &[u8], s: &[u8]) -> der::Result<Self> {
+    /// Create an ASN.1 DER encoded signature from big endian `r` and `s` scalar
+    /// components.
+    pub(crate) fn from_components(r: &[u8], s: &[u8]) -> der::Result<Self> {
         let r = UintRef::new(r)?;
         let s = UintRef::new(s)?;
 
@@ -103,6 +113,22 @@ where
             .finish()?
             .try_into()
             .map_err(|_| der::Tag::Sequence.value_error())
+    }
+
+    /// Borrow this signature as a byte slice
+    pub fn as_bytes(&self) -> &[u8] {
+        &self.bytes.as_slice()[..self.len()]
+    }
+
+    /// Serialize this signature as a boxed byte slice
+    #[cfg(feature = "alloc")]
+    pub fn to_bytes(&self) -> Box<[u8]> {
+        self.as_bytes().to_vec().into_boxed_slice()
+    }
+
+    /// Get the length of the signature in bytes
+    pub fn len(&self) -> usize {
+        self.s_range.end
     }
 
     /// Get the `r` component of the signature (leading zeros removed)
@@ -159,6 +185,51 @@ where
     }
 }
 
+impl<'a, C> Decode<'a> for Signature<C>
+where
+    C: PrimeCurve,
+    MaxSize<C>: ArrayLength<u8>,
+    <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+{
+    fn decode<R: Reader<'a>>(reader: &mut R) -> der::Result<Self> {
+        let header = reader.peek_header()?;
+        header.tag.assert_eq(Tag::Sequence)?;
+
+        let mut buf = SignatureBytes::<C>::default();
+        let len = (header.encoded_len()? + header.length)?;
+        let slice = buf
+            .get_mut(..usize::try_from(len)?)
+            .ok_or_else(|| reader.error(Tag::Sequence.length_error().kind()))?;
+
+        reader.read_into(slice)?;
+        Self::from_bytes(slice).map_err(|_| Tag::Integer.value_error())
+    }
+}
+
+impl<C> Encode for Signature<C>
+where
+    C: PrimeCurve,
+    MaxSize<C>: ArrayLength<u8>,
+    <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+{
+    fn encoded_len(&self) -> der::Result<Length> {
+        Length::try_from(self.len())
+    }
+
+    fn encode(&self, writer: &mut impl Writer) -> der::Result<()> {
+        writer.write(self.as_bytes())
+    }
+}
+
+impl<C> FixedTag for Signature<C>
+where
+    C: PrimeCurve,
+    MaxSize<C>: ArrayLength<u8>,
+    <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+{
+    const TAG: Tag = Tag::Sequence;
+}
+
 impl<C> From<crate::Signature<C>> for Signature<C>
 where
     C: PrimeCurve,
@@ -179,27 +250,7 @@ where
     type Error = Error;
 
     fn try_from(input: &[u8]) -> Result<Self> {
-        let (r, s) = decode_der(input).map_err(|_| Error::new())?;
-
-        if r.as_bytes().len() > C::Uint::BYTES || s.as_bytes().len() > C::Uint::BYTES {
-            return Err(Error::new());
-        }
-
-        let r_range = find_scalar_range(input, r.as_bytes())?;
-        let s_range = find_scalar_range(input, s.as_bytes())?;
-
-        if s_range.end != input.len() {
-            return Err(Error::new());
-        }
-
-        let mut bytes = SignatureBytes::<C>::default();
-        bytes[..s_range.end].copy_from_slice(input);
-
-        Ok(Signature {
-            bytes,
-            r_range,
-            s_range,
-        })
+        Self::from_bytes(input)
     }
 }
 
