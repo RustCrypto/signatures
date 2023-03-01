@@ -69,7 +69,10 @@ pub const OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.2.840.10040.4.
 
 use alloc::{boxed::Box, vec::Vec};
 use num_traits::Zero;
-use pkcs8::der::{self, asn1::UIntRef, Decode, Encode, Reader, Sequence};
+use pkcs8::der::{
+    self, asn1::UintRef, Decode, DecodeValue, Encode, EncodeValue, Header, Length, Reader,
+    Sequence, Writer,
+};
 use signature::SignatureEncoding;
 
 /// Container of the DSA signature
@@ -106,17 +109,30 @@ impl Signature {
     }
 }
 
-impl<'a> Decode<'a> for Signature {
-    fn decode<R: Reader<'a>>(reader: &mut R) -> der::Result<Self> {
-        reader.sequence(|sequence| {
-            let r = UIntRef::decode(sequence)?;
-            let s = UIntRef::decode(sequence)?;
+impl<'a> DecodeValue<'a> for Signature {
+    fn decode_value<R: Reader<'a>>(reader: &mut R, header: Header) -> der::Result<Self> {
+        reader.read_nested(header.length, |reader| {
+            let r = UintRef::decode(reader)?;
+            let s = UintRef::decode(reader)?;
 
             let r = BigUint::from_bytes_be(r.as_bytes());
             let s = BigUint::from_bytes_be(s.as_bytes());
 
             Self::from_components(r, s).map_err(|_| der::Tag::Integer.value_error())
         })
+    }
+}
+
+impl EncodeValue for Signature {
+    fn value_len(&self) -> der::Result<Length> {
+        UintRef::new(&self.r.to_bytes_be())?.encoded_len()?
+            + UintRef::new(&self.s.to_bytes_be())?.encoded_len()?
+    }
+
+    fn encode_value(&self, writer: &mut impl Writer) -> der::Result<()> {
+        UintRef::new(&self.r.to_bytes_be())?.encode(writer)?;
+        UintRef::new(&self.s.to_bytes_be())?.encode(writer)?;
+        Ok(())
     }
 }
 
@@ -138,20 +154,7 @@ impl PartialOrd for Signature {
     }
 }
 
-impl<'a> Sequence<'a> for Signature {
-    fn fields<F, T>(&self, encoder: F) -> der::Result<T>
-    where
-        F: FnOnce(&[&dyn der::Encode]) -> der::Result<T>,
-    {
-        let r_bytes = self.r.to_bytes_be();
-        let s_bytes = self.s.to_bytes_be();
-
-        let r = UIntRef::new(&r_bytes)?;
-        let s = UIntRef::new(&s_bytes)?;
-
-        encoder(&[&r, &s])
-    }
-}
+impl<'a> Sequence<'a> for Signature {}
 
 impl SignatureEncoding for Signature {
     type Repr = Box<[u8]>;
@@ -161,7 +164,7 @@ impl SignatureEncoding for Signature {
     }
 
     fn to_vec(&self) -> Vec<u8> {
-        Encode::to_vec(self).expect("DER encoding error")
+        self.to_der().expect("DER encoding error")
     }
 }
 
