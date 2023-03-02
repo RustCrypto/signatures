@@ -38,6 +38,18 @@ use serdect::serde::{de, ser, Deserialize, Serialize};
 /// Requires an [`elliptic_curve::CurveArithmetic`] impl on the curve, and a
 /// [`VerifyPrimitive`] impl on its associated `AffinePoint` type.
 ///
+/// ## Usage
+///
+/// The [`signature`] crate defines the following traits which are the
+/// primary API for verifying:
+///
+/// - [`Verifier`]: verify a message against a provided key and signature
+/// - [`DigestVerifier`]: verify a message [`Digest`] against a provided key and signature
+/// - [`PrehashVerifier`]: verify the low-level raw output bytes of a message digest
+///
+/// See the [`p256` crate](https://docs.rs/p256/latest/p256/ecdsa/index.html)
+/// for examples of using this type with a concrete elliptic curve.
+///
 /// # `serde` support
 ///
 /// When the `serde` feature of this crate is enabled, it provides support for
