@@ -197,7 +197,7 @@ dependencies = [
  "digest 0.10.6",
  "num-bigint-dig",
  "num-traits",
- "pkcs8 0.10.0",
+ "pkcs8 0.10.1",
  "rand 0.8.5",
  "rand_chacha 0.3.1",
  "rfc6979",
@@ -256,7 +256,7 @@ dependencies = [
  "bincode",
  "ed25519-dalek",
  "hex-literal",
- "pkcs8 0.10.0",
+ "pkcs8 0.10.1",
  "rand_core 0.5.1",
  "ring-compat",
  "serde",
@@ -312,7 +312,7 @@ dependencies = [
  "group 0.13.0",
  "hex-literal",
  "pem-rfc7468",
- "pkcs8 0.10.0",
+ "pkcs8 0.10.1",
  "rand_core 0.6.4",
  "sec1 0.7.1",
  "serdect",
@@ -551,9 +551,9 @@ dependencies = [
 
 [[package]]
 name = "pkcs8"
-version = "0.10.0"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e34154ec92c136238e7c210443538e64350962b8e2788cadcf5f781a6da70c36"
+checksum = "3d2820d87d2b008616e5c27212dd9e0e694fb4c6b522de06094106813328cb49"
 dependencies = [
  "der 0.7.0",
  "spki 0.7.0",
@@ -729,7 +729,7 @@ dependencies = [
  "base16ct 0.2.0",
  "der 0.7.0",
  "generic-array",
- "pkcs8 0.10.0",
+ "pkcs8 0.10.1",
  "serdect",
  "subtle",
  "zeroize",
