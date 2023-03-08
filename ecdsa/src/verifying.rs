@@ -8,7 +8,7 @@ use core::{cmp::Ordering, fmt::Debug};
 use elliptic_curve::{
     generic_array::ArrayLength,
     point::PointCompression,
-    sec1::{self, EncodedPoint, FromEncodedPoint, ToEncodedPoint},
+    sec1::{self, CompressedPoint, EncodedPoint, FromEncodedPoint, ToEncodedPoint},
     AffinePoint, CurveArithmetic, FieldBytesSize, PrimeCurve, PublicKey,
 };
 use signature::{
@@ -16,6 +16,9 @@ use signature::{
     hazmat::PrehashVerifier,
     DigestVerifier, Verifier,
 };
+
+#[cfg(feature = "alloc")]
+use alloc::boxed::Box;
 
 #[cfg(feature = "der")]
 use {crate::der, core::ops::Add};
@@ -100,6 +103,20 @@ where
     /// applying point compression.
     pub fn to_encoded_point(&self, compress: bool) -> EncodedPoint<C> {
         self.inner.to_encoded_point(compress)
+    }
+
+    /// Convert this [`VerifyingKey`] into the
+    /// `Elliptic-Curve-Point-to-Octet-String` encoding described in
+    /// SEC 1: Elliptic Curve Cryptography (Version 2.0) section 2.3.3
+    /// (page 10).
+    ///
+    /// <http://www.secg.org/sec1-v2.pdf>
+    #[cfg(feature = "alloc")]
+    pub fn to_sec1_bytes(&self) -> Box<[u8]>
+    where
+        C: PointCompression,
+    {
+        self.inner.to_sec1_bytes()
     }
 
     /// Borrow the inner [`AffinePoint`] for this public key.
@@ -210,6 +227,39 @@ where
 
 impl<C> Copy for VerifyingKey<C> where C: PrimeCurve + CurveArithmetic {}
 
+impl<C> From<VerifyingKey<C>> for CompressedPoint<C>
+where
+    C: PrimeCurve + CurveArithmetic + PointCompression,
+    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    FieldBytesSize<C>: sec1::ModulusSize,
+{
+    fn from(verifying_key: VerifyingKey<C>) -> CompressedPoint<C> {
+        verifying_key.inner.into()
+    }
+}
+
+impl<C> From<&VerifyingKey<C>> for CompressedPoint<C>
+where
+    C: PrimeCurve + CurveArithmetic + PointCompression,
+    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    FieldBytesSize<C>: sec1::ModulusSize,
+{
+    fn from(verifying_key: &VerifyingKey<C>) -> CompressedPoint<C> {
+        verifying_key.inner.into()
+    }
+}
+
+impl<C> From<VerifyingKey<C>> for EncodedPoint<C>
+where
+    C: PrimeCurve + CurveArithmetic + PointCompression,
+    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    FieldBytesSize<C>: sec1::ModulusSize,
+{
+    fn from(verifying_key: VerifyingKey<C>) -> EncodedPoint<C> {
+        verifying_key.inner.into()
+    }
+}
+
 impl<C> From<&VerifyingKey<C>> for EncodedPoint<C>
 where
     C: PrimeCurve + CurveArithmetic + PointCompression,
@@ -217,7 +267,7 @@ where
     FieldBytesSize<C>: sec1::ModulusSize,
 {
     fn from(verifying_key: &VerifyingKey<C>) -> EncodedPoint<C> {
-        verifying_key.to_encoded_point(C::COMPRESS_POINTS)
+        verifying_key.inner.into()
     }
 }
 
