@@ -107,7 +107,7 @@ where
     D: Digest + BlockSizeUser + FixedOutputReset,
 {
     /// Initialize `HMAC_DRBG`
-    pub fn new(entropy_input: &[u8], nonce: &[u8], additional_data: &[u8]) -> Self {
+    pub fn new(entropy_input: &[u8], nonce: &[u8], personalization_string: &[u8]) -> Self {
         let mut k = SimpleHmac::new(&Default::default());
         let mut v = GenericArray::default();
 
@@ -120,7 +120,7 @@ where
             k.update(&[i]);
             k.update(entropy_input);
             k.update(nonce);
-            k.update(additional_data);
+            k.update(personalization_string);
             k = SimpleHmac::new_from_slice(&k.finalize().into_bytes()).expect("HMAC error");
 
             // Steps 3.2.e,g: v = HMAC_k(v)
