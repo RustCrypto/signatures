@@ -276,15 +276,17 @@ where
 
     /// Recover a [`VerifyingKey`] from the given `prehash` of a message, the
     /// signature over that prehashed message, and a [`RecoveryId`].
-    // TODO(tarcieri): handle `is_x_reduced` case (RustCrypto/signatures#583)
     #[allow(non_snake_case)]
     pub fn recover_from_prehash(
         prehash: &[u8],
         signature: &Signature<C>,
         recovery_id: RecoveryId,
     ) -> Result<Self> {
-        let (r, s) = signature.split_scalars();
+        let (mut r, s) = signature.split_scalars();
         let z = <Scalar<C> as Reduce<C::Uint>>::reduce_bytes(&bits2field::<C>(prehash)?);
+        if recovery_id.is_x_reduced() {
+            r = r + &CurveArithmetic::ORDER;
+        };
         let R = AffinePoint::<C>::decompress(&r.to_repr(), u8::from(recovery_id.is_y_odd()).into());
 
         if R.is_none().into() {
