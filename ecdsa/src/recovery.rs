@@ -13,10 +13,11 @@ use {
 use {
     crate::{hazmat::VerifyPrimitive, VerifyingKey},
     elliptic_curve::{
+        bigint::CheckedAdd,
         ops::{LinearCombination, Reduce},
         point::DecompressPoint,
         sec1::{self, FromEncodedPoint, ToEncodedPoint},
-        AffinePoint, FieldBytesSize, Group, PrimeField, ProjectivePoint,
+        AffinePoint, FieldBytesEncoding, FieldBytesSize, Group, PrimeField, ProjectivePoint,
     },
     signature::hazmat::PrehashVerifier,
 };
@@ -282,12 +283,19 @@ where
         signature: &Signature<C>,
         recovery_id: RecoveryId,
     ) -> Result<Self> {
-        let (mut r, s) = signature.split_scalars();
+        let (r, s) = signature.split_scalars();
         let z = <Scalar<C> as Reduce<C::Uint>>::reduce_bytes(&bits2field::<C>(prehash)?);
+
+        let mut r_bytes = r.to_repr();
         if recovery_id.is_x_reduced() {
-            r = r + &C::ORDER;
+            let restored = C::Uint::decode_field_bytes(&r_bytes).checked_add(&C::ORDER);
+            // No reduction should happen here if r was reduced
+            if restored.is_none().into() {
+                return Err(Error::new());
+            }
+            r_bytes = restored.unwrap().encode_field_bytes();
         };
-        let R = AffinePoint::<C>::decompress(&r.to_repr(), u8::from(recovery_id.is_y_odd()).into());
+        let R = AffinePoint::<C>::decompress(&r_bytes, u8::from(recovery_id.is_y_odd()).into());
 
         if R.is_none().into() {
             return Err(Error::new());

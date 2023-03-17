@@ -95,6 +95,7 @@ where
         // Lift x-coordinate of 𝑹 (element of base field) into a serialized big
         // integer, then reduce it into an element of the scalar field
         let r = Self::reduce_bytes(&R.x());
+        let x_reduced = r.to_repr() != R.x();
 
         // Compute 𝒔 as a signature over 𝒓 and 𝒛.
         let s = k_inv * (z + (r * self));
@@ -108,8 +109,7 @@ where
         let is_s_high = s.is_high();
         let is_y_odd = is_r_odd ^ is_s_high;
 
-        // TODO(tarcieri): handle `is_x_reduced` case (currently hardcoded to `false`)
-        let recovery_id = RecoveryId::new(is_y_odd.into(), false);
+        let recovery_id = RecoveryId::new(is_y_odd.into(), x_reduced);
 
         Ok((signature, Some(recovery_id)))
     }
