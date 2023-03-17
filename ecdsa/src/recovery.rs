@@ -285,7 +285,7 @@ where
         let (mut r, s) = signature.split_scalars();
         let z = <Scalar<C> as Reduce<C::Uint>>::reduce_bytes(&bits2field::<C>(prehash)?);
         if recovery_id.is_x_reduced() {
-            r = r + &CurveArithmetic::ORDER;
+            r = r + &C::ORDER;
         };
         let R = AffinePoint::<C>::decompress(&r.to_repr(), u8::from(recovery_id.is_y_odd()).into());
 
