@@ -288,13 +288,14 @@ where
 
         let mut r_bytes = r.to_repr();
         if recovery_id.is_x_reduced() {
-            let restored = C::Uint::decode_field_bytes(&r_bytes).checked_add(&C::ORDER);
-            // No reduction should happen here if r was reduced
-            if restored.is_none().into() {
-                return Err(Error::new());
-            }
-            r_bytes = restored.unwrap().encode_field_bytes();
-        };
+            r_bytes = match Option::<C::Uint>::from(
+                C::Uint::decode_field_bytes(&r_bytes).checked_add(&C::ORDER),
+            ) {
+                Some(restored) => restored.encode_field_bytes(),
+                // No reduction should happen here if r was reduced
+                None => return Err(Error::new()),
+            };
+        }
         let R = AffinePoint::<C>::decompress(&r_bytes, u8::from(recovery_id.is_y_odd()).into());
 
         if R.is_none().into() {
