@@ -288,10 +288,10 @@ where
 
         let mut r_bytes = r.to_repr();
         if recovery_id.is_x_reduced() {
-            r_bytes = match Option::<C::Uint>::from(
+            match Option::<C::Uint>::from(
                 C::Uint::decode_field_bytes(&r_bytes).checked_add(&C::ORDER),
             ) {
-                Some(restored) => restored.encode_field_bytes(),
+                Some(restored) => r_bytes = restored.encode_field_bytes(),
                 // No reduction should happen here if r was reduced
                 None => return Err(Error::new()),
             };
