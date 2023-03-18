@@ -13,10 +13,11 @@ use {
 use {
     crate::{hazmat::VerifyPrimitive, VerifyingKey},
     elliptic_curve::{
+        bigint::CheckedAdd,
         ops::{LinearCombination, Reduce},
         point::DecompressPoint,
         sec1::{self, FromEncodedPoint, ToEncodedPoint},
-        AffinePoint, FieldBytesSize, Group, PrimeField, ProjectivePoint,
+        AffinePoint, FieldBytesEncoding, FieldBytesSize, Group, PrimeField, ProjectivePoint,
     },
     signature::hazmat::PrehashVerifier,
 };
@@ -276,7 +277,6 @@ where
 
     /// Recover a [`VerifyingKey`] from the given `prehash` of a message, the
     /// signature over that prehashed message, and a [`RecoveryId`].
-    // TODO(tarcieri): handle `is_x_reduced` case (RustCrypto/signatures#583)
     #[allow(non_snake_case)]
     pub fn recover_from_prehash(
         prehash: &[u8],
@@ -285,7 +285,18 @@ where
     ) -> Result<Self> {
         let (r, s) = signature.split_scalars();
         let z = <Scalar<C> as Reduce<C::Uint>>::reduce_bytes(&bits2field::<C>(prehash)?);
-        let R = AffinePoint::<C>::decompress(&r.to_repr(), u8::from(recovery_id.is_y_odd()).into());
+
+        let mut r_bytes = r.to_repr();
+        if recovery_id.is_x_reduced() {
+            match Option::<C::Uint>::from(
+                C::Uint::decode_field_bytes(&r_bytes).checked_add(&C::ORDER),
+            ) {
+                Some(restored) => r_bytes = restored.encode_field_bytes(),
+                // No reduction should happen here if r was reduced
+                None => return Err(Error::new()),
+            };
+        }
+        let R = AffinePoint::<C>::decompress(&r_bytes, u8::from(recovery_id.is_y_odd()).into());
 
         if R.is_none().into() {
             return Err(Error::new());
