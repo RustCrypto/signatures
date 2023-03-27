@@ -22,7 +22,7 @@ pkcs8 = { version = "0.10", default-features = false, features = ["alloc"] }
 rfc6979 = { version = "0.4", path = "../rfc6979" }
 sha2 = { version = "0.10", default-features = false }
 signature = { version = "2.0, <2.1", default-features = false, features = ["alloc", "digest", "rand_core"] }
-zeroize = { version = "1.5", default-features = false }
+zeroize = { version = "1.6", default-features = false }
 
 [dev-dependencies]
 pkcs8 = { version = "0.10", default-features = false, features = ["pem"] }
