@@ -89,7 +89,7 @@ use core::{
 };
 use elliptic_curve::{
     bigint::Integer,
-    generic_array::{sequence::Concat, ArrayLength, GenericArray},
+    generic_array::{sequence::Concat, typenum::Unsigned, ArrayLength, GenericArray},
     FieldBytes, FieldBytesSize, ScalarPrimitive,
 };
 
@@ -144,7 +144,29 @@ where
     C: PrimeCurve,
     SignatureSize<C>: ArrayLength<u8>,
 {
-    /// Parse a signature from ASN.1 DER
+    /// Parse a signature from fixed-with bytes.
+    pub fn from_bytes(bytes: &SignatureBytes<C>) -> Result<Self> {
+        let (r_bytes, s_bytes) = bytes.split_at(C::Uint::BYTES);
+        let r = ScalarPrimitive::from_slice(r_bytes).map_err(|_| Error::new())?;
+        let s = ScalarPrimitive::from_slice(s_bytes).map_err(|_| Error::new())?;
+
+        if r.is_zero().into() || s.is_zero().into() {
+            return Err(Error::new());
+        }
+
+        Ok(Self { r, s })
+    }
+
+    /// Parse a signature from a byte slice.
+    pub fn from_slice(slice: &[u8]) -> Result<Self> {
+        if slice.len() == SignatureSize::<C>::USIZE {
+            Self::from_bytes(SignatureBytes::<C>::from_slice(slice))
+        } else {
+            Err(Error::new())
+        }
+    }
+
+    /// Parse a signature from ASN.1 DER.
     #[cfg(feature = "der")]
     pub fn from_der(bytes: &[u8]) -> Result<Self>
     where
@@ -279,20 +301,8 @@ where
 {
     type Error = Error;
 
-    fn try_from(bytes: &[u8]) -> Result<Self> {
-        if bytes.len() != C::Uint::BYTES * 2 {
-            return Err(Error::new());
-        }
-
-        let (r_bytes, s_bytes) = bytes.split_at(C::Uint::BYTES);
-        let r = ScalarPrimitive::from_slice(r_bytes).map_err(|_| Error::new())?;
-        let s = ScalarPrimitive::from_slice(s_bytes).map_err(|_| Error::new())?;
-
-        if r.is_zero().into() || s.is_zero().into() {
-            return Err(Error::new());
-        }
-
-        Ok(Self { r, s })
+    fn try_from(slice: &[u8]) -> Result<Self> {
+        Self::from_slice(slice)
     }
 }
 
