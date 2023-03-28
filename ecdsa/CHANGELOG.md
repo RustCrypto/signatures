@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.16.2 (2023-03-28)
+### Added
+- Handle the reduced R.x case in public key recovery ([#680])
+- `Signature::{from_bytes, from_slice}` methods ([#684])
+
+[#680]: https://github.com/RustCrypto/signatures/pull/680
+[#684]: https://github.com/RustCrypto/signatures/pull/684
+
 ## 0.16.1 (2023-03-09)
 ### Added
 - `VerifyingKey::to_sec1_bytes` + more conversions ([#675])
