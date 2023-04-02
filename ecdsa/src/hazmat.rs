@@ -37,11 +37,11 @@ use {
     },
 };
 
-#[cfg(any(feature = "arithmetic", feature = "digest"))]
-use crate::{elliptic_curve::generic_array::ArrayLength, Signature};
-
 #[cfg(feature = "rfc6979")]
 use elliptic_curve::{FieldBytesEncoding, ScalarPrimitive};
+
+#[cfg(any(feature = "arithmetic", feature = "digest"))]
+use crate::{elliptic_curve::generic_array::ArrayLength, Signature};
 
 /// Try to sign the given prehashed message using ECDSA.
 ///

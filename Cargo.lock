@@ -37,6 +37,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b645a089122eccb6111b4f81cbc1a49f5900ac4666bb93ac027feaecf15607bf"
 
 [[package]]
+name = "base64ct"
+version = "1.6.0"
+source = "git+https://github.com/RustCrypto/formats.git#fd069a6ff7a9f5abfd3d797b51f50ca0a5307e44"
+
+[[package]]
 name = "bincode"
 version = "1.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -162,11 +167,10 @@ dependencies = [
 [[package]]
 name = "der"
 version = "0.7.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc906908ea6458456e5eaa160a9c08543ec3d1e6f71e2235cedd660cb65f9df0"
+source = "git+https://github.com/RustCrypto/formats.git#fd069a6ff7a9f5abfd3d797b51f50ca0a5307e44"
 dependencies = [
  "const-oid",
- "pem-rfc7468",
+ "pem-rfc7468 0.7.0 (git+https://github.com/RustCrypto/formats.git)",
  "zeroize",
 ]
 
@@ -186,6 +190,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8168378f4e5023e7218c89c891c0fd8ecdb5e5e4f18cb78f38cf245dd021e76f"
 dependencies = [
  "block-buffer 0.10.3",
+ "const-oid",
  "crypto-common",
  "subtle",
 ]
@@ -223,6 +228,7 @@ name = "ecdsa"
 version = "0.16.2"
 dependencies = [
  "der 0.7.1",
+ "digest 0.10.6",
  "elliptic-curve 0.13.2",
  "hex-literal",
  "rfc6979",
@@ -311,7 +317,7 @@ dependencies = [
  "generic-array",
  "group 0.13.0",
  "hex-literal",
- "pem-rfc7468",
+ "pem-rfc7468 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "pkcs8 0.10.1",
  "rand_core 0.6.4",
  "sec1 0.7.1",
@@ -536,7 +542,15 @@ version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "88b39c9bfcfc231068454382784bb460aae594343fb030d46e9f50a645418412"
 dependencies = [
- "base64ct",
+ "base64ct 1.5.3",
+]
+
+[[package]]
+name = "pem-rfc7468"
+version = "0.7.0"
+source = "git+https://github.com/RustCrypto/formats.git#fd069a6ff7a9f5abfd3d797b51f50ca0a5307e44"
+dependencies = [
+ "base64ct 1.6.0",
 ]
 
 [[package]]
@@ -829,17 +843,16 @@ version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "67cf02bbac7a337dc36e4f5a693db6c21e7863f45070f7064577eb4367a3212b"
 dependencies = [
- "base64ct",
+ "base64ct 1.5.3",
  "der 0.6.1",
 ]
 
 [[package]]
 name = "spki"
 version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c0445c905640145c7ea8c1993555957f65e7c46d0535b91ba501bc9bfc85522f"
+source = "git+https://github.com/RustCrypto/formats.git#fd069a6ff7a9f5abfd3d797b51f50ca0a5307e44"
 dependencies = [
- "base64ct",
+ "base64ct 1.6.0",
  "der 0.7.1",
 ]
 
