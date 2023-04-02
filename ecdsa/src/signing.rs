@@ -20,6 +20,9 @@ use signature::{
     DigestSigner, RandomizedDigestSigner, RandomizedSigner, Signer,
 };
 
+#[cfg(feature = "algorithm-identifier")]
+use elliptic_curve::pkcs8::spki::{AlgorithmIdentifierRef, AssociatedAlgorithmIdentifier};
+
 #[cfg(feature = "der")]
 use {crate::der, core::ops::Add};
 
@@ -538,4 +541,14 @@ where
     fn from_str(s: &str) -> Result<Self> {
         Self::from_pkcs8_pem(s).map_err(|_| Error::new())
     }
+}
+
+#[cfg(feature = "algorithm-identifier")]
+impl<C> AssociatedAlgorithmIdentifier for SigningKey<C>
+where
+    C: PrimeCurve + AssociatedAlgorithmIdentifier + CurveArithmetic,
+    Scalar<C>: SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    const ALGORITHM_IDENTIFIER: AlgorithmIdentifierRef<'static> = C::ALGORITHM_IDENTIFIER;
 }
