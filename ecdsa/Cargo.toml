@@ -21,6 +21,7 @@ signature = { version = "2.0, <2.1", default-features = false, features = ["rand
 
 # optional dependencies
 der = { version = "0.7", optional = true }
+digest = { version = "0.10.6", optional = true, default-features = false, features = ["oid"] }
 rfc6979 = { version = "0.4", optional = true, path = "../rfc6979" }
 serdect = { version = "0.2", optional = true, default-features = false, features = ["alloc"] }
 
@@ -36,9 +37,9 @@ std = ["alloc", "elliptic-curve/std", "signature/std"]
 
 arithmetic = ["elliptic-curve/arithmetic"]
 dev = ["arithmetic", "digest", "elliptic-curve/dev", "hazmat"]
-digest = ["signature/digest"]
+digest = ["dep:digest", "signature/digest"]
 hazmat = []
-pkcs8 = ["elliptic-curve/pkcs8", "der"]
+pkcs8 = ["digest", "elliptic-curve/pkcs8", "der"]
 pem = ["elliptic-curve/pem", "pkcs8"]
 serde = ["elliptic-curve/serde", "serdect"]
 signing = ["arithmetic", "digest", "hazmat", "rfc6979"]

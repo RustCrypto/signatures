@@ -102,8 +102,65 @@ use {
     elliptic_curve::{scalar::IsHigh, CurveArithmetic, NonZeroScalar},
 };
 
+#[cfg(feature = "digest")]
+use digest::const_oid::ObjectIdentifier;
+
 #[cfg(feature = "serde")]
 use serdect::serde::{de, ser, Deserialize, Serialize};
+
+#[cfg(all(feature = "digest", feature = "hazmat"))]
+use digest::const_oid::AssociatedOid;
+
+#[cfg(all(feature = "hazmat", feature = "pkcs8"))]
+use elliptic_curve::pkcs8::spki::{
+    der::AnyRef, AlgorithmIdentifierRef, AssociatedAlgorithmIdentifier,
+};
+
+/// OID for ECDSA with SHA-224 digests.
+///
+/// ```text
+/// ecdsa-with-SHA224 OBJECT IDENTIFIER ::= { iso(1) member-body(2)
+///      us(840) ansi-X9-62(10045) signatures(4) ecdsa-with-SHA2(3) 1 }
+/// ```
+// TODO(tarcieri): use `ObjectIdentifier::push_arc` when const unwrap is stable
+#[cfg(feature = "digest")]
+pub const ECDSA_SHA224_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.2.840.10045.4.3.1");
+
+/// OID for ECDSA with SHA-256 digests.
+///
+/// ```text
+/// ecdsa-with-SHA256 OBJECT IDENTIFIER ::= { iso(1) member-body(2)
+///      us(840) ansi-X9-62(10045) signatures(4) ecdsa-with-SHA2(3) 2 }
+/// ```
+#[cfg(feature = "digest")]
+pub const ECDSA_SHA256_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.2.840.10045.4.3.2");
+
+/// OID for ECDSA with SHA-384 digests.
+///
+/// ```text
+/// ecdsa-with-SHA384 OBJECT IDENTIFIER ::= { iso(1) member-body(2)
+///      us(840) ansi-X9-62(10045) signatures(4) ecdsa-with-SHA2(3) 3 }
+/// ```
+#[cfg(feature = "digest")]
+pub const ECDSA_SHA384_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.2.840.10045.4.3.3");
+
+/// OID for ECDSA with SHA-512 digests.
+///
+/// ```text
+/// ecdsa-with-SHA512 OBJECT IDENTIFIER ::= { iso(1) member-body(2)
+///      us(840) ansi-X9-62(10045) signatures(4) ecdsa-with-SHA2(3) 4 }
+/// ```
+#[cfg(feature = "digest")]
+pub const ECDSA_SHA512_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.2.840.10045.4.3.4");
+
+#[cfg(all(feature = "digest", feature = "hazmat"))]
+const SHA224_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("2.16.840.1.101.3.4.2.4");
+#[cfg(all(feature = "digest", feature = "hazmat"))]
+const SHA256_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("2.16.840.1.101.3.4.2.1");
+#[cfg(all(feature = "digest", feature = "hazmat"))]
+const SHA384_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("2.16.840.1.101.3.4.2.2");
+#[cfg(all(feature = "digest", feature = "hazmat"))]
+const SHA512_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("2.16.840.1.101.3.4.2.3");
 
 /// Size of a fixed sized signature for the given elliptic curve.
 pub type SignatureSize<C> = <FieldBytesSize<C> as Add>::Output;
@@ -376,6 +433,42 @@ where
 
         Self::from_scalars(r, s)
     }
+}
+
+/// ECDSA [`ObjectIdentifier`] which identifies the digest used by default
+/// with the `Signer` and `Verifier` traits.
+///
+/// To support non-default digest algorithms, use the [`SignatureWithOid`]
+/// type instead.
+#[cfg(all(feature = "digest", feature = "hazmat"))]
+impl<C> AssociatedOid for Signature<C>
+where
+    C: hazmat::DigestPrimitive,
+    C::Digest: AssociatedOid,
+{
+    const OID: ObjectIdentifier = match C::Digest::OID {
+        SHA224_OID => ECDSA_SHA224_OID,
+        SHA256_OID => ECDSA_SHA256_OID,
+        SHA384_OID => ECDSA_SHA384_OID,
+        SHA512_OID => ECDSA_SHA512_OID,
+        _ => panic!("no RFC5758 ECDSA OID defined for DigestPrimitive::Digest"),
+    };
+}
+
+/// ECDSA [`AlgorithmIdentifier`] which identifies the digest used by default
+/// with the `Signer` and `Verifier` traits.
+#[cfg(all(feature = "hazmat", feature = "pkcs8"))]
+impl<C> AssociatedAlgorithmIdentifier for Signature<C>
+where
+    C: PrimeCurve,
+    Self: AssociatedOid,
+{
+    type Params = AnyRef<'static>;
+
+    const ALGORITHM_IDENTIFIER: AlgorithmIdentifierRef<'static> = AlgorithmIdentifierRef {
+        oid: Self::OID,
+        parameters: None,
+    };
 }
 
 #[cfg(feature = "serde")]
