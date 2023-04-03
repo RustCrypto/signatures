@@ -31,7 +31,12 @@ use {
 
 #[cfg(feature = "pkcs8")]
 use crate::elliptic_curve::{
-    pkcs8::{self, AssociatedOid},
+    pkcs8::{
+        self,
+        der::AnyRef,
+        spki::{AlgorithmIdentifier, AssociatedAlgorithmIdentifier, SignatureAlgorithmIdentifier},
+        AssociatedOid,
+    },
     sec1::{self, FromEncodedPoint, ToEncodedPoint},
     AffinePoint,
 };
@@ -364,8 +369,6 @@ where
     SignatureSize<C>: ArrayLength<u8>,
 {
 }
-
-/// Constant-time comparison
 impl<C> PartialEq for SigningKey<C>
 where
     C: PrimeCurve + CurveArithmetic,
@@ -492,6 +495,20 @@ where
     SignatureSize<C>: ArrayLength<u8>,
 {
     type VerifyingKey = VerifyingKey<C>;
+}
+
+#[cfg(feature = "pkcs8")]
+impl<C> SignatureAlgorithmIdentifier for SigningKey<C>
+where
+    C: PrimeCurve + CurveArithmetic,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+    Signature<C>: AssociatedAlgorithmIdentifier<Params = AnyRef<'static>>,
+{
+    type Params = AnyRef<'static>;
+
+    const SIGNATURE_ALGORITHM_IDENTIFIER: AlgorithmIdentifier<Self::Params> =
+        Signature::<C>::ALGORITHM_IDENTIFIER;
 }
 
 #[cfg(feature = "pkcs8")]
