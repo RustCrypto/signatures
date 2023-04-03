@@ -28,7 +28,7 @@ sha2 = { version = "0.10", optional = true, default-features = false, features =
 
 [dev-dependencies]
 elliptic-curve = { version = "0.13", default-features = false, features = ["dev"] }
-hex-literal = "0.3"
+hex-literal = "0.4"
 sha2 = { version = "0.10", default-features = false }
 
 [features]
