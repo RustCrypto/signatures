@@ -30,7 +30,12 @@ use {
 };
 
 #[cfg(feature = "pkcs8")]
-use elliptic_curve::pkcs8::{self, AssociatedOid};
+use elliptic_curve::pkcs8::{
+    self,
+    der::AnyRef,
+    spki::{AlgorithmIdentifier, AssociatedAlgorithmIdentifier, SignatureAlgorithmIdentifier},
+    AssociatedOid,
+};
 
 #[cfg(all(feature = "pem", feature = "serde"))]
 use serdect::serde::{de, ser, Deserialize, Serialize};
@@ -351,6 +356,20 @@ where
     fn try_from(bytes: &[u8]) -> Result<Self> {
         Self::from_sec1_bytes(bytes)
     }
+}
+
+#[cfg(feature = "pkcs8")]
+impl<C> SignatureAlgorithmIdentifier for VerifyingKey<C>
+where
+    C: PrimeCurve + CurveArithmetic,
+    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    FieldBytesSize<C>: sec1::ModulusSize,
+    Signature<C>: AssociatedAlgorithmIdentifier<Params = AnyRef<'static>>,
+{
+    type Params = AnyRef<'static>;
+
+    const SIGNATURE_ALGORITHM_IDENTIFIER: AlgorithmIdentifier<Self::Params> =
+        Signature::<C>::ALGORITHM_IDENTIFIER;
 }
 
 #[cfg(feature = "pkcs8")]
