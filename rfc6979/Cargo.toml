@@ -19,5 +19,5 @@ hmac = { version = "0.12", default-features = false, features = ["reset"] }
 subtle = { version = "2", default-features = false }
 
 [dev-dependencies]
-hex-literal = "0.3"
+hex-literal = "0.4"
 sha2 = "0.10"
