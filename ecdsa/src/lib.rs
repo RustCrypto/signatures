@@ -103,18 +103,21 @@ use {
 };
 
 #[cfg(feature = "digest")]
-use digest::const_oid::ObjectIdentifier;
+use digest::{
+    const_oid::{AssociatedOid, ObjectIdentifier},
+    Digest,
+};
+
+#[cfg(feature = "pkcs8")]
+use elliptic_curve::pkcs8::spki::{
+    der::AnyRef, AlgorithmIdentifierRef, AssociatedAlgorithmIdentifier,
+};
 
 #[cfg(feature = "serde")]
 use serdect::serde::{de, ser, Deserialize, Serialize};
 
-#[cfg(all(feature = "digest", feature = "hazmat"))]
-use digest::const_oid::AssociatedOid;
-
-#[cfg(all(feature = "hazmat", feature = "pkcs8"))]
-use elliptic_curve::pkcs8::spki::{
-    der::AnyRef, AlgorithmIdentifierRef, AssociatedAlgorithmIdentifier,
-};
+#[cfg(all(feature = "alloc", feature = "pkcs8"))]
+use elliptic_curve::pkcs8::spki::{AlgorithmIdentifierOwned, DynAssociatedAlgorithmIdentifier};
 
 /// OID for ECDSA with SHA-224 digests.
 ///
@@ -153,13 +156,13 @@ pub const ECDSA_SHA384_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.2
 #[cfg(feature = "digest")]
 pub const ECDSA_SHA512_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.2.840.10045.4.3.4");
 
-#[cfg(all(feature = "digest", feature = "hazmat"))]
+#[cfg(feature = "digest")]
 const SHA224_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("2.16.840.1.101.3.4.2.4");
-#[cfg(all(feature = "digest", feature = "hazmat"))]
+#[cfg(feature = "digest")]
 const SHA256_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("2.16.840.1.101.3.4.2.1");
-#[cfg(all(feature = "digest", feature = "hazmat"))]
+#[cfg(feature = "digest")]
 const SHA384_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("2.16.840.1.101.3.4.2.2");
-#[cfg(all(feature = "digest", feature = "hazmat"))]
+#[cfg(feature = "digest")]
 const SHA512_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("2.16.840.1.101.3.4.2.3");
 
 /// Size of a fixed sized signature for the given elliptic curve.
@@ -446,18 +449,15 @@ where
     C: hazmat::DigestPrimitive,
     C::Digest: AssociatedOid,
 {
-    const OID: ObjectIdentifier = match C::Digest::OID {
-        SHA224_OID => ECDSA_SHA224_OID,
-        SHA256_OID => ECDSA_SHA256_OID,
-        SHA384_OID => ECDSA_SHA384_OID,
-        SHA512_OID => ECDSA_SHA512_OID,
-        _ => panic!("no RFC5758 ECDSA OID defined for DigestPrimitive::Digest"),
+    const OID: ObjectIdentifier = match ecdsa_oid_for_digest(C::Digest::OID) {
+        Some(oid) => oid,
+        None => panic!("no RFC5758 ECDSA OID defined for DigestPrimitive::Digest"),
     };
 }
 
-/// ECDSA [`AlgorithmIdentifier`] which identifies the digest used by default
+/// ECDSA `AlgorithmIdentifier` which identifies the digest used by default
 /// with the `Signer` and `Verifier` traits.
-#[cfg(all(feature = "hazmat", feature = "pkcs8"))]
+#[cfg(feature = "pkcs8")]
 impl<C> AssociatedAlgorithmIdentifier for Signature<C>
 where
     C: PrimeCurve,
@@ -498,5 +498,196 @@ where
         let mut bytes = SignatureBytes::<C>::default();
         serdect::array::deserialize_hex_or_bin(&mut bytes, deserializer)?;
         Self::try_from(bytes.as_slice()).map_err(de::Error::custom)
+    }
+}
+
+/// An extended [`Signature`] type which is parameterized by an
+/// `ObjectIdentifier` which identifies the ECDSA variant used by a
+/// particular signature.
+///
+/// Valid `ObjectIdentifiers` are defined in [RFC5758 § 3.2]:
+///
+/// - SHA-224: [`ECDSA_SHA224_OID`] (1.2.840.10045.4.3.1)
+/// - SHA-256: [`ECDSA_SHA256_OID`] (1.2.840.10045.4.3.2)
+/// - SHA-384: [`ECDSA_SHA384_OID`] (1.2.840.10045.4.3.3)
+/// - SHA-512: [`ECDSA_SHA512_OID`] (1.2.840.10045.4.3.4)
+///
+/// [RFC5758 § 3.2]: https://www.rfc-editor.org/rfc/rfc5758#section-3.2
+#[cfg(feature = "digest")]
+#[derive(Clone, Eq, PartialEq)]
+pub struct SignatureWithOid<C: PrimeCurve> {
+    /// Inner signature type.
+    signature: Signature<C>,
+
+    /// OID which identifies the ECDSA variant used.
+    ///
+    /// MUST be one of the ECDSA algorithm variants as defined in RFC5758.
+    ///
+    /// These OIDs begin with `1.2.840.10045.4`.
+    oid: ObjectIdentifier,
+}
+
+#[cfg(feature = "digest")]
+impl<C> SignatureWithOid<C>
+where
+    C: PrimeCurve,
+{
+    /// Create a new signature with an explicitly provided OID.
+    ///
+    /// OID must begin with `1.2.840.10045.4`, the [RFC5758] OID prefix for
+    /// ECDSA variants.
+    ///
+    /// [RFC5758]: https://www.rfc-editor.org/rfc/rfc5758#section-3.2
+    pub fn new(signature: Signature<C>, oid: ObjectIdentifier) -> Result<Self> {
+        // TODO(tarcieri): use `ObjectIdentifier::starts_with`
+        for (arc1, arc2) in ObjectIdentifier::new_unwrap("1.2.840.10045.4.3")
+            .arcs()
+            .zip(oid.arcs())
+        {
+            if arc1 != arc2 {
+                return Err(Error::new());
+            }
+        }
+
+        Ok(Self { signature, oid })
+    }
+
+    /// Create a new signature, determining the OID from the given digest.
+    ///
+    /// Supports SHA-2 family digests as enumerated in [RFC5758 § 3.2], i.e.
+    /// SHA-224, SHA-256, SHA-384, or SHA-512.
+    ///
+    /// [RFC5758 § 3.2]: https://www.rfc-editor.org/rfc/rfc5758#section-3.2
+    pub fn new_with_digest<D>(signature: Signature<C>) -> Result<Self>
+    where
+        D: AssociatedOid + Digest,
+    {
+        let oid = ecdsa_oid_for_digest(D::OID).ok_or_else(Error::new)?;
+        Ok(Self { signature, oid })
+    }
+
+    /// Parse a signature from fixed-with bytes.
+    pub fn from_bytes_with_digest<D>(bytes: &SignatureBytes<C>) -> Result<Self>
+    where
+        D: AssociatedOid + Digest,
+        SignatureSize<C>: ArrayLength<u8>,
+    {
+        Self::new_with_digest::<D>(Signature::<C>::from_bytes(bytes)?)
+    }
+
+    /// Parse a signature from a byte slice.
+    pub fn from_slice_with_digest<D>(slice: &[u8]) -> Result<Self>
+    where
+        D: AssociatedOid + Digest,
+        SignatureSize<C>: ArrayLength<u8>,
+    {
+        Self::new_with_digest::<D>(Signature::<C>::from_slice(slice)?)
+    }
+
+    /// Get the fixed-width ECDSA signature.
+    pub fn signature(&self) -> &Signature<C> {
+        &self.signature
+    }
+
+    /// Get the ECDSA OID for this signature.
+    pub fn oid(&self) -> ObjectIdentifier {
+        self.oid
+    }
+
+    /// Serialize this signature as bytes.
+    pub fn to_bytes(&self) -> SignatureBytes<C>
+    where
+        SignatureSize<C>: ArrayLength<u8>,
+    {
+        self.signature.to_bytes()
+    }
+}
+
+#[cfg(feature = "digest")]
+impl<C> Copy for SignatureWithOid<C>
+where
+    C: PrimeCurve,
+    SignatureSize<C>: ArrayLength<u8>,
+    <SignatureSize<C> as ArrayLength<u8>>::ArrayType: Copy,
+{
+}
+
+#[cfg(feature = "digest")]
+impl<C> From<SignatureWithOid<C>> for Signature<C>
+where
+    C: PrimeCurve,
+{
+    fn from(sig: SignatureWithOid<C>) -> Signature<C> {
+        sig.signature
+    }
+}
+
+#[cfg(feature = "digest")]
+impl<C> From<SignatureWithOid<C>> for SignatureBytes<C>
+where
+    C: PrimeCurve,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn from(signature: SignatureWithOid<C>) -> SignatureBytes<C> {
+        signature.to_bytes()
+    }
+}
+
+/// NOTE: this implementation assumes the default digest for the given elliptic
+/// curve as defined by [`hazmat::DigestPrimitive`].
+///
+/// When working with alternative digests, you will need to use e.g.
+/// [`SignatureWithOid::new_with_digest`].
+#[cfg(all(feature = "digest", feature = "hazmat"))]
+impl<C> SignatureEncoding for SignatureWithOid<C>
+where
+    C: hazmat::DigestPrimitive,
+    C::Digest: AssociatedOid,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    type Repr = SignatureBytes<C>;
+}
+
+/// NOTE: this implementation assumes the default digest for the given elliptic
+/// curve as defined by [`hazmat::DigestPrimitive`].
+///
+/// When working with alternative digests, you will need to use e.g.
+/// [`SignatureWithOid::new_with_digest`].
+#[cfg(all(feature = "digest", feature = "hazmat"))]
+impl<C> TryFrom<&[u8]> for SignatureWithOid<C>
+where
+    C: hazmat::DigestPrimitive,
+    C::Digest: AssociatedOid,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    type Error = Error;
+
+    fn try_from(slice: &[u8]) -> Result<Self> {
+        Self::new(Signature::<C>::from_slice(slice)?, C::Digest::OID)
+    }
+}
+
+#[cfg(all(feature = "alloc", feature = "pkcs8"))]
+impl<C> DynAssociatedAlgorithmIdentifier for SignatureWithOid<C>
+where
+    C: PrimeCurve,
+{
+    fn algorithm_identifier(&self) -> AlgorithmIdentifierOwned {
+        AlgorithmIdentifierOwned {
+            oid: self.oid,
+            parameters: None,
+        }
+    }
+}
+
+/// Get the ECDSA OID for a given digest OID.
+#[cfg(feature = "digest")]
+const fn ecdsa_oid_for_digest(digest_oid: ObjectIdentifier) -> Option<ObjectIdentifier> {
+    match digest_oid {
+        SHA224_OID => Some(ECDSA_SHA224_OID),
+        SHA256_OID => Some(ECDSA_SHA256_OID),
+        SHA384_OID => Some(ECDSA_SHA384_OID),
+        SHA512_OID => Some(ECDSA_SHA512_OID),
+        _ => None,
     }
 }

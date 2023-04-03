@@ -1,10 +1,12 @@
 //! ECDSA signing: producing signatures using a [`SigningKey`].
 
 use crate::{
+    ecdsa_oid_for_digest,
     hazmat::{bits2field, DigestPrimitive, SignPrimitive},
-    Error, Result, Signature, SignatureSize,
+    Error, Result, Signature, SignatureSize, SignatureWithOid,
 };
 use core::fmt::{self, Debug};
+use digest::{const_oid::AssociatedOid, Digest, FixedOutput};
 use elliptic_curve::{
     generic_array::ArrayLength,
     group::ff::PrimeField,
@@ -14,7 +16,6 @@ use elliptic_curve::{
     CurveArithmetic, FieldBytes, FieldBytesSize, NonZeroScalar, PrimeCurve, Scalar, SecretKey,
 };
 use signature::{
-    digest::{Digest, FixedOutput},
     hazmat::{PrehashSigner, RandomizedPrehashSigner},
     rand_core::CryptoRngCore,
     DigestSigner, RandomizedDigestSigner, RandomizedSigner, Signer,
@@ -35,7 +36,6 @@ use crate::elliptic_curve::{
         self,
         der::AnyRef,
         spki::{AlgorithmIdentifier, AssociatedAlgorithmIdentifier, SignatureAlgorithmIdentifier},
-        AssociatedOid,
     },
     sec1::{self, FromEncodedPoint, ToEncodedPoint},
     AffinePoint,
@@ -224,6 +224,32 @@ where
 {
     fn try_sign_with_rng(&self, rng: &mut impl CryptoRngCore, msg: &[u8]) -> Result<Signature<C>> {
         self.try_sign_digest_with_rng(rng, C::Digest::new_with_prefix(msg))
+    }
+}
+
+impl<C, D> DigestSigner<D, SignatureWithOid<C>> for SigningKey<C>
+where
+    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    D: AssociatedOid + Digest + FixedOutput<OutputSize = FieldBytesSize<C>>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn try_sign_digest(&self, msg_digest: D) -> Result<SignatureWithOid<C>> {
+        let signature: Signature<C> = self.try_sign_digest(msg_digest)?;
+        let oid = ecdsa_oid_for_digest(D::OID).ok_or_else(Error::new)?;
+        SignatureWithOid::new(signature, oid)
+    }
+}
+
+impl<C> Signer<SignatureWithOid<C>> for SigningKey<C>
+where
+    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    C::Digest: AssociatedOid,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn try_sign(&self, msg: &[u8]) -> Result<SignatureWithOid<C>> {
+        self.try_sign_digest(C::Digest::new_with_prefix(msg))
     }
 }
 
