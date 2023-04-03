@@ -43,7 +43,7 @@ jobs:
     strategy:
       matrix:
         toolchain:
-          - 1.60.0 # MSRV
+          - 1.65.0 # Technically MSRV is 1.60, but we have 1.65 dev-dependencies (i.e. ring-compat)
           - stable
     runs-on: ubuntu-latest
     steps:
@@ -53,23 +53,4 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
       - run: cargo test --release --no-default-features
       - run: cargo test --release
-      #- run: cargo test --release --all-features
-
-  # TODO(tarcieri): reunify with `test` when MSRV is 1.65
-  test-all-features:
-    strategy:
-      matrix:
-        platform:
-          - ubuntu-latest
-          - macos-latest
-          - windows-latest
-        toolchain:
-          - 1.65.0 # MSRV
-          - stable
-    runs-on: ${{ matrix.platform }}
-    steps:
-      - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{ matrix.toolchain }}
       - run: cargo test --release --all-features
