@@ -37,6 +37,14 @@ use elliptic_curve::pkcs8::{
     AssociatedOid,
 };
 
+#[cfg(feature = "sha2")]
+use {
+    crate::{
+        SignatureWithOid, ECDSA_SHA224_OID, ECDSA_SHA256_OID, ECDSA_SHA384_OID, ECDSA_SHA512_OID,
+    },
+    sha2::{Sha224, Sha256, Sha384, Sha512},
+};
+
 #[cfg(all(feature = "pem", feature = "serde"))]
 use serdect::serde::{de, ser, Deserialize, Serialize};
 
@@ -166,6 +174,24 @@ where
 {
     fn verify(&self, msg: &[u8], signature: &Signature<C>) -> Result<()> {
         self.verify_digest(C::Digest::new_with_prefix(msg), signature)
+    }
+}
+
+#[cfg(feature = "sha2")]
+impl<C> Verifier<SignatureWithOid<C>> for VerifyingKey<C>
+where
+    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    AffinePoint<C>: VerifyPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn verify(&self, msg: &[u8], sig: &SignatureWithOid<C>) -> Result<()> {
+        match sig.oid() {
+            ECDSA_SHA224_OID => self.verify_prehash(&Sha224::digest(msg), sig.signature()),
+            ECDSA_SHA256_OID => self.verify_prehash(&Sha256::digest(msg), sig.signature()),
+            ECDSA_SHA384_OID => self.verify_prehash(&Sha384::digest(msg), sig.signature()),
+            ECDSA_SHA512_OID => self.verify_prehash(&Sha512::digest(msg), sig.signature()),
+            _ => Err(Error::new()),
+        }
     }
 }
 
