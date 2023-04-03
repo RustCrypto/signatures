@@ -27,10 +27,10 @@ zeroize = { version = "1", optional = true, default-features = false }
 
 [dev-dependencies]
 bincode = "1"
-ed25519-dalek = "1"
+ed25519-dalek = { version = "=2.0.0-rc.2", features = ["rand_core"] }
 hex-literal = "0.4"
-ring-compat = "0.7"
-rand_core = { version = "0.5", features = ["std"] }
+ring-compat = { version = "0.7", default-features = false, features = ["signature"] }
+rand_core = { version = "0.6", features = ["std"] }
 
 [features]
 default = ["std"]
