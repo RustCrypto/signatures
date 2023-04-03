@@ -186,6 +186,16 @@ dependencies = [
 [[package]]
 name = "ed25519"
 version = "2.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "be522bee13fa6d8059f4903a4084aa3bd50725e18150202f0238deb615cd6371"
+dependencies = [
+ "pkcs8",
+ "signature",
+]
+
+[[package]]
+name = "ed25519"
+version = "2.2.1"
 dependencies = [
  "bincode",
  "ed25519-dalek",
@@ -200,23 +210,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "ed25519"
-version = "2.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "be522bee13fa6d8059f4903a4084aa3bd50725e18150202f0238deb615cd6371"
-dependencies = [
- "pkcs8",
- "signature",
-]
-
-[[package]]
 name = "ed25519-dalek"
 version = "2.0.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "798f704d128510932661a3489b08e3f4c934a01d61c5def59ae7b8e48f19665a"
 dependencies = [
  "curve25519-dalek",
- "ed25519 2.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ed25519 2.2.0",
  "rand_core",
  "serde",
  "sha2",
@@ -573,7 +573,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a6cc493d932a31cd225466b0361bc571f2c9cbb0db5ff06e843b478dc94027b"
 dependencies = [
  "ecdsa 0.16.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "ed25519 2.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ed25519 2.2.0",
  "generic-array",
  "p256",
  "p384",
