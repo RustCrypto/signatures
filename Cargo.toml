@@ -12,4 +12,5 @@ opt-level = 2
 
 [patch.crates-io]
 der = { git = "https://github.com/RustCrypto/formats.git" }
+ecdsa = { path = "./ecdsa" }
 spki = { git = "https://github.com/RustCrypto/formats.git" }

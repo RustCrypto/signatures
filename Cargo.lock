@@ -23,7 +23,7 @@ checksum = "8c3c1a368f70d6cf7302d78f8f7093da241fb8e8807c05cc9e51a125895a6d5b"
 [[package]]
 name = "base64ct"
 version = "1.6.0"
-source = "git+https://github.com/RustCrypto/formats.git#260faa90431c12837e53426e91214102d4810fea"
+source = "git+https://github.com/RustCrypto/formats.git#672ab4fade876f665bcf6526fae6f12aae38f5f7"
 
 [[package]]
 name = "bincode"
@@ -121,8 +121,8 @@ dependencies = [
 
 [[package]]
 name = "der"
-version = "0.7.1"
-source = "git+https://github.com/RustCrypto/formats.git#260faa90431c12837e53426e91214102d4810fea"
+version = "0.7.2"
+source = "git+https://github.com/RustCrypto/formats.git#672ab4fade876f665bcf6526fae6f12aae38f5f7"
 dependencies = [
  "const-oid",
  "pem-rfc7468 0.7.0 (git+https://github.com/RustCrypto/formats.git)",
@@ -169,17 +169,6 @@ dependencies = [
  "rfc6979",
  "serdect",
  "sha2",
- "signature",
-]
-
-[[package]]
-name = "ecdsa"
-version = "0.16.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "644d3b8674a5fc5b929ae435bca85c2323d85ccb013a5509c2ac9ee11a6284ba"
-dependencies = [
- "der",
- "elliptic-curve",
  "signature",
 ]
 
@@ -419,7 +408,7 @@ version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7270da3e5caa82afd3deb054cc237905853813aea3859544bc082c3fe55b8d47"
 dependencies = [
- "ecdsa 0.16.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ecdsa",
  "elliptic-curve",
  "primeorder",
 ]
@@ -430,7 +419,7 @@ version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "70786f51bcc69f6a4c0360e063a4cac5419ef7c5cd5b3c99ad70f3be5ba79209"
 dependencies = [
- "ecdsa 0.16.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ecdsa",
  "elliptic-curve",
  "primeorder",
 ]
@@ -457,7 +446,7 @@ dependencies = [
 [[package]]
 name = "pem-rfc7468"
 version = "0.7.0"
-source = "git+https://github.com/RustCrypto/formats.git#260faa90431c12837e53426e91214102d4810fea"
+source = "git+https://github.com/RustCrypto/formats.git#672ab4fade876f665bcf6526fae6f12aae38f5f7"
 dependencies = [
  "base64ct 1.6.0 (git+https://github.com/RustCrypto/formats.git)",
 ]
@@ -572,7 +561,7 @@ version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a6cc493d932a31cd225466b0361bc571f2c9cbb0db5ff06e843b478dc94027b"
 dependencies = [
- "ecdsa 0.16.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ecdsa",
  "ed25519 2.2.0",
  "generic-array",
  "p256",
@@ -646,9 +635,9 @@ dependencies = [
 
 [[package]]
 name = "signature"
-version = "2.0.0"
+version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8fe458c98333f9c8152221191a77e2a44e8325d0193484af2e9421a53019e57d"
+checksum = "5e1788eed21689f9cf370582dfc467ef36ed9c707f073528ddafa8d83e3b8500"
 dependencies = [
  "digest",
  "rand_core",
@@ -669,7 +658,7 @@ checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
 [[package]]
 name = "spki"
 version = "0.7.0"
-source = "git+https://github.com/RustCrypto/formats.git#260faa90431c12837e53426e91214102d4810fea"
+source = "git+https://github.com/RustCrypto/formats.git#672ab4fade876f665bcf6526fae6f12aae38f5f7"
 dependencies = [
  "base64ct 1.6.0 (git+https://github.com/RustCrypto/formats.git)",
  "der",
