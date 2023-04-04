@@ -21,11 +21,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c3c1a368f70d6cf7302d78f8f7093da241fb8e8807c05cc9e51a125895a6d5b"
 
 [[package]]
-name = "base64ct"
-version = "1.6.0"
-source = "git+https://github.com/RustCrypto/formats.git#260faa90431c12837e53426e91214102d4810fea"
-
-[[package]]
 name = "bincode"
 version = "1.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -121,11 +116,12 @@ dependencies = [
 
 [[package]]
 name = "der"
-version = "0.7.1"
-source = "git+https://github.com/RustCrypto/formats.git#260faa90431c12837e53426e91214102d4810fea"
+version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "19c5cb402c5c958281c7c0702edea7b780d03b86b606497ca3a10fcd3fc393ac"
 dependencies = [
  "const-oid",
- "pem-rfc7468 0.7.0 (git+https://github.com/RustCrypto/formats.git)",
+ "pem-rfc7468",
  "zeroize",
 ]
 
@@ -236,7 +232,7 @@ dependencies = [
  "generic-array",
  "group",
  "hex-literal 0.3.4",
- "pem-rfc7468 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "pem-rfc7468",
  "pkcs8",
  "rand_core",
  "sec1",
@@ -451,15 +447,7 @@ version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "88b39c9bfcfc231068454382784bb460aae594343fb030d46e9f50a645418412"
 dependencies = [
- "base64ct 1.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "pem-rfc7468"
-version = "0.7.0"
-source = "git+https://github.com/RustCrypto/formats.git#260faa90431c12837e53426e91214102d4810fea"
-dependencies = [
- "base64ct 1.6.0 (git+https://github.com/RustCrypto/formats.git)",
+ "base64ct",
 ]
 
 [[package]]
@@ -668,10 +656,11 @@ checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
 
 [[package]]
 name = "spki"
-version = "0.7.0"
-source = "git+https://github.com/RustCrypto/formats.git#260faa90431c12837e53426e91214102d4810fea"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "37a5be806ab6f127c3da44b7378837ebf01dadca8510a0e572460216b228bd0e"
 dependencies = [
- "base64ct 1.6.0 (git+https://github.com/RustCrypto/formats.git)",
+ "base64ct",
  "der",
 ]
 
