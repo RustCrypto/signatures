@@ -1,6 +1,6 @@
 [package]
 name = "ecdsa"
-version = "0.16.2"
+version = "0.16.3"
 description = """
 Pure Rust implementation of the Elliptic Curve Digital Signature Algorithm
 (ECDSA) as specified in FIPS 186-4 (Digital Signature Standard), providing
