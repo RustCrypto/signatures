@@ -1,6 +1,6 @@
 [package]
 name = "dsa"
-version = "0.6.0"
+version = "0.6.1"
 description = """
 Pure Rust implementation of the Digital Signature Algorithm (DSA) as specified
 in FIPS 186-4 (Digital Signature Standard), providing RFC6979 deterministic
