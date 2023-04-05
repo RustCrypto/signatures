@@ -221,9 +221,9 @@ dependencies = [
 
 [[package]]
 name = "elliptic-curve"
-version = "0.13.2"
+version = "0.13.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6ea5a92946e8614bb585254898bb7dd1ddad241ace60c52149e3765e34cc039d"
+checksum = "22cdacd4d6ed3f9b98680b679c0e52a823b8a2c7a97358d508fe247f2180c282"
 dependencies = [
  "base16ct",
  "crypto-bigint",
@@ -452,9 +452,9 @@ dependencies = [
 
 [[package]]
 name = "pkcs8"
-version = "0.10.1"
+version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d2820d87d2b008616e5c27212dd9e0e694fb4c6b522de06094106813328cb49"
+checksum = "f950b2377845cebe5cf8b5165cb3cc1a5e0fa5cfa3e1f7f55707d8fd82e0a7b7"
 dependencies = [
  "der",
  "spki",

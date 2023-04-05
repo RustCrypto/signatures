@@ -34,7 +34,7 @@ use elliptic_curve::pkcs8::{
     self,
     der::AnyRef,
     spki::{AlgorithmIdentifier, AssociatedAlgorithmIdentifier, SignatureAlgorithmIdentifier},
-    AssociatedOid,
+    AssociatedOid, ObjectIdentifier,
 };
 
 #[cfg(feature = "sha2")]
@@ -382,6 +382,19 @@ where
     fn try_from(bytes: &[u8]) -> Result<Self> {
         Self::from_sec1_bytes(bytes)
     }
+}
+
+#[cfg(feature = "pkcs8")]
+impl<C> AssociatedAlgorithmIdentifier for VerifyingKey<C>
+where
+    C: AssociatedOid + CurveArithmetic + PrimeCurve,
+    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    FieldBytesSize<C>: sec1::ModulusSize,
+{
+    type Params = ObjectIdentifier;
+
+    const ALGORITHM_IDENTIFIER: AlgorithmIdentifier<ObjectIdentifier> =
+        PublicKey::<C>::ALGORITHM_IDENTIFIER;
 }
 
 #[cfg(feature = "pkcs8")]

@@ -36,6 +36,7 @@ use crate::elliptic_curve::{
         self,
         der::AnyRef,
         spki::{AlgorithmIdentifier, AssociatedAlgorithmIdentifier, SignatureAlgorithmIdentifier},
+        ObjectIdentifier,
     },
     sec1::{self, FromEncodedPoint, ToEncodedPoint},
     AffinePoint,
@@ -521,6 +522,19 @@ where
     SignatureSize<C>: ArrayLength<u8>,
 {
     type VerifyingKey = VerifyingKey<C>;
+}
+
+#[cfg(feature = "pkcs8")]
+impl<C> AssociatedAlgorithmIdentifier for SigningKey<C>
+where
+    C: AssociatedOid + CurveArithmetic + PrimeCurve,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    type Params = ObjectIdentifier;
+
+    const ALGORITHM_IDENTIFIER: AlgorithmIdentifier<ObjectIdentifier> =
+        SecretKey::<C>::ALGORITHM_IDENTIFIER;
 }
 
 #[cfg(feature = "pkcs8")]
