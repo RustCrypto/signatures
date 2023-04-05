@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.16.3 (2023-04-04)
+### Added
+- RFC5758 OID support ([#686])
+- `SignatureAlgorithmIdentifier` impls for `SigningKey`/`VerifyingKey` ([#688])
+- `SignatureWithOid` ([#689], [#690])
+- `AssociatedAlgorithmIdentifier` impls for `SigningKey`/`VerifyingKey` ([#698])
+
+### Changed
+- Loosen `signature` bound to `2.0, <2.2` ([#697])
+
+[#686]: https://github.com/RustCrypto/signatures/pull/686
+[#688]: https://github.com/RustCrypto/signatures/pull/688
+[#689]: https://github.com/RustCrypto/signatures/pull/689
+[#690]: https://github.com/RustCrypto/signatures/pull/690
+[#697]: https://github.com/RustCrypto/signatures/pull/697
+[#698]: https://github.com/RustCrypto/signatures/pull/698
+
 ## 0.16.2 (2023-03-28)
 ### Added
 - Handle the reduced R.x case in public key recovery ([#680])
