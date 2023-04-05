@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.16.4 (2023-04-05)
+### Fixed
+- `RecoveryId` computation in `SignPrimitive` ([#702])
+
+[#702]: https://github.com/RustCrypto/signatures/pull/702
+
 ## 0.16.3 (2023-04-04)
 ### Added
 - RFC5758 OID support ([#686])
