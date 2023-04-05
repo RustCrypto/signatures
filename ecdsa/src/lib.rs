@@ -117,7 +117,9 @@ use elliptic_curve::pkcs8::spki::{
 use serdect::serde::{de, ser, Deserialize, Serialize};
 
 #[cfg(all(feature = "alloc", feature = "pkcs8"))]
-use elliptic_curve::pkcs8::spki::{AlgorithmIdentifierOwned, DynAssociatedAlgorithmIdentifier};
+use elliptic_curve::pkcs8::spki::{
+    self, AlgorithmIdentifierOwned, DynAssociatedAlgorithmIdentifier,
+};
 
 /// OID for ECDSA with SHA-224 digests.
 ///
@@ -672,11 +674,11 @@ impl<C> DynAssociatedAlgorithmIdentifier for SignatureWithOid<C>
 where
     C: PrimeCurve,
 {
-    fn algorithm_identifier(&self) -> AlgorithmIdentifierOwned {
-        AlgorithmIdentifierOwned {
+    fn algorithm_identifier(&self) -> spki::Result<AlgorithmIdentifierOwned> {
+        Ok(AlgorithmIdentifierOwned {
             oid: self.oid,
             parameters: None,
-        }
+        })
     }
 }
 
