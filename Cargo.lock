@@ -172,7 +172,7 @@ dependencies = [
  "der",
  "digest",
  "elliptic-curve",
- "hex-literal 0.4.0",
+ "hex-literal 0.4.1",
  "rfc6979",
  "serdect",
  "sha2",
@@ -195,7 +195,7 @@ version = "2.2.1"
 dependencies = [
  "bincode",
  "ed25519-dalek",
- "hex-literal 0.4.0",
+ "hex-literal 0.4.1",
  "pkcs8",
  "rand_core",
  "ring-compat",
@@ -298,9 +298,9 @@ checksum = "7ebdb29d2ea9ed0083cd8cece49bbd968021bd99b0849edb4a9a7ee0fdf6a4e0"
 
 [[package]]
 name = "hex-literal"
-version = "0.4.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4bcb5b3e439c92a7191df2f9bbe733de8de55c3f86368cdb1c63f8be7e9e328e"
+checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
 
 [[package]]
 name = "hmac"
@@ -533,7 +533,7 @@ dependencies = [
 name = "rfc6979"
 version = "0.4.0"
 dependencies = [
- "hex-literal 0.4.0",
+ "hex-literal 0.4.1",
  "hmac",
  "sha2",
  "subtle",
