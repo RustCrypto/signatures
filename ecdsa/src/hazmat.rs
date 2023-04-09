@@ -12,7 +12,7 @@
 
 use crate::{Error, Result};
 use core::cmp;
-use elliptic_curve::{bigint::Integer, FieldBytes, PrimeCurve};
+use elliptic_curve::{generic_array::typenum::Unsigned, FieldBytes, PrimeCurve};
 
 #[cfg(feature = "arithmetic")]
 use {
@@ -229,21 +229,21 @@ where
 /// [SEC1]: https://www.secg.org/sec1-v2.pdf
 pub fn bits2field<C: PrimeCurve>(bits: &[u8]) -> Result<FieldBytes<C>> {
     // Minimum allowed bits size is half the field size
-    if bits.len() < C::Uint::BYTES / 2 {
+    if bits.len() < C::FieldBytesSize::USIZE / 2 {
         return Err(Error::new());
     }
 
     let mut field_bytes = FieldBytes::<C>::default();
 
-    match bits.len().cmp(&C::Uint::BYTES) {
+    match bits.len().cmp(&C::FieldBytesSize::USIZE) {
         cmp::Ordering::Equal => field_bytes.copy_from_slice(bits),
         cmp::Ordering::Less => {
             // If bits is smaller than the field size, pad with zeroes on the left
-            field_bytes[(C::Uint::BYTES - bits.len())..].copy_from_slice(bits);
+            field_bytes[(C::FieldBytesSize::USIZE - bits.len())..].copy_from_slice(bits);
         }
         cmp::Ordering::Greater => {
             // If bits is larger than the field size, truncate
-            field_bytes.copy_from_slice(&bits[..C::Uint::BYTES]);
+            field_bytes.copy_from_slice(&bits[..C::FieldBytesSize::USIZE]);
         }
     }
 

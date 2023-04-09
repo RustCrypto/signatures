@@ -7,9 +7,8 @@ use core::{
 };
 use der::{asn1::UintRef, Decode, Encode, FixedTag, Length, Reader, Tag, Writer};
 use elliptic_curve::{
-    bigint::Integer,
     consts::U9,
-    generic_array::{ArrayLength, GenericArray},
+    generic_array::{typenum::Unsigned, ArrayLength, GenericArray},
     FieldBytesSize, PrimeCurve,
 };
 
@@ -74,7 +73,9 @@ where
     pub fn from_bytes(input: &[u8]) -> Result<Self> {
         let (r, s) = decode_der(input).map_err(|_| Error::new())?;
 
-        if r.as_bytes().len() > C::Uint::BYTES || s.as_bytes().len() > C::Uint::BYTES {
+        if r.as_bytes().len() > C::FieldBytesSize::USIZE
+            || s.as_bytes().len() > C::FieldBytesSize::USIZE
+        {
             return Err(Error::new());
         }
 
@@ -264,9 +265,9 @@ where
 
     fn try_from(sig: Signature<C>) -> Result<super::Signature<C>> {
         let mut bytes = super::SignatureBytes::<C>::default();
-        let r_begin = C::Uint::BYTES.saturating_sub(sig.r().len());
+        let r_begin = C::FieldBytesSize::USIZE.saturating_sub(sig.r().len());
         let s_begin = bytes.len().saturating_sub(sig.s().len());
-        bytes[r_begin..C::Uint::BYTES].copy_from_slice(sig.r());
+        bytes[r_begin..C::FieldBytesSize::USIZE].copy_from_slice(sig.r());
         bytes[s_begin..].copy_from_slice(sig.s());
         Self::try_from(bytes.as_slice())
     }
