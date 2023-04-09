@@ -149,7 +149,7 @@ macro_rules! new_wycheproof_test {
             fn element_from_padded_slice<C: elliptic_curve::Curve>(
                 data: &[u8],
             ) -> elliptic_curve::FieldBytes<C> {
-                let point_len = C::Uint::BYTES;
+                let point_len = C::FieldBytesSize::USIZE;
                 if data.len() >= point_len {
                     let offset = data.len() - point_len;
                     for v in data.iter().take(offset) {

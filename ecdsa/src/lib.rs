@@ -88,7 +88,6 @@ use core::{
     ops::Add,
 };
 use elliptic_curve::{
-    bigint::Integer,
     generic_array::{sequence::Concat, typenum::Unsigned, ArrayLength, GenericArray},
     FieldBytes, FieldBytesSize, ScalarPrimitive,
 };
@@ -208,7 +207,7 @@ where
 {
     /// Parse a signature from fixed-with bytes.
     pub fn from_bytes(bytes: &SignatureBytes<C>) -> Result<Self> {
-        let (r_bytes, s_bytes) = bytes.split_at(C::Uint::BYTES);
+        let (r_bytes, s_bytes) = bytes.split_at(C::FieldBytesSize::USIZE);
         let r = ScalarPrimitive::from_slice(r_bytes).map_err(|_| Error::new())?;
         let s = ScalarPrimitive::from_slice(s_bytes).map_err(|_| Error::new())?;
 
@@ -252,7 +251,7 @@ where
     /// Serialize this signature as bytes.
     pub fn to_bytes(&self) -> SignatureBytes<C> {
         let mut bytes = SignatureBytes::<C>::default();
-        let (r_bytes, s_bytes) = bytes.split_at_mut(C::Uint::BYTES);
+        let (r_bytes, s_bytes) = bytes.split_at_mut(C::FieldBytesSize::USIZE);
         r_bytes.copy_from_slice(&self.r.to_bytes());
         s_bytes.copy_from_slice(&self.s.to_bytes());
         bytes
@@ -413,7 +412,7 @@ where
     type Err = Error;
 
     fn from_str(hex: &str) -> Result<Self> {
-        if hex.as_bytes().len() != C::Uint::BYTES * 4 {
+        if hex.as_bytes().len() != C::FieldBytesSize::USIZE * 4 {
             return Err(Error::new());
         }
 
@@ -426,7 +425,7 @@ where
             return Err(Error::new());
         }
 
-        let (r_hex, s_hex) = hex.split_at(C::Uint::BYTES * 2);
+        let (r_hex, s_hex) = hex.split_at(C::FieldBytesSize::USIZE * 2);
 
         let r = r_hex
             .parse::<NonZeroScalar<C>>()
