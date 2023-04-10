@@ -33,14 +33,16 @@ macro_rules! new_signing_test {
     ($curve:path, $vectors:expr) => {
         use $crate::{
             elliptic_curve::{
-                bigint::Encoding, generic_array::GenericArray, group::ff::PrimeField, Curve,
-                CurveArithmetic, Scalar,
+                bigint::Encoding,
+                generic_array::{typenum::Unsigned, GenericArray},
+                group::ff::PrimeField,
+                Curve, CurveArithmetic, Scalar,
             },
             hazmat::SignPrimitive,
         };
 
         fn decode_scalar(bytes: &[u8]) -> Option<Scalar<$curve>> {
-            if bytes.len() == <$curve as Curve>::Uint::BYTES {
+            if bytes.len() == <$curve as Curve>::FieldBytesSize::USIZE {
                 Scalar::<$curve>::from_repr(GenericArray::clone_from_slice(bytes)).into()
             } else {
                 None
@@ -52,6 +54,12 @@ macro_rules! new_signing_test {
             for vector in $vectors {
                 let d = decode_scalar(vector.d).expect("invalid vector.d");
                 let k = decode_scalar(vector.k).expect("invalid vector.m");
+
+                assert_eq!(
+                    <$curve as Curve>::FieldBytesSize::USIZE,
+                    vector.m.len(),
+                    "invalid vector.m (must be field-sized digest)"
+                );
                 let z = GenericArray::clone_from_slice(vector.m);
                 let sig = d.try_sign_prehashed(k, &z).expect("ECDSA sign failed").0;
 
