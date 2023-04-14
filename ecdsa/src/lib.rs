@@ -192,8 +192,8 @@ pub type SignatureBytes<C> = GenericArray<u8, SignatureSize<C>>;
 /// serializing and deserializing ECDSA signatures using the `Serialize` and
 /// `Deserialize` traits.
 ///
-/// The serialization uses a 64-byte fixed encoding when used with binary
-/// formats, and a hexadecimal encoding when used with text formats.
+/// The serialization uses a hexadecimal encoding when used with
+/// "human readable" text formats, and a binary encoding otherwise.
 #[derive(Clone, Eq, PartialEq)]
 pub struct Signature<C: PrimeCurve> {
     r: ScalarPrimitive<C>,
