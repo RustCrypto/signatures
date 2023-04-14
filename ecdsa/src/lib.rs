@@ -83,10 +83,7 @@ pub use crate::signing::SigningKey;
 #[cfg(feature = "verifying")]
 pub use crate::verifying::VerifyingKey;
 
-use core::{
-    fmt::{self, Debug},
-    ops::Add,
-};
+use core::{fmt, ops::Add};
 use elliptic_curve::{
     generic_array::{sequence::Concat, typenum::Unsigned, ArrayLength, GenericArray},
     FieldBytes, FieldBytesSize, ScalarPrimitive,
@@ -321,22 +318,6 @@ where
 {
 }
 
-impl<C> Debug for Signature<C>
-where
-    C: PrimeCurve,
-    SignatureSize<C>: ArrayLength<u8>,
-{
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "ecdsa::Signature<{:?}>(", C::default())?;
-
-        for byte in self.to_bytes() {
-            write!(f, "{:02X}", byte)?;
-        }
-
-        write!(f, ")")
-    }
-}
-
 impl<C> From<Signature<C>> for SignatureBytes<C>
 where
     C: PrimeCurve,
@@ -364,6 +345,22 @@ where
 
     fn try_from(slice: &[u8]) -> Result<Self> {
         Self::from_slice(slice)
+    }
+}
+
+impl<C> fmt::Debug for Signature<C>
+where
+    C: PrimeCurve,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "ecdsa::Signature<{:?}>(", C::default())?;
+
+        for byte in self.to_bytes() {
+            write!(f, "{:02X}", byte)?;
+        }
+
+        write!(f, ")")
     }
 }
 
