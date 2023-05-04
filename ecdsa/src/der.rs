@@ -19,6 +19,7 @@ use elliptic_curve::{
 use {
     alloc::{boxed::Box, vec::Vec},
     signature::SignatureEncoding,
+    spki::{der::asn1::BitString, SignatureBitStringEncoding},
 };
 
 #[cfg(feature = "serde")]
@@ -306,6 +307,18 @@ where
 
     fn to_vec(&self) -> Vec<u8> {
         self.as_bytes().into()
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<C> SignatureBitStringEncoding for Signature<C>
+where
+    C: PrimeCurve,
+    MaxSize<C>: ArrayLength<u8>,
+    <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArrayLength<u8>,
+{
+    fn to_bitstring(&self) -> der::Result<BitString> {
+        BitString::new(0, self.to_vec())
     }
 }
 
