@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.16.7 (2023-05-11)
+
+### Added
+- RFC5480 citation for `der::Signature` ([#710])
+- support for the `SignatureBitStringEncoding` trait ([#716])
+
+### Changed
+- bump `elliptic-curve` from 0.13.3 to 0.13.4 ([#709])
+- `der::Signature` citation to RFC5912 ([#711])
+- make `fmt` impls more consistent ([#713])
+
+### Fixed
+- `serde` doc fixup ([#712])
+
+[#709]: https://github.com/RustCrypto/signatures/pull/709
+[#710]: https://github.com/RustCrypto/signatures/pull/710
+[#711]: https://github.com/RustCrypto/signatures/pull/711
+[#712]: https://github.com/RustCrypto/signatures/pull/712
+[#713]: https://github.com/RustCrypto/signatures/pull/713
+[#716]: https://github.com/RustCrypto/signatures/pull/716
+
 ## 0.16.6 (2023-04-09)
 ### Fixed
 - Test macro handling of serialized field size ([#707])
