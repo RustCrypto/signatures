@@ -234,6 +234,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "ed448"
+version = "0.1.0"
+
+[[package]]
 name = "elliptic-curve"
 version = "0.13.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
