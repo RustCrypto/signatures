@@ -238,6 +238,7 @@ name = "ed448"
 version = "0.1.0"
 dependencies = [
  "hex-literal",
+ "signature",
 ]
 
 [[package]]

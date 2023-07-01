@@ -5,6 +5,8 @@
 
 mod hex;
 
+pub use signature::{self, Error, SignatureEncoding};
+
 use core::fmt;
 
 /// Size of a single component of an Ed448 signature.
@@ -55,6 +57,17 @@ impl Signature {
         Self { R, s }
     }
 
+    /// Parse an Ed448 signature from a byte slice.
+    ///
+    /// # Returns
+    /// - `Ok` on success
+    /// - `Err` if the input byte slice is not 64-bytes
+    pub fn from_slice(bytes: &[u8]) -> signature::Result<Self> {
+        SignatureBytes::try_from(bytes)
+            .map(Into::into)
+            .map_err(|_| Error::new())
+    }
+
     /// Bytes for the `R` component of a signature.
     pub fn r_bytes(&self) -> &ComponentBytes {
         &self.R
@@ -63,6 +76,47 @@ impl Signature {
     /// Bytes for the `s` component of a signature.
     pub fn s_bytes(&self) -> &ComponentBytes {
         &self.s
+    }
+
+    /// Return the inner byte array.
+    pub fn to_bytes(&self) -> SignatureBytes {
+        let mut ret = [0u8; Self::BYTE_SIZE];
+        let (R, s) = ret.split_at_mut(COMPONENT_SIZE);
+        R.copy_from_slice(&self.R.0);
+        s.copy_from_slice(&self.s.0);
+        ret
+    }
+}
+
+impl From<Signature> for SignatureBytes {
+    fn from(sig: Signature) -> SignatureBytes {
+        sig.to_bytes()
+    }
+}
+
+impl From<&Signature> for SignatureBytes {
+    fn from(sig: &Signature) -> SignatureBytes {
+        sig.to_bytes()
+    }
+}
+
+impl From<SignatureBytes> for Signature {
+    fn from(bytes: SignatureBytes) -> Self {
+        Signature::from_bytes(&bytes)
+    }
+}
+
+impl From<&SignatureBytes> for Signature {
+    fn from(bytes: &SignatureBytes) -> Self {
+        Signature::from_bytes(bytes)
+    }
+}
+
+impl TryFrom<&[u8]> for Signature {
+    type Error = Error;
+
+    fn try_from(bytes: &[u8]) -> signature::Result<Self> {
+        Self::from_slice(bytes)
     }
 }
 

@@ -16,4 +16,5 @@ categories = ["cryptography", "no-std"]
 keywords = ["crypto", "curve448", "ecc", "signature", "signing"]
 
 [dependencies]
+signature = { version = "2", default-features = false }
 hex-literal = "0.4"
