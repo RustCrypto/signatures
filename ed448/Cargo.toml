@@ -16,3 +16,4 @@ categories = ["cryptography", "no-std"]
 keywords = ["crypto", "curve448", "ecc", "signature", "signing"]
 
 [dependencies]
+hex-literal = "0.4"

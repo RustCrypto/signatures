@@ -236,6 +236,9 @@ dependencies = [
 [[package]]
 name = "ed448"
 version = "0.1.0"
+dependencies = [
+ "hex-literal",
+]
 
 [[package]]
 name = "elliptic-curve"
