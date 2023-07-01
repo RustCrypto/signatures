@@ -37,7 +37,7 @@ for the default feature set.
 
 - All on-by-default features of this library are covered by SemVer
 - MSRV is considered exempt from SemVer as noted above
-- The `pkcs8` module is exempted as it uses a pre-1.0 dependency, however, 
+- The `pkcs8` module is exempted as it uses a pre-1.0 dependency, however,
   breaking changes to this module will be accompanied by a minor version bump.
 
 ## License
