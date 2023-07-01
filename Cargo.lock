@@ -237,7 +237,10 @@ dependencies = [
 name = "ed448"
 version = "0.1.0"
 dependencies = [
+ "bincode",
  "hex-literal",
+ "serde",
+ "serde_bytes",
  "signature",
 ]
 

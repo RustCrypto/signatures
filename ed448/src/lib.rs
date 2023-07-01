@@ -5,6 +5,9 @@
 
 mod hex;
 
+#[cfg(feature = "serde")]
+mod serde;
+
 pub use signature::{self, Error, SignatureEncoding};
 
 use core::fmt;

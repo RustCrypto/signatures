@@ -17,4 +17,16 @@ keywords = ["crypto", "curve448", "ecc", "signature", "signing"]
 
 [dependencies]
 signature = { version = "2", default-features = false }
+
+# optional dependencies
+serde = { version = "1", optional = true, default-features = false }
+serde_bytes = { version = "0.11", optional = true }
+
+[dev-dependencies]
 hex-literal = "0.4"
+bincode = "1"
+
+[features]
+default = ["std"]
+serde_bytes = ["serde", "dep:serde_bytes"]
+std = ["signature/std"]
