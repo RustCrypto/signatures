@@ -22,7 +22,7 @@ fn decode_pkcs8_v1() {
     let keypair = KeypairBytes::from_pkcs8_der(PKCS8_V1_DER).unwrap();
 
     // Extracted with:
-    // $ openssl asn1parse -inform der -in tests/examples/p256-priv.der
+    // $ openssl asn1parse -inform der -in tests/examples/pkcs8-v1.der
     assert_eq!(
         keypair.secret_key,
         &hex!("D4EE72DBF913584AD5B6D8F1F769F8AD3AFE7C28CBF1D4FBE097A88F44755842")[..]
@@ -36,7 +36,7 @@ fn decode_pkcs8_v2() {
     let keypair = KeypairBytes::from_pkcs8_der(PKCS8_V2_DER).unwrap();
 
     // Extracted with:
-    // $ openssl asn1parse -inform der -in tests/examples/p256-priv.der
+    // $ openssl asn1parse -inform der -in tests/examples/pkcs8-v2.der
     assert_eq!(
         keypair.secret_key,
         &hex!("D4EE72DBF913584AD5B6D8F1F769F8AD3AFE7C28CBF1D4FBE097A88F44755842")[..]
@@ -53,7 +53,7 @@ fn decode_public_key() {
     let public_key = PublicKeyBytes::from_public_key_der(PUBLIC_KEY_DER).unwrap();
 
     // Extracted with:
-    // $ openssl pkey -inform der -in pkcs8-v1.der -pubout -text
+    // $ openssl pkey -inform der -in tests/examples/pkcs8-v1.der -pubout -text
     assert_eq!(
         public_key.as_ref(),
         &hex!("19BF44096984CDFE8541BAC167DC3B96C85086AA30B6B6CB0C5C38AD703166E1")

@@ -14,7 +14,9 @@
 //! Please lock to a specific minor version of the `ed25519` crate to avoid
 //! breaking changes when using this module.
 
-pub use pkcs8::{spki, DecodePrivateKey, DecodePublicKey, Error, PrivateKeyInfo, Result};
+pub use pkcs8::{
+    spki, DecodePrivateKey, DecodePublicKey, Error, ObjectIdentifier, PrivateKeyInfo, Result,
+};
 
 #[cfg(feature = "alloc")]
 pub use pkcs8::{spki::EncodePublicKey, EncodePrivateKey};
@@ -23,7 +25,6 @@ pub use pkcs8::{spki::EncodePublicKey, EncodePrivateKey};
 pub use pkcs8::der::{asn1::BitStringRef, Document, SecretDocument};
 
 use core::fmt;
-use pkcs8::ObjectIdentifier;
 
 #[cfg(feature = "pem")]
 use {
