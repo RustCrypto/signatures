@@ -1,3 +1,4 @@
+//! Hexadecimal encoding support
 use crate::{Error, Signature};
 use core::{fmt, str};
 

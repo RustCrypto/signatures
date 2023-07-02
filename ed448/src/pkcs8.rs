@@ -13,6 +13,7 @@
 //!
 //! Please lock to a specific minor version of the `ed448` crate to avoid
 //! breaking changes when using this module.
+
 pub use pkcs8::{
     spki, DecodePrivateKey, DecodePublicKey, Error, ObjectIdentifier, PrivateKeyInfo, Result,
 };
@@ -37,6 +38,22 @@ pub const ALGORITHM_ID: pkcs8::AlgorithmIdentifierRef<'static> = pkcs8::Algorith
     parameters: None,
 };
 
+/// Ed448 keypair serialized as bytes.
+///
+/// This type is primarily useful for decoding/encoding PKCS#8 private key
+/// files (either DER or PEM) encoded using the following traits:
+///
+/// - [`DecodePrivateKey`]: decode DER or PEM encoded PKCS#8 private key.
+/// - [`EncodePrivateKey`]: encode DER or PEM encoded PKCS#8 private key.
+///
+/// PKCS#8 private key files encoded with PEM begin with:
+///
+/// ```text
+/// -----BEGIN PRIVATE KEY-----
+/// ```
+///
+/// Note that this type operates on raw bytes and performs no validation that
+/// keys represent valid Ed448 field elements.
 pub struct KeypairBytes {
     /// Ed448 secret key.
     ///
@@ -67,7 +84,7 @@ impl KeypairBytes {
         }
     }
 
-    /// Serialize as a 228-byte keypair.
+    /// Serialize as a 114-byte keypair.
     ///
     /// # Returns
     ///
@@ -154,6 +171,22 @@ impl fmt::Debug for KeypairBytes {
     }
 }
 
+/// Ed448 public key serialized as bytes.
+///
+/// This type is primarily useful for decoding/encoding SPKI public key
+/// files (either DER or PEM) encoded using the following traits:
+///
+/// - [`DecodePublicKey`]: decode DER or PEM encoded PKCS#8 private key.
+/// - [`EncodePublicKey`]: encode DER or PEM encoded PKCS#8 private key.
+///
+/// SPKI public key files encoded with PEM begin with:
+///
+/// ```text
+/// -----BEGIN PUBLIC KEY-----
+/// ```
+///
+/// Note that this type operates on raw bytes and performs no validation that
+/// public keys represent valid compressed Ed448 y-coordinates.
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub struct PublicKeyBytes(pub [u8; Self::BYTE_SIZE]);
 
@@ -212,5 +245,38 @@ impl fmt::Debug for PublicKeyBytes {
         }
 
         f.write_str(")")
+    }
+}
+
+#[cfg(feature = "pem")]
+#[cfg(test)]
+mod tests {
+    use super::{KeypairBytes, PublicKeyBytes};
+    use hex_literal::hex;
+
+    const SECRET_KEY_BYTES: [u8; 57] =
+        hex!("8A57471AA375074DC7D75EA2252E9933BB15C107E4F9A2F9CFEA6C418BEBB0774D1ABB671B58B96EFF95F35D63F2418422A59C7EAE3E00D70F");
+
+    const PUBLIC_KEY_BYTES: [u8; 57] =
+        hex!("f27f9809412035541b681c69fbe69b9d25a6af506d914ecef7d973fca04ccd33a8b96a0868211382ca08fe06b72e8c0cb3297f3a9d6bc02380");
+
+    #[test]
+    fn to_bytes() {
+        let valid_keypair = KeypairBytes {
+            secret_key: SECRET_KEY_BYTES,
+            public_key: Some(PublicKeyBytes(PUBLIC_KEY_BYTES)),
+        };
+
+        assert_eq!(
+            valid_keypair.to_bytes().unwrap(),
+            hex!("8A57471AA375074DC7D75EA2252E9933BB15C107E4F9A2F9CFEA6C418BEBB0774D1ABB671B58B96EFF95F35D63F2418422A59C7EAE3E00D70Ff27f9809412035541b681c69fbe69b9d25a6af506d914ecef7d973fca04ccd33a8b96a0868211382ca08fe06b72e8c0cb3297f3a9d6bc02380")
+        );
+
+        let invalid_keypair = KeypairBytes {
+            secret_key: SECRET_KEY_BYTES,
+            public_key: None,
+        };
+
+        assert_eq!(invalid_keypair.to_bytes(), None);
     }
 }

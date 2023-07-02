@@ -74,7 +74,7 @@ dual licensed as above, without any additional terms or conditions.
 
 [//]: # (footnotes)
 
-[1]: https://en.wikipedia.org/wiki/EdDSA
+[1]: https://en.wikipedia.org/wiki/EdDSA#Ed25519
 [2]: https://tools.ietf.org/html/rfc8032
 [3]: https://docs.rs/ed25519/latest/ed25519/struct.Signature.html
 [4]: https://docs.rs/signature/latest/signature/trait.Signer.html
