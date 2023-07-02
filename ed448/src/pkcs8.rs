@@ -17,6 +17,12 @@ pub use pkcs8::{
     spki, DecodePrivateKey, DecodePublicKey, Error, ObjectIdentifier, PrivateKeyInfo, Result,
 };
 
+#[cfg(feature = "alloc")]
+pub use pkcs8::{spki::EncodePublicKey, EncodePrivateKey};
+
+#[cfg(feature = "alloc")]
+pub use pkcs8::der::{asn1::BitStringRef, Document, SecretDocument};
+
 use core::fmt;
 
 /// Algorithm [`ObjectIdentifier`] for the Ed448 digital signature algorithm
@@ -61,7 +67,7 @@ impl KeypairBytes {
         }
     }
 
-    /// Serialize as a 64-byte keypair.
+    /// Serialize as a 228-byte keypair.
     ///
     /// # Returns
     ///
@@ -77,6 +83,30 @@ impl KeypairBytes {
         } else {
             None
         }
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl EncodePrivateKey for KeypairBytes {
+    fn to_pkcs8_der(&self) -> Result<SecretDocument> {
+        // Serialize private key as nested OCTET STRING
+        let mut private_key = [0u8; 2 + (Self::BYTE_SIZE / 2)];
+        private_key[0] = 0x04;
+        private_key[1] = 0x39;
+        private_key[2..].copy_from_slice(&self.secret_key);
+
+        let private_key_info = PrivateKeyInfo {
+            algorithm: ALGORITHM_ID,
+            private_key: &private_key,
+            public_key: self.public_key.as_ref().map(|pk| pk.0.as_slice()),
+        };
+
+        let result = SecretDocument::encode_msg(&private_key_info)?;
+
+        #[cfg(feature = "zeroize")]
+        private_key.zeroize();
+
+        Ok(result)
     }
 }
 
@@ -140,6 +170,17 @@ impl PublicKeyBytes {
 impl AsRef<[u8; Self::BYTE_SIZE]> for PublicKeyBytes {
     fn as_ref(&self) -> &[u8; Self::BYTE_SIZE] {
         &self.0
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl EncodePublicKey for PublicKeyBytes {
+    fn to_public_key_der(&self) -> spki::Result<Document> {
+        pkcs8::SubjectPublicKeyInfoRef {
+            algorithm: ALGORITHM_ID,
+            subject_public_key: BitStringRef::new(0, &self.0)?,
+        }
+        .try_into()
     }
 }
 

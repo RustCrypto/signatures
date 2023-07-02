@@ -5,6 +5,9 @@
 use ed448::pkcs8::{DecodePrivateKey, DecodePublicKey, KeypairBytes, PublicKeyBytes};
 use hex_literal::hex;
 
+#[cfg(feature = "alloc")]
+use ed448::pkcs8::{EncodePrivateKey, EncodePublicKey};
+
 /// Ed448 PKCS#8 v1 private key encoded as ASN.1 DER.
 const PKCS8_V1_DER: &[u8] = include_bytes!("examples/pkcs8-v1.der");
 
@@ -35,4 +38,20 @@ fn decode_public_key() {
         public_key.as_ref(),
         &hex!("f27f9809412035541b681c69fbe69b9d25a6af506d914ecef7d973fca04ccd33a8b96a0868211382ca08fe06b72e8c0cb3297f3a9d6bc02380")
     );
+}
+
+#[cfg(feature = "alloc")]
+#[test]
+fn encode_pkcs8_v1() {
+    let pk = KeypairBytes::from_pkcs8_der(PKCS8_V1_DER).unwrap();
+    let pk_der = pk.to_pkcs8_der().unwrap();
+    assert_eq!(pk_der.as_bytes(), PKCS8_V1_DER);
+}
+
+#[cfg(feature = "alloc")]
+#[test]
+fn encode_public_key() {
+    let pk = PublicKeyBytes::from_public_key_der(PUBLIC_KEY_DER).unwrap();
+    let pk_der = pk.to_public_key_der().unwrap();
+    assert_eq!(pk_der.as_ref(), PUBLIC_KEY_DER);
 }
