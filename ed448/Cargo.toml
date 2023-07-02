@@ -19,6 +19,7 @@ keywords = ["crypto", "curve448", "ecc", "signature", "signing"]
 signature = { version = "2", default-features = false }
 
 # optional dependencies
+pkcs8 = { version = "0.10", optional = true }
 serde = { version = "1", optional = true, default-features = false }
 serde_bytes = { version = "0.11", optional = true }
 
@@ -28,5 +29,7 @@ bincode = "1"
 
 [features]
 default = ["std"]
+alloc = ["pkcs8?/alloc"]
+pem = ["alloc", "pkcs8/pem"]
 serde_bytes = ["serde", "dep:serde_bytes"]
 std = ["signature/std"]

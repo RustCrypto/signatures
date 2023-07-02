@@ -5,6 +5,9 @@
 
 mod hex;
 
+#[cfg(feature = "pkcs8")]
+pub mod pkcs8;
+
 #[cfg(feature = "serde")]
 mod serde;
 
