@@ -13,7 +13,9 @@
 //!
 //! Please lock to a specific minor version of the `ed448` crate to avoid
 //! breaking changes when using this module.
-pub use pkcs8::{DecodePrivateKey, Error, ObjectIdentifier, PrivateKeyInfo, Result};
+pub use pkcs8::{
+    spki, DecodePrivateKey, DecodePublicKey, Error, ObjectIdentifier, PrivateKeyInfo, Result,
+};
 
 use core::fmt;
 
@@ -88,7 +90,7 @@ impl TryFrom<PrivateKeyInfo<'_>> for KeypairBytes {
             return Err(Error::ParametersMalformed);
         }
 
-        // Ed25519 PKCS#8 keys are represented as a nested OCTET STRING
+        // Ed448 PKCS#8 keys are represented as a nested OCTET STRING
         // (i.e. an OCTET STRING within an OCTET STRING).
         //
         // This match statement checks and removes the inner OCTET STRING
@@ -138,6 +140,25 @@ impl PublicKeyBytes {
 impl AsRef<[u8; Self::BYTE_SIZE]> for PublicKeyBytes {
     fn as_ref(&self) -> &[u8; Self::BYTE_SIZE] {
         &self.0
+    }
+}
+
+impl TryFrom<spki::SubjectPublicKeyInfoRef<'_>> for PublicKeyBytes {
+    type Error = spki::Error;
+
+    fn try_from(spki: spki::SubjectPublicKeyInfoRef<'_>) -> spki::Result<Self> {
+        spki.algorithm.assert_algorithm_oid(ALGORITHM_OID)?;
+
+        if spki.algorithm.parameters.is_some() {
+            return Err(spki::Error::KeyMalformed);
+        }
+
+        spki.subject_public_key
+            .as_bytes()
+            .ok_or(spki::Error::KeyMalformed)?
+            .try_into()
+            .map(Self)
+            .map_err(|_| spki::Error::KeyMalformed)
     }
 }
 

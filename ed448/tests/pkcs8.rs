@@ -2,12 +2,14 @@
 
 #![cfg(feature = "pkcs8")]
 
-use ed448::pkcs8::{DecodePrivateKey, KeypairBytes};
-
+use ed448::pkcs8::{DecodePrivateKey, DecodePublicKey, KeypairBytes, PublicKeyBytes};
 use hex_literal::hex;
 
 /// Ed448 PKCS#8 v1 private key encoded as ASN.1 DER.
 const PKCS8_V1_DER: &[u8] = include_bytes!("examples/pkcs8-v1.der");
+
+/// Ed448 SubjectPublicKeyInfo encoded as ASN.1 DER.
+const PUBLIC_KEY_DER: &[u8] = include_bytes!("examples/pubkey.der");
 
 #[test]
 fn decode_pkcs8_v1() {
@@ -21,4 +23,16 @@ fn decode_pkcs8_v1() {
     );
 
     assert_eq!(keypair.public_key, None);
+}
+
+#[test]
+fn decode_public_key() {
+    let public_key = PublicKeyBytes::from_public_key_der(PUBLIC_KEY_DER).unwrap();
+
+    // Extracted with:
+    // $ openssl pkey -inform der -in tests/examples/pkcs8-v1.der -pubout -text
+    assert_eq!(
+        public_key.as_ref(),
+        &hex!("f27f9809412035541b681c69fbe69b9d25a6af506d914ecef7d973fca04ccd33a8b96a0868211382ca08fe06b72e8c0cb3297f3a9d6bc02380")
+    );
 }
