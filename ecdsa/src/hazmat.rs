@@ -100,10 +100,7 @@ where
         // Compute 𝒔 as a signature over 𝒓 and 𝒛.
         let s = k_inv * (z + (r * self));
 
-        if s.is_zero().into() {
-            return Err(Error::new());
-        }
-
+        // NOTE: `Signature::from_scalars` checks that both `r` and `s` are non-zero.
         let signature = Signature::from_scalars(r, s)?;
         let recovery_id = RecoveryId::new(R.y_is_odd().into(), x_is_reduced);
         Ok((signature, Some(recovery_id)))
