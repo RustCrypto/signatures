@@ -85,7 +85,7 @@ pub use crate::verifying::VerifyingKey;
 
 use core::{fmt, ops::Add};
 use elliptic_curve::{
-    generic_array::{sequence::Concat, typenum::Unsigned, ArrayLength, GenericArray},
+    generic_array::{typenum::Unsigned, ArrayLength, GenericArray},
     FieldBytes, FieldBytesSize, ScalarPrimitive,
 };
 
@@ -176,9 +176,11 @@ pub type SignatureBytes<C> = GenericArray<u8, SignatureSize<C>>;
 /// - `r`: field element size for the given curve, big-endian
 /// - `s`: field element size for the given curve, big-endian
 ///
+/// Both `r` and `s` MUST be non-zero.
+///
 /// For example, in a curve with a 256-bit modulus like NIST P-256 or
-/// secp256k1, `r` and `s` will both be 32-bytes, resulting in a signature
-/// with a total of 64-bytes.
+/// secp256k1, `r` and `s` will both be 32-bytes and serialized as big endian,
+/// resulting in a signature with a total of 64-bytes.
 ///
 /// ASN.1 DER-encoded signatures also supported via the
 /// [`Signature::from_der`] and [`Signature::to_der`] methods.
@@ -202,17 +204,19 @@ where
     C: PrimeCurve,
     SignatureSize<C>: ArrayLength<u8>,
 {
-    /// Parse a signature from fixed-with bytes.
+    /// Parse a signature from fixed-width bytes, i.e. 2 * the size of
+    /// [`FieldBytes`] for a particular curve.
+    ///
+    /// # Returns
+    /// - `Ok(signature)` if the `r` and `s` components are both in the valid
+    ///   range `1..n` when serialized as concatenated big endian integers.
+    /// - `Err(err)` if the `r` and/or `s` component of the signature is
+    ///   out-of-range when interpreted as a big endian integer.
     pub fn from_bytes(bytes: &SignatureBytes<C>) -> Result<Self> {
         let (r_bytes, s_bytes) = bytes.split_at(C::FieldBytesSize::USIZE);
-        let r = ScalarPrimitive::from_slice(r_bytes).map_err(|_| Error::new())?;
-        let s = ScalarPrimitive::from_slice(s_bytes).map_err(|_| Error::new())?;
-
-        if r.is_zero().into() || s.is_zero().into() {
-            return Err(Error::new());
-        }
-
-        Ok(Self { r, s })
+        let r = FieldBytes::<C>::clone_from_slice(r_bytes);
+        let s = FieldBytes::<C>::clone_from_slice(s_bytes);
+        Self::from_scalars(r, s)
     }
 
     /// Parse a signature from a byte slice.
@@ -236,8 +240,21 @@ where
 
     /// Create a [`Signature`] from the serialized `r` and `s` scalar values
     /// which comprise the signature.
+    ///
+    /// # Returns
+    /// - `Ok(signature)` if the `r` and `s` components are both in the valid
+    ///   range `1..n` when serialized as concatenated big endian integers.
+    /// - `Err(err)` if the `r` and/or `s` component of the signature is
+    ///   out-of-range when interpreted as a big endian integer.
     pub fn from_scalars(r: impl Into<FieldBytes<C>>, s: impl Into<FieldBytes<C>>) -> Result<Self> {
-        Self::try_from(r.into().concat(s.into()).as_slice())
+        let r = ScalarPrimitive::from_slice(&r.into()).map_err(|_| Error::new())?;
+        let s = ScalarPrimitive::from_slice(&s.into()).map_err(|_| Error::new())?;
+
+        if r.is_zero().into() || s.is_zero().into() {
+            return Err(Error::new());
+        }
+
+        Ok(Self { r, s })
     }
 
     /// Split the signature into its `r` and `s` components, represented as bytes.
