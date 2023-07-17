@@ -18,7 +18,7 @@ use elliptic_curve::{generic_array::typenum::Unsigned, FieldBytes, PrimeCurve};
 use {
     crate::{RecoveryId, SignatureSize},
     elliptic_curve::{
-        ff::PrimeField,
+        ff::{Field, PrimeField},
         group::{Curve as _, Group},
         ops::{Invert, LinearCombination, MulByGenerator, Reduce},
         point::AffineCoordinates,
@@ -56,7 +56,7 @@ pub trait SignPrimitive<C>:
     + Reduce<C::Uint, Bytes = FieldBytes<C>>
     + Sized
 where
-    C: PrimeCurve + CurveArithmetic + CurveArithmetic<Scalar = Self>,
+    C: PrimeCurve + CurveArithmetic<Scalar = Self>,
     SignatureSize<C>: ArrayLength<u8>,
 {
     /// Try to sign the prehashed message.
@@ -71,7 +71,6 @@ where
     ///
     /// ECDSA [`Signature`] and, when possible/desired, a [`RecoveryId`]
     /// which can be used to recover the verifying key for a given signature.
-    #[allow(non_snake_case)]
     fn try_sign_prehashed<K>(
         &self,
         k: K,
@@ -80,30 +79,7 @@ where
     where
         K: AsRef<Self> + Invert<Output = CtOption<Self>>,
     {
-        if k.as_ref().is_zero().into() {
-            return Err(Error::new());
-        }
-
-        let z = <Self as Reduce<C::Uint>>::reduce_bytes(z);
-
-        // Compute scalar inversion of 𝑘
-        let k_inv = Option::<Scalar<C>>::from(k.invert()).ok_or_else(Error::new)?;
-
-        // Compute 𝑹 = 𝑘×𝑮
-        let R = ProjectivePoint::<C>::mul_by_generator(k.as_ref()).to_affine();
-
-        // Lift x-coordinate of 𝑹 (element of base field) into a serialized big
-        // integer, then reduce it into an element of the scalar field
-        let r = Self::reduce_bytes(&R.x());
-        let x_is_reduced = r.to_repr() != R.x();
-
-        // Compute 𝒔 as a signature over 𝒓 and 𝒛.
-        let s = k_inv * (z + (r * self));
-
-        // NOTE: `Signature::from_scalars` checks that both `r` and `s` are non-zero.
-        let signature = Signature::from_scalars(r, s)?;
-        let recovery_id = RecoveryId::new(R.y_is_odd().into(), x_is_reduced);
-        Ok((signature, Some(recovery_id)))
+        sign_prehashed(self, k, z).map(|(sig, recid)| (sig, (Some(recid))))
     }
 
     /// Try to sign the given message digest deterministically using the method
@@ -114,7 +90,7 @@ where
     /// - `ad`: optional additional data, e.g. added entropy from an RNG
     ///
     /// [RFC6979]: https://datatracker.ietf.org/doc/html/rfc6979
-    #[cfg(all(feature = "rfc6979"))]
+    #[cfg(feature = "rfc6979")]
     fn try_sign_prehashed_rfc6979<D>(
         &self,
         z: &FieldBytes<C>,
@@ -144,10 +120,10 @@ where
 #[cfg(feature = "arithmetic")]
 pub trait VerifyPrimitive<C>: AffineCoordinates<FieldRepr = FieldBytes<C>> + Copy + Sized
 where
-    C: PrimeCurve + CurveArithmetic<AffinePoint = Self> + CurveArithmetic,
+    C: PrimeCurve + CurveArithmetic<AffinePoint = Self>,
     SignatureSize<C>: ArrayLength<u8>,
 {
-    /// Verify the prehashed message against the provided signature
+    /// Verify the prehashed message against the provided ECDSA signature.
     ///
     /// Accepts the following arguments:
     ///
@@ -155,25 +131,7 @@ where
     ///        CRYPTOGRAPHICALLY SECURE DIGEST ALGORITHM!!!
     /// - `sig`: signature to be verified against the key and message
     fn verify_prehashed(&self, z: &FieldBytes<C>, sig: &Signature<C>) -> Result<()> {
-        let z = Scalar::<C>::reduce_bytes(z);
-        let (r, s) = sig.split_scalars();
-        let s_inv = *s.invert_vartime();
-        let u1 = z * s_inv;
-        let u2 = *r * s_inv;
-        let x = ProjectivePoint::<C>::lincomb(
-            &ProjectivePoint::<C>::generator(),
-            &u1,
-            &ProjectivePoint::<C>::from(*self),
-            &u2,
-        )
-        .to_affine()
-        .x();
-
-        if *r == Scalar::<C>::reduce_bytes(&x) {
-            Ok(())
-        } else {
-            Err(Error::new())
-        }
+        verify_prehashed(&ProjectivePoint::<C>::from(*self), z, sig)
     }
 
     /// Verify message digest against the provided signature.
@@ -245,6 +203,93 @@ pub fn bits2field<C: PrimeCurve>(bits: &[u8]) -> Result<FieldBytes<C>> {
     }
 
     Ok(field_bytes)
+}
+
+/// Sign a prehashed message digest using the provided secret scalar and
+/// ephemeral scalar, returning an ECDSA signature.
+///
+/// Accepts the following arguments:
+///
+/// - `d`: signing key. MUST BE UNIFORMLY RANDOM!!!
+/// - `k`: ephemeral scalar value. MUST BE UNIFORMLY RANDOM!!!
+/// - `z`: message digest to be signed. MUST BE OUTPUT OF A CRYPTOGRAPHICALLY
+///        SECURE DIGEST ALGORITHM!!!
+///
+/// # Returns
+///
+/// ECDSA [`Signature`] and, when possible/desired, a [`RecoveryId`]
+/// which can be used to recover the verifying key for a given signature.
+#[cfg(feature = "arithmetic")]
+#[allow(non_snake_case)]
+pub fn sign_prehashed<C, K>(
+    d: &Scalar<C>,
+    k: K,
+    z: &FieldBytes<C>,
+) -> Result<(Signature<C>, RecoveryId)>
+where
+    C: PrimeCurve + CurveArithmetic,
+    K: AsRef<Scalar<C>> + Invert<Output = CtOption<Scalar<C>>>,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    // TODO(tarcieri): use `NonZeroScalar<C>` for `k`.
+    if k.as_ref().is_zero().into() {
+        return Err(Error::new());
+    }
+
+    let z = <Scalar<C> as Reduce<C::Uint>>::reduce_bytes(z);
+
+    // Compute scalar inversion of 𝑘
+    let k_inv = Option::<Scalar<C>>::from(k.invert()).ok_or_else(Error::new)?;
+
+    // Compute 𝑹 = 𝑘×𝑮
+    let R = ProjectivePoint::<C>::mul_by_generator(k.as_ref()).to_affine();
+
+    // Lift x-coordinate of 𝑹 (element of base field) into a serialized big
+    // integer, then reduce it into an element of the scalar field
+    let r = Scalar::<C>::reduce_bytes(&R.x());
+    let x_is_reduced = r.to_repr() != R.x();
+
+    // Compute 𝒔 as a signature over 𝒓 and 𝒛.
+    let s = k_inv * (z + (r * d));
+
+    // NOTE: `Signature::from_scalars` checks that both `r` and `s` are non-zero.
+    let signature = Signature::from_scalars(r, s)?;
+    let recovery_id = RecoveryId::new(R.y_is_odd().into(), x_is_reduced);
+    Ok((signature, recovery_id))
+}
+
+/// Verify the prehashed message against the provided ECDSA signature.
+///
+/// Accepts the following arguments:
+///
+/// - `q`: public key with which to verify the signature.
+/// - `z`: message digest to be verified. MUST BE OUTPUT OF A
+///        CRYPTOGRAPHICALLY SECURE DIGEST ALGORITHM!!!
+/// - `sig`: signature to be verified against the key and message.
+#[cfg(feature = "arithmetic")]
+pub fn verify_prehashed<C>(
+    q: &ProjectivePoint<C>,
+    z: &FieldBytes<C>,
+    sig: &Signature<C>,
+) -> Result<()>
+where
+    C: PrimeCurve + CurveArithmetic,
+    SignatureSize<C>: ArrayLength<u8>,
+{
+    let z = Scalar::<C>::reduce_bytes(z);
+    let (r, s) = sig.split_scalars();
+    let s_inv = *s.invert_vartime();
+    let u1 = z * s_inv;
+    let u2 = *r * s_inv;
+    let x = ProjectivePoint::<C>::lincomb(&ProjectivePoint::<C>::generator(), &u1, q, &u2)
+        .to_affine()
+        .x();
+
+    if *r == Scalar::<C>::reduce_bytes(&x) {
+        Ok(())
+    } else {
+        Err(Error::new())
+    }
 }
 
 #[cfg(test)]
