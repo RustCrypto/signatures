@@ -4,8 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.16.7 (2023-05-11)
+## 0.16.8 (2023-07-20)
+### Added
+- `hazmat::{sign_prehashed, verify_prehashed}` ([#731])
 
+### Changed
+- Refactor `Signature` constructors and improve docs ([#730])
+
+[#730]: https://github.com/RustCrypto/signatures/pull/730
+[#731]: https://github.com/RustCrypto/signatures/pull/731
+
+## 0.16.7 (2023-05-11)
 ### Added
 - RFC5480 citation for `der::Signature` ([#710])
 - support for the `SignatureBitStringEncoding` trait ([#716])
