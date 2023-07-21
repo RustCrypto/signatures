@@ -1,4 +1,4 @@
-# RustCrypto: signatures [![Project Chat][chat-image]][chat-link] [![dependency status][deps-image]][deps-link]
+# RustCrypto: Signatures [![Project Chat][chat-image]][chat-link] [![dependency status][deps-image]][deps-link]
 
 Support for [digital signatures][1], which provide authentication of data using
 public-key cryptography.
