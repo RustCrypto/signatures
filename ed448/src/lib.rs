@@ -128,7 +128,7 @@ impl TryFrom<&[u8]> for Signature {
 
 impl fmt::Debug for Signature {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("ed448::Signature")
+        f.debug_struct("ed448_signature::Signature")
             .field("R", self.r_bytes())
             .field("s", self.s_bytes())
             .finish()

@@ -2,7 +2,7 @@
 
 #![cfg(feature = "serde")]
 
-use ed448::{Signature, SignatureBytes};
+use ed448_signature::{Signature, SignatureBytes};
 use hex_literal::hex;
 
 const EXAMPLE_SIGNATURE: SignatureBytes = hex!(

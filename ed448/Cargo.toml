@@ -1,5 +1,5 @@
 [package]
-name = "ed448"
+name = "ed448-signature"
 version = "0.1.0"
 edition = "2021"
 authors = ["RustCrypto Developers"]
@@ -9,8 +9,8 @@ Edwards Digital Signature Algorithm (EdDSA) over Curve448 (as specified in RFC 7
 support library providing signature type definitions and PKCS#8 private key
 decoding/encoding support
 """
-documentation = "https://docs.rs/ed448"
-repository = "https://github.com/RustCrypto/signatures/tree/master/ed448"
+documentation = "https://docs.rs/ed448-signature"
+repository = "https://github.com/RustCrypto/signatures/tree/master/ed448-signature"
 readme = "README.md"
 categories = ["cryptography", "no-std"]
 keywords = ["crypto", "curve448", "ecc", "signature", "signing"]

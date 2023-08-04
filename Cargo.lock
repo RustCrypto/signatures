@@ -234,7 +234,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "ed448"
+name = "ed448-signature"
 version = "0.1.0"
 dependencies = [
  "bincode",

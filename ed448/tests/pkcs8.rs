@@ -2,11 +2,11 @@
 
 #![cfg(feature = "pkcs8")]
 
-use ed448::pkcs8::{DecodePrivateKey, DecodePublicKey, KeypairBytes, PublicKeyBytes};
+use ed448_signature::pkcs8::{DecodePrivateKey, DecodePublicKey, KeypairBytes, PublicKeyBytes};
 use hex_literal::hex;
 
 #[cfg(feature = "alloc")]
-use ed448::pkcs8::{EncodePrivateKey, EncodePublicKey};
+use ed448_signature::pkcs8::{EncodePrivateKey, EncodePublicKey};
 
 /// Ed448 PKCS#8 v1 private key encoded as ASN.1 DER.
 const PKCS8_V1_DER: &[u8] = include_bytes!("examples/pkcs8-v1.der");
