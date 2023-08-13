@@ -79,8 +79,8 @@
 //! instantiate and use the previously defined `HelloSigner` and `HelloVerifier`
 //! types with [`ed25519-dalek`] as the signing/verification provider:
 //!
-//! *NOTE: requires [`ed25519-dalek`] v2.0.0-rc.2 or newer for compatibility
-//! with `ed25519` v2.2.
+//! *NOTE: requires [`ed25519-dalek`] v2 or newer for compatibility with
+//! `ed25519` v2.2+*.
 //!
 //! ```
 //! use ed25519_dalek::{Signer, Verifier, Signature};
