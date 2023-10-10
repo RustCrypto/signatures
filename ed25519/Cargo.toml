@@ -37,7 +37,7 @@ default = ["std"]
 alloc = ["pkcs8?/alloc"]
 pem = ["alloc", "pkcs8/pem"]
 serde_bytes = ["serde", "dep:serde_bytes"]
-std = ["signature/std"]
+std = ["pkcs8?/std", "signature/std"]
 
 [package.metadata.docs.rs]
 all-features = true
