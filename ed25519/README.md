@@ -37,7 +37,7 @@ for the default feature set.
 
 - All on-by-default features of this library are covered by SemVer
 - MSRV is considered exempt from SemVer as noted above
-- The `pkcs8` module is exempted as it uses a pre-1.0 dependency, however, 
+- The `pkcs8` module is exempted as it uses a pre-1.0 dependency, however,
   breaking changes to this module will be accompanied by a minor version bump.
 
 ## License
@@ -74,7 +74,7 @@ dual licensed as above, without any additional terms or conditions.
 
 [//]: # (footnotes)
 
-[1]: https://en.wikipedia.org/wiki/EdDSA
+[1]: https://en.wikipedia.org/wiki/EdDSA#Ed25519
 [2]: https://tools.ietf.org/html/rfc8032
 [3]: https://docs.rs/ed25519/latest/ed25519/struct.Signature.html
 [4]: https://docs.rs/signature/latest/signature/trait.Signer.html

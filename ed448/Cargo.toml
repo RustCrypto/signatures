@@ -1,0 +1,35 @@
+[package]
+name = "ed448-signature"
+version = "0.1.0"
+edition = "2021"
+authors = ["RustCrypto Developers"]
+license = "Apache-2.0 OR MIT"
+description = """
+Edwards Digital Signature Algorithm (EdDSA) over Curve448 (as specified in RFC 7748)
+support library providing signature type definitions and PKCS#8 private key
+decoding/encoding support
+"""
+documentation = "https://docs.rs/ed448-signature"
+repository = "https://github.com/RustCrypto/signatures/tree/master/ed448-signature"
+readme = "README.md"
+categories = ["cryptography", "no-std"]
+keywords = ["crypto", "curve448", "ecc", "signature", "signing"]
+
+[dependencies]
+signature = { version = "2", default-features = false }
+
+# optional dependencies
+pkcs8 = { version = "0.10", optional = true }
+serde = { version = "1", optional = true, default-features = false }
+serde_bytes = { version = "0.11", optional = true }
+
+[dev-dependencies]
+hex-literal = "0.4"
+bincode = "1"
+
+[features]
+default = ["std"]
+alloc = ["pkcs8?/alloc"]
+pem = ["alloc", "pkcs8/pem"]
+serde_bytes = ["serde", "dep:serde_bytes"]
+std = ["signature/std"]
