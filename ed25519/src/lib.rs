@@ -208,7 +208,7 @@
 //! let mut ed25519_seed = [0u8; 32];
 //! OsRng.fill_bytes(&mut ed25519_seed);
 //!
-//! let signing_key = SigningKey::from_seed(&ed25519_seed).unwrap();
+//! let signing_key = SigningKey::from_bytes(&ed25519_seed);
 //! let verifying_key = signing_key.verifying_key();
 //!
 //! let signer = RingHelloSigner { signing_key };
@@ -406,8 +406,8 @@ impl TryFrom<&[u8]> for Signature {
 impl fmt::Debug for Signature {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("ed25519::Signature")
-            .field("R", self.r_bytes())
-            .field("s", self.s_bytes())
+            .field("R", &hex::ComponentFormatter(self.r_bytes()))
+            .field("s", &hex::ComponentFormatter(self.s_bytes()))
             .finish()
     }
 }

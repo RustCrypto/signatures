@@ -57,6 +57,7 @@
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
+mod normalized;
 mod recovery;
 
 #[cfg(feature = "der")]
@@ -70,7 +71,7 @@ mod signing;
 #[cfg(feature = "verifying")]
 mod verifying;
 
-pub use crate::recovery::RecoveryId;
+pub use crate::{normalized::NormalizedSignature, recovery::RecoveryId};
 
 // Re-export the `elliptic-curve` crate (and select types)
 pub use elliptic_curve::{self, sec1::EncodedPoint, PrimeCurve};

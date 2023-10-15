@@ -1,8 +1,23 @@
 //! Hexadecimal encoding support
 // TODO(tarcieri): use `base16ct`?
 
-use crate::{Error, Signature};
+use crate::{ComponentBytes, Error, Signature};
 use core::{fmt, str};
+
+/// Format a signature component as hex.
+pub(crate) struct ComponentFormatter<'a>(pub(crate) &'a ComponentBytes);
+
+impl fmt::Debug for ComponentFormatter<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "0x")?;
+
+        for byte in self.0 {
+            write!(f, "{:02x}", byte)?;
+        }
+
+        Ok(())
+    }
+}
 
 impl fmt::LowerHex for Signature {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
