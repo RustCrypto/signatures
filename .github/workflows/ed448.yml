@@ -27,7 +27,7 @@ jobs:
           - 1.60.0 # MSRV
           - stable
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@master
         with:
           targets: ${{ matrix.target }}
@@ -47,7 +47,7 @@ jobs:
           - stable
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.toolchain }}
