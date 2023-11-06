@@ -1,7 +1,73 @@
 #![no_std]
+#![cfg_attr(docsrs, feature(doc_auto_cfg))]
 #![doc = include_str!("../README.md")]
+#![doc(html_logo_url = "https://raw.githubusercontent.com/RustCrypto/meta/master/logo_small.png")]
 #![allow(non_snake_case)]
 #![forbid(unsafe_code)]
+#![warn(
+    clippy::unwrap_used,
+    missing_docs,
+    rust_2018_idioms,
+    unused_lifetimes,
+    unused_qualifications
+)]
+
+//! # Using Ed448 generically over algorithm implementations/providers
+//!
+//! By using the `ed448-signature` crate, you can write code which signs and verifies
+//! messages using the Ed448 signature algorithm generically over any
+//! supported Ed448 implementation (see the next section for available
+//! providers).
+//!
+//! This allows consumers of your code to plug in whatever implementation they
+//! want to use without having to add all potential Ed448 libraries you'd
+//! like to support as optional dependencies.
+//!
+//! ## Example
+//!
+//! ```
+//! use ed448_signature::signature::{Signer, Verifier};
+//!
+//! pub struct HelloSigner<S>
+//! where
+//!     S: Signer<ed448_signature::Signature>
+//! {
+//!     pub signing_key: S
+//! }
+//!
+//! impl<S> HelloSigner<S>
+//! where
+//!     S: Signer<ed448_signature::Signature>
+//! {
+//!     pub fn sign(&self, person: &str) -> ed448_signature::Signature {
+//!         // NOTE: use `try_sign` if you'd like to be able to handle
+//!         // errors from external signing services/devices (e.g. HSM/KMS)
+//!         // <https://docs.rs/signature/latest/signature/trait.Signer.html#tymethod.try_sign>
+//!         self.signing_key.sign(format_message(person).as_bytes())
+//!     }
+//! }
+//!
+//! pub struct HelloVerifier<V> {
+//!     pub verifying_key: V
+//! }
+//!
+//! impl<V> HelloVerifier<V>
+//! where
+//!     V: Verifier<ed448_signature::Signature>
+//! {
+//!     pub fn verify(
+//!         &self,
+//!         person: &str,
+//!         signature: &ed448_signature::Signature
+//!     ) -> Result<(), ed448_signature::Error> {
+//!         self.verifying_key.verify(format_message(person).as_bytes(), signature)
+//!     }
+//! }
+//!
+//! fn format_message(person: &str) -> String {
+//!     format!("Hello, {}!", person)
+//! }
+//! ```
 
 mod hex;
 
