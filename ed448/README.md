@@ -1,11 +1,23 @@
 # [RustCrypto]: Ed448
 
+[![crate][crate-image]][crate-link]
+[![Docs][docs-image]][docs-link]
+[![Build Status][build-image]][build-link]
+![Apache2/MIT licensed][license-image]
+![Rust Version][rustc-image]
+[![Project Chat][chat-image]][chat-link]
+
 [Edwards Digital Signature Algorithm (EdDSA)][1] over Curve448 as specified
 in [RFC 7748][2].
 
+[Documentation][docs-link]
+
 ## About
 
-This crate doesn't contain an implementation of Ed448.
+This crate doesn't contain an implementation of Ed448, but instead
+contains an [`ed448_signature::Signature`][3] type which other crates can use in
+conjunction with the [`signature::Signer`][4] and [`signature::Verifier`][5]
+traits.
 
 These traits allow crates which produce and consume Ed448 signatures
 to be written abstractly in such a way that different signer/verifier
@@ -43,6 +55,19 @@ Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
 dual licensed as above, without any additional terms or conditions.
 
+[//]: # (badges)
+
+[crate-image]: https://buildstats.info/crate/ed448-signature
+[crate-link]: https://crates.io/crates/ed448-signature
+[docs-image]: https://docs.rs/ed448-signature/badge.svg
+[docs-link]: https://docs.rs/ed448-signature/
+[build-image]: https://github.com/RustCrypto/signatures/actions/workflows/ed448.yml/badge.svg
+[build-link]: https://github.com/RustCrypto/signatures/actions/workflows/ed448.yml
+[license-image]: https://img.shields.io/badge/license-Apache2.0/MIT-blue.svg
+[rustc-image]: https://img.shields.io/badge/rustc-1.60+-blue.svg
+[chat-image]: https://img.shields.io/badge/zulip-join_chat-blue.svg
+[chat-link]: https://rustcrypto.zulipchat.com/#narrow/stream/260048-signatures
+
 [//]: # (links)
 
 [RustCrypto]: https://github.com/RustCrypto
@@ -51,3 +76,6 @@ dual licensed as above, without any additional terms or conditions.
 
 [1]: https://en.wikipedia.org/wiki/EdDSA#Ed448
 [2]: https://tools.ietf.org/html/rfc7748
+[3]: https://docs.rs/ed448-signature/latest/ed448-signature/struct.Signature.html
+[4]: https://docs.rs/signature/latest/signature/trait.Signer.html
+[5]: https://docs.rs/signature/latest/signature/trait.Verifier.html

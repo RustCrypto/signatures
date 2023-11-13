@@ -1,7 +1,6 @@
 //! PKCS#8 private key tests
 
 #![cfg(feature = "pkcs8")]
-
 use ed25519::pkcs8::{DecodePrivateKey, DecodePublicKey, KeypairBytes, PublicKeyBytes};
 use hex_literal::hex;
 
