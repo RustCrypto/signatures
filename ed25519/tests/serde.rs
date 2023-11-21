@@ -38,7 +38,7 @@ fn test_serialize_bytes() {
     let mut serializer = bincode::Serializer::new(&mut encoded_signature, options);
     serde_bytes::serialize(&signature, &mut serializer).unwrap();
 
-    let mut expected = Vec::from(Signature::BYTE_SIZE.to_le_bytes());
+    let mut expected = Vec::from((Signature::BYTE_SIZE as u64).to_le_bytes());
     expected.extend(&EXAMPLE_SIGNATURE[..]);
     assert_eq!(&expected[..], &encoded_signature[..]);
 }
@@ -48,7 +48,7 @@ fn test_serialize_bytes() {
 fn test_deserialize_bytes() {
     use bincode::Options;
 
-    let mut encoded_signature = Vec::from(Signature::BYTE_SIZE.to_le_bytes());
+    let mut encoded_signature = Vec::from((Signature::BYTE_SIZE as u64).to_le_bytes());
     encoded_signature.extend(&EXAMPLE_SIGNATURE[..]);
 
     let options = bincode::DefaultOptions::new()
