@@ -1,6 +1,6 @@
 [package]
 name = "ed448-signature"
-version = "0.1.0"
+version = "0.0.0"
 edition = "2021"
 authors = ["RustCrypto Developers"]
 license = "Apache-2.0 OR MIT"
@@ -14,9 +14,11 @@ repository = "https://github.com/RustCrypto/signatures/tree/master/ed448"
 readme = "README.md"
 categories = ["cryptography", "no-std"]
 keywords = ["crypto", "curve448", "ecc", "signature", "signing"]
+rust-version = "1.71"
 
 [dependencies]
-signature = { version = "2", default-features = false }
+# TODO(tarcieri): relax requirement back to `2` before next release
+signature = { version = "=2.3.0-pre.0", default-features = false }
 
 # optional dependencies
 pkcs8 = { version = "0.10", optional = true }

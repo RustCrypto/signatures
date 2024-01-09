@@ -1,10 +1,10 @@
 //! Constant-time comparison helpers for [`ByteArray`].
 
-use crate::{ArrayLength, ByteArray};
+use crate::{ArraySize, ByteArray};
 use subtle::{Choice, ConditionallySelectable, ConstantTimeEq};
 
 /// Constant-time equals.
-pub(crate) fn ct_eq<N: ArrayLength<u8>>(a: &ByteArray<N>, b: &ByteArray<N>) -> Choice {
+pub(crate) fn ct_eq<N: ArraySize>(a: &ByteArray<N>, b: &ByteArray<N>) -> Choice {
     let mut ret = Choice::from(1);
 
     for (a, b) in a.iter().zip(b.iter()) {
@@ -17,7 +17,7 @@ pub(crate) fn ct_eq<N: ArrayLength<u8>>(a: &ByteArray<N>, b: &ByteArray<N>) -> C
 /// Constant-time less than.
 ///
 /// Inputs are interpreted as big endian integers.
-pub(crate) fn ct_lt<N: ArrayLength<u8>>(a: &ByteArray<N>, b: &ByteArray<N>) -> Choice {
+pub(crate) fn ct_lt<N: ArraySize>(a: &ByteArray<N>, b: &ByteArray<N>) -> Choice {
     let mut borrow = 0;
 
     // Perform subtraction with borrow a byte-at-a-time, interpreting a

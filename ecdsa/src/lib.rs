@@ -86,7 +86,7 @@ pub use crate::verifying::VerifyingKey;
 
 use core::{fmt, ops::Add};
 use elliptic_curve::{
-    generic_array::{typenum::Unsigned, ArrayLength, GenericArray},
+    array::{typenum::Unsigned, Array, ArraySize},
     FieldBytes, FieldBytesSize, ScalarPrimitive,
 };
 
@@ -168,7 +168,7 @@ const SHA512_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("2.16.840.1.10
 pub type SignatureSize<C> = <FieldBytesSize<C> as Add>::Output;
 
 /// Fixed-size byte array containing an ECDSA signature
-pub type SignatureBytes<C> = GenericArray<u8, SignatureSize<C>>;
+pub type SignatureBytes<C> = Array<u8, SignatureSize<C>>;
 
 /// ECDSA signature (fixed-size). Generic over elliptic curve types.
 ///
@@ -203,7 +203,7 @@ pub struct Signature<C: PrimeCurve> {
 impl<C> Signature<C>
 where
     C: PrimeCurve,
-    SignatureSize<C>: ArrayLength<u8>,
+    SignatureSize<C>: ArraySize,
 {
     /// Parse a signature from fixed-width bytes, i.e. 2 * the size of
     /// [`FieldBytes`] for a particular curve.
@@ -222,19 +222,17 @@ where
 
     /// Parse a signature from a byte slice.
     pub fn from_slice(slice: &[u8]) -> Result<Self> {
-        if slice.len() == SignatureSize::<C>::USIZE {
-            Self::from_bytes(SignatureBytes::<C>::from_slice(slice))
-        } else {
-            Err(Error::new())
-        }
+        <&SignatureBytes<C>>::try_from(slice)
+            .map_err(|_| Error::new())
+            .and_then(Self::from_bytes)
     }
 
     /// Parse a signature from ASN.1 DER.
     #[cfg(feature = "der")]
     pub fn from_der(bytes: &[u8]) -> Result<Self>
     where
-        der::MaxSize<C>: ArrayLength<u8>,
-        <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
+        der::MaxSize<C>: ArraySize,
+        <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
     {
         der::Signature::<C>::try_from(bytes).and_then(Self::try_from)
     }
@@ -276,8 +274,8 @@ where
     #[cfg(feature = "der")]
     pub fn to_der(&self) -> der::Signature<C>
     where
-        der::MaxSize<C>: ArrayLength<u8>,
-        <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
+        der::MaxSize<C>: ArraySize,
+        <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
     {
         let (r, s) = self.split_bytes();
         der::Signature::from_components(&r, &s).expect("DER encoding error")
@@ -294,7 +292,7 @@ where
 impl<C> Signature<C>
 where
     C: PrimeCurve + CurveArithmetic,
-    SignatureSize<C>: ArrayLength<u8>,
+    SignatureSize<C>: ArraySize,
 {
     /// Get the `r` component of this signature
     pub fn r(&self) -> NonZeroScalar<C> {
@@ -331,15 +329,15 @@ where
 impl<C> Copy for Signature<C>
 where
     C: PrimeCurve,
-    SignatureSize<C>: ArrayLength<u8>,
-    <SignatureSize<C> as ArrayLength<u8>>::ArrayType: Copy,
+    SignatureSize<C>: ArraySize,
+    <SignatureSize<C> as ArraySize>::ArrayType<u8>: Copy,
 {
 }
 
 impl<C> From<Signature<C>> for SignatureBytes<C>
 where
     C: PrimeCurve,
-    SignatureSize<C>: ArrayLength<u8>,
+    SignatureSize<C>: ArraySize,
 {
     fn from(signature: Signature<C>) -> SignatureBytes<C> {
         signature.to_bytes()
@@ -349,7 +347,8 @@ where
 impl<C> SignatureEncoding for Signature<C>
 where
     C: PrimeCurve,
-    SignatureSize<C>: ArrayLength<u8>,
+    SignatureSize<C>: ArraySize,
+    SignatureBytes<C>: Send + Sync,
 {
     type Repr = SignatureBytes<C>;
 }
@@ -357,7 +356,7 @@ where
 impl<C> TryFrom<&[u8]> for Signature<C>
 where
     C: PrimeCurve,
-    SignatureSize<C>: ArrayLength<u8>,
+    SignatureSize<C>: ArraySize,
 {
     type Error = Error;
 
@@ -369,7 +368,7 @@ where
 impl<C> fmt::Debug for Signature<C>
 where
     C: PrimeCurve,
-    SignatureSize<C>: ArrayLength<u8>,
+    SignatureSize<C>: ArraySize,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "ecdsa::Signature<{:?}>(", C::default())?;
@@ -385,7 +384,7 @@ where
 impl<C> fmt::Display for Signature<C>
 where
     C: PrimeCurve,
-    SignatureSize<C>: ArrayLength<u8>,
+    SignatureSize<C>: ArraySize,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:X}", self)
@@ -395,7 +394,7 @@ where
 impl<C> fmt::LowerHex for Signature<C>
 where
     C: PrimeCurve,
-    SignatureSize<C>: ArrayLength<u8>,
+    SignatureSize<C>: ArraySize,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for byte in self.to_bytes() {
@@ -408,7 +407,7 @@ where
 impl<C> fmt::UpperHex for Signature<C>
 where
     C: PrimeCurve,
-    SignatureSize<C>: ArrayLength<u8>,
+    SignatureSize<C>: ArraySize,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for byte in self.to_bytes() {
@@ -422,7 +421,7 @@ where
 impl<C> str::FromStr for Signature<C>
 where
     C: PrimeCurve + CurveArithmetic,
-    SignatureSize<C>: ArrayLength<u8>,
+    SignatureSize<C>: ArraySize,
 {
     type Err = Error;
 
@@ -491,7 +490,7 @@ where
 impl<C> Serialize for Signature<C>
 where
     C: PrimeCurve,
-    SignatureSize<C>: ArrayLength<u8>,
+    SignatureSize<C>: ArraySize,
 {
     fn serialize<S>(&self, serializer: S) -> core::result::Result<S::Ok, S::Error>
     where
@@ -505,7 +504,7 @@ where
 impl<'de, C> Deserialize<'de> for Signature<C>
 where
     C: PrimeCurve,
-    SignatureSize<C>: ArrayLength<u8>,
+    SignatureSize<C>: ArraySize,
 {
     fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
     where
@@ -586,7 +585,7 @@ where
     pub fn from_bytes_with_digest<D>(bytes: &SignatureBytes<C>) -> Result<Self>
     where
         D: AssociatedOid + Digest,
-        SignatureSize<C>: ArrayLength<u8>,
+        SignatureSize<C>: ArraySize,
     {
         Self::new_with_digest::<D>(Signature::<C>::from_bytes(bytes)?)
     }
@@ -595,7 +594,7 @@ where
     pub fn from_slice_with_digest<D>(slice: &[u8]) -> Result<Self>
     where
         D: AssociatedOid + Digest,
-        SignatureSize<C>: ArrayLength<u8>,
+        SignatureSize<C>: ArraySize,
     {
         Self::new_with_digest::<D>(Signature::<C>::from_slice(slice)?)
     }
@@ -613,7 +612,7 @@ where
     /// Serialize this signature as bytes.
     pub fn to_bytes(&self) -> SignatureBytes<C>
     where
-        SignatureSize<C>: ArrayLength<u8>,
+        SignatureSize<C>: ArraySize,
     {
         self.signature.to_bytes()
     }
@@ -623,8 +622,8 @@ where
 impl<C> Copy for SignatureWithOid<C>
 where
     C: PrimeCurve,
-    SignatureSize<C>: ArrayLength<u8>,
-    <SignatureSize<C> as ArrayLength<u8>>::ArrayType: Copy,
+    SignatureSize<C>: ArraySize,
+    <SignatureSize<C> as ArraySize>::ArrayType<u8>: Copy,
 {
 }
 
@@ -642,7 +641,7 @@ where
 impl<C> From<SignatureWithOid<C>> for SignatureBytes<C>
 where
     C: PrimeCurve,
-    SignatureSize<C>: ArrayLength<u8>,
+    SignatureSize<C>: ArraySize,
 {
     fn from(signature: SignatureWithOid<C>) -> SignatureBytes<C> {
         signature.to_bytes()
@@ -659,7 +658,8 @@ impl<C> SignatureEncoding for SignatureWithOid<C>
 where
     C: hazmat::DigestPrimitive,
     C::Digest: AssociatedOid,
-    SignatureSize<C>: ArrayLength<u8>,
+    SignatureSize<C>: ArraySize,
+    SignatureBytes<C>: Send + Sync,
 {
     type Repr = SignatureBytes<C>;
 }
@@ -674,7 +674,7 @@ impl<C> TryFrom<&[u8]> for SignatureWithOid<C>
 where
     C: hazmat::DigestPrimitive,
     C::Digest: AssociatedOid,
-    SignatureSize<C>: ArrayLength<u8>,
+    SignatureSize<C>: ArraySize,
 {
     type Error = Error;
 

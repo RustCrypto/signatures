@@ -82,7 +82,7 @@
 //! *NOTE: requires [`ed25519-dalek`] v2 or newer for compatibility with
 //! `ed25519` v2.2+*.
 //!
-//! ```
+//! ```ignore
 //! use ed25519_dalek::{Signer, Verifier, Signature};
 //! #
 //! # pub struct HelloSigner<S>
@@ -154,7 +154,7 @@
 //! instantiate and use the previously defined `HelloSigner` and `HelloVerifier`
 //! types with [`ring-compat`] as the signing/verification provider:
 //!
-//! ```
+//! ```ignore
 //! use ring_compat::signature::{
 //!     ed25519::{Signature, SigningKey, VerifyingKey},
 //!     Signer, Verifier

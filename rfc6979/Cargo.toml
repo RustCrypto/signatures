@@ -1,6 +1,6 @@
 [package]
 name    = "rfc6979"
-version = "0.4.0"
+version = "0.5.0-pre"
 description = """
 Pure Rust implementation of RFC6979: Deterministic Usage of the
 Digital Signature Algorithm (DSA) and Elliptic Curve Digital Signature Algorithm (ECDSA)
@@ -12,12 +12,12 @@ readme = "README.md"
 categories = ["cryptography", "no-std"]
 keywords = ["dsa", "ecdsa", "signature"]
 edition = "2021"
-rust-version = "1.61"
+rust-version = "1.71"
 
 [dependencies]
-hmac = { version = "0.12", default-features = false, features = ["reset"] }
+hmac = { version = "=0.13.0-pre.0", default-features = false, features = ["reset"] }
 subtle = { version = "2", default-features = false }
 
 [dev-dependencies]
 hex-literal = "0.4"
-sha2 = "0.10"
+sha2 = "=0.11.0-pre.0"
