@@ -12,7 +12,7 @@
 
 use crate::{Error, Result};
 use core::cmp;
-use elliptic_curve::{generic_array::typenum::Unsigned, FieldBytes, PrimeCurve};
+use elliptic_curve::{array::typenum::Unsigned, FieldBytes, PrimeCurve};
 
 #[cfg(feature = "arithmetic")]
 use {
@@ -41,7 +41,7 @@ use {
 use elliptic_curve::{FieldBytesEncoding, ScalarPrimitive};
 
 #[cfg(any(feature = "arithmetic", feature = "digest"))]
-use crate::{elliptic_curve::generic_array::ArrayLength, Signature};
+use crate::{elliptic_curve::array::ArraySize, Signature};
 
 /// Try to sign the given prehashed message using ECDSA.
 ///
@@ -57,7 +57,7 @@ pub trait SignPrimitive<C>:
     + Sized
 where
     C: PrimeCurve + CurveArithmetic<Scalar = Self>,
-    SignatureSize<C>: ArrayLength<u8>,
+    SignatureSize<C>: ArraySize,
 {
     /// Try to sign the prehashed message.
     ///
@@ -121,7 +121,7 @@ where
 pub trait VerifyPrimitive<C>: AffineCoordinates<FieldRepr = FieldBytes<C>> + Copy + Sized
 where
     C: PrimeCurve + CurveArithmetic<AffinePoint = Self>,
-    SignatureSize<C>: ArrayLength<u8>,
+    SignatureSize<C>: ArraySize,
 {
     /// Verify the prehashed message against the provided ECDSA signature.
     ///
@@ -168,7 +168,7 @@ pub trait DigestPrimitive: PrimeCurve {
 impl<C> PrehashSignature for Signature<C>
 where
     C: DigestPrimitive,
-    <FieldBytesSize<C> as core::ops::Add>::Output: ArrayLength<u8>,
+    <FieldBytesSize<C> as core::ops::Add>::Output: ArraySize,
 {
     type Digest = C::Digest;
 }
@@ -229,7 +229,7 @@ pub fn sign_prehashed<C, K>(
 where
     C: PrimeCurve + CurveArithmetic,
     K: AsRef<Scalar<C>> + Invert<Output = CtOption<Scalar<C>>>,
-    SignatureSize<C>: ArrayLength<u8>,
+    SignatureSize<C>: ArraySize,
 {
     // TODO(tarcieri): use `NonZeroScalar<C>` for `k`.
     if k.as_ref().is_zero().into() {
@@ -274,7 +274,7 @@ pub fn verify_prehashed<C>(
 ) -> Result<()>
 where
     C: PrimeCurve + CurveArithmetic,
-    SignatureSize<C>: ArrayLength<u8>,
+    SignatureSize<C>: ArraySize,
 {
     let z = Scalar::<C>::reduce_bytes(z);
     let (r, s) = sig.split_scalars();

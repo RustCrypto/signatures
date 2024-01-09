@@ -39,19 +39,19 @@
 
 mod ct_cmp;
 
-pub use hmac::digest::generic_array::typenum::consts;
+pub use hmac::digest::array::typenum::consts;
 
 use hmac::{
     digest::{
+        array::{Array, ArraySize},
         core_api::BlockSizeUser,
-        generic_array::{ArrayLength, GenericArray},
-        Digest, FixedOutput, FixedOutputReset, Mac,
+        Digest, FixedOutput, FixedOutputReset, KeyInit, Mac,
     },
     SimpleHmac,
 };
 
 /// Array of bytes representing a scalar serialized as a big endian integer.
-pub type ByteArray<Size> = GenericArray<u8, Size>;
+pub type ByteArray<Size> = Array<u8, Size>;
 
 /// Deterministically generate ephemeral scalar `k`.
 ///
@@ -70,7 +70,7 @@ pub fn generate_k<D, N>(
 ) -> ByteArray<N>
 where
     D: Digest + BlockSizeUser + FixedOutput<OutputSize = N> + FixedOutputReset,
-    N: ArrayLength<u8>,
+    N: ArraySize,
 {
     let mut hmac_drbg = HmacDrbg::<D>::new(x, h, data);
 
@@ -99,7 +99,7 @@ where
     k: SimpleHmac<D>,
 
     /// Chaining value `V` (see RFC 6979 Section 3.2.c)
-    v: GenericArray<u8, D::OutputSize>,
+    v: Array<u8, D::OutputSize>,
 }
 
 impl<D> HmacDrbg<D>
@@ -109,7 +109,7 @@ where
     /// Initialize `HMAC_DRBG`
     pub fn new(entropy_input: &[u8], nonce: &[u8], personalization_string: &[u8]) -> Self {
         let mut k = SimpleHmac::new(&Default::default());
-        let mut v = GenericArray::default();
+        let mut v = Array::default();
 
         for b in &mut v {
             *b = 0x01;

@@ -33,8 +33,8 @@ macro_rules! new_signing_test {
     ($curve:path, $vectors:expr) => {
         use $crate::{
             elliptic_curve::{
+                array::{typenum::Unsigned, Array},
                 bigint::Encoding,
-                generic_array::{typenum::Unsigned, GenericArray},
                 group::ff::PrimeField,
                 Curve, CurveArithmetic, Scalar,
             },
@@ -43,7 +43,7 @@ macro_rules! new_signing_test {
 
         fn decode_scalar(bytes: &[u8]) -> Option<Scalar<$curve>> {
             if bytes.len() == <$curve as Curve>::FieldBytesSize::USIZE {
-                Scalar::<$curve>::from_repr(GenericArray::clone_from_slice(bytes)).into()
+                Scalar::<$curve>::from_repr(Array::clone_from_slice(bytes)).into()
             } else {
                 None
             }
@@ -60,7 +60,7 @@ macro_rules! new_signing_test {
                     vector.m.len(),
                     "invalid vector.m (must be field-sized digest)"
                 );
-                let z = GenericArray::clone_from_slice(vector.m);
+                let z = Array::clone_from_slice(vector.m);
                 let sig = d.try_sign_prehashed(k, &z).expect("ECDSA sign failed").0;
 
                 assert_eq!(vector.r, sig.r().to_bytes().as_slice());
@@ -76,7 +76,7 @@ macro_rules! new_verification_test {
     ($curve:path, $vectors:expr) => {
         use $crate::{
             elliptic_curve::{
-                generic_array::GenericArray,
+                array::Array,
                 group::ff::PrimeField,
                 sec1::{EncodedPoint, FromEncodedPoint},
                 AffinePoint, CurveArithmetic, Scalar,
@@ -89,17 +89,17 @@ macro_rules! new_verification_test {
         fn ecdsa_verify_success() {
             for vector in $vectors {
                 let q_encoded = EncodedPoint::<$curve>::from_affine_coordinates(
-                    GenericArray::from_slice(vector.q_x),
-                    GenericArray::from_slice(vector.q_y),
+                    Array::from_slice(vector.q_x),
+                    Array::from_slice(vector.q_y),
                     false,
                 );
 
                 let q = AffinePoint::<$curve>::from_encoded_point(&q_encoded).unwrap();
-                let z = GenericArray::clone_from_slice(vector.m);
+                let z = Array::clone_from_slice(vector.m);
 
                 let sig = Signature::from_scalars(
-                    GenericArray::clone_from_slice(vector.r),
-                    GenericArray::clone_from_slice(vector.s),
+                    Array::clone_from_slice(vector.r),
+                    Array::clone_from_slice(vector.s),
                 )
                 .unwrap();
 
@@ -112,21 +112,20 @@ macro_rules! new_verification_test {
         fn ecdsa_verify_invalid_s() {
             for vector in $vectors {
                 let q_encoded = EncodedPoint::<$curve>::from_affine_coordinates(
-                    GenericArray::from_slice(vector.q_x),
-                    GenericArray::from_slice(vector.q_y),
+                    Array::from_slice(vector.q_x),
+                    Array::from_slice(vector.q_y),
                     false,
                 );
 
                 let q = AffinePoint::<$curve>::from_encoded_point(&q_encoded).unwrap();
-                let z = GenericArray::clone_from_slice(vector.m);
+                let z = Array::clone_from_slice(vector.m);
 
                 // Flip a bit in `s`
-                let mut s_tweaked = GenericArray::clone_from_slice(vector.s);
+                let mut s_tweaked = Array::clone_from_slice(vector.s);
                 s_tweaked[0] ^= 1;
 
                 let sig =
-                    Signature::from_scalars(GenericArray::clone_from_slice(vector.r), s_tweaked)
-                        .unwrap();
+                    Signature::from_scalars(Array::clone_from_slice(vector.r), s_tweaked).unwrap();
 
                 let result = q.verify_prehashed(&z, &sig);
                 assert!(result.is_err());
@@ -150,7 +149,7 @@ macro_rules! new_wycheproof_test {
         #[test]
         fn $name() {
             use blobby::Blob5Iterator;
-            use elliptic_curve::{bigint::Encoding as _, generic_array::typenum::Unsigned};
+            use elliptic_curve::{array::typenum::Unsigned, bigint::Encoding as _};
 
             // Build a field element but allow for too-short input (left pad with zeros)
             // or too-long input (check excess leftmost bytes are zeros).

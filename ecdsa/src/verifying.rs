@@ -6,7 +6,7 @@ use crate::{
 };
 use core::{cmp::Ordering, fmt::Debug};
 use elliptic_curve::{
-    generic_array::ArrayLength,
+    array::ArraySize,
     point::PointCompression,
     sec1::{self, CompressedPoint, EncodedPoint, FromEncodedPoint, ToEncodedPoint},
     AffinePoint, CurveArithmetic, FieldBytesSize, PrimeCurve, PublicKey,
@@ -147,7 +147,7 @@ where
     C: PrimeCurve + CurveArithmetic,
     D: Digest + FixedOutput<OutputSize = FieldBytesSize<C>>,
     AffinePoint<C>: VerifyPrimitive<C>,
-    SignatureSize<C>: ArrayLength<u8>,
+    SignatureSize<C>: ArraySize,
 {
     fn verify_digest(&self, msg_digest: D, signature: &Signature<C>) -> Result<()> {
         self.inner.as_affine().verify_digest(msg_digest, signature)
@@ -158,7 +158,7 @@ impl<C> PrehashVerifier<Signature<C>> for VerifyingKey<C>
 where
     C: PrimeCurve + CurveArithmetic,
     AffinePoint<C>: VerifyPrimitive<C>,
-    SignatureSize<C>: ArrayLength<u8>,
+    SignatureSize<C>: ArraySize,
 {
     fn verify_prehash(&self, prehash: &[u8], signature: &Signature<C>) -> Result<()> {
         let field = bits2field::<C>(prehash)?;
@@ -170,7 +170,7 @@ impl<C> Verifier<Signature<C>> for VerifyingKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
     AffinePoint<C>: VerifyPrimitive<C>,
-    SignatureSize<C>: ArrayLength<u8>,
+    SignatureSize<C>: ArraySize,
 {
     fn verify(&self, msg: &[u8], signature: &Signature<C>) -> Result<()> {
         self.verify_digest(C::Digest::new_with_prefix(msg), signature)
@@ -182,7 +182,7 @@ impl<C> Verifier<SignatureWithOid<C>> for VerifyingKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
     AffinePoint<C>: VerifyPrimitive<C>,
-    SignatureSize<C>: ArrayLength<u8>,
+    SignatureSize<C>: ArraySize,
 {
     fn verify(&self, msg: &[u8], sig: &SignatureWithOid<C>) -> Result<()> {
         match sig.oid() {
@@ -201,9 +201,9 @@ where
     C: PrimeCurve + CurveArithmetic,
     D: Digest + FixedOutput<OutputSize = FieldBytesSize<C>>,
     AffinePoint<C>: VerifyPrimitive<C>,
-    SignatureSize<C>: ArrayLength<u8>,
-    der::MaxSize<C>: ArrayLength<u8>,
-    <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
+    SignatureSize<C>: ArraySize,
+    der::MaxSize<C>: ArraySize,
+    <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
 {
     fn verify_digest(&self, msg_digest: D, signature: &der::Signature<C>) -> Result<()> {
         let signature = Signature::<C>::try_from(signature.clone())?;
@@ -216,9 +216,9 @@ impl<C> PrehashVerifier<der::Signature<C>> for VerifyingKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
     AffinePoint<C>: VerifyPrimitive<C>,
-    SignatureSize<C>: ArrayLength<u8>,
-    der::MaxSize<C>: ArrayLength<u8>,
-    <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
+    SignatureSize<C>: ArraySize,
+    der::MaxSize<C>: ArraySize,
+    <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
 {
     fn verify_prehash(&self, prehash: &[u8], signature: &der::Signature<C>) -> Result<()> {
         let signature = Signature::<C>::try_from(signature.clone())?;
@@ -231,9 +231,9 @@ impl<C> Verifier<der::Signature<C>> for VerifyingKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
     AffinePoint<C>: VerifyPrimitive<C>,
-    SignatureSize<C>: ArrayLength<u8>,
-    der::MaxSize<C>: ArrayLength<u8>,
-    <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
+    SignatureSize<C>: ArraySize,
+    der::MaxSize<C>: ArraySize,
+    <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
 {
     fn verify(&self, msg: &[u8], signature: &der::Signature<C>) -> Result<()> {
         let signature = Signature::<C>::try_from(signature.clone())?;
@@ -356,7 +356,7 @@ where
     FieldBytesSize<C>: sec1::ModulusSize,
 {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        self.inner.partial_cmp(&other.inner)
+        Some(self.cmp(other))
     }
 }
 

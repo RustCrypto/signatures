@@ -24,7 +24,7 @@ jobs:
           - thumbv7em-none-eabi
           - wasm32-unknown-unknown
         toolchain:
-          - 1.60.0 # MSRV
+          - 1.71.0 # MSRV
           - stable
     steps:
       - uses: actions/checkout@v4
@@ -34,16 +34,15 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
       - run: cargo build --target ${{ matrix.target }} --release --no-default-features
       - run: cargo build --target ${{ matrix.target }} --release --no-default-features --features alloc
-      # TODO(tarcieri): re-enable the following when MSRV is 1.65
-      #- run: cargo build --target ${{ matrix.target }} --release --no-default-features --features pem
-      #- run: cargo build --target ${{ matrix.target }} --release --no-default-features --features pkcs8
-      #- run: cargo build --target ${{ matrix.target }} --release --no-default-features --features alloc,pem,pkcs8
+      - run: cargo build --target ${{ matrix.target }} --release --no-default-features --features pem
+      - run: cargo build --target ${{ matrix.target }} --release --no-default-features --features pkcs8
+      - run: cargo build --target ${{ matrix.target }} --release --no-default-features --features alloc,pem,pkcs8
 
   test:
     strategy:
       matrix:
         toolchain:
-          - 1.65.0 # Technically MSRV is 1.60, but we have 1.65 dev-dependencies (i.e. ring-compat)
+          - 1.71.0 # MSRV
           - stable
     runs-on: ubuntu-latest
     steps:
