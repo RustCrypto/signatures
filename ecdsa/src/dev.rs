@@ -169,7 +169,7 @@ macro_rules! new_wycheproof_test {
                     let iter = core::iter::repeat(0)
                         .take(point_len - data.len())
                         .chain(data.iter().cloned());
-                    elliptic_curve::FieldBytes::<C>::from_exact_iter(iter).unwrap()
+                    elliptic_curve::FieldBytes::<C>::from_iter(iter)
                 }
             }
 
