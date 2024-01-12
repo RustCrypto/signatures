@@ -1,7 +1,7 @@
 //! Support for ASN.1 DER-encoded ECDSA signatures as specified in
-//! [RFC5912 Appendix A].
+//! [RFC5912 Section 6].
 //!
-//! [RFC5912 Appendix A]: https://www.rfc-editor.org/rfc/rfc5912#appendix-A
+//! [RFC5912 Section 6]: https://www.rfc-editor.org/rfc/rfc5912#section-6
 
 use crate::{Error, Result};
 use core::{
@@ -47,7 +47,7 @@ pub type MaxSize<C> = <<FieldBytesSize<C> as Add>::Output as Add<MaxOverhead>>::
 /// Byte array containing a serialized ASN.1 signature
 type SignatureBytes<C> = Array<u8, MaxSize<C>>;
 
-/// ASN.1 DER-encoded signature as specified in [RFC5912 Appendix A]:
+/// ASN.1 DER-encoded signature as specified in [RFC5912 Section 6]:
 ///
 /// ```text
 /// ECDSA-Sig-Value ::= SEQUENCE {
@@ -56,7 +56,7 @@ type SignatureBytes<C> = Array<u8, MaxSize<C>>;
 /// }
 /// ```
 ///
-/// [RFC5912 Appendix A]: https://www.rfc-editor.org/rfc/rfc5912#appendix-A
+/// [RFC5912 Section 6]: https://www.rfc-editor.org/rfc/rfc5912#section-6
 pub struct Signature<C>
 where
     C: PrimeCurve,
