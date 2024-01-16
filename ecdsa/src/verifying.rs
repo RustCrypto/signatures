@@ -145,7 +145,7 @@ where
 impl<C, D> DigestVerifier<D, Signature<C>> for VerifyingKey<C>
 where
     C: PrimeCurve + CurveArithmetic,
-    D: Digest + FixedOutput<OutputSize = FieldBytesSize<C>>,
+    D: Digest + FixedOutput,
     AffinePoint<C>: VerifyPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
@@ -199,7 +199,7 @@ where
 impl<C, D> DigestVerifier<D, der::Signature<C>> for VerifyingKey<C>
 where
     C: PrimeCurve + CurveArithmetic,
-    D: Digest + FixedOutput<OutputSize = FieldBytesSize<C>>,
+    D: Digest + FixedOutput,
     AffinePoint<C>: VerifyPrimitive<C>,
     SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,

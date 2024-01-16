@@ -13,7 +13,7 @@ use elliptic_curve::{
     ops::Invert,
     subtle::{Choice, ConstantTimeEq, CtOption},
     zeroize::{Zeroize, ZeroizeOnDrop},
-    CurveArithmetic, FieldBytes, FieldBytesSize, NonZeroScalar, PrimeCurve, Scalar, SecretKey,
+    CurveArithmetic, FieldBytes, NonZeroScalar, PrimeCurve, Scalar, SecretKey,
 };
 use signature::{
     hazmat::{PrehashSigner, RandomizedPrehashSigner},
@@ -22,12 +22,12 @@ use signature::{
 };
 
 #[cfg(feature = "der")]
-use {crate::der, core::ops::Add};
+use {crate::der, core::ops::Add, elliptic_curve::FieldBytesSize};
 
 #[cfg(feature = "pem")]
 use {
-    crate::elliptic_curve::pkcs8::{DecodePrivateKey, EncodePrivateKey, SecretDocument},
     core::str::FromStr,
+    elliptic_curve::pkcs8::{DecodePrivateKey, EncodePrivateKey, SecretDocument},
 };
 
 #[cfg(feature = "pkcs8")]
@@ -136,7 +136,7 @@ where
 impl<C, D> DigestSigner<D, Signature<C>> for SigningKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
-    D: Digest + FixedOutput<OutputSize = FieldBytesSize<C>>,
+    D: Digest + FixedOutput,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
@@ -182,7 +182,7 @@ where
 impl<C, D> RandomizedDigestSigner<D, Signature<C>> for SigningKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
-    D: Digest + FixedOutput<OutputSize = FieldBytesSize<C>>,
+    D: Digest + FixedOutput,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
@@ -231,7 +231,7 @@ where
 impl<C, D> DigestSigner<D, SignatureWithOid<C>> for SigningKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
-    D: AssociatedOid + Digest + FixedOutput<OutputSize = FieldBytesSize<C>>,
+    D: AssociatedOid + Digest + FixedOutput,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
@@ -286,7 +286,7 @@ where
 impl<C, D> RandomizedDigestSigner<D, der::Signature<C>> for SigningKey<C>
 where
     C: PrimeCurve + CurveArithmetic + DigestPrimitive,
-    D: Digest + FixedOutput<OutputSize = FieldBytesSize<C>>,
+    D: Digest + FixedOutput,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,
