@@ -138,9 +138,9 @@ where
     #[cfg(feature = "digest")]
     fn verify_digest<D>(&self, msg_digest: D, sig: &Signature<C>) -> Result<()>
     where
-        D: FixedOutput<OutputSize = FieldBytesSize<C>>,
+        D: FixedOutput,
     {
-        self.verify_prehashed(&msg_digest.finalize_fixed(), sig)
+        self.verify_prehashed(&bits2field::<C>(&msg_digest.finalize_fixed())?, sig)
     }
 }
 
@@ -158,10 +158,7 @@ where
 pub trait DigestPrimitive: PrimeCurve {
     /// Preferred digest to use when computing ECDSA signatures for this
     /// elliptic curve. This is typically a member of the SHA-2 family.
-    type Digest: BlockSizeUser
-        + Digest
-        + FixedOutput<OutputSize = FieldBytesSize<Self>>
-        + FixedOutputReset;
+    type Digest: BlockSizeUser + Digest + FixedOutput + FixedOutputReset;
 }
 
 #[cfg(feature = "digest")]
