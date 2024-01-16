@@ -1,14 +1,14 @@
 //! Constant-time comparison helpers for [`ByteArray`].
 
-use crate::{ArraySize, ByteArray};
 use subtle::{Choice, ConditionallySelectable, ConstantTimeEq};
 
-/// Constant-time equals.
-pub(crate) fn ct_eq<N: ArraySize>(a: &ByteArray<N>, b: &ByteArray<N>) -> Choice {
+/// Constant-time test that a given byte slice contains only zeroes.
+#[inline]
+pub(crate) fn ct_is_zero(n: &[u8]) -> Choice {
     let mut ret = Choice::from(1);
 
-    for (a, b) in a.iter().zip(b.iter()) {
-        ret.conditional_assign(&Choice::from(0), !a.ct_eq(b));
+    for byte in n {
+        ret.conditional_assign(&Choice::from(0), byte.ct_ne(&0));
     }
 
     ret
@@ -17,7 +17,10 @@ pub(crate) fn ct_eq<N: ArraySize>(a: &ByteArray<N>, b: &ByteArray<N>) -> Choice 
 /// Constant-time less than.
 ///
 /// Inputs are interpreted as big endian integers.
-pub(crate) fn ct_lt<N: ArraySize>(a: &ByteArray<N>, b: &ByteArray<N>) -> Choice {
+#[inline]
+pub(crate) fn ct_lt(a: &[u8], b: &[u8]) -> Choice {
+    debug_assert_eq!(a.len(), b.len());
+
     let mut borrow = 0;
 
     // Perform subtraction with borrow a byte-at-a-time, interpreting a
@@ -40,48 +43,39 @@ mod tests {
     const F: [u8; 4] = [0xFF, 0xFF, 0xFF, 0xFF];
 
     #[test]
-    fn ct_eq() {
-        use super::ct_eq;
-
-        assert_eq!(ct_eq(&A.into(), &A.into()).unwrap_u8(), 1);
-        assert_eq!(ct_eq(&B.into(), &B.into()).unwrap_u8(), 1);
-        assert_eq!(ct_eq(&C.into(), &C.into()).unwrap_u8(), 1);
-        assert_eq!(ct_eq(&D.into(), &D.into()).unwrap_u8(), 1);
-        assert_eq!(ct_eq(&E.into(), &E.into()).unwrap_u8(), 1);
-        assert_eq!(ct_eq(&F.into(), &F.into()).unwrap_u8(), 1);
-
-        assert_eq!(ct_eq(&A.into(), &B.into()).unwrap_u8(), 0);
-        assert_eq!(ct_eq(&C.into(), &D.into()).unwrap_u8(), 0);
-        assert_eq!(ct_eq(&E.into(), &F.into()).unwrap_u8(), 0);
+    fn ct_is_zero() {
+        use super::ct_is_zero;
+        assert_eq!(ct_is_zero(&A).unwrap_u8(), 1);
+        assert_eq!(ct_is_zero(&B).unwrap_u8(), 0);
     }
 
     #[test]
     fn ct_lt() {
         use super::ct_lt;
 
-        assert_eq!(ct_lt(&A.into(), &A.into()).unwrap_u8(), 0);
-        assert_eq!(ct_lt(&B.into(), &B.into()).unwrap_u8(), 0);
-        assert_eq!(ct_lt(&C.into(), &C.into()).unwrap_u8(), 0);
-        assert_eq!(ct_lt(&D.into(), &D.into()).unwrap_u8(), 0);
-        assert_eq!(ct_lt(&E.into(), &E.into()).unwrap_u8(), 0);
-        assert_eq!(ct_lt(&F.into(), &F.into()).unwrap_u8(), 0);
+        assert_eq!(ct_lt(&A, &A).unwrap_u8(), 0);
+        assert_eq!(ct_lt(&B, &B).unwrap_u8(), 0);
+        assert_eq!(ct_lt(&C, &C).unwrap_u8(), 0);
+        assert_eq!(ct_lt(&D, &D).unwrap_u8(), 0);
+        assert_eq!(ct_lt(&E, &E).unwrap_u8(), 0);
+        assert_eq!(ct_lt(&F, &F).unwrap_u8(), 0);
 
-        assert_eq!(ct_lt(&A.into(), &B.into()).unwrap_u8(), 1);
-        assert_eq!(ct_lt(&A.into(), &C.into()).unwrap_u8(), 1);
-        assert_eq!(ct_lt(&B.into(), &A.into()).unwrap_u8(), 0);
-        assert_eq!(ct_lt(&C.into(), &A.into()).unwrap_u8(), 0);
+        assert_eq!(ct_lt(&A, &B).unwrap_u8(), 1);
+        assert_eq!(ct_lt(&A, &C).unwrap_u8(), 1);
+        assert_eq!(ct_lt(&B, &A).unwrap_u8(), 0);
+        assert_eq!(ct_lt(&C, &A).unwrap_u8(), 0);
 
-        assert_eq!(ct_lt(&B.into(), &C.into()).unwrap_u8(), 1);
-        assert_eq!(ct_lt(&B.into(), &D.into()).unwrap_u8(), 1);
-        assert_eq!(ct_lt(&C.into(), &B.into()).unwrap_u8(), 0);
-        assert_eq!(ct_lt(&D.into(), &B.into()).unwrap_u8(), 0);
+        assert_eq!(ct_lt(&B, &C).unwrap_u8(), 1);
+        assert_eq!(ct_lt(&B, &D).unwrap_u8(), 1);
+        assert_eq!(ct_lt(&C, &B).unwrap_u8(), 0);
+        assert_eq!(ct_lt(&D, &B).unwrap_u8(), 0);
 
-        assert_eq!(ct_lt(&C.into(), &D.into()).unwrap_u8(), 1);
-        assert_eq!(ct_lt(&C.into(), &E.into()).unwrap_u8(), 1);
-        assert_eq!(ct_lt(&D.into(), &C.into()).unwrap_u8(), 0);
-        assert_eq!(ct_lt(&E.into(), &C.into()).unwrap_u8(), 0);
+        assert_eq!(ct_lt(&C, &D).unwrap_u8(), 1);
+        assert_eq!(ct_lt(&C, &E).unwrap_u8(), 1);
+        assert_eq!(ct_lt(&D, &C).unwrap_u8(), 0);
+        assert_eq!(ct_lt(&E, &C).unwrap_u8(), 0);
 
-        assert_eq!(ct_lt(&E.into(), &F.into()).unwrap_u8(), 1);
-        assert_eq!(ct_lt(&F.into(), &E.into()).unwrap_u8(), 0);
+        assert_eq!(ct_lt(&E, &F).unwrap_u8(), 1);
+        assert_eq!(ct_lt(&F, &E).unwrap_u8(), 0);
     }
 }

@@ -50,9 +50,6 @@ use hmac::{
     SimpleHmac,
 };
 
-/// Array of bytes representing a scalar serialized as a big endian integer.
-pub type ByteArray<Size> = Array<u8, Size>;
-
 /// Deterministically generate ephemeral scalar `k`.
 ///
 /// Accepts the following parameters and inputs:
@@ -63,24 +60,48 @@ pub type ByteArray<Size> = Array<u8, Size>;
 /// - `data`: additional associated data, e.g. CSRNG output used as added entropy
 #[inline]
 pub fn generate_k<D, N>(
-    x: &ByteArray<N>,
-    n: &ByteArray<N>,
-    h: &ByteArray<N>,
+    x: &Array<u8, N>,
+    n: &Array<u8, N>,
+    h: &Array<u8, N>,
     data: &[u8],
-) -> ByteArray<N>
+) -> Array<u8, N>
 where
-    D: Digest + BlockSizeUser + FixedOutput<OutputSize = N> + FixedOutputReset,
+    D: Digest + BlockSizeUser + FixedOutput + FixedOutputReset,
     N: ArraySize,
 {
+    let mut k = Array::default();
+    generate_k_mut::<D>(x, n, h, data, &mut k);
+    k
+}
+
+/// Deterministically generate ephemeral scalar `k` by writing it into the provided output buffer.
+///
+/// This is an API which accepts dynamically sized inputs intended for use cases where the sizes
+/// are determined at runtime, such as the legacy Digital Signature Algorithm (DSA).
+///
+/// Accepts the following parameters and inputs:
+///
+/// - `x`: secret key
+/// - `n`: field modulus
+/// - `h`: hash/digest of input message: must be reduced modulo `n` in advance
+/// - `data`: additional associated data, e.g. CSRNG output used as added entropy
+#[inline]
+pub fn generate_k_mut<D>(x: &[u8], n: &[u8], h: &[u8], data: &[u8], k: &mut [u8])
+where
+    D: Digest + BlockSizeUser + FixedOutput + FixedOutputReset,
+{
+    assert_eq!(k.len(), x.len());
+    assert_eq!(k.len(), n.len());
+    assert_eq!(k.len(), h.len());
+
     let mut hmac_drbg = HmacDrbg::<D>::new(x, h, data);
 
     loop {
-        let mut k = ByteArray::<N>::default();
-        hmac_drbg.fill_bytes(&mut k);
+        hmac_drbg.fill_bytes(k);
 
-        let k_is_zero = ct_cmp::ct_eq(&k, &ByteArray::default());
-        if (!k_is_zero & ct_cmp::ct_lt(&k, n)).into() {
-            return k;
+        let k_is_zero = ct_cmp::ct_is_zero(k);
+        if (!k_is_zero & ct_cmp::ct_lt(k, n)).into() {
+            return;
         }
     }
 }
