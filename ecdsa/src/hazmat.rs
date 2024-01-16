@@ -98,7 +98,7 @@ where
     ) -> Result<(Signature<C>, Option<RecoveryId>)>
     where
         Self: From<ScalarPrimitive<C>> + Invert<Output = CtOption<Self>>,
-        D: Digest + BlockSizeUser + FixedOutput<OutputSize = FieldBytesSize<C>> + FixedOutputReset,
+        D: Digest + BlockSizeUser + FixedOutput + FixedOutputReset,
     {
         let k = Scalar::<C>::from_repr(rfc6979::generate_k::<D, _>(
             &self.to_repr(),
