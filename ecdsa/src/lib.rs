@@ -166,6 +166,14 @@ const SHA384_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("2.16.840.1.10
 #[cfg(feature = "digest")]
 const SHA512_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("2.16.840.1.101.3.4.2.3");
 
+/// Marker trait for elliptic curves intended for use with ECDSA.
+pub trait EcdsaCurve: PrimeCurve {
+    /// Does this curve use low-S normalized signatures?
+    ///
+    /// This is typically `false`. See [`Signature::normalize_s`] for more information.
+    const NORMALIZE_S: bool;
+}
+
 /// Size of a fixed sized signature for the given elliptic curve.
 pub type SignatureSize<C> = <FieldBytesSize<C> as Add>::Output;
 
