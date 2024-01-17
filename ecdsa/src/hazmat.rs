@@ -86,7 +86,7 @@ where
     /// described in [RFC6979] for computing ECDSA ephemeral scalar `k`.
     ///
     /// Accepts the following parameters:
-    /// - `z`: message digest to be signed.
+    /// - `z`: message digest to be signed, i.e. `H(m)`. Does not have to be reduced in advance.
     /// - `ad`: optional additional data, e.g. added entropy from an RNG
     ///
     /// [RFC6979]: https://datatracker.ietf.org/doc/html/rfc6979
@@ -100,10 +100,18 @@ where
         Self: From<ScalarPrimitive<C>> + Invert<Output = CtOption<Self>>,
         D: Digest + BlockSizeUser + FixedOutput + FixedOutputReset,
     {
+        // From RFC6979 § 2.4:
+        //
+        // H(m) is transformed into an integer modulo q using the bits2int
+        // transform and an extra modular reduction:
+        //
+        // h = bits2int(H(m)) mod q
+        let z2 = <Scalar<C> as Reduce<C::Uint>>::reduce_bytes(z);
+
         let k = Scalar::<C>::from_repr(rfc6979::generate_k::<D, _>(
             &self.to_repr(),
             &C::ORDER.encode_field_bytes(),
-            z,
+            &z2.to_repr(),
             ad,
         ))
         .unwrap();
