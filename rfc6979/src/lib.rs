@@ -161,9 +161,12 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::{consts::U21, generate_k};
+    use crate::{
+        consts::{U21, U66},
+        generate_k, Array,
+    };
     use hex_literal::hex;
-    use sha2::Sha256;
+    use sha2::{Digest, Sha256, Sha512};
 
     /// "Detailed Example" from RFC6979 Appendix A.1.
     ///
@@ -180,5 +183,31 @@ mod tests {
         let aad = b"";
         let k = generate_k::<Sha256, U21>(&x.into(), &q.into(), &h2.into(), aad);
         assert_eq!(k, hex!("023AF4074C90A02B3FE61D286D5C87F425E6BDD81B"));
+    }
+
+    /// Example from RFC6979 Appendix A.2.7.
+    #[test]
+    fn p521_sha512() {
+        let q = hex!(
+            "01FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFA51868783BF2F966B7FCC0148F709A5D03BB5C9B8899C47AEBB6FB71E91386409"
+        );
+
+        let x = hex!(
+            "00FAD06DAA62BA3B25D2FB40133DA757205DE67F5BB0018FEE8C86E1B68C7E75CAA896EB32F1F47C70855836A6D16FCC1466F6D8FBEC67DB89EC0C08B0E996B83538"
+        );
+
+        // Hash message and emulate `bits2octets` to produce the input digest
+        let message = "sample";
+        let mut h = Array::<u8, U66>::default();
+        h[2..].copy_from_slice(&Sha512::digest(message));
+
+        let aad = b"";
+        let k = generate_k::<Sha512, U66>(&x.into(), &q.into(), &h.into(), aad);
+
+        let expected_k = hex!(
+            "01DAE2EA071F8110DC26882D4D5EAE0621A3256FC8847FB9022E2B7D28E6F10198B1574FDD03A9053C08A1854A168AA5A57470EC97DD5CE090124EF52A2F7ECBFFD3"
+        );
+
+        assert_eq!(k, expected_k);
     }
 }
