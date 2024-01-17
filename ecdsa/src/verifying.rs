@@ -2,14 +2,14 @@
 
 use crate::{
     hazmat::{bits2field, DigestPrimitive, VerifyPrimitive},
-    Error, Result, Signature, SignatureSize,
+    EcdsaCurve, Error, Result, Signature, SignatureSize,
 };
 use core::{cmp::Ordering, fmt::Debug};
 use elliptic_curve::{
     array::ArraySize,
     point::PointCompression,
     sec1::{self, CompressedPoint, EncodedPoint, FromEncodedPoint, ToEncodedPoint},
-    AffinePoint, CurveArithmetic, FieldBytesSize, PrimeCurve, PublicKey,
+    AffinePoint, CurveArithmetic, FieldBytesSize, PublicKey,
 };
 use signature::{
     digest::{Digest, FixedOutput},
@@ -77,14 +77,14 @@ use serdect::serde::{de, ser, Deserialize, Serialize};
 #[derive(Clone, Debug)]
 pub struct VerifyingKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
 {
     pub(crate) inner: PublicKey<C>,
 }
 
 impl<C> VerifyingKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
@@ -144,7 +144,7 @@ where
 
 impl<C, D> DigestVerifier<D, Signature<C>> for VerifyingKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     D: Digest + FixedOutput,
     AffinePoint<C>: VerifyPrimitive<C>,
     SignatureSize<C>: ArraySize,
@@ -156,7 +156,7 @@ where
 
 impl<C> PrehashVerifier<Signature<C>> for VerifyingKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     AffinePoint<C>: VerifyPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
@@ -168,7 +168,7 @@ where
 
 impl<C> Verifier<Signature<C>> for VerifyingKey<C>
 where
-    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     AffinePoint<C>: VerifyPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
@@ -180,7 +180,7 @@ where
 #[cfg(feature = "sha2")]
 impl<C> Verifier<SignatureWithOid<C>> for VerifyingKey<C>
 where
-    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     AffinePoint<C>: VerifyPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
@@ -198,7 +198,7 @@ where
 #[cfg(feature = "der")]
 impl<C, D> DigestVerifier<D, der::Signature<C>> for VerifyingKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     D: Digest + FixedOutput,
     AffinePoint<C>: VerifyPrimitive<C>,
     SignatureSize<C>: ArraySize,
@@ -214,7 +214,7 @@ where
 #[cfg(feature = "der")]
 impl<C> PrehashVerifier<der::Signature<C>> for VerifyingKey<C>
 where
-    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     AffinePoint<C>: VerifyPrimitive<C>,
     SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,
@@ -229,7 +229,7 @@ where
 #[cfg(feature = "der")]
 impl<C> Verifier<der::Signature<C>> for VerifyingKey<C>
 where
-    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     AffinePoint<C>: VerifyPrimitive<C>,
     SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,
@@ -247,7 +247,7 @@ where
 
 impl<C> AsRef<AffinePoint<C>> for VerifyingKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
@@ -256,11 +256,11 @@ where
     }
 }
 
-impl<C> Copy for VerifyingKey<C> where C: PrimeCurve + CurveArithmetic {}
+impl<C> Copy for VerifyingKey<C> where C: EcdsaCurve + CurveArithmetic {}
 
 impl<C> From<VerifyingKey<C>> for CompressedPoint<C>
 where
-    C: PrimeCurve + CurveArithmetic + PointCompression,
+    C: EcdsaCurve + CurveArithmetic + PointCompression,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
@@ -271,7 +271,7 @@ where
 
 impl<C> From<&VerifyingKey<C>> for CompressedPoint<C>
 where
-    C: PrimeCurve + CurveArithmetic + PointCompression,
+    C: EcdsaCurve + CurveArithmetic + PointCompression,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
@@ -282,7 +282,7 @@ where
 
 impl<C> From<VerifyingKey<C>> for EncodedPoint<C>
 where
-    C: PrimeCurve + CurveArithmetic + PointCompression,
+    C: EcdsaCurve + CurveArithmetic + PointCompression,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
@@ -293,7 +293,7 @@ where
 
 impl<C> From<&VerifyingKey<C>> for EncodedPoint<C>
 where
-    C: PrimeCurve + CurveArithmetic + PointCompression,
+    C: EcdsaCurve + CurveArithmetic + PointCompression,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
@@ -302,11 +302,11 @@ where
     }
 }
 
-impl<C> Eq for VerifyingKey<C> where C: PrimeCurve + CurveArithmetic {}
+impl<C> Eq for VerifyingKey<C> where C: EcdsaCurve + CurveArithmetic {}
 
 impl<C> PartialEq for VerifyingKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
 {
     fn eq(&self, other: &Self) -> bool {
         self.inner.eq(&other.inner)
@@ -315,7 +315,7 @@ where
 
 impl<C> From<PublicKey<C>> for VerifyingKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
 {
     fn from(public_key: PublicKey<C>) -> VerifyingKey<C> {
         VerifyingKey { inner: public_key }
@@ -324,7 +324,7 @@ where
 
 impl<C> From<&PublicKey<C>> for VerifyingKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
 {
     fn from(public_key: &PublicKey<C>) -> VerifyingKey<C> {
         (*public_key).into()
@@ -333,7 +333,7 @@ where
 
 impl<C> From<VerifyingKey<C>> for PublicKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
 {
     fn from(verifying_key: VerifyingKey<C>) -> PublicKey<C> {
         verifying_key.inner
@@ -342,7 +342,7 @@ where
 
 impl<C> From<&VerifyingKey<C>> for PublicKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
 {
     fn from(verifying_key: &VerifyingKey<C>) -> PublicKey<C> {
         (*verifying_key).into()
@@ -351,7 +351,7 @@ where
 
 impl<C> PartialOrd for VerifyingKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
@@ -362,7 +362,7 @@ where
 
 impl<C> Ord for VerifyingKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
@@ -373,7 +373,7 @@ where
 
 impl<C> TryFrom<&[u8]> for VerifyingKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
@@ -387,7 +387,7 @@ where
 #[cfg(feature = "pkcs8")]
 impl<C> AssociatedAlgorithmIdentifier for VerifyingKey<C>
 where
-    C: AssociatedOid + CurveArithmetic + PrimeCurve,
+    C: EcdsaCurve + AssociatedOid + CurveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
@@ -400,7 +400,7 @@ where
 #[cfg(feature = "pkcs8")]
 impl<C> SignatureAlgorithmIdentifier for VerifyingKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
     Signature<C>: AssociatedAlgorithmIdentifier<Params = AnyRef<'static>>,
@@ -414,7 +414,7 @@ where
 #[cfg(feature = "pkcs8")]
 impl<C> TryFrom<pkcs8::SubjectPublicKeyInfoRef<'_>> for VerifyingKey<C>
 where
-    C: PrimeCurve + AssociatedOid + CurveArithmetic + PointCompression,
+    C: EcdsaCurve + AssociatedOid + CurveArithmetic + PointCompression,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
@@ -428,7 +428,7 @@ where
 #[cfg(all(feature = "alloc", feature = "pkcs8"))]
 impl<C> EncodePublicKey for VerifyingKey<C>
 where
-    C: PrimeCurve + AssociatedOid + CurveArithmetic + PointCompression,
+    C: EcdsaCurve + AssociatedOid + CurveArithmetic + PointCompression,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
@@ -440,7 +440,7 @@ where
 #[cfg(feature = "pem")]
 impl<C> FromStr for VerifyingKey<C>
 where
-    C: PrimeCurve + AssociatedOid + CurveArithmetic + PointCompression,
+    C: EcdsaCurve + AssociatedOid + CurveArithmetic + PointCompression,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
@@ -454,7 +454,7 @@ where
 #[cfg(all(feature = "pem", feature = "serde"))]
 impl<C> Serialize for VerifyingKey<C>
 where
-    C: PrimeCurve + AssociatedOid + CurveArithmetic + PointCompression,
+    C: EcdsaCurve + AssociatedOid + CurveArithmetic + PointCompression,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
@@ -469,7 +469,7 @@ where
 #[cfg(all(feature = "pem", feature = "serde"))]
 impl<'de, C> Deserialize<'de> for VerifyingKey<C>
 where
-    C: PrimeCurve + AssociatedOid + CurveArithmetic + PointCompression,
+    C: EcdsaCurve + AssociatedOid + CurveArithmetic + PointCompression,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {

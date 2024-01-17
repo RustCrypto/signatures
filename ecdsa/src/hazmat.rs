@@ -10,9 +10,9 @@
 //! Failure to use them correctly can lead to catastrophic failures including
 //! FULL PRIVATE KEY RECOVERY!
 
-use crate::{Error, Result};
+use crate::{EcdsaCurve, Error, Result};
 use core::cmp;
-use elliptic_curve::{array::typenum::Unsigned, FieldBytes, PrimeCurve};
+use elliptic_curve::{array::typenum::Unsigned, FieldBytes};
 
 #[cfg(feature = "arithmetic")]
 use {
@@ -56,7 +56,7 @@ pub trait SignPrimitive<C>:
     + Reduce<C::Uint, Bytes = FieldBytes<C>>
     + Sized
 where
-    C: PrimeCurve + CurveArithmetic<Scalar = Self>,
+    C: EcdsaCurve + CurveArithmetic<Scalar = Self>,
     SignatureSize<C>: ArraySize,
 {
     /// Try to sign the prehashed message.
@@ -128,7 +128,7 @@ where
 #[cfg(feature = "arithmetic")]
 pub trait VerifyPrimitive<C>: AffineCoordinates<FieldRepr = FieldBytes<C>> + Copy + Sized
 where
-    C: PrimeCurve + CurveArithmetic<AffinePoint = Self>,
+    C: EcdsaCurve + CurveArithmetic<AffinePoint = Self>,
     SignatureSize<C>: ArraySize,
 {
     /// Verify the prehashed message against the provided ECDSA signature.
@@ -163,7 +163,7 @@ where
 ///
 /// [1]: https://github.com/RustCrypto/traits/tree/master/signature/derive
 #[cfg(feature = "digest")]
-pub trait DigestPrimitive: PrimeCurve {
+pub trait DigestPrimitive: EcdsaCurve {
     /// Preferred digest to use when computing ECDSA signatures for this
     /// elliptic curve. This is typically a member of the SHA-2 family.
     type Digest: BlockSizeUser + Digest + FixedOutput + FixedOutputReset;
@@ -187,7 +187,7 @@ where
 ///
 /// [RFC6979 § 2.3.2]: https://datatracker.ietf.org/doc/html/rfc6979#section-2.3.2
 /// [SEC1]: https://www.secg.org/sec1-v2.pdf
-pub fn bits2field<C: PrimeCurve>(bits: &[u8]) -> Result<FieldBytes<C>> {
+pub fn bits2field<C: EcdsaCurve>(bits: &[u8]) -> Result<FieldBytes<C>> {
     // Minimum allowed bits size is half the field size
     if bits.len() < C::FieldBytesSize::USIZE / 2 {
         return Err(Error::new());
@@ -232,7 +232,7 @@ pub fn sign_prehashed<C, K>(
     z: &FieldBytes<C>,
 ) -> Result<(Signature<C>, RecoveryId)>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     K: AsRef<Scalar<C>> + Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
@@ -278,7 +278,7 @@ pub fn verify_prehashed<C>(
     sig: &Signature<C>,
 ) -> Result<()>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     SignatureSize<C>: ArraySize,
 {
     let z = Scalar::<C>::reduce_bytes(z);
@@ -297,7 +297,7 @@ where
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "dev"))]
 mod tests {
     use super::bits2field;
     use elliptic_curve::dev::MockCurve;

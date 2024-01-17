@@ -3,7 +3,7 @@
 //!
 //! [RFC5912 Section 6]: https://www.rfc-editor.org/rfc/rfc5912#section-6
 
-use crate::{Error, Result};
+use crate::{EcdsaCurve, Error, Result};
 use core::{
     fmt::{self, Debug},
     ops::{Add, Range},
@@ -12,7 +12,7 @@ use der::{asn1::UintRef, Decode, Encode, FixedTag, Length, Reader, Tag, Writer};
 use elliptic_curve::{
     array::{typenum::Unsigned, Array, ArraySize},
     consts::U9,
-    FieldBytesSize, PrimeCurve,
+    FieldBytesSize,
 };
 
 #[cfg(feature = "alloc")]
@@ -59,7 +59,7 @@ type SignatureBytes<C> = Array<u8, MaxSize<C>>;
 /// [RFC5912 Section 6]: https://www.rfc-editor.org/rfc/rfc5912#section-6
 pub struct Signature<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
     MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArraySize,
 {
@@ -76,7 +76,7 @@ where
 #[allow(clippy::len_without_is_empty)]
 impl<C> Signature<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
     MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArraySize,
 {
@@ -156,7 +156,7 @@ where
 
 impl<C> AsRef<[u8]> for Signature<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
     MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArraySize,
 {
@@ -167,7 +167,7 @@ where
 
 impl<C> Clone for Signature<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
     MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArraySize,
 {
@@ -182,7 +182,7 @@ where
 
 impl<C> Debug for Signature<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
     MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArraySize,
 {
@@ -199,7 +199,7 @@ where
 
 impl<'a, C> Decode<'a> for Signature<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
     MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArraySize,
 {
@@ -220,7 +220,7 @@ where
 
 impl<C> Encode for Signature<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
     MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArraySize,
 {
@@ -235,7 +235,7 @@ where
 
 impl<C> FixedTag for Signature<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
     MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArraySize,
 {
@@ -244,7 +244,7 @@ where
 
 impl<C> From<crate::Signature<C>> for Signature<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
     MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArraySize,
 {
@@ -255,7 +255,7 @@ where
 
 impl<C> TryFrom<&[u8]> for Signature<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
     MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArraySize,
 {
@@ -268,7 +268,7 @@ where
 
 impl<C> TryFrom<Signature<C>> for crate::Signature<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
     MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArraySize,
 {
@@ -287,7 +287,7 @@ where
 #[cfg(feature = "alloc")]
 impl<C> From<Signature<C>> for Box<[u8]>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
     MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArraySize,
 {
@@ -299,7 +299,7 @@ where
 #[cfg(feature = "alloc")]
 impl<C> SignatureEncoding for Signature<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
     MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArraySize,
 {
@@ -313,7 +313,7 @@ where
 #[cfg(feature = "alloc")]
 impl<C> SignatureBitStringEncoding for Signature<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
     MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArraySize,
 {
@@ -325,7 +325,7 @@ where
 #[cfg(feature = "serde")]
 impl<C> Serialize for Signature<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
     MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArraySize,
 {
@@ -340,7 +340,7 @@ where
 #[cfg(feature = "serde")]
 impl<'de, C> Deserialize<'de> for Signature<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
     MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArraySize,
 {
@@ -383,7 +383,7 @@ fn find_scalar_range(outer: &[u8], inner: &[u8]) -> Result<Range<usize>> {
 #[cfg(all(feature = "digest", feature = "hazmat"))]
 impl<C> signature::PrehashSignature for Signature<C>
 where
-    C: PrimeCurve + crate::hazmat::DigestPrimitive,
+    C: EcdsaCurve + crate::hazmat::DigestPrimitive,
     MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArraySize,
 {
