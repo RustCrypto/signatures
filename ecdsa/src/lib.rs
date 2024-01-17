@@ -345,7 +345,6 @@ impl<C> SignatureEncoding for Signature<C>
 where
     C: PrimeCurve,
     SignatureSize<C>: ArraySize,
-    SignatureBytes<C>: Send + Sync,
 {
     type Repr = SignatureBytes<C>;
 }
@@ -656,7 +655,6 @@ where
     C: hazmat::DigestPrimitive,
     C::Digest: AssociatedOid,
     SignatureSize<C>: ArraySize,
-    SignatureBytes<C>: Send + Sync,
 {
     type Repr = SignatureBytes<C>;
 }
