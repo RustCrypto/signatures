@@ -24,10 +24,7 @@ use alloc::boxed::Box;
 use {crate::der, core::ops::Add};
 
 #[cfg(feature = "pem")]
-use {
-    core::str::FromStr,
-    elliptic_curve::pkcs8::{DecodePublicKey, EncodePublicKey},
-};
+use {core::str::FromStr, elliptic_curve::pkcs8::DecodePublicKey};
 
 #[cfg(feature = "pkcs8")]
 use elliptic_curve::pkcs8::{
@@ -44,6 +41,9 @@ use {
     },
     sha2::{Sha224, Sha256, Sha384, Sha512},
 };
+
+#[cfg(all(feature = "alloc", feature = "pkcs8"))]
+use elliptic_curve::pkcs8::EncodePublicKey;
 
 #[cfg(all(feature = "pem", feature = "serde"))]
 use serdect::serde::{de, ser, Deserialize, Serialize};
@@ -425,7 +425,7 @@ where
     }
 }
 
-#[cfg(feature = "pem")]
+#[cfg(all(feature = "alloc", feature = "pkcs8"))]
 impl<C> EncodePublicKey for VerifyingKey<C>
 where
     C: PrimeCurve + AssociatedOid + CurveArithmetic + PointCompression,
