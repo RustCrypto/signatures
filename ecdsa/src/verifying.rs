@@ -1,15 +1,16 @@
 //! ECDSA verifying: checking signatures are authentic using a [`VerifyingKey`].
 
 use crate::{
-    hazmat::{bits2field, DigestPrimitive, VerifyPrimitive},
+    hazmat::{self, bits2field, DigestPrimitive},
     EcdsaCurve, Error, Result, Signature, SignatureSize,
 };
 use core::{cmp::Ordering, fmt::Debug};
 use elliptic_curve::{
     array::ArraySize,
     point::PointCompression,
+    scalar::IsHigh,
     sec1::{self, CompressedPoint, EncodedPoint, FromEncodedPoint, ToEncodedPoint},
-    AffinePoint, CurveArithmetic, FieldBytesSize, PublicKey,
+    AffinePoint, CurveArithmetic, FieldBytesSize, ProjectivePoint, PublicKey,
 };
 use signature::{
     digest::{Digest, FixedOutput},
@@ -146,30 +147,34 @@ impl<C, D> DigestVerifier<D, Signature<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
     D: Digest + FixedOutput,
-    AffinePoint<C>: VerifyPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
     fn verify_digest(&self, msg_digest: D, signature: &Signature<C>) -> Result<()> {
-        self.inner.as_affine().verify_digest(msg_digest, signature)
+        self.verify_prehash(&msg_digest.finalize(), signature)
     }
 }
 
 impl<C> PrehashVerifier<Signature<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    AffinePoint<C>: VerifyPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
     fn verify_prehash(&self, prehash: &[u8], signature: &Signature<C>) -> Result<()> {
-        let field = bits2field::<C>(prehash)?;
-        self.inner.as_affine().verify_prehashed(&field, signature)
+        if C::NORMALIZE_S && signature.s().is_high().into() {
+            return Err(Error::new());
+        }
+
+        hazmat::verify_prehashed::<C>(
+            &ProjectivePoint::<C>::from(*self.inner.as_affine()),
+            &bits2field::<C>(prehash)?,
+            signature,
+        )
     }
 }
 
 impl<C> Verifier<Signature<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
-    AffinePoint<C>: VerifyPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
     fn verify(&self, msg: &[u8], signature: &Signature<C>) -> Result<()> {
@@ -181,7 +186,6 @@ where
 impl<C> Verifier<SignatureWithOid<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
-    AffinePoint<C>: VerifyPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
     fn verify(&self, msg: &[u8], sig: &SignatureWithOid<C>) -> Result<()> {
@@ -200,7 +204,6 @@ impl<C, D> DigestVerifier<D, der::Signature<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
     D: Digest + FixedOutput,
-    AffinePoint<C>: VerifyPrimitive<C>,
     SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
@@ -215,7 +218,6 @@ where
 impl<C> PrehashVerifier<der::Signature<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
-    AffinePoint<C>: VerifyPrimitive<C>,
     SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
@@ -230,7 +232,6 @@ where
 impl<C> Verifier<der::Signature<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
-    AffinePoint<C>: VerifyPrimitive<C>,
     SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,

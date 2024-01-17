@@ -23,7 +23,6 @@ use {
         ops::{Invert, LinearCombination, MulByGenerator, Reduce},
         point::AffineCoordinates,
         scalar::IsHigh,
-        subtle::CtOption,
         CurveArithmetic, ProjectivePoint, Scalar,
     },
 };
@@ -38,119 +37,10 @@ use {
 };
 
 #[cfg(feature = "rfc6979")]
-use elliptic_curve::{FieldBytesEncoding, ScalarPrimitive};
+use elliptic_curve::FieldBytesEncoding;
 
 #[cfg(any(feature = "arithmetic", feature = "digest"))]
 use crate::{elliptic_curve::array::ArraySize, Signature};
-
-/// Try to sign the given prehashed message using ECDSA.
-///
-/// This trait is intended to be implemented on a type with access to the
-/// secret scalar via `&self`, such as particular curve's `Scalar` type.
-#[cfg(feature = "arithmetic")]
-pub trait SignPrimitive<C>:
-    AsRef<Self>
-    + Into<FieldBytes<C>>
-    + IsHigh
-    + PrimeField<Repr = FieldBytes<C>>
-    + Reduce<C::Uint, Bytes = FieldBytes<C>>
-    + Sized
-where
-    C: EcdsaCurve + CurveArithmetic<Scalar = Self>,
-    SignatureSize<C>: ArraySize,
-{
-    /// Try to sign the prehashed message.
-    ///
-    /// Accepts the following arguments:
-    ///
-    /// - `k`: ephemeral scalar value. MUST BE UNIFORMLY RANDOM!!!
-    /// - `z`: message digest to be signed. MUST BE OUTPUT OF A CRYPTOGRAPHICALLY
-    ///        SECURE DIGEST ALGORITHM!!!
-    ///
-    /// # Returns
-    ///
-    /// ECDSA [`Signature`] and, when possible/desired, a [`RecoveryId`]
-    /// which can be used to recover the verifying key for a given signature.
-    fn try_sign_prehashed<K>(
-        &self,
-        k: K,
-        z: &FieldBytes<C>,
-    ) -> Result<(Signature<C>, Option<RecoveryId>)>
-    where
-        K: AsRef<Self> + Invert<Output = CtOption<Self>>,
-    {
-        sign_prehashed(self, k, z).map(|(sig, recid)| (sig, (Some(recid))))
-    }
-
-    /// Try to sign the given message digest deterministically using the method
-    /// described in [RFC6979] for computing ECDSA ephemeral scalar `k`.
-    ///
-    /// Accepts the following parameters:
-    /// - `z`: message digest to be signed, i.e. `H(m)`. Does not have to be reduced in advance.
-    /// - `ad`: optional additional data, e.g. added entropy from an RNG
-    ///
-    /// [RFC6979]: https://datatracker.ietf.org/doc/html/rfc6979
-    #[cfg(feature = "rfc6979")]
-    fn try_sign_prehashed_rfc6979<D>(
-        &self,
-        z: &FieldBytes<C>,
-        ad: &[u8],
-    ) -> Result<(Signature<C>, Option<RecoveryId>)>
-    where
-        Self: From<ScalarPrimitive<C>> + Invert<Output = CtOption<Self>>,
-        D: Digest + BlockSizeUser + FixedOutput + FixedOutputReset,
-    {
-        // From RFC6979 § 2.4:
-        //
-        // H(m) is transformed into an integer modulo q using the bits2int
-        // transform and an extra modular reduction:
-        //
-        // h = bits2int(H(m)) mod q
-        let z2 = <Scalar<C> as Reduce<C::Uint>>::reduce_bytes(z);
-
-        let k = Scalar::<C>::from_repr(rfc6979::generate_k::<D, _>(
-            &self.to_repr(),
-            &C::ORDER.encode_field_bytes(),
-            &z2.to_repr(),
-            ad,
-        ))
-        .unwrap();
-
-        self.try_sign_prehashed::<Self>(k, z)
-    }
-}
-
-/// Verify the given prehashed message using ECDSA.
-///
-/// This trait is intended to be implemented on type which can access
-/// the affine point represeting the public key via `&self`, such as a
-/// particular curve's `AffinePoint` type.
-#[cfg(feature = "arithmetic")]
-pub trait VerifyPrimitive<C>: AffineCoordinates<FieldRepr = FieldBytes<C>> + Copy + Sized
-where
-    C: EcdsaCurve + CurveArithmetic<AffinePoint = Self>,
-    SignatureSize<C>: ArraySize,
-{
-    /// Verify the prehashed message against the provided ECDSA signature.
-    ///
-    /// Accepts the following arguments:
-    ///
-    /// - `z`: message digest to be verified. MUST BE OUTPUT OF A
-    ///        CRYPTOGRAPHICALLY SECURE DIGEST ALGORITHM!!!
-    /// - `sig`: signature to be verified against the key and message
-    fn verify_prehashed(&self, z: &FieldBytes<C>, sig: &Signature<C>) -> Result<()> {
-        verify_prehashed(&ProjectivePoint::<C>::from(*self), z, sig)
-    }
-
-    /// Verify message digest against the provided signature.
-    #[cfg(feature = "digest")]
-    fn verify_digest<D>(&self, msg_digest: D, sig: &Signature<C>) -> Result<()>
-    where
-        D: FixedOutput,
-    {
-        self.verify_prehashed(&bits2field::<C>(&msg_digest.finalize_fixed())?, sig)
-    }
-}
 
 /// Bind a preferred [`Digest`] algorithm to an elliptic curve type.
 ///
@@ -220,34 +110,37 @@ pub fn bits2field<C: EcdsaCurve>(bits: &[u8]) -> Result<FieldBytes<C>> {
 /// - `z`: message digest to be signed. MUST BE OUTPUT OF A CRYPTOGRAPHICALLY
 ///        SECURE DIGEST ALGORITHM!!!
 ///
+/// # Low-S Normalization
+///
+/// This function will apply low-S normalization if `<C as EcdsaCurve>::NORMALIZE_S` is true.
+///
 /// # Returns
 ///
-/// ECDSA [`Signature`] and, when possible/desired, a [`RecoveryId`]
-/// which can be used to recover the verifying key for a given signature.
+/// ECDSA [`Signature`] and a [`RecoveryId`] which can be used to recover the verifying key for a
+/// given signature.
 #[cfg(feature = "arithmetic")]
 #[allow(non_snake_case)]
-pub fn sign_prehashed<C, K>(
+pub fn sign_prehashed<C>(
     d: &Scalar<C>,
-    k: K,
+    k: &Scalar<C>,
     z: &FieldBytes<C>,
 ) -> Result<(Signature<C>, RecoveryId)>
 where
     C: EcdsaCurve + CurveArithmetic,
-    K: AsRef<Scalar<C>> + Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     // TODO(tarcieri): use `NonZeroScalar<C>` for `k`.
-    if k.as_ref().is_zero().into() {
+    if k.is_zero().into() {
         return Err(Error::new());
     }
 
     let z = <Scalar<C> as Reduce<C::Uint>>::reduce_bytes(z);
 
     // Compute scalar inversion of 𝑘
-    let k_inv = Option::<Scalar<C>>::from(k.invert()).ok_or_else(Error::new)?;
+    let k_inv = Option::<Scalar<C>>::from(Invert::invert(k)).ok_or_else(Error::new)?;
 
     // Compute 𝑹 = 𝑘×𝑮
-    let R = ProjectivePoint::<C>::mul_by_generator(k.as_ref()).to_affine();
+    let R = ProjectivePoint::<C>::mul_by_generator(k).to_affine();
 
     // Lift x-coordinate of 𝑹 (element of base field) into a serialized big
     // integer, then reduce it into an element of the scalar field
@@ -258,9 +151,55 @@ where
     let s = k_inv * (z + (r * d));
 
     // NOTE: `Signature::from_scalars` checks that both `r` and `s` are non-zero.
-    let signature = Signature::from_scalars(r, s)?;
-    let recovery_id = RecoveryId::new(R.y_is_odd().into(), x_is_reduced);
+    let mut signature = Signature::from_scalars(r, s)?;
+    let mut recovery_id = RecoveryId::new(R.y_is_odd().into(), x_is_reduced);
+
+    // Apply low-S normalization if the curve is configured for it
+    if C::NORMALIZE_S {
+        recovery_id.0 ^= s.is_high().unwrap_u8();
+        signature = signature.normalize_s();
+    }
+
     Ok((signature, recovery_id))
+}
+
+/// Try to sign the given message digest deterministically using the method
+/// described in [RFC6979] for computing ECDSA ephemeral scalar `k`.
+///
+/// Accepts the following parameters:
+/// - `d`: signing key. MUST BE UNIFORMLY RANDOM!!!
+/// - `z`: message digest to be signed, i.e. `H(m)`. Does not have to be reduced in advance.
+/// - `ad`: optional additional data, e.g. added entropy from an RNG
+///
+/// [RFC6979]: https://datatracker.ietf.org/doc/html/rfc6979
+#[cfg(feature = "rfc6979")]
+pub fn sign_prehashed_rfc6979<C, D>(
+    d: &Scalar<C>,
+    z: &FieldBytes<C>,
+    ad: &[u8],
+) -> Result<(Signature<C>, RecoveryId)>
+where
+    C: EcdsaCurve + CurveArithmetic,
+    D: Digest + BlockSizeUser + FixedOutput + FixedOutputReset,
+    SignatureSize<C>: ArraySize,
+{
+    // From RFC6979 § 2.4:
+    //
+    // H(m) is transformed into an integer modulo q using the bits2int
+    // transform and an extra modular reduction:
+    //
+    // h = bits2int(H(m)) mod q
+    let z2 = <Scalar<C> as Reduce<C::Uint>>::reduce_bytes(z);
+
+    let k = Scalar::<C>::from_repr(rfc6979::generate_k::<D, _>(
+        &d.to_repr(),
+        &C::ORDER.encode_field_bytes(),
+        &z2.to_repr(),
+        ad,
+    ))
+    .unwrap();
+
+    sign_prehashed(d, &k, z)
 }
 
 /// Verify the prehashed message against the provided ECDSA signature.
@@ -268,9 +207,13 @@ where
 /// Accepts the following arguments:
 ///
 /// - `q`: public key with which to verify the signature.
-/// - `z`: message digest to be verified. MUST BE OUTPUT OF A
-///        CRYPTOGRAPHICALLY SECURE DIGEST ALGORITHM!!!
+/// - `z`: message digest to be verified. MUST BE OUTPUT OF A CRYPTOGRAPHICALLY SECURE DIGEST
+///        ALGORITHM!!!
 /// - `sig`: signature to be verified against the key and message.
+///
+/// # Low-S Normalization
+///
+/// This is a low-level function that does *NOT* apply the `EcdsaCurve::NORMALIZE_S` checks.
 #[cfg(feature = "arithmetic")]
 pub fn verify_prehashed<C>(
     q: &ProjectivePoint<C>,

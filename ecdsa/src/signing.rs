@@ -2,7 +2,7 @@
 
 use crate::{
     ecdsa_oid_for_digest,
-    hazmat::{bits2field, DigestPrimitive, SignPrimitive},
+    hazmat::{bits2field, sign_prehashed_rfc6979, DigestPrimitive},
     EcdsaCurve, Error, Result, Signature, SignatureSize, SignatureWithOid,
 };
 use core::fmt::{self, Debug};
@@ -66,7 +66,7 @@ use elliptic_curve::pkcs8::{EncodePrivateKey, SecretDocument};
 pub struct SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     /// ECDSA signing keys are non-zero elements of a given curve's scalar field.
@@ -80,7 +80,7 @@ where
 impl<C> SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     /// Generate a cryptographically random [`SigningKey`].
@@ -137,7 +137,7 @@ impl<C, D> DigestSigner<D, Signature<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     D: Digest + FixedOutput,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     fn try_sign_digest(&self, msg_digest: D) -> Result<Signature<C>> {
@@ -152,15 +152,12 @@ where
 impl<C> PrehashSigner<Signature<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     fn sign_prehash(&self, prehash: &[u8]) -> Result<Signature<C>> {
         let z = bits2field::<C>(prehash)?;
-        Ok(self
-            .secret_scalar
-            .try_sign_prehashed_rfc6979::<C::Digest>(&z, &[])?
-            .0)
+        Ok(sign_prehashed_rfc6979::<C, C::Digest>(self.secret_scalar.as_ref(), &z, &[])?.0)
     }
 }
 
@@ -171,7 +168,7 @@ where
 impl<C> Signer<Signature<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     fn try_sign(&self, msg: &[u8]) -> Result<Signature<C>> {
@@ -183,7 +180,7 @@ impl<C, D> RandomizedDigestSigner<D, Signature<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     D: Digest + FixedOutput,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     fn try_sign_digest_with_rng(
@@ -198,7 +195,7 @@ where
 impl<C> RandomizedPrehashSigner<Signature<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     fn sign_prehash_with_rng(
@@ -209,10 +206,7 @@ where
         let z = bits2field::<C>(prehash)?;
         let mut ad = FieldBytes::<C>::default();
         rng.fill_bytes(&mut ad);
-        Ok(self
-            .secret_scalar
-            .try_sign_prehashed_rfc6979::<C::Digest>(&z, &ad)?
-            .0)
+        Ok(sign_prehashed_rfc6979::<C, C::Digest>(self.secret_scalar.as_ref(), &z, &ad)?.0)
     }
 }
 
@@ -220,7 +214,7 @@ impl<C> RandomizedSigner<Signature<C>> for SigningKey<C>
 where
     Self: RandomizedDigestSigner<C::Digest, Signature<C>>,
     C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     fn try_sign_with_rng(&self, rng: &mut impl CryptoRngCore, msg: &[u8]) -> Result<Signature<C>> {
@@ -232,7 +226,7 @@ impl<C, D> DigestSigner<D, SignatureWithOid<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     D: AssociatedOid + Digest + FixedOutput,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     fn try_sign_digest(&self, msg_digest: D) -> Result<SignatureWithOid<C>> {
@@ -246,7 +240,7 @@ impl<C> Signer<SignatureWithOid<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     C::Digest: AssociatedOid,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     fn try_sign(&self, msg: &[u8]) -> Result<SignatureWithOid<C>> {
@@ -258,7 +252,7 @@ where
 impl<C> PrehashSigner<der::Signature<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
@@ -272,7 +266,7 @@ where
 impl<C> Signer<der::Signature<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
@@ -287,7 +281,7 @@ impl<C, D> RandomizedDigestSigner<D, der::Signature<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     D: Digest + FixedOutput,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
@@ -306,7 +300,7 @@ where
 impl<C> RandomizedPrehashSigner<der::Signature<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
@@ -325,7 +319,7 @@ where
 impl<C> RandomizedSigner<der::Signature<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
@@ -347,7 +341,7 @@ where
 impl<C> AsRef<VerifyingKey<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     fn as_ref(&self) -> &VerifyingKey<C> {
@@ -358,7 +352,7 @@ where
 impl<C> ConstantTimeEq for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     fn ct_eq(&self, other: &Self) -> Choice {
@@ -369,7 +363,7 @@ where
 impl<C> Debug for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -380,7 +374,7 @@ where
 impl<C> Drop for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     fn drop(&mut self) {
@@ -392,14 +386,14 @@ where
 impl<C> Eq for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
 }
 impl<C> PartialEq for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     fn eq(&self, other: &SigningKey<C>) -> bool {
@@ -410,7 +404,7 @@ where
 impl<C> From<NonZeroScalar<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     fn from(secret_scalar: NonZeroScalar<C>) -> Self {
@@ -428,7 +422,7 @@ where
 impl<C> From<SecretKey<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     fn from(secret_key: SecretKey<C>) -> Self {
@@ -439,7 +433,7 @@ where
 impl<C> From<&SecretKey<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     fn from(secret_key: &SecretKey<C>) -> Self {
@@ -450,7 +444,7 @@ where
 impl<C> From<SigningKey<C>> for SecretKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     fn from(key: SigningKey<C>) -> Self {
@@ -461,7 +455,7 @@ where
 impl<C> From<&SigningKey<C>> for SecretKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     fn from(secret_key: &SigningKey<C>) -> Self {
@@ -472,7 +466,7 @@ where
 impl<C> TryFrom<&[u8]> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     type Error = Error;
@@ -485,7 +479,7 @@ where
 impl<C> ZeroizeOnDrop for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
 }
@@ -494,7 +488,7 @@ where
 impl<C> From<SigningKey<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     fn from(signing_key: SigningKey<C>) -> VerifyingKey<C> {
@@ -506,7 +500,7 @@ where
 impl<C> From<&SigningKey<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     fn from(signing_key: &SigningKey<C>) -> VerifyingKey<C> {
@@ -518,7 +512,7 @@ where
 impl<C> KeypairRef for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     type VerifyingKey = VerifyingKey<C>;
@@ -528,7 +522,7 @@ where
 impl<C> AssociatedAlgorithmIdentifier for SigningKey<C>
 where
     C: EcdsaCurve + AssociatedOid + CurveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     type Params = ObjectIdentifier;
@@ -541,7 +535,7 @@ where
 impl<C> SignatureAlgorithmIdentifier for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
     Signature<C>: AssociatedAlgorithmIdentifier<Params = AnyRef<'static>>,
 {
@@ -557,7 +551,7 @@ where
     C: EcdsaCurve + AssociatedOid + CurveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     type Error = pkcs8::Error;
@@ -573,7 +567,7 @@ where
     C: EcdsaCurve + AssociatedOid + CurveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     fn to_pkcs8_der(&self) -> pkcs8::Result<SecretDocument> {
@@ -587,7 +581,7 @@ where
     C: EcdsaCurve + AssociatedOid + CurveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     type Err = Error;
