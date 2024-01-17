@@ -595,6 +595,27 @@ where
         Self::new_with_digest::<D>(Signature::<C>::from_slice(slice)?)
     }
 
+    /// Parse a signature from ASN.1 DER and associate the given digest's OID with it.
+    #[cfg(feature = "der")]
+    pub fn from_der_with_digest<D>(der_bytes: &[u8]) -> Result<Self>
+    where
+        D: AssociatedOid + Digest,
+        der::MaxSize<C>: ArraySize,
+        <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
+    {
+        Self::new_with_digest::<D>(Signature::<C>::from_der(der_bytes)?)
+    }
+
+    /// Parse a signature from ASN.1 DER and associate the given OID with it.
+    #[cfg(feature = "der")]
+    pub fn from_der_with_oid(der_bytes: &[u8], oid: ObjectIdentifier) -> Result<Self>
+    where
+        der::MaxSize<C>: ArraySize,
+        <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
+    {
+        Self::new(Signature::<C>::from_der(der_bytes)?, oid)
+    }
+
     /// Get the fixed-width ECDSA signature.
     pub fn signature(&self) -> &Signature<C> {
         &self.signature
@@ -605,12 +626,26 @@ where
         self.oid
     }
 
-    /// Serialize this signature as bytes.
+    /// Serialize this signature as fixed-width bytes.
     pub fn to_bytes(&self) -> SignatureBytes<C>
     where
         SignatureSize<C>: ArraySize,
     {
         self.signature.to_bytes()
+    }
+
+    /// Serialize this signature as ASN.1 DER.
+    ///
+    /// Note that this includes only the `r` and `s` signature components, and not the OID.
+    ///
+    /// See [`der::Signature`] documentation for more information.
+    #[cfg(feature = "der")]
+    pub fn to_der(&self) -> der::Signature<C>
+    where
+        der::MaxSize<C>: ArraySize,
+        <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
+    {
+        self.signature.clone().into()
     }
 }
 
@@ -641,6 +676,30 @@ where
 {
     fn from(signature: SignatureWithOid<C>) -> SignatureBytes<C> {
         signature.to_bytes()
+    }
+}
+
+#[cfg(all(feature = "der", feature = "digest"))]
+impl<C> From<SignatureWithOid<C>> for der::Signature<C>
+where
+    C: PrimeCurve,
+    der::MaxSize<C>: ArraySize,
+    <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
+{
+    fn from(sig: SignatureWithOid<C>) -> der::Signature<C> {
+        sig.to_der()
+    }
+}
+
+#[cfg(all(feature = "der", feature = "digest"))]
+impl<C> From<&SignatureWithOid<C>> for der::Signature<C>
+where
+    C: PrimeCurve,
+    der::MaxSize<C>: ArraySize,
+    <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
+{
+    fn from(sig: &SignatureWithOid<C>) -> der::Signature<C> {
+        sig.to_der()
     }
 }
 
