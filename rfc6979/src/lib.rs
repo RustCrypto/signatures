@@ -37,7 +37,7 @@
 //! assert_eq!(k.as_slice(), &RFC6979_EXPECTED_K);
 //! ```
 
-mod ct_cmp;
+mod ct;
 
 pub use hmac::digest::array::typenum::consts;
 
@@ -55,13 +55,13 @@ use hmac::{
 /// Accepts the following parameters and inputs:
 ///
 /// - `x`: secret key
-/// - `n`: field modulus
+/// - `q`: field modulus
 /// - `h`: hash/digest of input message: must be reduced modulo `n` in advance
 /// - `data`: additional associated data, e.g. CSRNG output used as added entropy
 #[inline]
 pub fn generate_k<D, N>(
     x: &Array<u8, N>,
-    n: &Array<u8, N>,
+    q: &Array<u8, N>,
     h: &Array<u8, N>,
     data: &[u8],
 ) -> Array<u8, N>
@@ -69,39 +69,20 @@ where
     D: Digest + BlockSizeUser + FixedOutput + FixedOutputReset,
     N: ArraySize,
 {
+    let shift = ct::leading_zeros(q);
     let mut k = Array::default();
-    generate_k_mut::<D>(x, n, h, data, &mut k);
-    k
-}
-
-/// Deterministically generate ephemeral scalar `k` by writing it into the provided output buffer.
-///
-/// This is an API which accepts dynamically sized inputs intended for use cases where the sizes
-/// are determined at runtime, such as the legacy Digital Signature Algorithm (DSA).
-///
-/// Accepts the following parameters and inputs:
-///
-/// - `x`: secret key
-/// - `n`: field modulus
-/// - `h`: hash/digest of input message: must be reduced modulo `n` in advance
-/// - `data`: additional associated data, e.g. CSRNG output used as added entropy
-#[inline]
-pub fn generate_k_mut<D>(x: &[u8], n: &[u8], h: &[u8], data: &[u8], k: &mut [u8])
-where
-    D: Digest + BlockSizeUser + FixedOutput + FixedOutputReset,
-{
-    assert_eq!(k.len(), x.len());
-    assert_eq!(k.len(), n.len());
-    assert_eq!(k.len(), h.len());
-
     let mut hmac_drbg = HmacDrbg::<D>::new(x, h, data);
 
     loop {
-        hmac_drbg.fill_bytes(k);
+        hmac_drbg.fill_bytes(&mut k);
 
-        let k_is_zero = ct_cmp::ct_is_zero(k);
-        if (!k_is_zero & ct_cmp::ct_lt(k, n)).into() {
-            return;
+        if shift != 0 {
+            ct::rshift(&mut k, shift);
+        }
+
+        let k_is_zero = ct::is_zero(&k);
+        if (!k_is_zero & ct::lt(&k, q)).into() {
+            return k;
         }
     }
 }
@@ -154,10 +135,19 @@ where
 
     /// Write the next `HMAC_DRBG` output to the given byte slice.
     pub fn fill_bytes(&mut self, out: &mut [u8]) {
-        for out_chunk in out.chunks_mut(self.v.len()) {
+        let mut out_chunks = out.chunks_exact_mut(self.v.len());
+
+        for out_chunk in &mut out_chunks {
             self.k.update(&self.v);
             self.v = self.k.finalize_reset().into_bytes();
             out_chunk.copy_from_slice(&self.v[..out_chunk.len()]);
+        }
+
+        let out_remainder = out_chunks.into_remainder();
+        if !out_remainder.is_empty() {
+            self.k.update(&self.v);
+            self.v = self.k.finalize_reset().into_bytes();
+            out_remainder.copy_from_slice(&self.v[..out_remainder.len()]);
         }
 
         self.k.update(&self.v);
@@ -166,5 +156,29 @@ where
             SimpleHmac::new_from_slice(&self.k.finalize_reset().into_bytes()).expect("HMAC error");
         self.k.update(&self.v);
         self.v = self.k.finalize_reset().into_bytes();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{consts::U21, generate_k};
+    use hex_literal::hex;
+    use sha2::Sha256;
+
+    /// "Detailed Example" from RFC6979 Appendix A.1.
+    ///
+    /// Example for ECDSA on the curve K-163 described in FIPS 186-4 (also known as
+    /// "ansix9t163k1" in X9.62), defined over a field GF(2^163)
+    #[test]
+    fn k163_sha256() {
+        let q = hex!("04000000000000000000020108A2E0CC0D99F8A5EF");
+        let x = hex!("009A4D6792295A7F730FC3F2B49CBC0F62E862272F");
+
+        // Note: SHA-256 digest of "sample" with the output run through `bits2octets` transform
+        let h2 = hex!("01795EDF0D54DB760F156D0DAC04C0322B3A204224");
+
+        let aad = b"";
+        let k = generate_k::<Sha256, U21>(&x.into(), &q.into(), &h2.into(), aad);
+        assert_eq!(k, hex!("023AF4074C90A02B3FE61D286D5C87F425E6BDD81B"));
     }
 }
