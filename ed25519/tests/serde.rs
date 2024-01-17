@@ -13,7 +13,6 @@ const EXAMPLE_SIGNATURE: SignatureBytes = hex!(
 #[test]
 fn test_serialize() {
     let signature = Signature::try_from(&EXAMPLE_SIGNATURE[..]).unwrap();
-    dbg!(&signature);
     let encoded_signature: Vec<u8> = bincode::serialize(&signature).unwrap();
     assert_eq!(&EXAMPLE_SIGNATURE[..], &encoded_signature[..]);
 }

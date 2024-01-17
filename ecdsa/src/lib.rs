@@ -57,7 +57,6 @@
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
-mod normalized;
 mod recovery;
 
 #[cfg(feature = "der")]
@@ -71,7 +70,7 @@ mod signing;
 #[cfg(feature = "verifying")]
 mod verifying;
 
-pub use crate::{normalized::NormalizedSignature, recovery::RecoveryId};
+pub use crate::recovery::RecoveryId;
 
 // Re-export the `elliptic-curve` crate (and select types)
 pub use elliptic_curve::{self, sec1::EncodedPoint, PrimeCurve};
@@ -205,14 +204,14 @@ pub type SignatureBytes<C> = Array<u8, SignatureSize<C>>;
 /// The serialization uses a hexadecimal encoding when used with
 /// "human readable" text formats, and a binary encoding otherwise.
 #[derive(Clone, Eq, PartialEq)]
-pub struct Signature<C: PrimeCurve> {
+pub struct Signature<C: EcdsaCurve> {
     r: ScalarPrimitive<C>,
     s: ScalarPrimitive<C>,
 }
 
 impl<C> Signature<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
     SignatureSize<C>: ArraySize,
 {
     /// Parse a signature from fixed-width bytes, i.e. 2 * the size of
@@ -301,7 +300,7 @@ where
 #[cfg(feature = "arithmetic")]
 impl<C> Signature<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     SignatureSize<C>: ArraySize,
 {
     /// Get the `r` component of this signature
@@ -333,7 +332,7 @@ where
 
 impl<C> Copy for Signature<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
     SignatureSize<C>: ArraySize,
     <SignatureSize<C> as ArraySize>::ArrayType<u8>: Copy,
 {
@@ -341,7 +340,7 @@ where
 
 impl<C> From<Signature<C>> for SignatureBytes<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
     SignatureSize<C>: ArraySize,
 {
     fn from(signature: Signature<C>) -> SignatureBytes<C> {
@@ -351,7 +350,7 @@ where
 
 impl<C> SignatureEncoding for Signature<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
     SignatureSize<C>: ArraySize,
 {
     type Repr = SignatureBytes<C>;
@@ -359,7 +358,7 @@ where
 
 impl<C> TryFrom<&[u8]> for Signature<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
     SignatureSize<C>: ArraySize,
 {
     type Error = Error;
@@ -371,7 +370,7 @@ where
 
 impl<C> fmt::Debug for Signature<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
     SignatureSize<C>: ArraySize,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -387,7 +386,7 @@ where
 
 impl<C> fmt::Display for Signature<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
     SignatureSize<C>: ArraySize,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -397,7 +396,7 @@ where
 
 impl<C> fmt::LowerHex for Signature<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
     SignatureSize<C>: ArraySize,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -410,7 +409,7 @@ where
 
 impl<C> fmt::UpperHex for Signature<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
     SignatureSize<C>: ArraySize,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -424,7 +423,7 @@ where
 #[cfg(feature = "arithmetic")]
 impl<C> str::FromStr for Signature<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     SignatureSize<C>: ArraySize,
 {
     type Err = Error;
@@ -479,7 +478,7 @@ where
 #[cfg(feature = "pkcs8")]
 impl<C> AssociatedAlgorithmIdentifier for Signature<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
     Self: AssociatedOid,
 {
     type Params = AnyRef<'static>;
@@ -493,7 +492,7 @@ where
 #[cfg(feature = "serde")]
 impl<C> Serialize for Signature<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
     SignatureSize<C>: ArraySize,
 {
     fn serialize<S>(&self, serializer: S) -> core::result::Result<S::Ok, S::Error>
@@ -507,7 +506,7 @@ where
 #[cfg(feature = "serde")]
 impl<'de, C> Deserialize<'de> for Signature<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
     SignatureSize<C>: ArraySize,
 {
     fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
@@ -534,7 +533,7 @@ where
 /// [RFC5758 § 3.2]: https://www.rfc-editor.org/rfc/rfc5758#section-3.2
 #[cfg(feature = "digest")]
 #[derive(Clone, Eq, PartialEq)]
-pub struct SignatureWithOid<C: PrimeCurve> {
+pub struct SignatureWithOid<C: EcdsaCurve> {
     /// Inner signature type.
     signature: Signature<C>,
 
@@ -549,7 +548,7 @@ pub struct SignatureWithOid<C: PrimeCurve> {
 #[cfg(feature = "digest")]
 impl<C> SignatureWithOid<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
 {
     /// Create a new signature with an explicitly provided OID.
     ///
@@ -660,7 +659,7 @@ where
 #[cfg(feature = "digest")]
 impl<C> Copy for SignatureWithOid<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
     SignatureSize<C>: ArraySize,
     <SignatureSize<C> as ArraySize>::ArrayType<u8>: Copy,
 {
@@ -669,7 +668,7 @@ where
 #[cfg(feature = "digest")]
 impl<C> From<SignatureWithOid<C>> for Signature<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
 {
     fn from(sig: SignatureWithOid<C>) -> Signature<C> {
         sig.signature
@@ -679,7 +678,7 @@ where
 #[cfg(feature = "digest")]
 impl<C> From<SignatureWithOid<C>> for SignatureBytes<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
     SignatureSize<C>: ArraySize,
 {
     fn from(signature: SignatureWithOid<C>) -> SignatureBytes<C> {
@@ -690,7 +689,7 @@ where
 #[cfg(all(feature = "der", feature = "digest"))]
 impl<C> From<SignatureWithOid<C>> for der::Signature<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
 {
@@ -702,7 +701,7 @@ where
 #[cfg(all(feature = "der", feature = "digest"))]
 impl<C> From<&SignatureWithOid<C>> for der::Signature<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
 {
@@ -748,7 +747,7 @@ where
 #[cfg(all(feature = "alloc", feature = "pkcs8"))]
 impl<C> DynAssociatedAlgorithmIdentifier for SignatureWithOid<C>
 where
-    C: PrimeCurve,
+    C: EcdsaCurve,
 {
     fn algorithm_identifier(&self) -> spki::Result<AlgorithmIdentifierOwned> {
         Ok(AlgorithmIdentifierOwned {

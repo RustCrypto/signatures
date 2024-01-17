@@ -3,7 +3,7 @@
 use crate::{
     ecdsa_oid_for_digest,
     hazmat::{bits2field, DigestPrimitive, SignPrimitive},
-    Error, Result, Signature, SignatureSize, SignatureWithOid,
+    EcdsaCurve, Error, Result, Signature, SignatureSize, SignatureWithOid,
 };
 use core::fmt::{self, Debug};
 use digest::{const_oid::AssociatedOid, Digest, FixedOutput};
@@ -13,7 +13,7 @@ use elliptic_curve::{
     ops::Invert,
     subtle::{Choice, ConstantTimeEq, CtOption},
     zeroize::{Zeroize, ZeroizeOnDrop},
-    CurveArithmetic, FieldBytes, NonZeroScalar, PrimeCurve, Scalar, SecretKey,
+    CurveArithmetic, FieldBytes, NonZeroScalar, Scalar, SecretKey,
 };
 use signature::{
     hazmat::{PrehashSigner, RandomizedPrehashSigner},
@@ -65,7 +65,7 @@ use elliptic_curve::pkcs8::{EncodePrivateKey, SecretDocument};
 #[derive(Clone)]
 pub struct SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
@@ -79,7 +79,7 @@ where
 
 impl<C> SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
@@ -135,7 +135,7 @@ where
 /// [RFC6979 § 3.2]: https://tools.ietf.org/html/rfc6979#section-3
 impl<C, D> DigestSigner<D, Signature<C>> for SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     D: Digest + FixedOutput,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
@@ -151,7 +151,7 @@ where
 /// [RFC6979 § 3.2]: https://tools.ietf.org/html/rfc6979#section-3
 impl<C> PrehashSigner<Signature<C>> for SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
@@ -170,7 +170,7 @@ where
 /// [RFC6979 § 3.2]: https://tools.ietf.org/html/rfc6979#section-3
 impl<C> Signer<Signature<C>> for SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
@@ -181,7 +181,7 @@ where
 
 impl<C, D> RandomizedDigestSigner<D, Signature<C>> for SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     D: Digest + FixedOutput,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
@@ -197,7 +197,7 @@ where
 
 impl<C> RandomizedPrehashSigner<Signature<C>> for SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
@@ -219,7 +219,7 @@ where
 impl<C> RandomizedSigner<Signature<C>> for SigningKey<C>
 where
     Self: RandomizedDigestSigner<C::Digest, Signature<C>>,
-    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
@@ -230,7 +230,7 @@ where
 
 impl<C, D> DigestSigner<D, SignatureWithOid<C>> for SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     D: AssociatedOid + Digest + FixedOutput,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
@@ -244,7 +244,7 @@ where
 
 impl<C> Signer<SignatureWithOid<C>> for SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     C::Digest: AssociatedOid,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
@@ -257,7 +257,7 @@ where
 #[cfg(feature = "der")]
 impl<C> PrehashSigner<der::Signature<C>> for SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,
@@ -271,7 +271,7 @@ where
 #[cfg(feature = "der")]
 impl<C> Signer<der::Signature<C>> for SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,
@@ -285,7 +285,7 @@ where
 #[cfg(feature = "der")]
 impl<C, D> RandomizedDigestSigner<D, der::Signature<C>> for SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     D: Digest + FixedOutput,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
@@ -305,7 +305,7 @@ where
 #[cfg(feature = "der")]
 impl<C> RandomizedPrehashSigner<der::Signature<C>> for SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,
@@ -324,7 +324,7 @@ where
 #[cfg(feature = "der")]
 impl<C> RandomizedSigner<der::Signature<C>> for SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,
@@ -346,7 +346,7 @@ where
 #[cfg(feature = "verifying")]
 impl<C> AsRef<VerifyingKey<C>> for SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
@@ -357,7 +357,7 @@ where
 
 impl<C> ConstantTimeEq for SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
@@ -368,7 +368,7 @@ where
 
 impl<C> Debug for SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
@@ -379,7 +379,7 @@ where
 
 impl<C> Drop for SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
@@ -391,14 +391,14 @@ where
 /// Constant-time comparison
 impl<C> Eq for SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
 }
 impl<C> PartialEq for SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
@@ -409,7 +409,7 @@ where
 
 impl<C> From<NonZeroScalar<C>> for SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
@@ -427,7 +427,7 @@ where
 
 impl<C> From<SecretKey<C>> for SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
@@ -438,7 +438,7 @@ where
 
 impl<C> From<&SecretKey<C>> for SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
@@ -449,7 +449,7 @@ where
 
 impl<C> From<SigningKey<C>> for SecretKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
@@ -460,7 +460,7 @@ where
 
 impl<C> From<&SigningKey<C>> for SecretKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
@@ -471,7 +471,7 @@ where
 
 impl<C> TryFrom<&[u8]> for SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
@@ -484,7 +484,7 @@ where
 
 impl<C> ZeroizeOnDrop for SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
@@ -493,7 +493,7 @@ where
 #[cfg(feature = "verifying")]
 impl<C> From<SigningKey<C>> for VerifyingKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
@@ -505,7 +505,7 @@ where
 #[cfg(feature = "verifying")]
 impl<C> From<&SigningKey<C>> for VerifyingKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
@@ -517,7 +517,7 @@ where
 #[cfg(feature = "verifying")]
 impl<C> KeypairRef for SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
@@ -527,7 +527,7 @@ where
 #[cfg(feature = "pkcs8")]
 impl<C> AssociatedAlgorithmIdentifier for SigningKey<C>
 where
-    C: AssociatedOid + CurveArithmetic + PrimeCurve,
+    C: EcdsaCurve + AssociatedOid + CurveArithmetic,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
@@ -540,7 +540,7 @@ where
 #[cfg(feature = "pkcs8")]
 impl<C> SignatureAlgorithmIdentifier for SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
     Signature<C>: AssociatedAlgorithmIdentifier<Params = AnyRef<'static>>,
@@ -554,7 +554,7 @@ where
 #[cfg(feature = "pkcs8")]
 impl<C> TryFrom<pkcs8::PrivateKeyInfo<'_>> for SigningKey<C>
 where
-    C: PrimeCurve + AssociatedOid + CurveArithmetic,
+    C: EcdsaCurve + AssociatedOid + CurveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
@@ -570,7 +570,7 @@ where
 #[cfg(all(feature = "alloc", feature = "pkcs8"))]
 impl<C> EncodePrivateKey for SigningKey<C>
 where
-    C: AssociatedOid + PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + AssociatedOid + CurveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
@@ -584,7 +584,7 @@ where
 #[cfg(feature = "pem")]
 impl<C> FromStr for SigningKey<C>
 where
-    C: PrimeCurve + AssociatedOid + CurveArithmetic,
+    C: EcdsaCurve + AssociatedOid + CurveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,

@@ -3,6 +3,13 @@
 // TODO(tarcieri): implement full set of tests from ECDSA2VS
 // <https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/dss2/ecdsa2vs.pdf>
 
+use crate::EcdsaCurve;
+use elliptic_curve::dev::MockCurve;
+
+impl EcdsaCurve for MockCurve {
+    const NORMALIZE_S: bool = false;
+}
+
 /// ECDSA test vector
 pub struct TestVector {
     /// Private scalar

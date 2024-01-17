@@ -26,9 +26,9 @@ use {
 use {
     crate::{
         hazmat::{bits2field, DigestPrimitive},
-        Signature, SignatureSize,
+        EcdsaCurve, Signature, SignatureSize,
     },
-    elliptic_curve::{array::ArraySize, ops::Invert, CurveArithmetic, PrimeCurve, Scalar},
+    elliptic_curve::{array::ArraySize, ops::Invert, CurveArithmetic, Scalar},
     signature::digest::Digest,
 };
 
@@ -96,7 +96,7 @@ impl RecoveryId {
         signature: &Signature<C>,
     ) -> Result<Self>
     where
-        C: DigestPrimitive + PrimeCurve + CurveArithmetic,
+        C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
         AffinePoint<C>:
             DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C> + VerifyPrimitive<C>,
         FieldBytesSize<C>: sec1::ModulusSize,
@@ -114,7 +114,7 @@ impl RecoveryId {
         signature: &Signature<C>,
     ) -> Result<Self>
     where
-        C: PrimeCurve + CurveArithmetic,
+        C: EcdsaCurve + CurveArithmetic,
         D: Digest,
         AffinePoint<C>:
             DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C> + VerifyPrimitive<C>,
@@ -133,7 +133,7 @@ impl RecoveryId {
         signature: &Signature<C>,
     ) -> Result<Self>
     where
-        C: PrimeCurve + CurveArithmetic,
+        C: EcdsaCurve + CurveArithmetic,
         AffinePoint<C>:
             DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C> + VerifyPrimitive<C>,
         FieldBytesSize<C>: sec1::ModulusSize,
@@ -170,7 +170,7 @@ impl From<RecoveryId> for u8 {
 #[cfg(feature = "signing")]
 impl<C> SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
@@ -202,7 +202,7 @@ where
 #[cfg(feature = "signing")]
 impl<C, D> DigestSigner<D, (Signature<C>, RecoveryId)> for SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     D: Digest,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
@@ -215,7 +215,7 @@ where
 #[cfg(feature = "signing")]
 impl<C> PrehashSigner<(Signature<C>, RecoveryId)> for SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
@@ -227,7 +227,7 @@ where
 #[cfg(feature = "signing")]
 impl<C> Signer<(Signature<C>, RecoveryId)> for SigningKey<C>
 where
-    C: PrimeCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
     SignatureSize<C>: ArraySize,
 {
@@ -239,7 +239,7 @@ where
 #[cfg(feature = "verifying")]
 impl<C> VerifyingKey<C>
 where
-    C: PrimeCurve + CurveArithmetic,
+    C: EcdsaCurve + CurveArithmetic,
     AffinePoint<C>:
         DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C> + VerifyPrimitive<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
