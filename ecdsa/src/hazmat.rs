@@ -44,7 +44,6 @@ use elliptic_curve::{FieldBytesEncoding, ScalarPrimitive};
 use crate::{elliptic_curve::array::ArraySize, Signature};
 
 /// Marker trait for elliptic curves intended for use with ECDSA.
-#[cfg(feature = "arithmetic")]
 pub trait EcdsaCurve: PrimeCurve {
     /// Does this curve use low-S normalized signatures?
     ///
