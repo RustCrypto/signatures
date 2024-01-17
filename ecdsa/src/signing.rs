@@ -25,10 +25,7 @@ use signature::{
 use {crate::der, core::ops::Add, elliptic_curve::FieldBytesSize};
 
 #[cfg(feature = "pem")]
-use {
-    core::str::FromStr,
-    elliptic_curve::pkcs8::{DecodePrivateKey, EncodePrivateKey, SecretDocument},
-};
+use {core::str::FromStr, elliptic_curve::pkcs8::DecodePrivateKey};
 
 #[cfg(feature = "pkcs8")]
 use crate::elliptic_curve::{
@@ -44,6 +41,9 @@ use crate::elliptic_curve::{
 
 #[cfg(feature = "verifying")]
 use {crate::VerifyingKey, elliptic_curve::PublicKey, signature::KeypairRef};
+
+#[cfg(all(feature = "alloc", feature = "pkcs8"))]
+use elliptic_curve::pkcs8::{EncodePrivateKey, SecretDocument};
 
 /// ECDSA secret key used for signing. Generic over prime order elliptic curves
 /// (e.g. NIST P-curves)
@@ -567,7 +567,7 @@ where
     }
 }
 
-#[cfg(feature = "pem")]
+#[cfg(all(feature = "alloc", feature = "pkcs8"))]
 impl<C> EncodePrivateKey for SigningKey<C>
 where
     C: AssociatedOid + PrimeCurve + CurveArithmetic,
