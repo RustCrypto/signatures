@@ -96,7 +96,9 @@ use alloc::vec::Vec;
 #[cfg(feature = "arithmetic")]
 use {
     core::str,
-    elliptic_curve::{scalar::IsHigh, CurveArithmetic, NonZeroScalar},
+    elliptic_curve::{
+        scalar::IsHigh, subtle::ConditionallySelectable, CurveArithmetic, NonZeroScalar,
+    },
 };
 
 #[cfg(feature = "digest")]
@@ -313,16 +315,11 @@ where
     /// [BIP 0062: Dealing with Malleability][1].
     ///
     /// [1]: https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki
-    pub fn normalize_s(&self) -> Option<Self> {
-        let s = self.s();
-
-        if s.is_high().into() {
-            let mut result = self.clone();
-            result.s = ScalarPrimitive::from(-s);
-            Some(result)
-        } else {
-            None
-        }
+    pub fn normalize_s(&self) -> Self {
+        let mut result = self.clone();
+        let s_inv = ScalarPrimitive::from(-self.s());
+        result.s.conditional_assign(&s_inv, self.s.is_high());
+        result
     }
 }
 
