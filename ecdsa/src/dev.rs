@@ -43,14 +43,14 @@ macro_rules! new_signing_test {
                 array::{typenum::Unsigned, Array},
                 bigint::Encoding,
                 group::ff::PrimeField,
-                Curve, CurveArithmetic, Scalar,
+                Curve, CurveArithmetic, FieldBytes, Scalar,
             },
-            hazmat::SignPrimitive,
+            hazmat::sign_prehashed,
         };
 
         fn decode_scalar(bytes: &[u8]) -> Option<Scalar<$curve>> {
             if bytes.len() == <$curve as Curve>::FieldBytesSize::USIZE {
-                Scalar::<$curve>::from_repr(Array::clone_from_slice(bytes)).into()
+                Scalar::<$curve>::from_repr(bytes.try_into().unwrap()).into()
             } else {
                 None
             }
@@ -67,8 +67,10 @@ macro_rules! new_signing_test {
                     vector.m.len(),
                     "invalid vector.m (must be field-sized digest)"
                 );
-                let z = Array::clone_from_slice(vector.m);
-                let sig = d.try_sign_prehashed(k, &z).expect("ECDSA sign failed").0;
+                let z = FieldBytes::<$curve>::try_from(vector.m).unwrap();
+                let sig = sign_prehashed::<$curve>(&d, &k, &z)
+                    .expect("ECDSA sign failed")
+                    .0;
 
                 assert_eq!(vector.r, sig.r().to_bytes().as_slice());
                 assert_eq!(vector.s, sig.s().to_bytes().as_slice());
@@ -88,8 +90,8 @@ macro_rules! new_verification_test {
                 sec1::{EncodedPoint, FromEncodedPoint},
                 AffinePoint, CurveArithmetic, Scalar,
             },
-            hazmat::VerifyPrimitive,
-            Signature,
+            signature::hazmat::PrehashVerifier,
+            Signature, VerifyingKey,
         };
 
         #[test]
@@ -101,16 +103,15 @@ macro_rules! new_verification_test {
                     false,
                 );
 
-                let q = AffinePoint::<$curve>::from_encoded_point(&q_encoded).unwrap();
-                let z = Array::clone_from_slice(vector.m);
+                let q = VerifyingKey::<$curve>::from_encoded_point(&q_encoded).unwrap();
 
                 let sig = Signature::from_scalars(
-                    Array::clone_from_slice(vector.r),
-                    Array::clone_from_slice(vector.s),
+                    Array::try_from(vector.r).unwrap(),
+                    Array::try_from(vector.s).unwrap(),
                 )
                 .unwrap();
 
-                let result = q.verify_prehashed(&z, &sig);
+                let result = q.verify_prehash(vector.m, &sig);
                 assert!(result.is_ok());
             }
         }
@@ -124,17 +125,15 @@ macro_rules! new_verification_test {
                     false,
                 );
 
-                let q = AffinePoint::<$curve>::from_encoded_point(&q_encoded).unwrap();
-                let z = Array::clone_from_slice(vector.m);
+                let q = VerifyingKey::<$curve>::from_encoded_point(&q_encoded).unwrap();
+                let r = Array::try_from(vector.r).unwrap();
 
                 // Flip a bit in `s`
-                let mut s_tweaked = Array::clone_from_slice(vector.s);
+                let mut s_tweaked = Array::try_from(vector.s).unwrap();
                 s_tweaked[0] ^= 1;
 
-                let sig =
-                    Signature::from_scalars(Array::clone_from_slice(vector.r), s_tweaked).unwrap();
-
-                let result = q.verify_prehashed(&z, &sig);
+                let sig = Signature::from_scalars(r, s_tweaked).unwrap();
+                let result = q.verify_prehash(vector.m, &sig);
                 assert!(result.is_err());
             }
         }
@@ -169,7 +168,7 @@ macro_rules! new_wycheproof_test {
                     for v in data.iter().take(offset) {
                         assert_eq!(*v, 0, "EcdsaVerifier: point too large");
                     }
-                    elliptic_curve::FieldBytes::<C>::clone_from_slice(&data[offset..])
+                    elliptic_curve::FieldBytes::<C>::try_from(&data[offset..]).unwrap()
                 } else {
                     // Provided slice is too short and needs to be padded with zeros
                     // on the left.  Build a combined exact iterator to do this.

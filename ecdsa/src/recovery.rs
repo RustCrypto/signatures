@@ -4,14 +4,14 @@ use crate::{Error, Result};
 
 #[cfg(feature = "signing")]
 use {
-    crate::{hazmat::SignPrimitive, SigningKey},
+    crate::{hazmat::sign_prehashed_rfc6979, SigningKey},
     elliptic_curve::subtle::CtOption,
     signature::{hazmat::PrehashSigner, DigestSigner, Signer},
 };
 
 #[cfg(feature = "verifying")]
 use {
-    crate::{hazmat::VerifyPrimitive, VerifyingKey},
+    crate::{hazmat::verify_prehashed, VerifyingKey},
     elliptic_curve::{
         bigint::CheckedAdd,
         ops::{LinearCombination, Reduce},
@@ -19,7 +19,6 @@ use {
         sec1::{self, FromEncodedPoint, ToEncodedPoint},
         AffinePoint, FieldBytesEncoding, FieldBytesSize, Group, PrimeField, ProjectivePoint,
     },
-    signature::hazmat::PrehashVerifier,
 };
 
 #[cfg(any(feature = "signing", feature = "verifying"))]
@@ -46,7 +45,7 @@ use {
 /// - hi bit (3/4): did the affine x-coordinate of 𝑘×𝑮 overflow the order of
 ///   the scalar field, requiring a reduction when computing `r`?
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
-pub struct RecoveryId(u8);
+pub struct RecoveryId(pub(crate) u8);
 
 impl RecoveryId {
     /// Maximum supported value for the recovery ID (inclusive).
@@ -97,8 +96,7 @@ impl RecoveryId {
     ) -> Result<Self>
     where
         C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
-        AffinePoint<C>:
-            DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C> + VerifyPrimitive<C>,
+        AffinePoint<C>: DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C>,
         FieldBytesSize<C>: sec1::ModulusSize,
         SignatureSize<C>: ArraySize,
     {
@@ -116,8 +114,7 @@ impl RecoveryId {
     where
         C: EcdsaCurve + CurveArithmetic,
         D: Digest,
-        AffinePoint<C>:
-            DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C> + VerifyPrimitive<C>,
+        AffinePoint<C>: DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C>,
         FieldBytesSize<C>: sec1::ModulusSize,
         SignatureSize<C>: ArraySize,
     {
@@ -134,8 +131,7 @@ impl RecoveryId {
     ) -> Result<Self>
     where
         C: EcdsaCurve + CurveArithmetic,
-        AffinePoint<C>:
-            DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C> + VerifyPrimitive<C>,
+        AffinePoint<C>: DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C>,
         FieldBytesSize<C>: sec1::ModulusSize,
         SignatureSize<C>: ArraySize,
     {
@@ -171,17 +167,13 @@ impl From<RecoveryId> for u8 {
 impl<C> SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     /// Sign the given message prehash, returning a signature and recovery ID.
     pub fn sign_prehash_recoverable(&self, prehash: &[u8]) -> Result<(Signature<C>, RecoveryId)> {
         let z = bits2field::<C>(prehash)?;
-        let (sig, recid) = self
-            .as_nonzero_scalar()
-            .try_sign_prehashed_rfc6979::<C::Digest>(&z, &[])?;
-
-        Ok((sig, recid.ok_or_else(Error::new)?))
+        sign_prehashed_rfc6979::<C, C::Digest>(self.as_nonzero_scalar(), &z, &[])
     }
 
     /// Sign the given message digest, returning a signature and recovery ID.
@@ -204,7 +196,7 @@ impl<C, D> DigestSigner<D, (Signature<C>, RecoveryId)> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     D: Digest,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     fn try_sign_digest(&self, msg_digest: D) -> Result<(Signature<C>, RecoveryId)> {
@@ -216,7 +208,7 @@ where
 impl<C> PrehashSigner<(Signature<C>, RecoveryId)> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     fn sign_prehash(&self, prehash: &[u8]) -> Result<(Signature<C>, RecoveryId)> {
@@ -228,7 +220,7 @@ where
 impl<C> Signer<(Signature<C>, RecoveryId)> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>> + SignPrimitive<C>,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     fn try_sign(&self, msg: &[u8]) -> Result<(Signature<C>, RecoveryId)> {
@@ -240,8 +232,7 @@ where
 impl<C> VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    AffinePoint<C>:
-        DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C> + VerifyPrimitive<C>,
+    AffinePoint<C>: DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
     SignatureSize<C>: ArraySize,
 {
@@ -308,7 +299,11 @@ where
         let vk = Self::from_affine(pk.into())?;
 
         // Ensure signature verifies with the recovered key
-        vk.verify_prehash(prehash, signature)?;
+        verify_prehashed::<C>(
+            &ProjectivePoint::<C>::from(*vk.as_affine()),
+            &bits2field::<C>(prehash)?,
+            signature,
+        )?;
 
         Ok(vk)
     }
