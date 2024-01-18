@@ -56,7 +56,7 @@ use hmac::{
 ///
 /// - `x`: secret key
 /// - `q`: field modulus
-/// - `h`: hash/digest of input message: must be reduced modulo `n` in advance
+/// - `h`: hash/digest of input message: must be reduced modulo `q` in advance
 /// - `data`: additional associated data, e.g. CSRNG output used as added entropy
 #[inline]
 pub fn generate_k<D, N>(
@@ -69,20 +69,45 @@ where
     D: Digest + BlockSizeUser + FixedOutput + FixedOutputReset,
     N: ArraySize,
 {
-    let shift = ct::leading_zeros(q);
     let mut k = Array::default();
+    generate_k_mut::<D>(x, q, h, data, &mut k);
+    k
+}
+
+/// Deterministically generate ephemeral scalar `k` by writing it into the provided output buffer.
+///
+/// This is an API which accepts dynamically sized inputs intended for use cases where the sizes
+/// are determined at runtime, such as the legacy Digital Signature Algorithm (DSA).
+///
+/// Accepts the following parameters and inputs:
+///
+/// - `x`: secret key
+/// - `q`: field modulus
+/// - `h`: hash/digest of input message: must be reduced modulo `q` in advance
+/// - `data`: additional associated data, e.g. CSRNG output used as added entropy
+#[inline]
+pub fn generate_k_mut<D>(x: &[u8], q: &[u8], h: &[u8], data: &[u8], k: &mut [u8])
+where
+    D: Digest + BlockSizeUser + FixedOutput + FixedOutputReset,
+{
+    assert_eq!(k.len(), x.len());
+    assert_eq!(k.len(), q.len());
+    assert_eq!(k.len(), h.len());
+    debug_assert!(bool::from(ct::lt(h, q)));
+
+    let rlen = q.len() as u32 * 8;
+    let qlen = rlen - ct::leading_zeros(q);
     let mut hmac_drbg = HmacDrbg::<D>::new(x, h, data);
 
     loop {
-        hmac_drbg.fill_bytes(&mut k);
+        hmac_drbg.fill_bytes(k);
 
-        if shift != 0 {
-            ct::rshift(&mut k, shift);
+        if qlen != rlen {
+            ct::rshift(k, rlen - qlen);
         }
 
-        let k_is_zero = ct::is_zero(&k);
-        if (!k_is_zero & ct::lt(&k, q)).into() {
-            return k;
+        if (!ct::is_zero(k) & ct::lt(k, q)).into() {
+            return;
         }
     }
 }
