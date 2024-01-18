@@ -18,12 +18,12 @@ use elliptic_curve::{array::typenum::Unsigned, FieldBytes};
 use {
     crate::{RecoveryId, SignatureSize},
     elliptic_curve::{
-        ff::{Field, PrimeField},
+        ff::PrimeField,
         group::{Curve as _, Group},
         ops::{Invert, LinearCombination, MulByGenerator, Reduce},
         point::AffineCoordinates,
         scalar::IsHigh,
-        CurveArithmetic, ProjectivePoint, Scalar,
+        CurveArithmetic, NonZeroScalar, ProjectivePoint, Scalar,
     },
 };
 
@@ -121,23 +121,18 @@ pub fn bits2field<C: EcdsaCurve>(bits: &[u8]) -> Result<FieldBytes<C>> {
 #[cfg(feature = "arithmetic")]
 #[allow(non_snake_case)]
 pub fn sign_prehashed<C>(
-    d: &Scalar<C>,
-    k: &Scalar<C>,
+    d: &NonZeroScalar<C>,
+    k: &NonZeroScalar<C>,
     z: &FieldBytes<C>,
 ) -> Result<(Signature<C>, RecoveryId)>
 where
     C: EcdsaCurve + CurveArithmetic,
     SignatureSize<C>: ArraySize,
 {
-    // TODO(tarcieri): use `NonZeroScalar<C>` for `k`.
-    if k.is_zero().into() {
-        return Err(Error::new());
-    }
-
     let z = <Scalar<C> as Reduce<C::Uint>>::reduce_bytes(z);
 
     // Compute scalar inversion of 𝑘
-    let k_inv = Option::<Scalar<C>>::from(Invert::invert(k)).ok_or_else(Error::new)?;
+    let k_inv = k.invert();
 
     // Compute 𝑹 = 𝑘×𝑮
     let R = ProjectivePoint::<C>::mul_by_generator(k).to_affine();
@@ -148,7 +143,7 @@ where
     let x_is_reduced = r.to_repr() != R.x();
 
     // Compute 𝒔 as a signature over 𝒓 and 𝒛.
-    let s = k_inv * (z + (r * d));
+    let s = *k_inv * (z + (r * d.as_ref()));
 
     // NOTE: `Signature::from_scalars` checks that both `r` and `s` are non-zero.
     let mut signature = Signature::from_scalars(r, s)?;
@@ -174,7 +169,7 @@ where
 /// [RFC6979]: https://datatracker.ietf.org/doc/html/rfc6979
 #[cfg(feature = "rfc6979")]
 pub fn sign_prehashed_rfc6979<C, D>(
-    d: &Scalar<C>,
+    d: &NonZeroScalar<C>,
     z: &FieldBytes<C>,
     ad: &[u8],
 ) -> Result<(Signature<C>, RecoveryId)>
@@ -191,7 +186,7 @@ where
     // h = bits2int(H(m)) mod q
     let z2 = <Scalar<C> as Reduce<C::Uint>>::reduce_bytes(z);
 
-    let k = Scalar::<C>::from_repr(rfc6979::generate_k::<D, _>(
+    let k = NonZeroScalar::<C>::from_repr(rfc6979::generate_k::<D, _>(
         &d.to_repr(),
         &C::ORDER.encode_field_bytes(),
         &z2.to_repr(),
