@@ -43,14 +43,14 @@ macro_rules! new_signing_test {
                 array::{typenum::Unsigned, Array},
                 bigint::Encoding,
                 group::ff::PrimeField,
-                Curve, CurveArithmetic, FieldBytes, Scalar,
+                Curve, CurveArithmetic, FieldBytes, NonZeroScalar, Scalar,
             },
             hazmat::sign_prehashed,
         };
 
-        fn decode_scalar(bytes: &[u8]) -> Option<Scalar<$curve>> {
+        fn decode_scalar(bytes: &[u8]) -> Option<NonZeroScalar<$curve>> {
             if bytes.len() == <$curve as Curve>::FieldBytesSize::USIZE {
-                Scalar::<$curve>::from_repr(bytes.try_into().unwrap()).into()
+                NonZeroScalar::<$curve>::from_repr(bytes.try_into().unwrap()).into()
             } else {
                 None
             }

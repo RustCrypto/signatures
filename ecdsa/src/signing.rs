@@ -157,7 +157,7 @@ where
 {
     fn sign_prehash(&self, prehash: &[u8]) -> Result<Signature<C>> {
         let z = bits2field::<C>(prehash)?;
-        Ok(sign_prehashed_rfc6979::<C, C::Digest>(self.secret_scalar.as_ref(), &z, &[])?.0)
+        Ok(sign_prehashed_rfc6979::<C, C::Digest>(&self.secret_scalar, &z, &[])?.0)
     }
 }
 
@@ -206,7 +206,7 @@ where
         let z = bits2field::<C>(prehash)?;
         let mut ad = FieldBytes::<C>::default();
         rng.fill_bytes(&mut ad);
-        Ok(sign_prehashed_rfc6979::<C, C::Digest>(self.secret_scalar.as_ref(), &z, &ad)?.0)
+        Ok(sign_prehashed_rfc6979::<C, C::Digest>(&self.secret_scalar, &z, &ad)?.0)
     }
 }
 
