@@ -3,8 +3,7 @@
 //!
 
 use crate::{size::KeySize, two};
-use num_bigint::BigUint;
-use num_traits::Zero;
+use crypto_bigint::{BoxedUint, NonZero};
 use pkcs8::der::{
     self, asn1::UintRef, DecodeValue, Encode, EncodeValue, Header, Length, Reader, Sequence, Tag,
     Writer,
@@ -18,19 +17,23 @@ use signature::rand_core::CryptoRngCore;
 #[must_use]
 pub struct Components {
     /// Prime p
-    p: BigUint,
+    p: NonZero<BoxedUint>,
 
     /// Quotient q
-    q: BigUint,
+    q: NonZero<BoxedUint>,
 
     /// Generator g
-    g: BigUint,
+    g: NonZero<BoxedUint>,
 }
 
 impl Components {
     /// Construct the common components container from its inner values (p, q and g)
-    pub fn from_components(p: BigUint, q: BigUint, g: BigUint) -> signature::Result<Self> {
-        if p < two() || q < two() || g.is_zero() || g > p {
+    pub fn from_components(
+        p: NonZero<BoxedUint>,
+        q: NonZero<BoxedUint>,
+        g: NonZero<BoxedUint>,
+    ) -> signature::Result<Self> {
+        if *p < two() || *q < two() || g > p {
             return Err(signature::Error::new());
         }
 
@@ -45,19 +48,19 @@ impl Components {
 
     /// DSA prime p
     #[must_use]
-    pub const fn p(&self) -> &BigUint {
+    pub const fn p(&self) -> &NonZero<BoxedUint> {
         &self.p
     }
 
     /// DSA quotient q
     #[must_use]
-    pub const fn q(&self) -> &BigUint {
+    pub const fn q(&self) -> &NonZero<BoxedUint> {
         &self.q
     }
 
     /// DSA generator g
     #[must_use]
-    pub const fn g(&self) -> &BigUint {
+    pub const fn g(&self) -> &NonZero<BoxedUint> {
         &self.g
     }
 }
@@ -70,9 +73,13 @@ impl<'a> DecodeValue<'a> for Components {
         let q = reader.decode::<UintRef<'_>>()?;
         let g = reader.decode::<UintRef<'_>>()?;
 
-        let p = BigUint::from_bytes_be(p.as_bytes());
-        let q = BigUint::from_bytes_be(q.as_bytes());
-        let g = BigUint::from_bytes_be(g.as_bytes());
+        let p = BoxedUint::from_be_slice(p.as_bytes(), (p.as_bytes().len() * 8) as u32).unwrap();
+        let q = BoxedUint::from_be_slice(q.as_bytes(), (q.as_bytes().len() * 8) as u32).unwrap();
+        let g = BoxedUint::from_be_slice(g.as_bytes(), (g.as_bytes().len() * 8) as u32).unwrap();
+
+        let p = NonZero::new(p).unwrap();
+        let q = NonZero::new(q).unwrap();
+        let g = NonZero::new(g).unwrap();
 
         Self::from_components(p, q, g).map_err(|_| Tag::Integer.value_error())
     }
@@ -80,15 +87,15 @@ impl<'a> DecodeValue<'a> for Components {
 
 impl EncodeValue for Components {
     fn value_len(&self) -> der::Result<Length> {
-        UintRef::new(&self.p.to_bytes_be())?.encoded_len()?
-            + UintRef::new(&self.q.to_bytes_be())?.encoded_len()?
-            + UintRef::new(&self.g.to_bytes_be())?.encoded_len()?
+        UintRef::new(&self.p.to_be_bytes())?.encoded_len()?
+            + UintRef::new(&self.q.to_be_bytes())?.encoded_len()?
+            + UintRef::new(&self.g.to_be_bytes())?.encoded_len()?
     }
 
     fn encode_value(&self, writer: &mut impl Writer) -> der::Result<()> {
-        UintRef::new(&self.p.to_bytes_be())?.encode(writer)?;
-        UintRef::new(&self.q.to_bytes_be())?.encode(writer)?;
-        UintRef::new(&self.g.to_bytes_be())?.encode(writer)?;
+        UintRef::new(&self.p.to_be_bytes())?.encode(writer)?;
+        UintRef::new(&self.q.to_be_bytes())?.encode(writer)?;
+        UintRef::new(&self.g.to_be_bytes())?.encode(writer)?;
         Ok(())
     }
 }

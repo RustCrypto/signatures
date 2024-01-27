@@ -2,9 +2,11 @@
 // But we want to use those small key sizes for fast tests
 #![allow(deprecated)]
 
+use crypto_bigint::{
+    modular::{BoxedMontyForm, BoxedMontyParams},
+    BoxedUint, Odd,
+};
 use dsa::{Components, KeySize, SigningKey, VerifyingKey};
-use num_bigint::BigUint;
-use num_traits::One;
 use pkcs8::{DecodePublicKey, EncodePublicKey, LineEnding};
 
 const OPENSSL_PEM_PUBLIC_KEY: &str = include_str!("pems/public.pem");
@@ -44,6 +46,9 @@ fn validate_verifying_key() {
     let p = verifying_key.components().p();
     let q = verifying_key.components().q();
 
+    let params = BoxedMontyParams::new(Odd::new((**q).clone()).unwrap());
+    let form = BoxedMontyForm::new((**verifying_key.y()).clone(), params);
+
     // Taken from the parameter validation from bouncy castle
-    assert_eq!(verifying_key.y().modpow(q, p), BigUint::one());
+    assert_eq!(form.pow(p).to_montgomery(), BoxedUint::one());
 }

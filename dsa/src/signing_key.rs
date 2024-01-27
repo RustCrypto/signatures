@@ -7,9 +7,11 @@ use core::{
     cmp::min,
     fmt::{self, Debug},
 };
+use crypto_bigint::{
+    modular::{BoxedMontyForm, BoxedMontyParams},
+    BoxedUint, NonZero, Odd,
+};
 use digest::{core_api::BlockSizeUser, Digest, FixedOutputReset};
-use num_bigint::BigUint;
-use num_traits::Zero;
 use pkcs8::{
     der::{asn1::UintRef, AnyRef, Decode, Encode},
     AlgorithmIdentifierRef, EncodePrivateKey, PrivateKeyInfo, SecretDocument,
@@ -32,13 +34,16 @@ pub struct SigningKey {
     verifying_key: VerifyingKey,
 
     /// Private component x
-    x: Zeroizing<BigUint>,
+    x: Zeroizing<NonZero<BoxedUint>>,
 }
 
 impl SigningKey {
     /// Construct a new private key from the public key and private component
-    pub fn from_components(verifying_key: VerifyingKey, x: BigUint) -> signature::Result<Self> {
-        if x.is_zero() || x > *verifying_key.components().q() {
+    pub fn from_components(
+        verifying_key: VerifyingKey,
+        x: NonZero<BoxedUint>,
+    ) -> signature::Result<Self> {
+        if x > *verifying_key.components().q() {
             return Err(signature::Error::new());
         }
 
@@ -63,7 +68,7 @@ impl SigningKey {
     ///
     /// If you decide to clone this value, please consider using [`Zeroize::zeroize`](::zeroize::Zeroize::zeroize()) to zero out the memory after you're done using the clone
     #[must_use]
-    pub fn x(&self) -> &BigUint {
+    pub fn x(&self) -> &NonZero<BoxedUint> {
         &self.x
     }
 
@@ -82,24 +87,27 @@ impl SigningKey {
     /// Sign some pre-hashed data
     fn sign_prehashed(
         &self,
-        (k, inv_k): (BigUint, BigUint),
+        (k, inv_k): (BoxedUint, BoxedUint),
         hash: &[u8],
     ) -> signature::Result<Signature> {
         let components = self.verifying_key().components();
         let (p, q, g) = (components.p(), components.q(), components.g());
         let x = self.x();
 
-        let r = g.modpow(&k, p) % q;
+        let params = BoxedMontyParams::new(Odd::new(k).unwrap());
+        let form = BoxedMontyForm::new((**g).clone(), params);
+        let r = NonZero::new(form.pow(p).to_montgomery() % q).unwrap();
 
         let n = q.bits() / 8;
         let block_size = hash.len(); // Hash function output size
 
-        let z_len = min(n, block_size);
-        let z = BigUint::from_bytes_be(&hash[..z_len]);
+        let z_len = min(n as usize, block_size);
+        let z = BoxedUint::from_be_slice(&hash[..z_len], z_len as u32 * 8).unwrap();
 
-        let s = (inv_k * (z + x * &r)) % q;
+        let s = inv_k.mul_mod(&(z + &**x * &*r), q);
+        let s = NonZero::new(s).unwrap();
 
-        let signature = Signature::from_components(r, s)?;
+        let signature = Signature::from_components(r, s);
 
         if signature.r() < q && signature.s() < q {
             Ok(signature)
@@ -178,7 +186,7 @@ impl EncodePrivateKey for SigningKey {
             parameters: Some(parameters),
         };
 
-        let mut x_bytes = self.x().to_bytes_be();
+        let mut x_bytes = self.x().to_be_bytes();
         let x = UintRef::new(&x_bytes)?;
         let mut signing_key = x.to_der()?;
 
@@ -202,11 +210,15 @@ impl<'a> TryFrom<PrivateKeyInfo<'a>> for SigningKey {
         let components = parameters.decode_as::<Components>()?;
 
         let x = UintRef::from_der(value.private_key)?;
-        let x = BigUint::from_bytes_be(x.as_bytes());
+        let x = BoxedUint::from_be_slice(x.as_bytes(), x.as_bytes().len() as u32 * 8).unwrap();
+        let x = NonZero::new(x).unwrap();
 
         let y = if let Some(y_bytes) = value.public_key {
             let y = UintRef::from_der(y_bytes)?;
-            BigUint::from_bytes_be(y.as_bytes())
+            NonZero::new(
+                BoxedUint::from_be_slice(y.as_bytes(), y.as_bytes().len() as u32 * 8).unwrap(),
+            )
+            .unwrap()
         } else {
             crate::generate::public_component(&components, &x)
         };

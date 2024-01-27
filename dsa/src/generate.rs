@@ -1,6 +1,5 @@
 use crate::two;
-use num_bigint::{BigUint, RandPrime};
-use num_traits::Pow;
+use crypto_bigint::BoxedUint;
 use signature::rand_core::CryptoRngCore;
 
 mod components;
@@ -13,9 +12,9 @@ pub use self::secret_number::{secret_number, secret_number_rfc6979};
 
 /// Calculate the upper and lower bounds for generating values like p or q
 #[inline]
-fn calculate_bounds(size: u32) -> (BigUint, BigUint) {
-    let lower = two().pow(size - 1);
-    let upper = two().pow(size);
+fn calculate_bounds(size: u32) -> (BoxedUint, BoxedUint) {
+    let lower = two().shl(size - 1);
+    let upper = two().shl(size);
 
     (lower, upper)
 }
@@ -24,6 +23,6 @@ fn calculate_bounds(size: u32) -> (BigUint, BigUint) {
 ///
 /// This wrapper function mainly exists to enforce the [`CryptoRng`](rand::CryptoRng) requirement (I might otherwise forget it)
 #[inline]
-fn generate_prime(bit_length: usize, rng: &mut impl CryptoRngCore) -> BigUint {
-    rng.gen_prime(bit_length)
+fn generate_prime(bit_length: u32, rng: &mut impl CryptoRngCore) -> BoxedUint {
+    crypto_primes::generate_prime_with_rng(rng, bit_length, bit_length)
 }
