@@ -57,7 +57,7 @@ pub fn common(
     let g = loop {
         let params = BoxedMontyParams::new_vartime(Odd::new((*p).clone()).unwrap());
         let form = BoxedMontyForm::new(h.clone(), params);
-        let g = form.pow(&e).to_montgomery();
+        let g = form.pow(&e).retrieve();
 
         if !bool::from(g.is_one()) {
             break NonZero::new(g).unwrap();
@@ -78,5 +78,5 @@ pub fn public(components: &Components, x: &NonZero<BoxedUint>) -> NonZero<BoxedU
     let params = BoxedMontyParams::new_vartime(Odd::new((**p).clone()).unwrap());
     let form = BoxedMontyForm::new((**g).clone(), params);
 
-    NonZero::new(form.pow(x).to_montgomery()).unwrap()
+    NonZero::new(form.pow(x).retrieve()).unwrap()
 }
