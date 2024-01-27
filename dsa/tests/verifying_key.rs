@@ -58,5 +58,5 @@ fn validate_verifying_key() {
     let form = BoxedMontyForm::new((**verifying_key.y()).clone(), params);
 
     // Taken from the parameter validation from bouncy castle
-    assert_eq!(form.pow(p).to_montgomery(), BoxedUint::one());
+    assert_eq!(form.pow(p).retrieve(), BoxedUint::one());
 }
