@@ -3,10 +3,12 @@
 // But we want to use those small key sizes for fast tests
 #![allow(deprecated)]
 
+use crypto_bigint::{
+    modular::{BoxedMontyForm, BoxedMontyParams},
+    BoxedUint, Odd,
+};
 use digest::Digest;
 use dsa::{Components, KeySize, SigningKey};
-use num_bigint::BigUint;
-use num_traits::Zero;
 use pkcs8::{DecodePrivateKey, EncodePrivateKey, LineEnding};
 use sha1::Sha1;
 use signature::{DigestVerifier, RandomizedDigestSigner};
@@ -60,13 +62,16 @@ fn verify_validity() {
     let signing_key = generate_keypair();
     let components = signing_key.verifying_key().components();
 
+    let params = BoxedMontyParams::new(Odd::new((**signing_key.x()).clone()).unwrap());
+    let form = BoxedMontyForm::new((**components.g()).clone(), params);
+
     assert!(
-        BigUint::zero() < *signing_key.x() && signing_key.x() < components.q(),
+        BoxedUint::zero() < **signing_key.x() && signing_key.x() < components.q(),
         "Requirement 0<x<q not met"
     );
     assert_eq!(
-        *signing_key.verifying_key().y(),
-        components.g().modpow(signing_key.x(), components.p()),
+        **signing_key.verifying_key().y(),
+        form.pow(signing_key.x()).to_montgomery(),
         "Requirement y=(g^x)%p not met"
     );
 }
