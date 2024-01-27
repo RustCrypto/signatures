@@ -26,6 +26,7 @@ signature = { version = "=3.0.0-pre", default-features = false, features = ["all
 zeroize = { version = "1", default-features = false }
 
 [dev-dependencies]
+hex = "0.4.3"
 pkcs8 = { version = "0.11.0-rc.1", default-features = false, features = ["pem"] }
 rand = "0.8"
 rand_chacha = "0.3"
