@@ -1,7 +1,6 @@
+use crypto_bigint::{BoxedUint, NonZero};
 use digest::{core_api::BlockSizeUser, Digest, FixedOutputReset};
 use dsa::{Components, Signature, SigningKey, VerifyingKey};
-use num_bigint::BigUint;
-use num_traits::Num;
 use sha1::Sha1;
 use sha2::{Sha224, Sha256, Sha384, Sha512};
 use signature::DigestSigner;
@@ -10,33 +9,37 @@ const MESSAGE: &[u8] = b"sample";
 const MESSAGE_2: &[u8] = b"test";
 
 fn dsa_1024_signing_key() -> SigningKey {
-    let p = BigUint::from_str_radix(
-        "86F5CA03DCFEB225063FF830A0C769B9DD9D6153AD91D7CE27F787C43278B447\
+    let p_str = "86F5CA03DCFEB225063FF830A0C769B9DD9D6153AD91D7CE27F787C43278B447\
                 E6533B86B18BED6E8A48B784A14C252C5BE0DBF60B86D6385BD2F12FB763ED88\
                 73ABFD3F5BA2E0A8C0A59082EAC056935E529DAF7C610467899C77ADEDFC846C\
-                881870B7B19B2B58F9BE0521A17002E3BDD6B86685EE90B3D9A1B02B782B1779",
-        16,
-    )
-    .unwrap();
-    let q = BigUint::from_str_radix("996F967F6C8E388D9E28D01E205FBA957A5698B1", 16).unwrap();
-    let g = BigUint::from_str_radix(
-        "07B0F92546150B62514BB771E2A0C0CE387F03BDA6C56B505209FF25FD3C133D\
+                881870B7B19B2B58F9BE0521A17002E3BDD6B86685EE90B3D9A1B02B782B1779";
+    let p = BoxedUint::from_be_hex(p_str, p_str.len() as u32 * 8 / 2).unwrap();
+
+    let q_str = "996F967F6C8E388D9E28D01E205FBA957A5698B1";
+    let q = BoxedUint::from_be_hex(q_str, q_str.len() as u32 * 8 / 2).unwrap();
+
+    let g_str = "07B0F92546150B62514BB771E2A0C0CE387F03BDA6C56B505209FF25FD3C133D\
             89BBCD97E904E09114D9A7DEFDEADFC9078EA544D2E401AEECC40BB9FBBF78FD\
             87995A10A1C27CB7789B594BA7EFB5C4326A9FE59A070E136DB77175464ADCA4\
-            17BE5DCE2F40D10A46A3A3943F26AB7FD9C0398FF8C76EE0A56826A8A88F1DBD",
-        16,
-    )
-    .unwrap();
+            17BE5DCE2F40D10A46A3A3943F26AB7FD9C0398FF8C76EE0A56826A8A88F1DBD";
+    let g = BoxedUint::from_be_hex(g_str, g_str.len() as u32 / 2 * 8).unwrap();
 
-    let x = BigUint::from_str_radix("411602CB19A6CCC34494D79D98EF1E7ED5AF25F7", 16).unwrap();
-    let y = BigUint::from_str_radix(
-        "5DF5E01DED31D0297E274E1691C192FE5868FEF9E19A84776454B100CF16F653\
+    let x_str = "411602CB19A6CCC34494D79D98EF1E7ED5AF25F7";
+    let x = BoxedUint::from_be_hex(x_str, x_str.len() as u32 / 2 * 8).unwrap();
+
+    let y_str = "5DF5E01DED31D0297E274E1691C192FE5868FEF9E19A84776454B100CF16F653\
             92195A38B90523E2542EE61871C0440CB87C322FC4B4D2EC5E1E7EC766E1BE8D\
             4CE935437DC11C3C8FD426338933EBFE739CB3465F4D3668C5E473508253B1E6\
-            82F65CBDC4FAE93C2EA212390E54905A86E2223170B44EAA7DA5DD9FFCFB7F3B",
-        16,
-    )
-    .unwrap();
+            82F65CBDC4FAE93C2EA212390E54905A86E2223170B44EAA7DA5DD9FFCFB7F3B";
+    let y = BoxedUint::from_be_hex(y_str, y_str.len() as u32 / 2 * 8).unwrap();
+
+    let (p, q, g, y, x) = (
+        NonZero::new(p).unwrap(),
+        NonZero::new(q).unwrap(),
+        NonZero::new(g).unwrap(),
+        NonZero::new(y).unwrap(),
+        NonZero::new(x).unwrap(),
+    );
 
     let components = Components::from_components(p, q, g).expect("Invalid components");
     let verifying_key =
@@ -46,7 +49,7 @@ fn dsa_1024_signing_key() -> SigningKey {
 }
 
 fn dsa_2048_signing_key() -> SigningKey {
-    let p = BigUint::from_str_radix(
+    let p = BoxedUint::from_be_hex(
         "9DB6FB5951B66BB6FE1E140F1D2CE5502374161FD6538DF1648218642F0B5C48\
         C8F7A41AADFA187324B87674FA1822B00F1ECF8136943D7C55757264E5A1A44F\
         FE012E9936E00C1D3E9310B01C7D179805D3058B2A9F4BB6F9716BFE6117C6B5\
@@ -55,15 +58,15 @@ fn dsa_2048_signing_key() -> SigningKey {
         F1BF14D4BB4563CA28371621CAD3324B6A2D392145BEBFAC748805236F5CA2FE\
         92B871CD8F9C36D3292B5509CA8CAA77A2ADFC7BFD77DDA6F71125A7456FEA15\
         3E433256A2261C6A06ED3693797E7995FAD5AABBCFBE3EDA2741E375404AE25B",
-        16,
+        2048,
     )
     .unwrap();
-    let q = BigUint::from_str_radix(
+    let q = BoxedUint::from_be_hex(
         "F2C3119374CE76C9356990B465374A17F23F9ED35089BD969F61C6DDE9998C1F",
-        16,
+        2048,
     )
     .unwrap();
-    let g = BigUint::from_str_radix(
+    let g = BoxedUint::from_be_hex(
         "5C7FF6B06F8F143FE8288433493E4769C4D988ACE5BE25A0E24809670716C613\
         D7B0CEE6932F8FAA7C44D2CB24523DA53FBE4F6EC3595892D1AA58C4328A06C4\
         6A15662E7EAA703A1DECF8BBB2D05DBE2EB956C142A338661D10461C0D135472\
@@ -72,16 +75,16 @@ fn dsa_2048_signing_key() -> SigningKey {
         3A10B1C4D203CC76A470A33AFDCBDD92959859ABD8B56E1725252D78EAC66E71\
         BA9AE3F1DD2487199874393CD4D832186800654760E1E34C09E4D155179F9EC0\
         DC4473F996BDCE6EED1CABED8B6F116F7AD9CF505DF0F998E34AB27514B0FFE7",
-        16,
+        2048,
     )
     .unwrap();
 
-    let x = BigUint::from_str_radix(
+    let x = BoxedUint::from_be_hex(
         "69C7548C21D0DFEA6B9A51C9EAD4E27C33D3B3F180316E5BCAB92C933F0E4DBC",
-        16,
+        2048,
     )
     .unwrap();
-    let y = BigUint::from_str_radix(
+    let y = BoxedUint::from_be_hex(
         "667098C654426C78D7F8201EAC6C203EF030D43605032C2F1FA937E5237DBD94\
         9F34A0A2564FE126DC8B715C5141802CE0979C8246463C40E6B6BDAA2513FA61\
         1728716C2E4FD53BC95B89E69949D96512E873B9C8F8DFD499CC312882561ADE\
@@ -90,9 +93,17 @@ fn dsa_2048_signing_key() -> SigningKey {
         687972A2D382599C9BAC4E0ED7998193078913032558134976410B89D2C171D1\
         23AC35FD977219597AA7D15C1A9A428E59194F75C721EBCBCFAE44696A499AFA\
         74E04299F132026601638CB87AB79190D4A0986315DA8EEC6561C938996BEADF",
-        16,
+        2048,
     )
     .unwrap();
+
+    let (p, q, g, y, x) = (
+        NonZero::new(p).unwrap(),
+        NonZero::new(q).unwrap(),
+        NonZero::new(g).unwrap(),
+        NonZero::new(y).unwrap(),
+        NonZero::new(x).unwrap(),
+    );
 
     let components = Components::from_components(p, q, g).expect("Invalid components");
     let verifying_key =
@@ -128,10 +139,9 @@ where
 /// Create a signature container from the two components in their textual hexadecimal form
 fn from_str_signature(r: &str, s: &str) -> Signature {
     Signature::from_components(
-        BigUint::from_str_radix(r, 16).unwrap(),
-        BigUint::from_str_radix(s, 16).unwrap(),
+        NonZero::new(BoxedUint::from_be_hex(r, r.len() as u32 / 2 * 8).unwrap()).unwrap(),
+        NonZero::new(BoxedUint::from_be_hex(s, s.len() as u32 / 2 * 8).unwrap()).unwrap(),
     )
-    .unwrap()
 }
 
 /// Return the RFC 6979 test cases
