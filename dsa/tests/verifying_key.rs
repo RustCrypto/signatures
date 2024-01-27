@@ -6,11 +6,13 @@ use dsa::VerifyingKey;
 use pkcs8::{DecodePublicKey, EncodePublicKey, LineEnding};
 
 #[cfg(feature = "hazmat")]
-use dsa::{Components, KeySize, SigningKey};
-#[cfg(feature = "hazmat")]
-use num_bigint::BigUint;
-#[cfg(feature = "hazmat")]
-use num_traits::One;
+use {
+    crypto_bigint::{
+        modular::{BoxedMontyForm, BoxedMontyParams},
+        BoxedUint, Odd,
+    },
+    dsa::{Components, KeySize, SigningKey},
+};
 
 const OPENSSL_PEM_PUBLIC_KEY: &str = include_str!("pems/public.pem");
 
@@ -52,6 +54,9 @@ fn validate_verifying_key() {
     let p = verifying_key.components().p();
     let q = verifying_key.components().q();
 
+    let params = BoxedMontyParams::new(Odd::new((**q).clone()).unwrap());
+    let form = BoxedMontyForm::new((**verifying_key.y()).clone(), params);
+
     // Taken from the parameter validation from bouncy castle
-    assert_eq!(verifying_key.y().modpow(q, p), BigUint::one());
+    assert_eq!(form.pow(p).to_montgomery(), BoxedUint::one());
 }
