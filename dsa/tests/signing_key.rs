@@ -71,7 +71,7 @@ fn verify_validity() {
     );
     assert_eq!(
         **signing_key.verifying_key().y(),
-        form.pow(signing_key.x()).to_montgomery(),
+        form.pow(signing_key.x()).retrieve(),
         "Requirement y=(g^x)%p not met"
     );
 }
