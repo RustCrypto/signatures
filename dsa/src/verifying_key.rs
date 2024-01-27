@@ -38,7 +38,7 @@ impl VerifyingKey {
         let params = BoxedMontyParams::new_vartime(Odd::new((**components.p()).clone()).unwrap());
         let form = BoxedMontyForm::new((*y).clone(), params);
 
-        if *y < two() || form.pow(components.q()).to_montgomery() != BoxedUint::one() {
+        if *y < two() || form.pow(components.q()).retrieve() != BoxedUint::one() {
             return Err(signature::Error::new());
         }
 
@@ -85,7 +85,7 @@ impl VerifyingKey {
         let g_form = BoxedMontyForm::new((**g).clone(), u1_params);
         let y_form = BoxedMontyForm::new((**y).clone(), u2_params);
 
-        let v = (g_form.pow(p).to_montgomery() * y_form.pow(p).to_montgomery() % p) % q;
+        let v = (g_form.pow(p).retrieve() * y_form.pow(p).retrieve() % p) % q;
 
         Some(v == **r)
     }

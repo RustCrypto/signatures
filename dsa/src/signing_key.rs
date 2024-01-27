@@ -96,7 +96,7 @@ impl SigningKey {
 
         let params = BoxedMontyParams::new(Odd::new(k).unwrap());
         let form = BoxedMontyForm::new((**g).clone(), params);
-        let r = NonZero::new(form.pow(p).to_montgomery() % q).unwrap();
+        let r = NonZero::new(form.pow(p).retrieve() % q).unwrap();
 
         let n = q.bits() / 8;
         let block_size = hash.len(); // Hash function output size
