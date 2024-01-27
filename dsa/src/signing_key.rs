@@ -67,6 +67,18 @@ impl SigningKey {
         &self.x
     }
 
+    /// Try to sign the given message digest deterministically with a prehashed digest.
+    /// The parameter `D` must match the hash function used to sign the digest.
+    ///
+    /// [RFC6979]: https://datatracker.ietf.org/doc/html/rfc6979
+    pub fn sign_prehashed_rfc6979<D>(&self, prehash: &[u8]) -> Result<Signature, signature::Error>
+    where
+        D: Digest + BlockSizeUser + FixedOutputReset,
+    {
+        let k_kinv = crate::generate::secret_number_rfc6979::<D>(self, prehash);
+        self.sign_prehashed(k_kinv, prehash)
+    }
+
     /// Sign some pre-hashed data
     fn sign_prehashed(
         &self,
@@ -105,6 +117,7 @@ impl Signer<Signature> for SigningKey {
 }
 
 impl PrehashSigner<Signature> for SigningKey {
+    /// Warning: This uses `sha2::Sha256` as the hash function for the digest. If you need to use a different one, use [`SigningKey::sign_prehashed_rfc6979`].
     fn sign_prehash(&self, prehash: &[u8]) -> Result<Signature, signature::Error> {
         let k_kinv = crate::generate::secret_number_rfc6979::<sha2::Sha256>(self, prehash);
         self.sign_prehashed(k_kinv, prehash)
