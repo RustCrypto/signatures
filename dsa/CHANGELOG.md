@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.6.3 (2024-01-28)
 ### Added
-- `SigningKey::sign_prehashed_rfc6979 ([#798])
+- `SigningKey::sign_prehashed_rfc6979` ([#798])
 
 [#798]: https://github.com/RustCrypto/signatures/pull/798
 
