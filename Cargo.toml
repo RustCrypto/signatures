@@ -5,6 +5,7 @@ members = [
     "ecdsa",
     "ed448",
     "ed25519",
+    "lms",
     "rfc6979"
 ]
 
