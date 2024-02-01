@@ -18,7 +18,7 @@ rust-version = "1.72"
 
 [dependencies]
 # TODO(tarcieri): relax requirement back to `2` before next release
-signature = { version = "=2.3.0-pre.2", default-features = false }
+signature = { version = "=2.3.0-pre.3", default-features = false }
 
 # optional dependencies
 pkcs8 = { version = "0.10", optional = true }
