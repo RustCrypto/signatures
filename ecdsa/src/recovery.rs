@@ -275,23 +275,23 @@ where
         let (r, s) = signature.split_scalars();
         let z = <Scalar<C> as Reduce<C::Uint>>::reduce_bytes(&bits2field::<C>(prehash)?);
 
-        let mut r_bytes = r.to_repr();
-        if recovery_id.is_x_reduced() {
-            match Option::<C::Uint>::from(
-                C::Uint::decode_field_bytes(&r_bytes).checked_add(&C::ORDER),
-            ) {
-                Some(restored) => r_bytes = restored.encode_field_bytes(),
-                // No reduction should happen here if r was reduced
-                None => return Err(Error::new()),
-            };
-        }
-        let R = AffinePoint::<C>::decompress(&r_bytes, u8::from(recovery_id.is_y_odd()).into());
+        let r_bytes = if recovery_id.is_x_reduced() {
+            Option::<C::Uint>::from(
+                C::Uint::decode_field_bytes(&r.to_repr()).checked_add(&C::ORDER),
+            )
+            .ok_or_else(Error::new)?
+            .encode_field_bytes()
+        } else {
+            r.to_repr()
+        };
 
-        if R.is_none().into() {
-            return Err(Error::new());
-        }
+        let R: ProjectivePoint<C> = Option::<AffinePoint<C>>::from(AffinePoint::<C>::decompress(
+            &r_bytes,
+            u8::from(recovery_id.is_y_odd()).into(),
+        ))
+        .ok_or_else(Error::new)?
+        .into();
 
-        let R = ProjectivePoint::<C>::from(R.unwrap());
         let r_inv = *r.invert();
         let u1 = -(r_inv * z);
         let u2 = r_inv * *s;
