@@ -224,7 +224,7 @@ where
     let s_inv = *s.invert_vartime();
     let u1 = z * s_inv;
     let u2 = *r * s_inv;
-    let x = ProjectivePoint::<C>::lincomb(&ProjectivePoint::<C>::generator(), &u1, q, &u2)
+    let x = ProjectivePoint::<C>::lincomb(&[(ProjectivePoint::<C>::generator(), u1), (*q, u2)])
         .to_affine()
         .x();
 
