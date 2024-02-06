@@ -10,7 +10,7 @@ on:
 
 defaults:
   run:
-    working-directory: .
+    working-directory: lms
 
 env:
   CARGO_INCREMENTAL: 0

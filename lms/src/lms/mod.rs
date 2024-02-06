@@ -1,5 +1,6 @@
 //! Everything related to LMS (and not LM-OTS)
 
+pub mod error;
 mod keypair;
 pub(crate) mod modes;
 mod private;
@@ -9,8 +10,8 @@ pub mod signature;
 pub use modes::{
     LmsMode, LmsSha256M32H10, LmsSha256M32H15, LmsSha256M32H20, LmsSha256M32H25, LmsSha256M32H5,
 };
-pub use private::PrivateKey;
-pub use public::PublicKey;
+pub use private::SigningKey;
+pub use public::VerifyingKey;
 pub use signature::Signature;
 
 #[cfg(test)]
@@ -19,13 +20,13 @@ mod tests {
 
     use super::*;
 
-    use crate::{lms::PrivateKey, ots::LmsOtsSha256N32W4};
+    use crate::{lms::SigningKey, ots::LmsOtsSha256N32W4};
 
     fn test_sign_and_verify<Mode: LmsMode>() {
         let mut rng = rand::thread_rng();
 
         // Generate a fresh keypair
-        let mut sk = PrivateKey::<Mode>::new(&mut rng);
+        let mut sk = SigningKey::<Mode>::new(&mut rng);
         let pk = sk.public();
 
         let msg = "this is a test message".as_bytes();

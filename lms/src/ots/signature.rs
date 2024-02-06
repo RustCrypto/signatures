@@ -11,7 +11,7 @@ use std::cmp::Ordering;
 use std::ops::{Add, Mul};
 use typenum::{Prod, Sum, U1, U4};
 
-use super::PublicKey;
+use super::VerifyingKey;
 
 #[derive(Debug, Eq)]
 /// Opaque struct representing a LM-OTS signature
@@ -105,7 +105,7 @@ impl<Mode: LmsOtsMode> Signature<Mode> {
     /// Returns a public key candidate for this signature as defined by
     /// algorithm 4b of the LMS RFC. The signature will always be valid for
     /// the returned public key candidate.
-    pub fn recover_pubkey(&self, id: Identifier, q: u32, msg: &[u8]) -> PublicKey<Mode> {
+    pub fn recover_pubkey(&self, id: Identifier, q: u32, msg: &[u8]) -> VerifyingKey<Mode> {
         // algorithm 4b
 
         // Q = H(I || u32str(q) || u16str(D_MESG) || C || message)
@@ -144,7 +144,7 @@ impl<Mode: LmsOtsMode> Signature<Mode> {
             // Kc = H(I || u32str(q) || u16str(D_PBLC) || z[0] || z[1] || ... || z[p-1])
             hasher.update(&tmp);
         }
-        PublicKey {
+        VerifyingKey {
             id,
             q,
             k: hasher.finalize(),

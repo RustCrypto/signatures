@@ -1,4 +1,4 @@
-//! Contains the [PublicKey] type
+//! Contains the [VerifyingKey] type
 
 use crate::constants::ID_LEN;
 use crate::error::LmsDeserializeError;
@@ -16,14 +16,14 @@ use typenum::{Sum, U2, U24};
 
 #[derive(Debug)]
 /// Opaque struct representing a LM-OTS public key
-pub struct PublicKey<Mode: LmsOtsMode> {
+pub struct VerifyingKey<Mode: LmsOtsMode> {
     pub(crate) q: u32,
     pub(crate) id: Identifier,
     pub(crate) k: Output<Mode::Hasher>,
 }
 
 // manual Clone impl because Mode is not Clone
-impl<Mode: LmsOtsMode> Clone for PublicKey<Mode> {
+impl<Mode: LmsOtsMode> Clone for VerifyingKey<Mode> {
     fn clone(&self) -> Self {
         Self {
             q: self.q,
@@ -34,13 +34,13 @@ impl<Mode: LmsOtsMode> Clone for PublicKey<Mode> {
 }
 
 // manual PartialEq impl because Mode is not PartialEq
-impl<Mode: LmsOtsMode> PartialEq for PublicKey<Mode> {
+impl<Mode: LmsOtsMode> PartialEq for VerifyingKey<Mode> {
     fn eq(&self, other: &Self) -> bool {
         self.q == other.q && self.id == other.id && self.k == other.k
     }
 }
 
-impl<Mode: LmsOtsMode> Verifier<Signature<Mode>> for PublicKey<Mode>
+impl<Mode: LmsOtsMode> Verifier<Signature<Mode>> for VerifyingKey<Mode>
 where
     // required to concat Q and cksm(Q)
     <Mode::Hasher as OutputSizeUser>::OutputSize: Add<U2>,
@@ -60,14 +60,14 @@ where
     }
 }
 
-/// Converts a [PublicKey] into its byte representation
-impl<Mode: LmsOtsMode> From<PublicKey<Mode>>
+/// Converts a [VerifyingKey] into its byte representation
+impl<Mode: LmsOtsMode> From<VerifyingKey<Mode>>
     for GenericArray<u8, Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U24>>
 where
     <Mode::Hasher as OutputSizeUser>::OutputSize: Add<U24>,
     Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U24>: ArrayLength<u8>,
 {
-    fn from(pk: PublicKey<Mode>) -> Self {
+    fn from(pk: VerifyingKey<Mode>) -> Self {
         // Return u32str(type) || I || u32str(q) || K
         GenericArray::from_exact_iter(
             std::iter::empty()
@@ -80,8 +80,8 @@ where
     }
 }
 
-/// Tries to parse a [PublicKey] from an exact slice
-impl<'a, Mode: LmsOtsMode> TryFrom<&'a [u8]> for PublicKey<Mode> {
+/// Tries to parse a [VerifyingKey] from an exact slice
+impl<'a, Mode: LmsOtsMode> TryFrom<&'a [u8]> for VerifyingKey<Mode> {
     type Error = LmsDeserializeError;
 
     fn try_from(pk: &'a [u8]) -> Result<Self, Self::Error> {
@@ -120,28 +120,28 @@ mod tests {
     use crate::constants::ID_LEN;
     use crate::error::LmsDeserializeError;
     use crate::ots::modes::{LmsOtsSha256N32W4, LmsOtsSha256N32W8};
-    use crate::ots::private::PrivateKey;
-    use crate::ots::public::PublicKey;
+    use crate::ots::private::SigningKey;
+    use crate::ots::public::VerifyingKey;
     use generic_array::GenericArray;
     use rand::thread_rng;
 
     #[test]
     fn test_serde() {
         let pk =
-            PrivateKey::<LmsOtsSha256N32W8>::new(0, [0xbb; ID_LEN], &mut thread_rng()).public();
+            SigningKey::<LmsOtsSha256N32W8>::new(0, [0xbb; ID_LEN], &mut thread_rng()).public();
         let pk_serialized: GenericArray<u8, _> = pk.clone().into();
         let bytes = pk_serialized.as_slice();
-        let pk_deserialized = PublicKey::<LmsOtsSha256N32W8>::try_from(bytes);
+        let pk_deserialized = VerifyingKey::<LmsOtsSha256N32W8>::try_from(bytes);
 
         assert!(pk_deserialized.is_ok());
         let pk_deserialized = pk_deserialized.unwrap();
         assert_eq!(pk, pk_deserialized);
 
-        let pk_wrongalgo = PublicKey::<LmsOtsSha256N32W4>::try_from(bytes);
-        let pk_short = PublicKey::<LmsOtsSha256N32W8>::try_from(&bytes[0..(bytes.len() - 1)]);
+        let pk_wrongalgo = VerifyingKey::<LmsOtsSha256N32W4>::try_from(bytes);
+        let pk_short = VerifyingKey::<LmsOtsSha256N32W8>::try_from(&bytes[0..(bytes.len() - 1)]);
         let mut long_bytes = pk_serialized.into_iter().collect::<Vec<_>>();
         long_bytes.push(0);
-        let pk_long = PublicKey::<LmsOtsSha256N32W8>::try_from(long_bytes.as_slice());
+        let pk_long = VerifyingKey::<LmsOtsSha256N32W8>::try_from(long_bytes.as_slice());
 
         assert_eq!(pk_wrongalgo, Err(LmsDeserializeError::WrongAlgorithm));
         assert_eq!(pk_short, Err(LmsDeserializeError::TooShort));

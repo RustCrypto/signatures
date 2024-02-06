@@ -1,5 +1,6 @@
 //! Everything related to LM-OTS
 
+pub mod error;
 mod keypair;
 pub(crate) mod modes;
 mod private;
@@ -10,8 +11,8 @@ mod util;
 pub use modes::{
     LmsOtsMode, LmsOtsSha256N32W1, LmsOtsSha256N32W2, LmsOtsSha256N32W4, LmsOtsSha256N32W8,
 };
-pub use private::PrivateKey;
-pub use public::PublicKey;
+pub use private::SigningKey;
+pub use public::VerifyingKey;
 pub use signature::Signature;
 
 #[cfg(test)]
@@ -20,7 +21,7 @@ pub mod tests {
     use crate::ots::modes::{
         LmsOtsMode, LmsOtsSha256N32W1, LmsOtsSha256N32W2, LmsOtsSha256N32W4, LmsOtsSha256N32W8,
     };
-    use crate::ots::private::PrivateKey;
+    use crate::ots::private::SigningKey;
     use digest::Digest;
     use digest::OutputSizeUser;
     use generic_array::{ArrayLength, GenericArray};
@@ -41,7 +42,7 @@ pub mod tests {
         Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U2>: ArrayLength<u8>,
     {
         let mut rng = thread_rng();
-        let mut sk = PrivateKey::<Mode>::new(0, [0xcc; ID_LEN], &mut rng);
+        let mut sk = SigningKey::<Mode>::new(0, [0xcc; ID_LEN], &mut rng);
         let pk = sk.public();
         let msg = "this is a test message".as_bytes();
 
@@ -65,7 +66,7 @@ pub mod tests {
         Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U2>: ArrayLength<u8>,
     {
         let mut rng = thread_rng();
-        let mut sk = PrivateKey::<Mode>::new(0, [0xcc; ID_LEN], &mut rng);
+        let mut sk = SigningKey::<Mode>::new(0, [0xcc; ID_LEN], &mut rng);
         let mut pk = sk.public();
         let msg = "this is a test message".as_bytes();
 
@@ -166,7 +167,7 @@ pub mod tests {
         let id = hex!("215f83b7ccb9acbcd08db97b0d04dc2b");
         let q = 4;
         let y0 = hex!("11b3649023696f85150b189e50c00e98850ac343a77b3638319c347d7310269d");
-        let mut sk = PrivateKey::<LmsOtsSha256N32W8>::new_from_seed(q, id, seed);
+        let mut sk = SigningKey::<LmsOtsSha256N32W8>::new_from_seed(q, id, seed);
         let _ = sk.public();
 
         let c = hex!("0eb1ed54a2460d512388cad533138d240534e97b1e82d33bd927d201dfc24ebb");
@@ -189,7 +190,7 @@ pub mod tests {
 
         let k = hex!("4de1f6965bdabc676c5a4dc7c35f97f82cb0e31c68d04f1dad96314ff09e6b3d");
 
-        let sk = PrivateKey::<LmsOtsSha256N32W8>::new_from_seed(q, id, seed);
+        let sk = SigningKey::<LmsOtsSha256N32W8>::new_from_seed(q, id, seed);
         let pk = sk.public();
         // H(I||u32str(r)||u16str(D_LEAF)||OTS_PUB_HASH[r-2^h])
         let x = <LmsOtsSha256N32W8 as LmsOtsMode>::Hasher::new()

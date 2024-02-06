@@ -19,12 +19,12 @@ use digest::Output;
 
 #[derive(Debug)]
 /// Opaque struct representing a LMS public key
-pub struct PublicKey<Mode: LmsMode> {
+pub struct VerifyingKey<Mode: LmsMode> {
     pub(crate) id: Identifier,
     pub(crate) k: Output<Mode::Hasher>,
 }
 
-impl<Mode: LmsMode> Clone for PublicKey<Mode> {
+impl<Mode: LmsMode> Clone for VerifyingKey<Mode> {
     fn clone(&self) -> Self {
         Self {
             id: self.id,
@@ -33,13 +33,13 @@ impl<Mode: LmsMode> Clone for PublicKey<Mode> {
     }
 }
 
-impl<Mode: LmsMode> PartialEq for PublicKey<Mode> {
+impl<Mode: LmsMode> PartialEq for VerifyingKey<Mode> {
     fn eq(&self, other: &Self) -> bool {
         self.id == other.id && self.k == other.k
     }
 }
 
-impl<Mode: LmsMode> PublicKey<Mode> {
+impl<Mode: LmsMode> VerifyingKey<Mode> {
     pub fn new(id: Identifier, k: Output<Mode::Hasher>) -> Self {
         Self { id, k }
     }
@@ -55,7 +55,7 @@ impl<Mode: LmsMode> PublicKey<Mode> {
     }
 }
 
-impl<Mode: LmsMode> Verifier<Signature<Mode>> for PublicKey<Mode> {
+impl<Mode: LmsMode> Verifier<Signature<Mode>> for VerifyingKey<Mode> {
     fn verify(&self, msg: &[u8], signature: &Signature<Mode>) -> Result<(), Error> {
         // Compute the LMS Public Key Candidate Tc from the signature,
         //    message, identifier, pubtype, and ots_typecode, using
@@ -97,14 +97,14 @@ impl<Mode: LmsMode> Verifier<Signature<Mode>> for PublicKey<Mode> {
     }
 }
 
-/// Converts a [PublicKey] into its byte representation
-impl<Mode: LmsMode> From<PublicKey<Mode>>
+/// Converts a [VerifyingKey] into its byte representation
+impl<Mode: LmsMode> From<VerifyingKey<Mode>>
     for GenericArray<u8, Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U24>>
 where
     <Mode::Hasher as OutputSizeUser>::OutputSize: Add<U24>,
     Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U24>: ArrayLength<u8>,
 {
-    fn from(pk: PublicKey<Mode>) -> Self {
+    fn from(pk: VerifyingKey<Mode>) -> Self {
         // Return u32(type) || u32(otstype) || id || k
         GenericArray::from_exact_iter(
             std::iter::empty()
@@ -117,8 +117,8 @@ where
     }
 }
 
-/// Tries to parse a [PublicKey] from an exact slice
-impl<'a, Mode: LmsMode> TryFrom<&'a [u8]> for PublicKey<Mode> {
+/// Tries to parse a [VerifyingKey] from an exact slice
+impl<'a, Mode: LmsMode> TryFrom<&'a [u8]> for VerifyingKey<Mode> {
     type Error = LmsDeserializeError;
 
     fn try_from(pk: &'a [u8]) -> Result<Self, Self::Error> {
@@ -160,8 +160,8 @@ mod tests {
 
     use crate::{
         lms::modes::*,
-        lms::PrivateKey,
-        lms::PublicKey,
+        lms::SigningKey,
+        lms::VerifyingKey,
         ots::{LmsOtsSha256N32W4, LmsOtsSha256N32W8},
     };
     use digest::OutputSizeUser;
@@ -180,8 +180,8 @@ mod tests {
 
     #[test]
     fn test_pubkey_deserialize_kat1() {
-        let pk = PublicKey::<LmsSha256M32H5<LmsOtsSha256N32W8>>::try_from(&KAT1[..]).unwrap();
-        let expected = PublicKey::<LmsSha256M32H5<LmsOtsSha256N32W8>> {
+        let pk = VerifyingKey::<LmsSha256M32H5<LmsOtsSha256N32W8>>::try_from(&KAT1[..]).unwrap();
+        let expected = VerifyingKey::<LmsSha256M32H5<LmsOtsSha256N32W8>> {
             id: hex!("61a5d57d37f5e46bfb7520806b07a1b8"),
             k: hex!("50650e3b31fe4a773ea29a07f09cf2ea30e579f0df58ef8e298da0434cb2b878").into(),
         };
@@ -190,20 +190,20 @@ mod tests {
 
     #[test]
     fn test_pubkey_deserialize_kat1_wrong_lms_mode() {
-        let pk = PublicKey::<LmsSha256M32H10<LmsOtsSha256N32W8>>::try_from(&KAT1[..]);
+        let pk = VerifyingKey::<LmsSha256M32H10<LmsOtsSha256N32W8>>::try_from(&KAT1[..]);
         assert_eq!(pk, Err(crate::error::LmsDeserializeError::WrongAlgorithm));
     }
 
     #[test]
     fn test_pubkey_deserialize_kat1_wrong_otsmode() {
-        let pk = PublicKey::<LmsSha256M32H5<LmsOtsSha256N32W4>>::try_from(&KAT1[..]);
+        let pk = VerifyingKey::<LmsSha256M32H5<LmsOtsSha256N32W4>>::try_from(&KAT1[..]);
         assert_eq!(pk, Err(crate::error::LmsDeserializeError::WrongAlgorithm));
     }
 
     #[test]
     fn test_pubkey_deserialize_kat1_too_short() {
         let pk_bytes = &KAT1[..(KAT1.len() - 4)];
-        let pk = PublicKey::<LmsSha256M32H5<LmsOtsSha256N32W8>>::try_from(pk_bytes);
+        let pk = VerifyingKey::<LmsSha256M32H5<LmsOtsSha256N32W8>>::try_from(pk_bytes);
         assert_eq!(pk, Err(crate::error::LmsDeserializeError::TooShort));
     }
 
@@ -212,7 +212,7 @@ mod tests {
         let mut pk_bytes = vec![42; 4];
         pk_bytes.extend_from_slice(&KAT1[..]);
 
-        let pk = PublicKey::<LmsSha256M32H5<LmsOtsSha256N32W8>>::try_from(&pk_bytes[..]);
+        let pk = VerifyingKey::<LmsSha256M32H5<LmsOtsSha256N32W8>>::try_from(&pk_bytes[..]);
         assert_eq!(pk, Err(crate::error::LmsDeserializeError::TooLong));
     }
 
@@ -226,7 +226,8 @@ mod tests {
             50650e3b31fe4a773ea29a07f09cf2ea
             30e579f0df58ef8e298da0434cb2b878"
         );
-        let pk = PublicKey::<LmsSha256M32H5<LmsOtsSha256N32W8>>::try_from(&pk_bytes[..]).unwrap();
+        let pk =
+            VerifyingKey::<LmsSha256M32H5<LmsOtsSha256N32W8>>::try_from(&pk_bytes[..]).unwrap();
         let pk_serialized: GenericArray<u8, _> = pk.clone().into();
         let bytes = pk_serialized.as_slice();
         assert_eq!(bytes, &pk_bytes[..]);
@@ -246,7 +247,7 @@ mod tests {
             d152338e7a5e5984bcd5f7bb4eba40b7
         "
         );
-        let lms_priv = PrivateKey::<LmsSha256M32H5<LmsOtsSha256N32W8>>::new_from_seed(id, seed);
+        let lms_priv = SigningKey::<LmsSha256M32H5<LmsOtsSha256N32W8>>::new_from_seed(id, seed);
         let lms_pub = lms_priv.public();
         let lms_pub_serialized: GenericArray<u8, _> = lms_pub.into();
         let bytes = lms_pub_serialized.as_slice();
@@ -255,19 +256,19 @@ mod tests {
 
     fn test_serialize_deserialize_random<Mode: LmsMode>()
     where
-        PublicKey<Mode>: std::fmt::Debug,
+        VerifyingKey<Mode>: std::fmt::Debug,
         <Mode::Hasher as OutputSizeUser>::OutputSize: Add<U24>,
         Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U24>: ArrayLength<u8>,
     {
         let rng = rand::thread_rng();
-        let lms_priv = PrivateKey::<Mode>::new(rng);
+        let lms_priv = SigningKey::<Mode>::new(rng);
         let lms_pub = lms_priv.public();
         let lms_pub_serialized: GenericArray<
             u8,
             Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U24>,
         > = lms_pub.clone().into();
         let bytes = lms_pub_serialized.as_slice();
-        let lms_pub_deserialized = PublicKey::<Mode>::try_from(bytes).unwrap();
+        let lms_pub_deserialized = VerifyingKey::<Mode>::try_from(bytes).unwrap();
         assert_eq!(lms_pub, lms_pub_deserialized);
     }
 

@@ -1,10 +1,10 @@
 use crate::constants::{D_INTR, D_LEAF, ID_LEN};
 use crate::error::LmsDeserializeError;
-use crate::lms::{LmsMode, PublicKey, Signature};
-use crate::ots::PrivateKey as OtsPrivateKey;
+use crate::lms::error::LmsSigningError;
+use crate::lms::{LmsMode, Signature, VerifyingKey};
+use crate::ots::SigningKey as OtsPrivateKey;
 use crate::types::{Identifier, Typecode};
 
-use anyhow::anyhow;
 use digest::{Digest, Output, OutputSizeUser};
 use generic_array::{ArrayLength, GenericArray};
 use rand::{CryptoRng, Rng};
@@ -14,20 +14,20 @@ use std::cmp::Ordering;
 use std::ops::Add;
 use typenum::{Sum, U28};
 
-/// Opaque struct representing a LMS public key
+/// Opaque struct representing a LMS private key
 ///
 /// Note: there is no requirement to map specific LMS algorithms to specific
 /// LM-OTS algorithms so it must be parametrized. With the algorithms provided
 /// by this crate, this is done via
 /// [LmsSha256M32H10](crate::lms::LmsSha256M32H10)<[LmsOtsSha256N32W4](crate::ots::LmsOtsSha256N32W4)>.
-pub struct PrivateKey<Mode: LmsMode> {
+pub struct SigningKey<Mode: LmsMode> {
     id: Identifier,
     seed: Output<Mode::Hasher>, // Re-generate the leaf privkeys as-needed from a seed
     auth_tree: GenericArray<Output<Mode::Hasher>, Mode::TreeLen>, // TODO: Decide whether/when to precompute
     q: u32,
 }
 
-impl<Mode: LmsMode> PrivateKey<Mode> {
+impl<Mode: LmsMode> SigningKey<Mode> {
     /// Creates a new private key with a random identifier using
     /// algorithm 5 from <https://datatracker.ietf.org/doc/html/rfc8554#section-5.2>
     pub fn new(mut rng: impl Rng + CryptoRng) -> Self {
@@ -88,8 +88,8 @@ impl<Mode: LmsMode> PrivateKey<Mode> {
     }
 
     /// this implements algorithm 1 from <https://datatracker.ietf.org/doc/html/rfc8554#section-4.3>
-    pub fn public(&self) -> PublicKey<Mode> {
-        PublicKey::<Mode>::new(self.id, self.auth_tree[0].clone())
+    pub fn public(&self) -> VerifyingKey<Mode> {
+        VerifyingKey::<Mode>::new(self.id, self.auth_tree[0].clone())
     }
 
     /// Returns the 16-byte identifier of the key pair
@@ -104,16 +104,14 @@ impl<Mode: LmsMode> PrivateKey<Mode> {
 }
 
 // this implements the algorithm from Appendix D in <https://datatracker.ietf.org/doc/html/rfc8554#appendix-D>
-impl<Mode: LmsMode> RandomizedSignerMut<Signature<Mode>> for PrivateKey<Mode> {
+impl<Mode: LmsMode> RandomizedSignerMut<Signature<Mode>> for SigningKey<Mode> {
     fn try_sign_with_rng(
         &mut self,
         rng: &mut impl rand_core::CryptoRngCore,
         msg: &[u8],
     ) -> Result<Signature<Mode>, Error> {
         if self.q >= Mode::LEAVES {
-            return Err(Error::from_source(anyhow!(
-                "private key has been exhausted"
-            )));
+            return Err(Error::from_source(LmsSigningError::OutOfPrivateKeys));
         }
 
         let mut ots_priv_key =
@@ -136,13 +134,13 @@ impl<Mode: LmsMode> RandomizedSignerMut<Signature<Mode>> for PrivateKey<Mode> {
 }
 
 /// Converts a [PrivateKey] into its byte representation
-impl<Mode: LmsMode> From<PrivateKey<Mode>>
+impl<Mode: LmsMode> From<SigningKey<Mode>>
     for GenericArray<u8, Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U28>>
 where
     <Mode::Hasher as OutputSizeUser>::OutputSize: Add<U28>,
     Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U28>: ArrayLength<u8>,
 {
-    fn from(pk: PrivateKey<Mode>) -> Self {
+    fn from(pk: SigningKey<Mode>) -> Self {
         // Return u32(type) || u32(otstype) || u32(q) || id || seed
         GenericArray::from_exact_iter(
             std::iter::empty()
@@ -157,7 +155,7 @@ where
 }
 
 /// Tries to parse a [PrivateKey] from an exact slice
-impl<'a, Mode: LmsMode> TryFrom<&'a [u8]> for PrivateKey<Mode> {
+impl<'a, Mode: LmsMode> TryFrom<&'a [u8]> for SigningKey<Mode> {
     type Error = LmsDeserializeError;
 
     fn try_from(pk: &'a [u8]) -> Result<Self, Self::Error> {
@@ -202,7 +200,7 @@ impl<'a, Mode: LmsMode> TryFrom<&'a [u8]> for PrivateKey<Mode> {
 
 #[cfg(test)]
 mod tests {
-    use super::PrivateKey;
+    use super::SigningKey;
     use crate::lms::modes::{LmsSha256M32H10, LmsSha256M32H5};
     use crate::ots::modes::{LmsOtsSha256N32W4, LmsOtsSha256N32W8};
     use hex_literal::hex;
@@ -214,7 +212,7 @@ mod tests {
         let id = hex!("d08fabd4a2091ff0a8cb4ed834e74534");
         let expected_k = hex!("32a58885cd9ba0431235466bff9651c6c92124404d45fa53cf161c28f1ad5a8e");
 
-        let lms_priv = PrivateKey::<LmsSha256M32H10<LmsOtsSha256N32W4>>::new_from_seed(id, seed);
+        let lms_priv = SigningKey::<LmsSha256M32H10<LmsOtsSha256N32W4>>::new_from_seed(id, seed);
         let lms_pub = lms_priv.public();
         assert_eq!(lms_pub.k(), expected_k);
         assert_eq!(lms_pub.id(), &id);
@@ -226,7 +224,7 @@ mod tests {
         let id = hex!("215f83b7ccb9acbcd08db97b0d04dc2b");
         let expected_k = hex!("a1cd035833e0e90059603f26e07ad2aad152338e7a5e5984bcd5f7bb4eba40b7");
 
-        let lms_priv = PrivateKey::<LmsSha256M32H5<LmsOtsSha256N32W8>>::new_from_seed(id, seed);
+        let lms_priv = SigningKey::<LmsSha256M32H5<LmsOtsSha256N32W8>>::new_from_seed(id, seed);
         let lms_pub = lms_priv.public();
         assert_eq!(lms_pub.k(), expected_k);
         assert_eq!(lms_pub.id(), &id);
@@ -334,7 +332,7 @@ mod tests {
         let id = hex!("215f83b7ccb9acbcd08db97b0d04dc2b");
         let _expected_k = hex!("a1cd035833e0e90059603f26e07ad2aad152338e7a5e5984bcd5f7bb4eba40b7");
 
-        let mut lms_priv = PrivateKey::<LmsSha256M32H5<LmsOtsSha256N32W8>>::new_from_seed(id, seed);
+        let mut lms_priv = SigningKey::<LmsSha256M32H5<LmsOtsSha256N32W8>>::new_from_seed(id, seed);
         lms_priv.q = 4;
         let _lms_pub = lms_priv.public();
 

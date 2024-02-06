@@ -2,16 +2,21 @@
 name = "lms-signature"
 version = "0.1.0"
 edition = "2021"
+license = "Apache-2.0 OR MIT"
+repository = "https://github.com/RustCrypto/signatures/tree/master/lms"
+readme = "README.md"
+rust-version = "1.73"
+categories = ["cryptography"]
+keywords = ["crypto", "signature"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
 name = "lms"
-path = "lms/lib.rs"
+path = "src/lib.rs"
 edition = "2021"
 
 [dependencies]
-anyhow = "1.0.75"
 digest = "0.10.7"
 generic-array = {version =  "0.14.4", features = ["zeroize"]}
 rand = "0.8.5"

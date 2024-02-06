@@ -137,7 +137,7 @@ mod tests {
     use std::ops::{Add, Mul};
 
     use crate::lms::modes::*;
-    use crate::lms::{PrivateKey, PublicKey, Signature};
+    use crate::lms::{Signature, SigningKey, VerifyingKey};
     use crate::ots::modes::*;
     use generic_array::ArrayLength;
     use hex_literal::hex;
@@ -249,7 +249,8 @@ mod tests {
         6f7220746f207468652070656f706c65
         2e0a"
         );
-        let pk = PublicKey::<LmsSha256M32H5<LmsOtsSha256N32W8>>::try_from(&pk_bytes[..]).unwrap();
+        let pk =
+            VerifyingKey::<LmsSha256M32H5<LmsOtsSha256N32W8>>::try_from(&pk_bytes[..]).unwrap();
         let sig = Signature::<LmsSha256M32H5<LmsOtsSha256N32W8>>::try_from(&sig_bytes[..]).unwrap();
         assert!(pk.verify(&msg[..], &sig).is_ok());
     }
@@ -266,7 +267,7 @@ mod tests {
         >: ArrayLength<u8>,
     {
         let mut rng = thread_rng();
-        let mut sk = PrivateKey::<Mode>::new(&mut rng);
+        let mut sk = SigningKey::<Mode>::new(&mut rng);
         let pk = sk.public();
         let msg = b"Hello, world!";
         let sig = sk.sign_with_rng(&mut rng, msg);
