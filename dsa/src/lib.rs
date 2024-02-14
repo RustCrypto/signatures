@@ -110,6 +110,8 @@ impl Signature {
 }
 
 impl<'a> DecodeValue<'a> for Signature {
+    type Error = der::Error;
+
     fn decode_value<R: Reader<'a>>(reader: &mut R, header: Header) -> der::Result<Self> {
         reader.read_nested(header.length, |reader| {
             let r = UintRef::decode(reader)?;

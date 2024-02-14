@@ -109,8 +109,7 @@ dependencies = [
 [[package]]
 name = "der"
 version = "0.8.0-pre.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b489fd2221710c1dd46637d66b984161fb66134f81437a8489800306bcc2ecea"
+source = "git+https://github.com/RustCrypto/formats.git?branch=master#270dbcb01ff75791d6527ff7759d335a39585420"
 dependencies = [
  "const-oid 0.10.0-pre.2",
  "pem-rfc7468 1.0.0-pre.0",
@@ -353,6 +352,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "pkcs5"
+version = "0.8.0-pre.0"
+source = "git+https://github.com/RustCrypto/formats.git?branch=master#270dbcb01ff75791d6527ff7759d335a39585420"
+dependencies = [
+ "der 0.8.0-pre.0",
+ "spki 0.8.0-pre.0",
+]
+
+[[package]]
 name = "pkcs8"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -365,10 +373,10 @@ dependencies = [
 [[package]]
 name = "pkcs8"
 version = "0.11.0-pre.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "935c09e0aecb0cb8f8907b57438b19a068cb74a25189b06724f061170b2465ff"
+source = "git+https://github.com/RustCrypto/formats.git?branch=master#270dbcb01ff75791d6527ff7759d335a39585420"
 dependencies = [
  "der 0.8.0-pre.0",
+ "pkcs5",
  "spki 0.8.0-pre.0",
 ]
 
@@ -439,8 +447,7 @@ dependencies = [
 [[package]]
 name = "sec1"
 version = "0.8.0-pre.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "02dc081ed777a3bab68583b52ffb8221677b6e90d483b320963a247e2c07f328"
+source = "git+https://github.com/RustCrypto/formats.git?branch=master#270dbcb01ff75791d6527ff7759d335a39585420"
 dependencies = [
  "base16ct",
  "der 0.8.0-pre.0",
@@ -557,8 +564,7 @@ dependencies = [
 [[package]]
 name = "spki"
 version = "0.8.0-pre.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb2b56670f5ef52934c97efad30bf42585de0c33ec3e2a886e38b80d2db67243"
+source = "git+https://github.com/RustCrypto/formats.git?branch=master#270dbcb01ff75791d6527ff7759d335a39585420"
 dependencies = [
  "base64ct",
  "der 0.8.0-pre.0",
