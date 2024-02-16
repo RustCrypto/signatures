@@ -169,6 +169,9 @@ mod tests {
     use hex_literal::hex;
     use typenum::{Sum, U24};
 
+    // RFC 8554 Appendix F. Test Case 1
+    // Top-level LMS Public Key
+    // LM_SHA256_M32_H5 / LMOTS_SHA256_N32_W8
     const KAT1: [u8; 56] = hex!(
         "
         00000005
@@ -218,36 +221,30 @@ mod tests {
 
     #[test]
     fn test_kat1_round_trip() {
-        let pk_bytes = hex!(
-            "
-            00000005
-            00000004
-            61a5d57d37f5e46bfb7520806b07a1b8
-            50650e3b31fe4a773ea29a07f09cf2ea
-            30e579f0df58ef8e298da0434cb2b878"
-        );
-        let pk =
-            VerifyingKey::<LmsSha256M32H5<LmsOtsSha256N32W8>>::try_from(&pk_bytes[..]).unwrap();
+        let pk = VerifyingKey::<LmsSha256M32H5<LmsOtsSha256N32W8>>::try_from(&KAT1[..]).unwrap();
         let pk_serialized: GenericArray<u8, _> = pk.clone().into();
         let bytes = pk_serialized.as_slice();
-        assert_eq!(bytes, &pk_bytes[..]);
+        assert_eq!(bytes, &KAT1[..]);
     }
 
+    // RFC 8554 Appendix F. Test Case 2
+    // Top-level LMS Public Key
+    // LM_SHA256_M32_H10 / LMOTS_SHA256_N32_W4
     #[test]
     fn test_kat2() {
         // Tests that the serialized public key from RFC seed matches the expected value
-        let seed = hex!("a1c4696e2608035a886100d05cd99945eb3370731884a8235e2fb3d4d71f2547");
-        let id = hex!("215f83b7ccb9acbcd08db97b0d04dc2b");
+        let seed = hex!("558b8966c48ae9cb898b423c83443aae014a72f1b1ab5cc85cf1d892903b5439");
+        let id = hex!("d08fabd4a2091ff0a8cb4ed834e74534");
         let expected_pubkey = hex!(
             "
-            00000005
-            00000004
-            215f83b7ccb9acbcd08db97b0d04dc2b
-            a1cd035833e0e90059603f26e07ad2aa
-            d152338e7a5e5984bcd5f7bb4eba40b7
+            00000006
+            00000003
+            d08fabd4a2091ff0a8cb4ed834e74534
+            32a58885cd9ba0431235466bff9651c6
+            c92124404d45fa53cf161c28f1ad5a8e
         "
         );
-        let lms_priv = SigningKey::<LmsSha256M32H5<LmsOtsSha256N32W8>>::new_from_seed(id, seed);
+        let lms_priv = SigningKey::<LmsSha256M32H10<LmsOtsSha256N32W4>>::new_from_seed(id, seed);
         let lms_pub = lms_priv.public();
         let lms_pub_serialized: GenericArray<u8, _> = lms_pub.into();
         let bytes = lms_pub_serialized.as_slice();

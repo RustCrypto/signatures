@@ -206,8 +206,11 @@ mod tests {
     use hex_literal::hex;
     use signature::{RandomizedSignerMut, SignatureEncoding};
 
+    // Known-Answer Test vectors from <https://datatracker.ietf.org/doc/html/rfc8554#appendix-F>
     #[test]
-    fn test_pk_tree_kat1() {
+    // Generate Test Case 2 top-level LMS public key
+    // LM_SHA256_M32_H10 / LMOTS_SHA256_N32_W4
+    fn test_pk_gen_rfc8554_testcase_2_top_level() {
         let seed = hex!("558b8966c48ae9cb898b423c83443aae014a72f1b1ab5cc85cf1d892903b5439");
         let id = hex!("d08fabd4a2091ff0a8cb4ed834e74534");
         let expected_k = hex!("32a58885cd9ba0431235466bff9651c6c92124404d45fa53cf161c28f1ad5a8e");
@@ -219,7 +222,9 @@ mod tests {
     }
 
     #[test]
-    fn test_pk_tree_kat2() {
+    // Generate Test Case 2 leaf-level LMS public key
+    // LM_SHA256_M32_H5 / LMOTS_SHA256_N32_W8
+    fn test_pk_gen_rfc8554_testcase_2_leaf_level() {
         let seed = hex!("a1c4696e2608035a886100d05cd99945eb3370731884a8235e2fb3d4d71f2547");
         let id = hex!("215f83b7ccb9acbcd08db97b0d04dc2b");
         let expected_k = hex!("a1cd035833e0e90059603f26e07ad2aad152338e7a5e5984bcd5f7bb4eba40b7");
@@ -231,7 +236,9 @@ mod tests {
     }
 
     #[test]
-    fn test_kat_2() {
+    // Byte-for-byte signature equivalence test with RFC 8554 Test Case 2
+    // Leaf-level LMS signature. LM_SHA256_M32_H5 / LMOTS_SHA256_N32_W8
+    fn test_sign_rfc8554_testcase_2() {
         let expected_signature = [
             0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x04, 0x0e, 0xb1, 0xed, 0x54, 0xa2, 0x46,
             0x0d, 0x51, 0x23, 0x88, 0xca, 0xd5, 0x33, 0x13, 0x8d, 0x24, 0x05, 0x34, 0xe9, 0x7b,
