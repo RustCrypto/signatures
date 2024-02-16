@@ -1,4 +1,4 @@
-//! Contains the [VerifyingKey] type
+//! Contains the [`VerifyingKey`] type
 
 use crate::constants::ID_LEN;
 use crate::error::LmsDeserializeError;
@@ -60,7 +60,7 @@ where
     }
 }
 
-/// Converts a [VerifyingKey] into its byte representation
+/// Converts a [`VerifyingKey`] into its byte representation
 impl<Mode: LmsOtsMode> From<VerifyingKey<Mode>>
     for GenericArray<u8, Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U24>>
 where
@@ -80,7 +80,7 @@ where
     }
 }
 
-/// Tries to parse a [VerifyingKey] from an exact slice
+/// Tries to parse a [`VerifyingKey`] from an exact slice
 impl<'a, Mode: LmsOtsMode> TryFrom<&'a [u8]> for VerifyingKey<Mode> {
     type Error = LmsDeserializeError;
 

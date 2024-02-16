@@ -4,18 +4,12 @@ use std::error::Error;
 use std::fmt::{Display, Formatter, Result};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum LmsSigningError {
-    OutOfPrivateKeys,
-}
+pub struct LmsOutOfPrivateKeys {}
 
-impl Display for LmsSigningError {
+impl Display for LmsOutOfPrivateKeys {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        match self {
-            Self::OutOfPrivateKeys => {
-                write!(f, "private key has been exhausted")
-            }
-        }
+        write!(f, "private key has been exhausted")
     }
 }
 
-impl Error for LmsSigningError {}
+impl Error for LmsOutOfPrivateKeys {}

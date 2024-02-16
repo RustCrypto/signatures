@@ -1,6 +1,6 @@
 use crate::constants::{D_INTR, D_LEAF, ID_LEN};
 use crate::error::LmsDeserializeError;
-use crate::lms::error::LmsSigningError;
+use crate::lms::error::LmsOutOfPrivateKeys;
 use crate::lms::{LmsMode, Signature, VerifyingKey};
 use crate::ots::SigningKey as OtsPrivateKey;
 use crate::types::{Identifier, Typecode};
@@ -111,7 +111,7 @@ impl<Mode: LmsMode> RandomizedSignerMut<Signature<Mode>> for SigningKey<Mode> {
         msg: &[u8],
     ) -> Result<Signature<Mode>, Error> {
         if self.q >= Mode::LEAVES {
-            return Err(Error::from_source(LmsSigningError::OutOfPrivateKeys));
+            return Err(Error::from_source(LmsOutOfPrivateKeys {}));
         }
 
         let mut ots_priv_key =

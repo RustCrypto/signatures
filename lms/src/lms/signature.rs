@@ -1,4 +1,4 @@
-//! Contains the [Signature] type
+//! Contains the [`Signature`] type
 
 use crate::error::LmsDeserializeError;
 use crate::lms::LmsMode;
@@ -77,7 +77,7 @@ where
     }
 }
 
-/// Tries to parse a [Signature] from an exact slice
+/// Tries to parse a [`Signature`] from an exact slice
 impl<Mode: LmsMode> TryFrom<&[u8]> for Signature<Mode> {
     type Error = LmsDeserializeError;
 

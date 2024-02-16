@@ -1,4 +1,4 @@
-//! Contains the [Signature] type
+//! Contains the [`Signature`] type
 
 use crate::constants::{D_MESG, D_PBLC};
 use crate::error::LmsDeserializeError;
@@ -37,13 +37,13 @@ impl<Mode: LmsOtsMode> PartialEq for Signature<Mode> {
     }
 }
 
-/// Useful type alias to get the [GenericArray] representation
+/// Useful type alias to get the [`GenericArray`] representation
 pub type Output<Mode> = GenericArray<
     u8,
     Sum<Prod<<Mode as LmsOtsMode>::NLen, Sum<<Mode as LmsOtsMode>::PLen, U1>>, U4>,
 >;
 
-/// Converts a [Signature] into its byte representation
+/// Converts a [`Signature`] into its byte representation
 impl<Mode: LmsOtsMode> From<Signature<Mode>> for Output<Mode>
 where
     // required for Output<Mode>
@@ -63,7 +63,7 @@ where
     }
 }
 
-/// Tries to parse a [Signature] from an exact slice
+/// Tries to parse a [`Signature`] from an exact slice
 impl<'a, Mode: LmsOtsMode> TryFrom<&'a [u8]> for Signature<Mode> {
     type Error = LmsDeserializeError;
 

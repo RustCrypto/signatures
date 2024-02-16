@@ -97,7 +97,7 @@ impl<Mode: LmsMode> Verifier<Signature<Mode>> for VerifyingKey<Mode> {
     }
 }
 
-/// Converts a [VerifyingKey] into its byte representation
+/// Converts a [`VerifyingKey`] into its byte representation
 impl<Mode: LmsMode> From<VerifyingKey<Mode>>
     for GenericArray<u8, Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U24>>
 where
@@ -117,7 +117,7 @@ where
     }
 }
 
-/// Tries to parse a [VerifyingKey] from an exact slice
+/// Tries to parse a [`VerifyingKey`] from an exact slice
 impl<'a, Mode: LmsMode> TryFrom<&'a [u8]> for VerifyingKey<Mode> {
     type Error = LmsDeserializeError;
 

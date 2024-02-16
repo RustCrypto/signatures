@@ -1,5 +1,5 @@
 use crate::constants::{D_MESG, D_PBLC};
-use crate::ots::error::LmsOtsSigningError;
+use crate::ots::error::LmsOtsInvalidPrivateKey;
 use crate::ots::modes::LmsOtsMode;
 use crate::ots::public::VerifyingKey;
 use crate::ots::signature::Signature;
@@ -103,7 +103,7 @@ impl<Mode: LmsOtsMode> RandomizedSignerMut<Signature<Mode>> for SigningKey<Mode>
         msg: &[u8],
     ) -> Result<Signature<Mode>, Error> {
         if !self.valid {
-            return Err(Error::from_source(LmsOtsSigningError::InvalidPrivateKey));
+            return Err(Error::from_source(LmsOtsInvalidPrivateKey {}));
         }
 
         // Generate the message randomizer C

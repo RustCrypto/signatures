@@ -4,18 +4,12 @@ use std::error::Error;
 use std::fmt::{Display, Formatter, Result};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum LmsOtsSigningError {
-    InvalidPrivateKey,
-}
+pub struct LmsOtsInvalidPrivateKey {}
 
-impl Display for LmsOtsSigningError {
+impl Display for LmsOtsInvalidPrivateKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        match self {
-            Self::InvalidPrivateKey => {
-                write!(f, "private key is no longer valid")
-            }
-        }
+        write!(f, "private key is no longer valid")
     }
 }
 
-impl Error for LmsOtsSigningError {}
+impl Error for LmsOtsInvalidPrivateKey {}
