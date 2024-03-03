@@ -203,6 +203,8 @@ where
     MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArraySize,
 {
+    type Error = der::Error;
+
     fn decode<R: Reader<'a>>(reader: &mut R) -> der::Result<Self> {
         let header = reader.peek_header()?;
         header.tag.assert_eq(Tag::Sequence)?;
@@ -360,7 +362,7 @@ fn decode_der(der_bytes: &[u8]) -> der::Result<(UintRef<'_>, UintRef<'_>)> {
     let header = der::Header::decode(&mut reader)?;
     header.tag.assert_eq(der::Tag::Sequence)?;
 
-    let ret = reader.read_nested(header.length, |reader| {
+    let ret = reader.read_nested::<_, _, der::Error>(header.length, |reader| {
         let r = UintRef::decode(reader)?;
         let s = UintRef::decode(reader)?;
         Ok((r, s))

@@ -63,6 +63,8 @@ impl Components {
 }
 
 impl<'a> DecodeValue<'a> for Components {
+    type Error = der::Error;
+
     fn decode_value<R: Reader<'a>>(reader: &mut R, _header: Header) -> der::Result<Self> {
         let p = reader.decode::<UintRef<'_>>()?;
         let q = reader.decode::<UintRef<'_>>()?;
