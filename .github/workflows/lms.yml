@@ -1,4 +1,4 @@
-name: lms-rust
+name: lms
 on:
   pull_request:
     paths:
