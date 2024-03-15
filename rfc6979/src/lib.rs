@@ -90,20 +90,21 @@ pub fn generate_k_mut<D>(x: &[u8], q: &[u8], h: &[u8], data: &[u8], k: &mut [u8]
 where
     D: Digest + BlockSizeUser + FixedOutput + FixedOutputReset,
 {
-    assert_eq!(k.len(), x.len());
-    assert_eq!(k.len(), q.len());
-    assert_eq!(k.len(), h.len());
+    let k_len = k.len();
+    assert_eq!(k_len, x.len());
+    assert_eq!(k_len, q.len());
+    assert_eq!(k_len, h.len());
     debug_assert!(bool::from(ct::lt(h, q)));
 
-    let rlen = q.len() as u32 * 8;
-    let qlen = rlen - ct::leading_zeros(q);
+    let q_leading_zeros = ct::leading_zeros(q);
+    let q_has_leading_zeros = q_leading_zeros != 0;
     let mut hmac_drbg = HmacDrbg::<D>::new(x, h, data);
 
     loop {
         hmac_drbg.fill_bytes(k);
 
-        if qlen != rlen {
-            ct::rshift(k, rlen - qlen);
+        if q_has_leading_zeros {
+            ct::rshift(k, q_leading_zeros);
         }
 
         if (!ct::is_zero(k) & ct::lt(k, q)).into() {
