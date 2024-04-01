@@ -6,7 +6,8 @@ members = [
     "ed448",
     "ed25519",
     "lms",
-    "rfc6979"
+    "rfc6979",
+    "slh-dsa"
 ]
 
 [profile.dev]
