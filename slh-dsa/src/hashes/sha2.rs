@@ -3,7 +3,7 @@ use core::fmt::Debug;
 use crate::hashes::HashSuite;
 use crate::{
     address::Address, fors::ForsParams, hypertree::HypertreeParams, wots::WotsParams,
-    xmss::XMSSParams, ParameterSet,
+    xmss::XmssParams, ParameterSet,
 };
 use crate::{PkSeed, SkPrf, SkSeed};
 use digest::{Digest, Mac};
@@ -151,7 +151,7 @@ impl WotsParams for Sha2_128s {
     type WotsMsgLen = U<32>;
     type WotsSigLen = U<35>;
 }
-impl XMSSParams for Sha2_128s {
+impl XmssParams for Sha2_128s {
     type HPrime = U<9>;
 }
 impl HypertreeParams for Sha2_128s {
@@ -173,7 +173,7 @@ impl WotsParams for Sha2_128f {
     type WotsMsgLen = U<32>;
     type WotsSigLen = U<35>;
 }
-impl XMSSParams for Sha2_128f {
+impl XmssParams for Sha2_128f {
     type HPrime = U<3>;
 }
 impl HypertreeParams for Sha2_128f {
@@ -311,7 +311,7 @@ impl WotsParams for Sha2_192s {
     type WotsMsgLen = U<{ 24 * 2 }>;
     type WotsSigLen = U<{ 24 * 2 + 3 }>;
 }
-impl XMSSParams for Sha2_192s {
+impl XmssParams for Sha2_192s {
     type HPrime = U<9>;
 }
 impl HypertreeParams for Sha2_192s {
@@ -333,7 +333,7 @@ impl WotsParams for Sha2_192f {
     type WotsMsgLen = U<{ 24 * 2 }>;
     type WotsSigLen = U<{ 24 * 2 + 3 }>;
 }
-impl XMSSParams for Sha2_192f {
+impl XmssParams for Sha2_192f {
     type HPrime = U<3>;
 }
 impl HypertreeParams for Sha2_192f {
@@ -355,7 +355,7 @@ impl WotsParams for Sha2_256s {
     type WotsMsgLen = U<{ 32 * 2 }>;
     type WotsSigLen = U<{ 32 * 2 + 3 }>;
 }
-impl XMSSParams for Sha2_256s {
+impl XmssParams for Sha2_256s {
     type HPrime = U<8>;
 }
 impl HypertreeParams for Sha2_256s {
@@ -377,7 +377,7 @@ impl WotsParams for Sha2_256f {
     type WotsMsgLen = U<{ 32 * 2 }>;
     type WotsSigLen = U<{ 32 * 2 + 3 }>;
 }
-impl XMSSParams for Sha2_256f {
+impl XmssParams for Sha2_256f {
     type HPrime = U<4>;
 }
 impl HypertreeParams for Sha2_256f {

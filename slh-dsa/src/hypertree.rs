@@ -5,14 +5,14 @@ use typenum::Unsigned;
 
 use crate::{
     address::WotsHash,
-    xmss::{XMSSParams, XMSSSig},
+    xmss::{XmssParams, XmssSig},
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct HypertreeSig<P: HypertreeParams>(Array<XMSSSig<P>, P::D>);
+pub struct HypertreeSig<P: HypertreeParams>(Array<XmssSig<P>, P::D>);
 
 impl<P: HypertreeParams> HypertreeSig<P> {
-    pub const SIZE: usize = XMSSSig::<P>::SIZE * P::D::USIZE;
+    pub const SIZE: usize = XmssSig::<P>::SIZE * P::D::USIZE;
 
     pub fn write_to(&self, buf: &mut [u8]) {
         debug_assert!(
@@ -22,7 +22,7 @@ impl<P: HypertreeParams> HypertreeSig<P> {
             Self::SIZE
         );
 
-        buf.chunks_exact_mut(XMSSSig::<P>::SIZE)
+        buf.chunks_exact_mut(XmssSig::<P>::SIZE)
             .zip(self.0.iter())
             .for_each(|(buf, sig)| sig.write_to(buf));
     }
@@ -43,14 +43,14 @@ impl<P: HypertreeParams> TryFrom<&[u8]> for HypertreeSig<P> {
             return Err(());
         }
         let sig = value
-            .chunks(XMSSSig::<P>::SIZE)
-            .map(|c| XMSSSig::try_from(c).unwrap())
+            .chunks(XmssSig::<P>::SIZE)
+            .map(|c| XmssSig::try_from(c).unwrap())
             .collect();
         Ok(HypertreeSig(sig))
     }
 }
 
-pub trait HypertreeParams: XMSSParams + Sized {
+pub trait HypertreeParams: XmssParams + Sized {
     type D: ArraySize + Debug + Eq;
     type H: ArraySize; // HPrime * D
 

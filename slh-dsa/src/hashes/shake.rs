@@ -5,7 +5,7 @@ use crate::fors::ForsParams;
 use crate::hashes::HashSuite;
 use crate::hypertree::HypertreeParams;
 use crate::wots::WotsParams;
-use crate::xmss::XMSSParams;
+use crate::xmss::XmssParams;
 use crate::{ParameterSet, PkSeed, SkPrf, SkSeed};
 use digest::{ExtendableOutput, Update};
 use hybrid_array::typenum::consts::{U16, U30, U32};
@@ -130,7 +130,7 @@ impl WotsParams for Shake128s {
     type WotsMsgLen = U<32>;
     type WotsSigLen = U<35>;
 }
-impl XMSSParams for Shake128s {
+impl XmssParams for Shake128s {
     type HPrime = U<9>;
 }
 impl HypertreeParams for Shake128s {
@@ -152,7 +152,7 @@ impl WotsParams for Shake128f {
     type WotsMsgLen = U<32>;
     type WotsSigLen = U<35>;
 }
-impl XMSSParams for Shake128f {
+impl XmssParams for Shake128f {
     type HPrime = U<3>;
 }
 impl HypertreeParams for Shake128f {
@@ -174,7 +174,7 @@ impl WotsParams for Shake192s {
     type WotsMsgLen = U<{ 24 * 2 }>;
     type WotsSigLen = U<{ 24 * 2 + 3 }>;
 }
-impl XMSSParams for Shake192s {
+impl XmssParams for Shake192s {
     type HPrime = U<9>;
 }
 impl HypertreeParams for Shake192s {
@@ -196,7 +196,7 @@ impl WotsParams for Shake192f {
     type WotsMsgLen = U<{ 24 * 2 }>;
     type WotsSigLen = U<{ 24 * 2 + 3 }>;
 }
-impl XMSSParams for Shake192f {
+impl XmssParams for Shake192f {
     type HPrime = U<3>;
 }
 impl HypertreeParams for Shake192f {
@@ -218,7 +218,7 @@ impl WotsParams for Shake256s {
     type WotsMsgLen = U<{ 32 * 2 }>;
     type WotsSigLen = U<{ 32 * 2 + 3 }>;
 }
-impl XMSSParams for Shake256s {
+impl XmssParams for Shake256s {
     type HPrime = U<8>;
 }
 impl HypertreeParams for Shake256s {
@@ -240,7 +240,7 @@ impl WotsParams for Shake256f {
     type WotsMsgLen = U<{ 32 * 2 }>;
     type WotsSigLen = U<{ 32 * 2 + 3 }>;
 }
-impl XMSSParams for Shake256f {
+impl XmssParams for Shake256f {
     type HPrime = U<4>;
 }
 impl HypertreeParams for Shake256f {
