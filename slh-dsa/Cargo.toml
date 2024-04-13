@@ -1,0 +1,42 @@
+[package]
+name = "slh-dsa"
+version = "0.0.1"
+edition = "2021"
+
+[dependencies]
+hybrid-array = {version = "0.2.0-rc.8", features = ["extra-sizes"]}
+typenum = {version = "1.17.0", features = ["const-generics"]}
+sha3 = "0.10.8"
+zerocopy = "0.7.32"
+zerocopy-derive = "0.7.32"
+rand_core = {version = "0.6.4"}
+signature = {version = "2.3.0-pre.0", features = ["rand_core"]}
+hmac = "0.12.1"
+sha2 = "0.10.8"
+digest = "0.10.7"
+
+[dev-dependencies]
+hex-literal = "0.4.1" 
+hex = "0.4.1"
+num-bigint = "0.4.4"
+quickcheck = "1"
+quickcheck_macros = "1"
+proptest = "1.4.0"
+criterion = "0.5"
+aes = "0.8.4"
+cipher = "0.4.4"
+ctr = "0.9.2"
+rand_core = "0.6.4"
+paste = "1.0.14"
+rand = "0.8.5"
+
+[lib]
+bench = false
+
+[[bench]]
+name = "sign_verify"
+harness = false
+
+[features]
+alloc = []
+default = ["alloc"]
