@@ -1,16 +1,16 @@
-name: lms
+name: slh-dsa
 on:
   pull_request:
     paths:
-      - ".github/workflows/lms.yml"
-      - "lms/**"
+      - ".github/workflows/slh-dsa.yml"
+      - "slh-dsa/**"
       - "Cargo.*"
   push:
     branches: master
 
 defaults:
   run:
-    working-directory: lms
+    working-directory: slh-dsa
 
 env:
   CARGO_INCREMENTAL: 0
@@ -22,7 +22,7 @@ jobs:
     strategy:
       matrix:
         rust:
-          - 1.73.0 # MSRV
+          - 1.75.0 # MSRV
           - stable
     steps:
       - uses: actions/checkout@v4
@@ -30,6 +30,6 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
       - run: cargo check --all-features
-      - run: cargo test --no-default-features
+      # - run: cargo test --no-default-features TODO
       - run: cargo test
       - run: cargo test --all-features
