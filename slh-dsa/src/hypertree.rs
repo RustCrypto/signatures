@@ -131,10 +131,8 @@ pub trait HypertreeParams: XmssParams + Sized {
 mod tests {
     use super::*;
     use crate::{hashes::Shake128f, util::macros::test_parameter_sets, PkSeed};
-    use hex_literal::hex;
     use hybrid_array::Array;
     use rand::{thread_rng, Rng};
-    use sha3::{digest::ExtendableOutput, Shake256};
 
     fn test_ht_sign_verify<HTMode: HypertreeParams>() {
         let mut rng = thread_rng();
@@ -207,6 +205,9 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn test_ht_sign_kat() {
+        use hex_literal::hex;
+        use sha3::{digest::ExtendableOutput, Shake256};
+
         let sk_seed = SkSeed(Array([1; 16]));
         let pk_seed = PkSeed(Array([2; 16]));
         let m = Array([3; 16]);
