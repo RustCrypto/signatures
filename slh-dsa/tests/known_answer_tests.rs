@@ -121,8 +121,8 @@ where
         let sk = SigningKey::<P>::new(&mut seed_rng);
         let pk = sk.verifying_key();
 
-        writeln!(resp, "pk = {}", hex::encode_upper(&pk.to_vec())).unwrap();
-        writeln!(resp, "sk = {}", hex::encode_upper(&sk.to_vec())).unwrap();
+        writeln!(resp, "pk = {}", hex::encode_upper(&pk.to_bytes())).unwrap();
+        writeln!(resp, "sk = {}", hex::encode_upper(&sk.to_bytes())).unwrap();
 
         let sig = sk.sign_with_rng(&mut rng, msg).to_bytes();
         writeln!(resp, "smlen = {}", sig.as_slice().len() + msg.len()).unwrap();

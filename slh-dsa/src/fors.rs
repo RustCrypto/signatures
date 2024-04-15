@@ -219,12 +219,13 @@ mod tests {
     use rand::{thread_rng, Rng, RngCore};
 
     use super::*;
-    use hex_literal::hex;
 
     #[test]
     #[cfg(feature = "alloc")]
     #[allow(clippy::too_many_lines)] // KAT is long
     fn fors_sign_kat() {
+        use hex_literal::hex;
+
         let sk_seed = SkSeed(Array([1; 16]));
         let pk_seed = PkSeed(Array([2; 16]));
         let adrs = ForsTree::new(3, 5);

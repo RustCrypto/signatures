@@ -196,6 +196,7 @@ mod tests {
         assert_eq!(sig, sig2);
     }
 
+    #[cfg(feature = "alloc")]
     test_parameter_sets!(test_serialize_deserialize_vec);
 
     #[test]
