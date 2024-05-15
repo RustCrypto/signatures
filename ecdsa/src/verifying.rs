@@ -219,7 +219,7 @@ where
 #[cfg(feature = "der")]
 impl<C> PrehashVerifier<der::Signature<C>> for VerifyingKey<C>
 where
-    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic,
     SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
