@@ -31,7 +31,9 @@ use {core::str::FromStr, elliptic_curve::pkcs8::DecodePublicKey};
 use elliptic_curve::pkcs8::{
     self,
     der::AnyRef,
-    spki::{AlgorithmIdentifier, AssociatedAlgorithmIdentifier, SignatureAlgorithmIdentifier},
+    spki::{
+        self, AlgorithmIdentifier, AssociatedAlgorithmIdentifier, SignatureAlgorithmIdentifier,
+    },
     AssociatedOid, ObjectIdentifier,
 };
 
@@ -419,9 +421,9 @@ where
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
-    type Error = pkcs8::spki::Error;
+    type Error = spki::Error;
 
-    fn try_from(spki: pkcs8::SubjectPublicKeyInfoRef<'_>) -> pkcs8::spki::Result<Self> {
+    fn try_from(spki: pkcs8::SubjectPublicKeyInfoRef<'_>) -> spki::Result<Self> {
         PublicKey::try_from(spki).map(|inner| Self { inner })
     }
 }
@@ -433,7 +435,7 @@ where
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
-    fn to_public_key_der(&self) -> pkcs8::spki::Result<pkcs8::Document> {
+    fn to_public_key_der(&self) -> spki::Result<pkcs8::Document> {
         self.inner.to_public_key_der()
     }
 }
