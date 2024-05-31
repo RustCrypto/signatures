@@ -4,6 +4,11 @@ version = "0.0.1"
 edition = "2021"
 rust-version = "1.75"
 license = "Apache-2.0 OR MIT"
+homepage = "https://github.com/RustCrypto/signatures/tree/master/lms"
+repository = "https://github.com/RustCrypto/signatures"
+readme = "README.md"
+categories = ["cryptography"]
+keywords = ["crypto", "signature"]
 
 [dependencies]
 hybrid-array = { version = "0.2.0-rc.8", features = ["extra-sizes"] }
