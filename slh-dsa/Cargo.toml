@@ -1,6 +1,10 @@
 [package]
 name = "slh-dsa"
-version = "0.0.1"
+description = """
+Pure Rust implementation of the SLH-DSA (aka SPHINCS+) as described in the
+FIPS-205 Inital Public Draft
+"""
+version = "0.0.2"
 edition = "2021"
 rust-version = "1.75"
 license = "Apache-2.0 OR MIT"
