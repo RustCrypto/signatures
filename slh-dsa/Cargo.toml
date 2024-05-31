@@ -1,7 +1,7 @@
 [package]
 name = "slh-dsa"
 description = """
-Pure Rust implementation of the SLH-DSA (aka SPHINCS+) as described in the
+Pure Rust implementation of SLH-DSA (aka SPHINCS+) as described in the
 FIPS-205 Inital Public Draft
 """
 version = "0.0.2"
