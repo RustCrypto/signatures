@@ -7,7 +7,8 @@ Digital Signature Algorithm (DSA) and Elliptic Curve Digital Signature Algorithm
 """
 authors = ["RustCrypto Developers"]
 license = "Apache-2.0 OR MIT"
-repository = "https://github.com/RustCrypto/signatures/tree/master/rfc6979"
+homepage = "https://github.com/RustCrypto/signatures/tree/master/rfc6979"
+repository = "https://github.com/RustCrypto/signatures"
 readme = "README.md"
 categories = ["cryptography", "no-std"]
 keywords = ["dsa", "ecdsa", "signature"]
