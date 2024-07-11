@@ -1,0 +1,18 @@
+[package]
+name = "ml-dsa"
+description = """
+Pure Rust implementation of ML-DSA (formerly known as CRYSTALS-Dilithium) as
+described in the FIPS-204 Inital Public Draft
+"""
+version = "0.1.0-pre"
+edition = "2021"
+rust-version = "1.75"
+license = "Apache-2.0 OR MIT"
+homepage = "https://github.com/RustCrypto/signatures/tree/master/ml-dsa"
+repository = "https://github.com/RustCrypto/signatures"
+readme = "README.md"
+categories = ["cryptography"]
+keywords = ["crypto", "signature"]
+
+[dependencies]
+signature = { version = "2.3.0-pre.0", features = ["rand_core"] }
