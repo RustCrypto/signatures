@@ -6,6 +6,7 @@ members = [
     "ed448",
     "ed25519",
     "lms",
+    "ml-dsa",
     "rfc6979",
     "slh-dsa"
 ]
