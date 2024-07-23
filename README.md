@@ -18,6 +18,7 @@ and can be easily used for bare-metal or lightweight WebAssembly programming.
 | [`ed25519`] | [Ed25519](https://en.wikipedia.org/wiki/EdDSA#Ed25519) | [![crates.io](https://img.shields.io/crates/v/ed25519.svg)](https://crates.io/crates/ed25519) | [![Documentation](https://docs.rs/ed25519/badge.svg)](https://docs.rs/ed25519) | [![ed25519 build](https://github.com/RustCrypto/signatures/workflows/ed25519/badge.svg?branch=master&event=push)](https://github.com/RustCrypto/signatures/actions?query=workflow%3Aed25519)
 | [`ed448`] | [Ed448](https://en.wikipedia.org/wiki/EdDSA#Ed448) | [![crates.io](https://img.shields.io/crates/v/ed448-signature.svg)](https://crates.io/crates/ed448-signature) | [![Documentation](https://docs.rs/ed448-signature/badge.svg)](https://docs.rs/ed448-signature) | [![ed448 build](https://github.com/RustCrypto/signatures/actions/workflows/ed448.yml/badge.svg)](https://github.com/RustCrypto/signatures/actions/workflows/ed448.yml)
 | [`lms`] | [Leighton-Micali Signature](https://datatracker.ietf.org/doc/html/rfc8554) | [![crates.io](https://img.shields.io/crates/v/lms-signature.svg)](https://crates.io/crates/lms-signature) | [![Documentation](https://docs.rs/lms-signature/badge.svg)](https://docs.rs/ed25519) | [![lms build](https://github.com/RustCrypto/signatures/actions/workflows/lms.yml/badge.svg)](https://github.com/RustCrypto/signatures/actions/workflows/lms.yml)
+| [`ml-dsa`] | [Module Lattice Signature]([https://datatracker.ietf.org/doc/html/rfc8554](https://csrc.nist.gov/pubs/fips/204/ipd)) | [![crates.io](https://img.shields.io/crates/v/ml-dsa.svg)](https://crates.io/crates/ml-dsa) | [![Documentation](https://docs.rs/ml-dsa/badge.svg)](https://docs.rs/ml-dsa) | [![lms build](https://github.com/RustCrypto/signatures/actions/workflows/ml-dsa.yml/badge.svg)](https://github.com/RustCrypto/signatures/actions/workflows/lms.yml)
 | [`rfc6979`] | [RFC6979](https://datatracker.ietf.org/doc/html/rfc6979) | [![crates.io](https://img.shields.io/crates/v/rfc6979.svg)](https://crates.io/crates/rfc6979) | [![Documentation](https://docs.rs/rfc6979/badge.svg)](https://docs.rs/rfc6979) | [![rfc6979 build](https://github.com/RustCrypto/signatures/actions/workflows/rfc6979.yml/badge.svg)](https://github.com/RustCrypto/signatures/actions/workflows/rfc6979.yml)
 | [`slh-dsa`] | [Stateless Hash-Based Signature](https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.205.ipd.pdf) | [![crates.io](https://img.shields.io/crates/v/slh-dsa.svg)](https://crates.io/crates/slh-dsa) | [![Documentation](https://docs.rs/slh-dsa/badge.svg)](https://docs.rs/ed25519) | [![slh-dsa build](https://github.com/RustCrypto/signatures/actions/workflows/slh-dsa.yml/badge.svg)](https://github.com/RustCrypto/signatures/actions/workflows/slh-dsa.yml)
 
@@ -57,6 +58,7 @@ dual licensed as above, without any additional terms or conditions.
 [`ed448`]: ./ed448
 [`ed25519`]: ./ed25519
 [`lms`]: ./lms
+[`ml-dsa`]: ./ml-dsa
 [`rfc6979`]: ./rfc6979
 [`slh-dsa`]: ./slh-dsa
 
