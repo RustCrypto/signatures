@@ -27,7 +27,7 @@ where
     let size = (q.bits() / 8) as usize;
 
     // Reduce hash mod q
-    let hash = BoxedUint::from_be_slice(hash, (hash.len() * 8) as u32).unwrap();
+    let hash = BoxedUint::from_be_slice(hash, q.bits_precision()).unwrap();
     let hash = (hash % q).to_be_bytes();
     let hash = strip_leading_zeros(&hash, size);
 
@@ -41,7 +41,7 @@ where
     loop {
         rfc6979::generate_k_mut::<D>(x_bytes, q_bytes, hash, &[], &mut buffer);
 
-        let k = BoxedUint::from_be_slice(&buffer, (buffer.len() * 8) as u32).unwrap();
+        let k = BoxedUint::from_be_slice(&buffer, q.bits_precision()).unwrap();
         if let Some(inv_k) = k.inv_mod(q).into() {
             if (bool::from(k.is_nonzero())) && (k < **q) {
                 return (k, inv_k);
