@@ -315,7 +315,7 @@ where
         let u1 = -(r_inv * z);
         let u2 = r_inv * *s;
         let pk = ProjectivePoint::<C>::lincomb(&[(ProjectivePoint::<C>::generator(), u1), (R, u2)]);
-        Ok(Self::from_affine(pk.into())?)
+        Self::from_affine(pk.into())
     }
 }
 
