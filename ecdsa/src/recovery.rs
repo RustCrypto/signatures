@@ -266,8 +266,27 @@ where
 
     /// Recover a [`VerifyingKey`] from the given `prehash` of a message, the
     /// signature over that prehashed message, and a [`RecoveryId`].
-    #[allow(non_snake_case)]
     pub fn recover_from_prehash(
+        prehash: &[u8],
+        signature: &Signature<C>,
+        recovery_id: RecoveryId,
+    ) -> Result<Self> {
+        let vk = Self::recover_from_prehash_noverify(prehash, signature, recovery_id)?;
+        // Ensure signature verifies with the recovered key
+        verify_prehashed::<C>(
+            &ProjectivePoint::<C>::from(*vk.as_affine()),
+            &bits2field::<C>(prehash)?,
+            signature,
+        )?;
+        Ok(vk)
+    }
+
+    /// Recover a [`VerifyingKey`] from the given `prehash` of a message, the
+    /// signature over that prehashed message, and a [`RecoveryId`]. Compared to
+    /// `recover_from_prehash`, this function skips verification with the
+    /// recovered key.
+    #[allow(non_snake_case)]
+    pub fn recover_from_prehash_noverify(
         prehash: &[u8],
         signature: &Signature<C>,
         recovery_id: RecoveryId,
@@ -296,16 +315,7 @@ where
         let u1 = -(r_inv * z);
         let u2 = r_inv * *s;
         let pk = ProjectivePoint::<C>::lincomb(&[(ProjectivePoint::<C>::generator(), u1), (R, u2)]);
-        let vk = Self::from_affine(pk.into())?;
-
-        // Ensure signature verifies with the recovered key
-        verify_prehashed::<C>(
-            &ProjectivePoint::<C>::from(*vk.as_affine()),
-            &bits2field::<C>(prehash)?,
-            signature,
-        )?;
-
-        Ok(vk)
+        Self::from_affine(pk.into())
     }
 }
 
