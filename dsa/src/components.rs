@@ -73,9 +73,12 @@ impl<'a> DecodeValue<'a> for Components {
         let q = reader.decode::<UintRef<'_>>()?;
         let g = reader.decode::<UintRef<'_>>()?;
 
-        let p = BoxedUint::from_be_slice(p.as_bytes(), (p.as_bytes().len() * 8) as u32).unwrap();
-        let q = BoxedUint::from_be_slice(q.as_bytes(), (q.as_bytes().len() * 8) as u32).unwrap();
-        let g = BoxedUint::from_be_slice(g.as_bytes(), (g.as_bytes().len() * 8) as u32).unwrap();
+        // Just use the precision of `p` since `p` will be the largest value and all values need to have the same precision
+        let precision = (p.as_bytes().len() * 8) as u32;
+
+        let p = BoxedUint::from_be_slice(p.as_bytes(), precision).unwrap();
+        let q = BoxedUint::from_be_slice(q.as_bytes(), precision).unwrap();
+        let g = BoxedUint::from_be_slice(g.as_bytes(), precision).unwrap();
 
         let p = NonZero::new(p).unwrap();
         let q = NonZero::new(q).unwrap();
