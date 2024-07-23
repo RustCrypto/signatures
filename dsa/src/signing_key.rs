@@ -94,6 +94,12 @@ impl SigningKey {
         let (p, q, g) = (components.p(), components.q(), components.g());
         let x = self.x();
 
+        // Verify all the precisions check out. Otherwise the math operations will fail
+        debug_assert_eq!(p.bits_precision(), q.bits_precision());
+        debug_assert_eq!(q.bits_precision(), g.bits_precision());
+        debug_assert_eq!(g.bits_precision(), x.bits_precision());
+        debug_assert_eq!(x.bits_precision(), k.bits_precision());
+
         let params = BoxedMontyParams::new(Odd::new(k).unwrap());
         let form = BoxedMontyForm::new((**g).clone(), params);
         let r = NonZero::new(form.pow(p).retrieve() % q).unwrap();
@@ -209,14 +215,18 @@ impl<'a> TryFrom<PrivateKeyInfo<'a>> for SigningKey {
         let parameters = value.algorithm.parameters_any()?;
         let components = parameters.decode_as::<Components>()?;
 
+        // Use the precision of `p`. `p` will always have the largest precision.
+        // Every operation is mod `p` anyway, so it will always fit.
+        let precision = components.p().bits_precision();
+
         let x = UintRef::from_der(value.private_key)?;
-        let x = BoxedUint::from_be_slice(x.as_bytes(), x.as_bytes().len() as u32 * 8).unwrap();
+        let x = BoxedUint::from_be_slice(x.as_bytes(), precision).unwrap();
         let x = NonZero::new(x).unwrap();
 
         let y = if let Some(y_bytes) = value.public_key {
             let y = UintRef::from_der(y_bytes)?;
             NonZero::new(
-                BoxedUint::from_be_slice(y.as_bytes(), y.as_bytes().len() as u32 * 8).unwrap(),
+                BoxedUint::from_be_slice(y.as_bytes(), precision).unwrap(),
             )
             .unwrap()
         } else {
