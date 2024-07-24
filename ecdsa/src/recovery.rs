@@ -135,10 +135,18 @@ impl RecoveryId {
         FieldBytesSize<C>: sec1::ModulusSize,
         SignatureSize<C>: ArraySize,
     {
+        // Ensure signature verifies with the recovered key
+        verify_prehashed::<C>(
+            &ProjectivePoint::<C>::from(*verifying_key.as_affine()),
+            &bits2field::<C>(prehash)?,
+            signature,
+        )?;
         for id in 0..=Self::MAX {
             let recovery_id = RecoveryId(id);
 
-            if let Ok(vk) = VerifyingKey::recover_from_prehash(prehash, signature, recovery_id) {
+            if let Ok(vk) =
+                VerifyingKey::recover_from_prehash_noverify(prehash, signature, recovery_id)
+            {
                 if verifying_key == &vk {
                     return Ok(recovery_id);
                 }
