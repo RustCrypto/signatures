@@ -107,6 +107,7 @@ impl KeypairBytes {
 impl EncodePrivateKey for KeypairBytes {
     fn to_pkcs8_der(&self) -> Result<SecretDocument> {
         // Serialize private key as nested OCTET STRING
+        // TODO(tarcieri): zeroize `private_key`
         let mut private_key = [0u8; 2 + (Self::BYTE_SIZE / 2)];
         private_key[0] = 0x04;
         private_key[1] = 0x39;
@@ -118,12 +119,7 @@ impl EncodePrivateKey for KeypairBytes {
             public_key: self.public_key.as_ref().map(|pk| pk.0.as_slice()),
         };
 
-        let result = SecretDocument::encode_msg(&private_key_info)?;
-
-        #[cfg(feature = "zeroize")]
-        private_key.zeroize();
-
-        Ok(result)
+        Ok(SecretDocument::encode_msg(&private_key_info)?)
     }
 }
 
