@@ -24,11 +24,11 @@
 //!
 //! ```
 //! # use dsa::{Components, SigningKey, VerifyingKey};
-//! # use num_bigint::BigUint;
+//! # use crypto_bigint::BoxedUint;
 //! # use num_traits::One;
-//! # let read_common_parameters = || (BigUint::one(), BigUint::one(), BigUint::one());
-//! # let read_public_component = || BigUint::one();
-//! # let read_private_component = || BigUint::one();
+//! # let read_common_parameters = || (BoxedUint::one(), BoxedUint::one(), BoxedUint::one());
+//! # let read_public_component = || BoxedUint::one();
+//! # let read_private_component = || BoxedUint::one();
 //! # || -> signature::Result<()> {
 //! let (p, q, g) = read_common_parameters();
 //! let components = Components::from_components(p, q, g)?;
@@ -50,7 +50,8 @@ pub use crate::{
     components::Components, signing_key::SigningKey, size::KeySize, verifying_key::VerifyingKey,
 };
 
-pub use num_bigint::BigUint;
+pub use crypto_bigint::BoxedUint;
+use crypto_bigint::NonZero;
 pub use pkcs8;
 pub use signature;
 
@@ -68,7 +69,6 @@ mod verifying_key;
 pub const OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.2.840.10040.4.1");
 
 use alloc::{boxed::Box, vec::Vec};
-use num_traits::Zero;
 use pkcs8::der::{
     self, asn1::UintRef, Decode, DecodeValue, Encode, EncodeValue, Header, Length, Reader,
     Sequence, Writer,
@@ -80,31 +80,27 @@ use signature::SignatureEncoding;
 #[must_use]
 pub struct Signature {
     /// Signature part r
-    r: BigUint,
+    r: NonZero<BoxedUint>,
 
     /// Signature part s
-    s: BigUint,
+    s: NonZero<BoxedUint>,
 }
 
 impl Signature {
     /// Create a new Signature container from its components
-    pub fn from_components(r: BigUint, s: BigUint) -> signature::Result<Self> {
-        if r.is_zero() || s.is_zero() {
-            return Err(signature::Error::new());
-        }
-
-        Ok(Self { r, s })
+    pub fn from_components(r: NonZero<BoxedUint>, s: NonZero<BoxedUint>) -> Self {
+        Self { r, s }
     }
 
     /// Signature part r
     #[must_use]
-    pub fn r(&self) -> &BigUint {
+    pub fn r(&self) -> &NonZero<BoxedUint> {
         &self.r
     }
 
     /// Signature part s
     #[must_use]
-    pub fn s(&self) -> &BigUint {
+    pub fn s(&self) -> &NonZero<BoxedUint> {
         &self.s
     }
 }
@@ -117,23 +113,26 @@ impl<'a> DecodeValue<'a> for Signature {
             let r = UintRef::decode(reader)?;
             let s = UintRef::decode(reader)?;
 
-            let r = BigUint::from_bytes_be(r.as_bytes());
-            let s = BigUint::from_bytes_be(s.as_bytes());
+            let r = BoxedUint::from_be_slice(r.as_bytes(), r.as_bytes().len() as u32 * 8).unwrap();
+            let s = BoxedUint::from_be_slice(s.as_bytes(), s.as_bytes().len() as u32 * 8).unwrap();
 
-            Self::from_components(r, s).map_err(|_| der::Tag::Integer.value_error())
+            let r = NonZero::new(r).unwrap();
+            let s = NonZero::new(s).unwrap();
+
+            Ok(Self::from_components(r, s))
         })
     }
 }
 
 impl EncodeValue for Signature {
     fn value_len(&self) -> der::Result<Length> {
-        UintRef::new(&self.r.to_bytes_be())?.encoded_len()?
-            + UintRef::new(&self.s.to_bytes_be())?.encoded_len()?
+        UintRef::new(&self.r.to_be_bytes())?.encoded_len()?
+            + UintRef::new(&self.s.to_be_bytes())?.encoded_len()?
     }
 
     fn encode_value(&self, writer: &mut impl Writer) -> der::Result<()> {
-        UintRef::new(&self.r.to_bytes_be())?.encode(writer)?;
-        UintRef::new(&self.s.to_bytes_be())?.encode(writer)?;
+        UintRef::new(&self.r.to_be_bytes())?.encode(writer)?;
+        UintRef::new(&self.s.to_be_bytes())?.encode(writer)?;
         Ok(())
     }
 }
@@ -179,8 +178,8 @@ impl TryFrom<&[u8]> for Signature {
     }
 }
 
-/// Returns a `BigUint` with the value 2
+/// Returns a `BoxedUint` with the value 2
 #[inline]
-fn two() -> BigUint {
-    BigUint::from(2_u8)
+fn two() -> BoxedUint {
+    BoxedUint::from(2_u8)
 }
