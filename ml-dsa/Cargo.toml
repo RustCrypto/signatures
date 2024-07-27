@@ -15,4 +15,4 @@ categories = ["cryptography"]
 keywords = ["crypto", "signature"]
 
 [dependencies]
-signature = { version = "2.3.0-pre.0", features = ["rand_core"] }
+signature = { version = "2.3.0-pre.4", features = ["rand_core"] }
