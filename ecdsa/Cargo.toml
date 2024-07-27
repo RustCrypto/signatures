@@ -23,7 +23,7 @@ signature = { version = "=2.3.0-pre.4", default-features = false, features = ["r
 # optional dependencies
 der = { version = "=0.8.0-rc.0", optional = true }
 digest = { version = "=0.11.0-pre.9", optional = true, default-features = false, features = ["oid"] }
-rfc6979 = { version = "=0.5.0-pre.3", optional = true, path = "../rfc6979" }
+rfc6979 = { version = "=0.5.0-pre.4", optional = true, path = "../rfc6979" }
 serdect = { version = "0.2", optional = true, default-features = false, features = ["alloc"] }
 sha2 = { version = "=0.11.0-pre.4", optional = true, default-features = false, features = ["oid"] }
 spki = { version = "=0.8.0-rc.0", optional = true, default-features = false }
