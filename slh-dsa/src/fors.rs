@@ -52,6 +52,7 @@ impl<P: ForsParams> TryFrom<&[u8]> for ForsMTSig<P> {
         if slice.len() != ForsMTSig::<P>::SIZE {
             return Err(());
         }
+        #[allow(deprecated)]
         let sk = Array::clone_from_slice(&slice[..P::N::USIZE]);
         let mut auth: Array<Array<u8, P::N>, P::A> = Array::default();
         for i in 0..P::A::USIZE {

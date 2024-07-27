@@ -223,9 +223,9 @@ where
     /// - `Err(err)` if the `r` and/or `s` component of the signature is
     ///   out-of-range when interpreted as a big endian integer.
     pub fn from_bytes(bytes: &SignatureBytes<C>) -> Result<Self> {
-        let (r_bytes, s_bytes) = bytes.split_at(C::FieldBytesSize::USIZE);
-        let r = FieldBytes::<C>::clone_from_slice(r_bytes);
-        let s = FieldBytes::<C>::clone_from_slice(s_bytes);
+        let chunks = FieldBytes::<C>::slice_as_chunks(bytes).0;
+        let r = chunks[0].clone();
+        let s = chunks[1].clone();
         Self::from_scalars(r, s)
     }
 

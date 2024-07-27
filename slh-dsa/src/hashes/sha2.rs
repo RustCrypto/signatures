@@ -1,3 +1,6 @@
+// TODO(tarcieri): fix `hybrid-array` deprecation warnings
+#![allow(deprecated)]
+
 use core::fmt::Debug;
 
 use crate::hashes::HashSuite;

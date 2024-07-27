@@ -24,6 +24,7 @@ impl<N: ArraySize> AsRef<[u8]> for PkSeed<N> {
 }
 impl<N: ArraySize> From<&[u8]> for PkSeed<N> {
     fn from(slice: &[u8]) -> Self {
+        #[allow(deprecated)]
         Self(Array::clone_from_slice(slice))
     }
 }
@@ -79,6 +80,7 @@ impl<P: ParameterSet> From<&VerifyingKey<P>> for Array<u8, P::VkLen> {
 }
 
 impl<P: ParameterSet> From<Array<u8, P::VkLen>> for VerifyingKey<P> {
+    #[allow(deprecated)] // clone_from_slice
     fn from(bytes: Array<u8, P::VkLen>) -> VerifyingKey<P> {
         debug_assert!(P::VkLen::USIZE == 2 * P::N::USIZE);
         let pk_seed = PkSeed(Array::clone_from_slice(&bytes[..P::N::USIZE]));
@@ -90,6 +92,7 @@ impl<P: ParameterSet> From<Array<u8, P::VkLen>> for VerifyingKey<P> {
 impl<P: ParameterSet> TryFrom<&[u8]> for VerifyingKey<P> {
     type Error = Error;
 
+    #[allow(deprecated)] // clone_from_slice
     fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
         if bytes.len() != P::N::USIZE * 2 {
             return Err(Error::new());

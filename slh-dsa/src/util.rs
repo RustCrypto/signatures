@@ -25,6 +25,7 @@ pub fn base_2b<OutLen: ArraySize, B: Unsigned>(x: &[u8]) -> Array<u16, OutLen> {
 
 /// Separates the digest into the FORS message, the Xmss tree index, and the Xmss leaf index.
 pub fn split_digest<P: ForsParams>(digest: &Array<u8, P::M>) -> (&Array<u8, P::MD>, u64, u32) {
+    #[allow(deprecated)]
     let m = Array::from_slice(&digest[..P::MD::USIZE]);
     let idx_tree_size = (P::H::USIZE - P::HPrime::USIZE).div_ceil(8);
     let idx_leaf_size = P::HPrime::USIZE.div_ceil(8);
