@@ -98,8 +98,8 @@ macro_rules! new_verification_test {
         fn ecdsa_verify_success() {
             for vector in $vectors {
                 let q_encoded = EncodedPoint::<$curve>::from_affine_coordinates(
-                    Array::from_slice(vector.q_x),
-                    Array::from_slice(vector.q_y),
+                    &Array::try_from(vector.q_x).unwrap(),
+                    &Array::try_from(vector.q_y).unwrap(),
                     false,
                 );
 
@@ -120,8 +120,8 @@ macro_rules! new_verification_test {
         fn ecdsa_verify_invalid_s() {
             for vector in $vectors {
                 let q_encoded = EncodedPoint::<$curve>::from_affine_coordinates(
-                    Array::from_slice(vector.q_x),
-                    Array::from_slice(vector.q_y),
+                    &Array::try_from(vector.q_x).unwrap(),
+                    &Array::try_from(vector.q_y).unwrap(),
                     false,
                 );
 
