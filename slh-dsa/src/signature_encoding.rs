@@ -59,6 +59,7 @@ impl<P: ParameterSet> TryFrom<&[u8]> for Signature<P> {
         }
 
         let (rand_bytes, rest) = bytes.split_at(P::N::USIZE);
+        #[allow(deprecated)]
         let randomizer = Array::clone_from_slice(rand_bytes);
 
         let (fors_bytes, ht_bytes) = rest.split_at(ForsSignature::<P>::SIZE);

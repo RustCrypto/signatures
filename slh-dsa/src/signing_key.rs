@@ -17,6 +17,7 @@ impl<N: ArraySize> AsRef<[u8]> for SkSeed<N> {
 }
 impl<N: ArraySize> From<&[u8]> for SkSeed<N> {
     fn from(slice: &[u8]) -> Self {
+        #[allow(deprecated)]
         Self(Array::clone_from_slice(slice))
     }
 }
@@ -37,6 +38,7 @@ impl<N: ArraySize> AsRef<[u8]> for SkPrf<N> {
 }
 impl<N: ArraySize> From<&[u8]> for SkPrf<N> {
     fn from(slice: &[u8]) -> Self {
+        #[allow(deprecated)]
         Self(Array::clone_from_slice(slice))
     }
 }
