@@ -8,7 +8,7 @@
 #![deny(missing_docs)] // Require all public interfaces to be documented
 
 //! # Usage
-//! This crate implements the Stateless Hash-based Digital Signature Algorithm (SLH-DSA) based on the draft
+//! This crate implements the Stateless Hash-based Digital Signature Algorithm (SLH-DSA) based on the finalized
 //! standard by NIST in FIPS-205. SLH-DSA (based on the SPHINCS+ submission) is a signature algorithm designed
 //! to be resistant to quantum computers.
 //!

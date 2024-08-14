@@ -2,7 +2,7 @@
 name = "slh-dsa"
 description = """
 Pure Rust implementation of SLH-DSA (aka SPHINCS+) as described in the
-FIPS-205 Inital Public Draft
+FIPS-205 standard
 """
 version = "0.0.2"
 edition = "2021"

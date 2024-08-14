@@ -21,7 +21,7 @@ impl<N: ArraySize> From<&[u8]> for SkSeed<N> {
         Self(Array::clone_from_slice(slice))
     }
 }
-impl<N: ArraySize> SkPrf<N> {
+impl<N: ArraySize> SkSeed<N> {
     pub(crate) fn new(rng: &mut impl rand_core::CryptoRngCore) -> Self {
         let mut bytes = Array::<u8, N>::default();
         rng.fill_bytes(bytes.as_mut_slice());
@@ -42,7 +42,7 @@ impl<N: ArraySize> From<&[u8]> for SkPrf<N> {
         Self(Array::clone_from_slice(slice))
     }
 }
-impl<N: ArraySize> SkSeed<N> {
+impl<N: ArraySize> SkPrf<N> {
     pub(crate) fn new(rng: &mut impl rand_core::CryptoRngCore) -> Self {
         let mut bytes = Array::<u8, N>::default();
         rng.fill_bytes(bytes.as_mut_slice());
@@ -70,6 +70,10 @@ impl<P: ParameterSet> SigningKey<P> {
         let sk_seed = SkSeed::new(rng);
         let sk_prf = SkPrf::new(rng);
         let pk_seed = PkSeed::new(rng);
+        Self::from_seed(sk_seed, sk_prf, pk_seed)
+    }
+
+    fn from_seed(sk_seed: SkSeed<P::N>, sk_prf: SkPrf<P::N>, pk_seed: PkSeed<P::N>) -> Self {
         let mut adrs = WotsHash::default();
         adrs.layer_adrs.set(P::D::U32 - 1);
 
@@ -80,6 +84,67 @@ impl<P: ParameterSet> SigningKey<P> {
             sk_prf,
             verifying_key,
         }
+    }
+
+    #[doc(hidden)]
+    #[allow(clippy::must_use_candidate)]
+    /// Construct a new SigningKey from pre-chosen seeds.
+    /// Implements [slh_keygen_internal] as defined in FIPS-205.
+    /// Published for KAT validation purposes but not intended for general use.
+    pub fn slh_keygen_internal(sk_seed: &[u8], sk_prf: &[u8], pk_seed: &[u8]) -> Self {
+        let sk_seed = SkSeed::from(sk_seed);
+        let sk_prf = SkPrf::from(sk_prf);
+        let pk_seed = PkSeed::from(pk_seed);
+        Self::from_seed(sk_seed, sk_prf, pk_seed)
+    }
+
+    #[doc(hidden)]
+    /// Sign a message with a pre-chosen randomizer.
+    /// Implements [slh_sign_internal] as defined in FIPS-205.
+    /// Published for KAT validation purposes but not intended for general use.
+    /// opt_rand must be a P::N length slice, panics otherwise.
+    pub fn slh_sign_internal(&self, msg: &[u8], opt_rand: Option<&[u8]>) -> Signature<P> {
+        let rand = opt_rand
+            .unwrap_or(&self.verifying_key.pk_seed.0)
+            .try_into()
+            .unwrap();
+
+        let sk_seed = &self.sk_seed;
+        let pk_seed = &self.verifying_key.pk_seed;
+
+        let randomizer = P::prf_msg(&self.sk_prf, rand, msg);
+
+        let digest = P::h_msg(&randomizer, pk_seed, &self.verifying_key.pk_root, msg);
+        let (md, idx_tree, idx_leaf) = split_digest::<P>(&digest);
+        let adrs = ForsTree::new(idx_tree, idx_leaf);
+        let fors_sig = P::fors_sign(md, sk_seed, pk_seed, &adrs);
+
+        let fors_pk = P::fors_pk_from_sig(&fors_sig, md, pk_seed, &adrs);
+        let ht_sig = P::ht_sign(&fors_pk, sk_seed, pk_seed, idx_tree, idx_leaf);
+
+        Signature {
+            randomizer,
+            fors_sig,
+            ht_sig,
+        }
+    }
+
+    /// Implements [slh-sign] as defined in FIPS-205, using a context string.
+    /// Context strings must be 255 bytes or less.
+    /// # Errors
+    /// Returns an error if the context string is too long.
+    pub fn try_sign_with_context(
+        &self,
+        msg: &[u8],
+        ctx: &[u8],
+        opt_rand: Option<&[u8]>,
+    ) -> Result<Signature<P>, Error> {
+        let ctx_len = u8::try_from(ctx.len()).map_err(|_| Error::new())?;
+        let ctx_len_bytes = ctx_len.to_be_bytes();
+
+        // TODO - figure out what to do about this allocation. Maybe pass a chained iterator to slh_sign_internal?
+        let ctx_msg = [&[0], &ctx_len_bytes, ctx, msg].concat();
+        Ok(self.slh_sign_internal(&ctx_msg, opt_rand))
     }
 
     /// Serialize the signing key to a new stack-allocated array
@@ -103,34 +168,9 @@ impl<P: ParameterSet> SigningKey<P> {
     }
 }
 
-fn sign_with_opt_rng<P: ParameterSet>(
-    sk: &SigningKey<P>,
-    msg: &[u8],
-    opt_rand: &Array<u8, P::N>,
-) -> Signature<P> {
-    let sk_seed = &sk.sk_seed;
-    let pk_seed = &sk.verifying_key.pk_seed;
-
-    let randomizer = P::prf_msg(&sk.sk_prf, opt_rand, msg);
-
-    let digest = P::h_msg(&randomizer, pk_seed, &sk.verifying_key.pk_root, msg);
-    let (md, idx_tree, idx_leaf) = split_digest::<P>(&digest);
-    let adrs = ForsTree::new(idx_tree, idx_leaf);
-    let fors_sig = P::fors_sign(md, sk_seed, pk_seed, &adrs);
-
-    let fors_pk = P::fors_pk_from_sig(&fors_sig, md, pk_seed, &adrs);
-    let ht_sig = P::ht_sign(&fors_pk, sk_seed, pk_seed, idx_tree, idx_leaf);
-
-    Signature {
-        randomizer,
-        fors_sig,
-        ht_sig,
-    }
-}
-
 impl<P: ParameterSet> Signer<Signature<P>> for SigningKey<P> {
     fn try_sign(&self, msg: &[u8]) -> Result<Signature<P>, Error> {
-        Ok(sign_with_opt_rng(self, msg, &self.verifying_key.pk_seed.0))
+        self.try_sign_with_context(msg, &[], None)
     }
 }
 
@@ -142,7 +182,7 @@ impl<P: ParameterSet> RandomizedSigner<Signature<P>> for SigningKey<P> {
     ) -> Result<Signature<P>, signature::Error> {
         let mut randomizer = Array::<u8, P::N>::default();
         rng.fill_bytes(randomizer.as_mut_slice());
-        Ok(sign_with_opt_rng(self, msg, &randomizer))
+        self.try_sign_with_context(msg, &[], Some(&randomizer))
     }
 }
 

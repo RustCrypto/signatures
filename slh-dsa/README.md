@@ -9,7 +9,7 @@
 
 Pure Rust implementation of the SLH-DSA (aka SPHINCS+) signature scheme.
 
-Implemented based on the [FIPS-205 Inital Public Draft].
+Implemented based on the [FIPS-205 Standard].
 
 ## ⚠️ Security Warning
 
@@ -53,4 +53,4 @@ dual licensed as above, without any additional terms or conditions.
 [//]: # (links)
 
 [RustCrypto]: https://github.com/RustCrypto
-[FIPS-205 Inital Public Draft]: https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.205.ipd.pdf
+[FIPS-205 Standard]: https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.205.pdf
