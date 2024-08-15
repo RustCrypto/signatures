@@ -1,4 +1,5 @@
 #![allow(non_snake_case)]
+#![cfg(feature = "alloc")]
 
 use serde::Deserialize;
 use slh_dsa::*;

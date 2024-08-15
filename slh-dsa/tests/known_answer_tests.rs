@@ -3,6 +3,7 @@
 //! with PQCgenKAT_sign.c modified on line 59 to reduce iterations from 100 to 10
 //!
 //! These tests call the `slh_*_internal` functions directly, bypassing context processing.
+#![cfg(feature = "alloc")]
 use std::{array::from_fn, fmt::Write};
 
 use aes::Aes256;

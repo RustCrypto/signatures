@@ -1,4 +1,5 @@
 #![allow(non_snake_case)]
+#![cfg(feature = "alloc")]
 
 use serde::Deserialize;
 use signature::Keypair;
@@ -39,8 +40,8 @@ macro_rules! parameter_case {
             &$test_case.pkSeed,
         );
         let vk = sk.verifying_key();
-        assert_eq!(sk.to_bytes().to_vec(), $test_case.sk);
-        assert_eq!(vk.to_bytes().to_vec(), $test_case.pk);
+        assert_eq!(sk.to_vec(), $test_case.sk);
+        assert_eq!(vk.to_vec(), $test_case.pk);
     }};
 }
 

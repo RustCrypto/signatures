@@ -1,8 +1,8 @@
 #![allow(non_snake_case)]
+#![cfg(feature = "alloc")]
 
 use serde::Deserialize;
 use slh_dsa::*;
-
 
 const KEYGEN_KAT_JSON: &str = include_str!("acvp/SLH-DSA-sigVer-FIPS205/internalProjection.json");
 
