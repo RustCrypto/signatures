@@ -349,7 +349,7 @@ impl ForsParams for Sha2_192f {
     type MD = U<{ (33 * 8 + 7) / 8 }>;
 }
 impl ParameterSet for Sha2_192f {
-    const NAME: &'static str = "SLH-DSA-SHA2-128f";
+    const NAME: &'static str = "SLH-DSA-SHA2-192f";
 }
 
 /// SHA2 at L5 security with small signatures

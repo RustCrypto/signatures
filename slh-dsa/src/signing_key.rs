@@ -8,7 +8,7 @@ use hybrid_array::{Array, ArraySize};
 use typenum::{Unsigned, U, U16, U24, U32};
 
 // NewTypes for ensuring hash argument order correctness
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub(crate) struct SkSeed<N: ArraySize>(pub(crate) Array<u8, N>);
 impl<N: ArraySize> AsRef<[u8]> for SkSeed<N> {
     fn as_ref(&self) -> &[u8] {
@@ -29,7 +29,7 @@ impl<N: ArraySize> SkSeed<N> {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub(crate) struct SkPrf<N: ArraySize>(pub(crate) Array<u8, N>);
 impl<N: ArraySize> AsRef<[u8]> for SkPrf<N> {
     fn as_ref(&self) -> &[u8] {
@@ -51,7 +51,7 @@ impl<N: ArraySize> SkPrf<N> {
 }
 
 /// A `SigningKey` allows signing messages with a fixed parameter set
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct SigningKey<P: ParameterSet> {
     pub(crate) sk_seed: SkSeed<P::N>,
     pub(crate) sk_prf: SkPrf<P::N>,
@@ -168,6 +168,26 @@ impl<P: ParameterSet> SigningKey<P> {
     }
 }
 
+impl<P: ParameterSet> TryFrom<&[u8]> for SigningKey<P> {
+    type Error = Error;
+
+    fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
+        if bytes.len() != P::SkLen::USIZE {
+            return Err(Error::new());
+        }
+
+        let (sk_seed_bytes, rest) = bytes.split_at(P::N::USIZE);
+        let (sk_prf_bytes, verifying_key_bytes) = rest.split_at(P::N::USIZE);
+        let verifying_key = VerifyingKey::try_from(verifying_key_bytes)?;
+
+        Ok(SigningKey {
+            sk_seed: SkSeed::from(sk_seed_bytes),
+            sk_prf: SkPrf::from(sk_prf_bytes),
+            verifying_key,
+        })
+    }
+}
+
 impl<P: ParameterSet> Signer<Signature<P>> for SigningKey<P> {
     fn try_sign(&self, msg: &[u8]) -> Result<Signature<P>, Error> {
         self.try_sign_with_context(msg, &[], None)
@@ -215,4 +235,38 @@ impl<M> SigningKeyLen for Shake<U24, M> {
 }
 impl<M> SigningKeyLen for Shake<U32, M> {
     type SkLen = U<{ 4 * 32 }>;
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{util::macros::test_parameter_sets, ParameterSet, SigningKey};
+
+    fn test_serialize_deserialize<P: ParameterSet>() {
+        let mut rng: rand::prelude::ThreadRng = rand::thread_rng();
+        let sk = SigningKey::<P>::new(&mut rng);
+        let bytes = sk.to_bytes();
+        let sk2 = SigningKey::<P>::try_from(bytes.as_slice()).unwrap();
+        assert_eq!(sk, sk2);
+    }
+    test_parameter_sets!(test_serialize_deserialize);
+
+    #[cfg(feature = "alloc")]
+    fn test_serialize_deserialize_vec<P: ParameterSet>() {
+        let mut rng: rand::prelude::ThreadRng = rand::thread_rng();
+        let sk = SigningKey::<P>::new(&mut rng);
+        let vec = sk.to_vec();
+        let sk2 = SigningKey::<P>::try_from(vec.as_slice()).unwrap();
+        assert_eq!(sk, sk2);
+    }
+    #[cfg(feature = "alloc")]
+    test_parameter_sets!(test_serialize_deserialize_vec);
+
+    #[test]
+    fn test_deserialize_fail_on_incorrect_length() {
+        let mut rng: rand::prelude::ThreadRng = rand::thread_rng();
+        let sk = SigningKey::<Shake128f>::new(&mut rng);
+        let bytes = sk.to_bytes();
+        let incorrect_bytes = &bytes[..bytes.len() - 1];
+        assert!(SigningKey::<Shake128f>::try_from(incorrect_bytes).is_err());
+    }
 }

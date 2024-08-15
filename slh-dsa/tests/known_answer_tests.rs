@@ -3,7 +3,6 @@
 //! with PQCgenKAT_sign.c modified on line 59 to reduce iterations from 100 to 10
 //!
 //! These tests call the `slh_*_internal` functions directly, bypassing context processing.
-use std::default;
 use std::{array::from_fn, fmt::Write};
 
 use aes::Aes256;
@@ -11,8 +10,8 @@ use cipher::{KeyIvInit, StreamCipher};
 use ctr::Ctr128BE;
 use rand_core::{CryptoRng, RngCore};
 use sha2::Digest;
+use signature::Keypair;
 use signature::SignatureEncoding;
-use signature::{Keypair, RandomizedSigner};
 use slh_dsa::*;
 use typenum::Unsigned;
 
