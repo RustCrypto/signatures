@@ -18,8 +18,7 @@ keywords = ["crypto", "signature"]
 hybrid-array = { version = "0.2.0-rc.8", features = ["extra-sizes"] }
 typenum = { version = "1.17.0", features = ["const-generics"] }
 sha3 = { version = "0.10.8", default-features = false }
-zerocopy = "0.7.34"
-zerocopy-derive = "0.7.32"
+zerocopy = { version = "0.7.34", features = ["derive"] }
 rand_core = { version = "0.6.4" }
 signature = { version = "2.3.0-pre.4", features = ["rand_core"] }
 hmac = "0.12.1"
