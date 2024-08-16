@@ -20,7 +20,6 @@ use typenum::U22;
 
 use zerocopy::byteorder::big_endian::{U32, U64};
 use zerocopy::AsBytes;
-use zerocopy_derive::AsBytes;
 
 /// `Address` represents a hash address as defined by FIPS-205 section 4.2
 pub trait Address: AsRef<[u8]> {
