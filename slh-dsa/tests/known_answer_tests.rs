@@ -1,3 +1,9 @@
+//! Known-answer tests from the SPHINCS+ reference implementation
+//! Generated via https://github.com/sphincs/sphincsplus on branch consistent_basew (eccdc43a99e194f52d5ef0e4030ef4dd1e31828b)
+//! with PQCgenKAT_sign.c modified on line 59 to reduce iterations from 100 to 10
+//!
+//! These tests call the `slh_*_internal` functions directly, bypassing context processing.
+#![cfg(feature = "alloc")]
 use std::{array::from_fn, fmt::Write};
 
 use aes::Aes256;
@@ -5,8 +11,8 @@ use cipher::{KeyIvInit, StreamCipher};
 use ctr::Ctr128BE;
 use rand_core::{CryptoRng, RngCore};
 use sha2::Digest;
+use signature::Keypair;
 use signature::SignatureEncoding;
-use signature::{Keypair, RandomizedSigner};
 use slh_dsa::*;
 use typenum::Unsigned;
 
@@ -124,7 +130,10 @@ where
         writeln!(resp, "pk = {}", hex::encode_upper(&pk.to_bytes())).unwrap();
         writeln!(resp, "sk = {}", hex::encode_upper(&sk.to_bytes())).unwrap();
 
-        let sig = sk.sign_with_rng(&mut rng, msg).to_bytes();
+        let mut opt_rand = vec![0; P::VkLen::USIZE / 2];
+        rng.fill_bytes(opt_rand.as_mut());
+
+        let sig = sk.slh_sign_internal(msg, Some(&opt_rand)).to_bytes();
         writeln!(resp, "smlen = {}", sig.as_slice().len() + msg.len()).unwrap();
         writeln!(
             resp,

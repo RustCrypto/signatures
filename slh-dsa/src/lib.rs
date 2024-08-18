@@ -8,7 +8,7 @@
 #![deny(missing_docs)] // Require all public interfaces to be documented
 
 //! # Usage
-//! This crate implements the Stateless Hash-based Digital Signature Algorithm (SLH-DSA) based on the draft
+//! This crate implements the Stateless Hash-based Digital Signature Algorithm (SLH-DSA) based on the finalized
 //! standard by NIST in FIPS-205. SLH-DSA (based on the SPHINCS+ submission) is a signature algorithm designed
 //! to be resistant to quantum computers.
 //!
@@ -80,6 +80,7 @@ mod tests {
     use super::*;
     use rand::Rng;
     use signature::*;
+    use util::macros::test_parameter_sets;
 
     fn test_sign_verify<P: ParameterSet>() {
         let mut rng = rand::thread_rng();
@@ -89,66 +90,7 @@ mod tests {
         let sig = sk.try_sign(msg).unwrap();
         vk.verify(msg, &sig).unwrap();
     }
-
-    #[test]
-    fn test_sign_verify_shake_128f() {
-        test_sign_verify::<Shake128f>();
-    }
-
-    #[test]
-    fn test_sign_verify_shake_128s() {
-        test_sign_verify::<Shake128s>();
-    }
-
-    #[test]
-    fn test_sign_verify_shake_192f() {
-        test_sign_verify::<Shake192f>();
-    }
-
-    #[test]
-    fn test_sign_verify_shake_192s() {
-        test_sign_verify::<Shake192s>();
-    }
-
-    #[test]
-    fn test_sign_verify_shake_256f() {
-        test_sign_verify::<Shake256f>();
-    }
-
-    #[test]
-    fn test_sign_verify_shake_256s() {
-        test_sign_verify::<Shake256s>();
-    }
-
-    #[test]
-    fn test_sign_verify_sha2_128f() {
-        test_sign_verify::<Sha2_128f>();
-    }
-
-    #[test]
-    fn test_sign_verify_sha2_128s() {
-        test_sign_verify::<Sha2_128s>();
-    }
-
-    #[test]
-    fn test_sign_verify_sha2_192f() {
-        test_sign_verify::<Sha2_192f>();
-    }
-
-    #[test]
-    fn test_sign_verify_sha2_192s() {
-        test_sign_verify::<Sha2_192s>();
-    }
-
-    #[test]
-    fn test_sign_verify_sha2_256f() {
-        test_sign_verify::<Sha2_256f>();
-    }
-
-    #[test]
-    fn test_sign_verify_sha2_256s() {
-        test_sign_verify::<Sha2_256s>();
-    }
+    test_parameter_sets!(test_sign_verify);
 
     // Check signature fails on modified message
     #[test]
@@ -211,5 +153,28 @@ mod tests {
             sig1, sig2,
             "Two successive randomized signatures over the same message should not be equal"
         );
+    }
+
+    #[test]
+    fn test_sign_verify_nonempty_context() {
+        let mut rng = rand::thread_rng();
+        let sk = SigningKey::<Shake128f>::new(&mut rng);
+        let vk = sk.verifying_key();
+        let msg = b"Hello, world!";
+        let ctx = b"Test context";
+        let sig = sk.try_sign_with_context(msg, ctx, None).unwrap();
+        vk.try_verify_with_context(msg, ctx, &sig).unwrap();
+    }
+
+    #[test]
+    fn test_sign_verify_wrong_context() {
+        let mut rng = rand::thread_rng();
+        let sk = SigningKey::<Shake128f>::new(&mut rng);
+        let vk = sk.verifying_key();
+        let msg = b"Hello, world!";
+        let ctx = b"Test context!";
+        let wrong_ctx = b"Wrong context";
+        let sig = sk.try_sign_with_context(msg, ctx, None).unwrap();
+        assert!(vk.try_verify_with_context(msg, wrong_ctx, &sig).is_err());
     }
 }

@@ -2,7 +2,7 @@
 name = "slh-dsa"
 description = """
 Pure Rust implementation of SLH-DSA (aka SPHINCS+) as described in the
-FIPS-205 Inital Public Draft
+FIPS-205 standard
 """
 version = "0.0.2"
 edition = "2021"
@@ -27,7 +27,7 @@ digest = "0.10.7"
 
 [dev-dependencies]
 hex-literal = "0.4.1"
-hex = "0.4.1"
+hex = { version = "0.4.1", features = ["serde"] }
 num-bigint = "0.4.4"
 quickcheck = "1"
 quickcheck_macros = "1"
@@ -39,6 +39,8 @@ ctr = "0.9.2"
 rand_core = "0.6.4"
 paste = "1.0.15"
 rand = "0.8.5"
+serde_json = "1.0.124"
+serde = { version = "1.0.207", features = ["derive"] }
 
 [lib]
 bench = false

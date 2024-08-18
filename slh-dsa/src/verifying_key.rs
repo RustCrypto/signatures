@@ -46,6 +46,44 @@ pub struct VerifyingKey<P: ParameterSet> {
 }
 
 impl<P: ParameterSet + VerifyingKeyLen> VerifyingKey<P> {
+    #[doc(hidden)]
+    /// Verify a raw message (without context).
+    /// Implements [slh_verify_internal] as defined in FIPS-205.
+    /// Published for KAT validation purposes but not intended for general use.
+    pub fn slh_verify_internal(&self, msg: &[u8], signature: &Signature<P>) -> Result<(), Error> {
+        let pk_seed = &self.pk_seed;
+        let randomizer = &signature.randomizer;
+        let fors_sig = &signature.fors_sig;
+        let ht_sig = &signature.ht_sig;
+
+        let digest = P::h_msg(randomizer, pk_seed, &self.pk_root, msg);
+        let (md, idx_tree, idx_leaf) = split_digest::<P>(&digest);
+
+        let adrs = ForsTree::new(idx_tree, idx_leaf);
+        let fors_pk = P::fors_pk_from_sig(fors_sig, md, pk_seed, &adrs);
+        P::ht_verify(&fors_pk, ht_sig, pk_seed, idx_tree, idx_leaf, &self.pk_root)
+            .then_some(())
+            .ok_or(Error::new())
+    }
+
+    /// Implements [slh-verify] as defined in FIPS-205, using a context string.
+    /// Context strings must be 255 bytes or less.
+    /// # Errors
+    /// Returns an error if the context is too long or if the signature is invalid
+    pub fn try_verify_with_context(
+        &self,
+        msg: &[u8],
+        ctx: &[u8],
+        signature: &Signature<P>,
+    ) -> Result<(), Error> {
+        let ctx_len = u8::try_from(ctx.len()).map_err(|_| Error::new())?;
+        let ctx_len_bytes = ctx_len.to_be_bytes();
+
+        // TODO - figure out what to do about this allocation. Maybe pass a chained iterator to slh_sign_internal?
+        let ctx_msg = [&[0], &ctx_len_bytes, ctx, msg].concat();
+        self.slh_verify_internal(&ctx_msg, signature) // TODO - context processing
+    }
+
     /// Serialize the verifying key to a new stack-allocated array
     ///
     /// This clones the underlying fields
@@ -105,19 +143,7 @@ impl<P: ParameterSet> TryFrom<&[u8]> for VerifyingKey<P> {
 
 impl<P: ParameterSet> Verifier<Signature<P>> for VerifyingKey<P> {
     fn verify(&self, msg: &[u8], signature: &Signature<P>) -> Result<(), Error> {
-        let pk_seed = &self.pk_seed;
-        let randomizer = &signature.randomizer;
-        let fors_sig = &signature.fors_sig;
-        let ht_sig = &signature.ht_sig;
-
-        let digest = P::h_msg(randomizer, pk_seed, &self.pk_root, msg);
-        let (md, idx_tree, idx_leaf) = split_digest::<P>(&digest);
-
-        let adrs = ForsTree::new(idx_tree, idx_leaf);
-        let fors_pk = P::fors_pk_from_sig(fors_sig, md, pk_seed, &adrs);
-        P::ht_verify(&fors_pk, ht_sig, pk_seed, idx_tree, idx_leaf, &self.pk_root)
-            .then_some(())
-            .ok_or(Error::new())
+        self.try_verify_with_context(msg, &[], signature) // TODO - context processing
     }
 }
 
