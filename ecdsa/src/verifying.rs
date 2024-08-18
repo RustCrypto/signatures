@@ -52,10 +52,9 @@ use elliptic_curve::pkcs8::EncodePublicKey;
 use serdect::serde::{de, ser, Deserialize, Serialize};
 
 /// ECDSA public key used for verifying signatures. Generic over prime order
-/// elliptic curves (e.g. NIST P-curves)
+/// elliptic curves (e.g. NIST P-curves).
 ///
-/// Requires an [`elliptic_curve::CurveArithmetic`] impl on the curve, and a
-/// [`VerifyPrimitive`] impl on its associated `AffinePoint` type.
+/// Requires an [`elliptic_curve::CurveArithmetic`] impl on the curve.
 ///
 /// ## Usage
 ///
