@@ -46,10 +46,9 @@ use {crate::VerifyingKey, elliptic_curve::PublicKey, signature::KeypairRef};
 use elliptic_curve::pkcs8::{EncodePrivateKey, SecretDocument};
 
 /// ECDSA secret key used for signing. Generic over prime order elliptic curves
-/// (e.g. NIST P-curves)
+/// (e.g. NIST P-curves).
 ///
-/// Requires an [`elliptic_curve::CurveArithmetic`] impl on the curve, and a
-/// [`SignPrimitive`] impl on its associated `Scalar` type.
+/// Requires an [`elliptic_curve::CurveArithmetic`] impl on the curve.
 ///
 /// ## Usage
 ///

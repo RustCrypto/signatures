@@ -179,7 +179,7 @@ pub type SignatureSize<C> = <FieldBytesSize<C> as Add>::Output;
 /// Fixed-size byte array containing an ECDSA signature
 pub type SignatureBytes<C> = Array<u8, SignatureSize<C>>;
 
-/// ECDSA signature (fixed-size). Generic over elliptic curve types.
+/// ECDSA signature (fixed-size, a.k.a. [IEEE P1363]). Generic over elliptic curve types.
 ///
 /// Serialized as fixed-sized big endian scalar values with no added framing:
 ///
@@ -203,6 +203,8 @@ pub type SignatureBytes<C> = Array<u8, SignatureSize<C>>;
 ///
 /// The serialization uses a hexadecimal encoding when used with
 /// "human readable" text formats, and a binary encoding otherwise.
+///
+/// [IEEE P1363]: https://en.wikipedia.org/wiki/IEEE_P1363
 #[derive(Clone, Eq, PartialEq)]
 pub struct Signature<C: EcdsaCurve> {
     r: ScalarPrimitive<C>,
