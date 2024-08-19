@@ -545,7 +545,7 @@ where
 }
 
 #[cfg(feature = "pkcs8")]
-impl<C> TryFrom<pkcs8::PrivateKeyInfo<'_>> for SigningKey<C>
+impl<C> TryFrom<pkcs8::PrivateKeyInfoRef<'_>> for SigningKey<C>
 where
     C: EcdsaCurve + AssociatedOid + CurveArithmetic,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
@@ -555,7 +555,7 @@ where
 {
     type Error = pkcs8::Error;
 
-    fn try_from(private_key_info: pkcs8::PrivateKeyInfo<'_>) -> pkcs8::Result<Self> {
+    fn try_from(private_key_info: pkcs8::PrivateKeyInfoRef<'_>) -> pkcs8::Result<Self> {
         SecretKey::try_from(private_key_info).map(Into::into)
     }
 }

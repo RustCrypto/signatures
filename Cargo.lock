@@ -319,9 +319,9 @@ dependencies = [
 
 [[package]]
 name = "der"
-version = "0.8.0-rc.0"
+version = "0.8.0-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "05d9c07d3bd80cf0935ce478d07edf7e7a5b158446757f988f3e62082227b700"
+checksum = "82db698b33305f0134faf590b9d1259dc171b5481ac41d5c8146c3b3ee7d4319"
 dependencies = [
  "const-oid",
  "pem-rfc7468",
@@ -418,8 +418,7 @@ checksum = "11157ac094ffbdde99aa67b23417ebdd801842852b500e395a45a9c0aac03e4a"
 [[package]]
 name = "elliptic-curve"
 version = "0.14.0-pre.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ed8e96bb573517f42470775f8ef1b9cd7595de52ba7a8e19c48325a92c8fe4f"
+source = "git+https://github.com/baloo/traits.git?branch=baloo/elliptic-curve/pkcs8-API-break#1b036fe61696772d74f5195db9f9338936795929"
 dependencies = [
  "base16ct",
  "crypto-bigint",
@@ -766,9 +765,9 @@ checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
 
 [[package]]
 name = "pem-rfc7468"
-version = "1.0.0-rc.0"
+version = "1.0.0-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b2b24c1c4a3b352d47de5ec824193e68317dc0ce041f6279a4771eb550ab7f8c"
+checksum = "b6c1cde4770761bf6bd336f947b9ac1fe700b0a4ec5867cf66cf08597fe89e8c"
 dependencies = [
  "base64ct",
 ]
@@ -776,8 +775,7 @@ dependencies = [
 [[package]]
 name = "pkcs8"
 version = "0.11.0-rc.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "66180445f1dce533620a7743467ef85fe1c5e80cdaf7c7053609d7a2fbcdae20"
+source = "git+https://github.com/RustCrypto/formats.git#3fb883b2f445e74f38f51fef63a347ecfe69f623"
 dependencies = [
  "der",
  "spki",
@@ -1033,8 +1031,7 @@ dependencies = [
 [[package]]
 name = "sec1"
 version = "0.8.0-rc.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32c98827dc6ed0ea1707286a3d14b4ad4e25e2643169cbf111568a46ff5b09f5"
+source = "git+https://github.com/RustCrypto/formats.git#3fb883b2f445e74f38f51fef63a347ecfe69f623"
 dependencies = [
  "base16ct",
  "der",
