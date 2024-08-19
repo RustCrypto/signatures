@@ -8,7 +8,7 @@ use core::{
     fmt::{self, Debug},
     ops::{Add, Range},
 };
-use der::{asn1::UintRef, Decode, Encode, FixedTag, Length, Reader, Tag, Writer};
+use der::{asn1::UintRef, Decode, Encode, FixedTag, Header, Length, Reader, Tag, Writer};
 use elliptic_curve::{
     array::{typenum::Unsigned, Array, ArraySize},
     consts::U9,
@@ -206,7 +206,7 @@ where
     type Error = der::Error;
 
     fn decode<R: Reader<'a>>(reader: &mut R) -> der::Result<Self> {
-        let header = reader.peek_header()?;
+        let header = Header::peek(reader)?;
         header.tag.assert_eq(Tag::Sequence)?;
 
         let mut buf = SignatureBytes::<C>::default();
@@ -359,7 +359,7 @@ where
 /// Decode the `r` and `s` components of a DER-encoded ECDSA signature.
 fn decode_der(der_bytes: &[u8]) -> der::Result<(UintRef<'_>, UintRef<'_>)> {
     let mut reader = der::SliceReader::new(der_bytes)?;
-    let header = der::Header::decode(&mut reader)?;
+    let header = Header::decode(&mut reader)?;
     header.tag.assert_eq(Tag::Sequence)?;
 
     let ret = reader.read_nested::<_, _, der::Error>(header.length, |reader| {
