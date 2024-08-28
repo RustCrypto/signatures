@@ -34,6 +34,13 @@ use {
     signature::digest::Digest,
 };
 
+cfg_if::cfg_if! {
+    if #[cfg(all(target_os = "zkvm", target_vendor = "succinct"))] {
+        use digest::generic_array::GenericArray;
+        use elliptic_curve::Curve;
+    }
+}
+
 /// Recovery IDs, a.k.a. "recid".
 ///
 /// This is an integer value `0`, `1`, `2`, or `3` included along with a
@@ -277,12 +284,29 @@ where
 
     /// Recover a [`VerifyingKey`] from the given `prehash` of a message, the
     /// signature over that prehashed message, and a [`RecoveryId`].
+    ///
+    /// This function has been modified to support SP1 acceleration for secp256k1 signature verification
+    /// in the context of a zkVM. If the curve is secp256k1 and the prehash is 32 bytes long (indicating a SHA-256 hash),
+    /// the function will use [`crate::sp1::VerifyingKey::recover_from_prehash_secp256k1`] to return a precomputed public key.
     #[allow(non_snake_case)]
     pub fn recover_from_prehash(
         prehash: &[u8],
         signature: &Signature<C>,
         recovery_id: RecoveryId,
     ) -> Result<Self> {
+        // Only override the recovery function if this is a secp256k1 curve and the prehash is 32 bytes long (indicating a SHA-256 hash).
+        cfg_if::cfg_if! {
+            if #[cfg(all(target_os = "zkvm", target_vendor = "succinct"))] {
+                // Reference: https://en.bitcoin.it/wiki/Secp256k1.
+                const SECP256K1_ORDER: [u8; 32] = hex_literal::hex!("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141");
+
+                // Note: An additional check can be added to ensure the field bytes size is 32 bytes, but this is not neceessary.
+                if C::ORDER == <C as Curve>::Uint::decode_field_bytes(GenericArray::from_slice(&SECP256K1_ORDER)) && prehash.len() == 32 {
+                    return Self::recover_from_prehash_secp256k1(prehash, signature, recovery_id);
+                }
+            }
+        }
+
         let (r, s) = signature.split_scalars();
         let z = <Scalar<C> as Reduce<C::Uint>>::reduce_bytes(&bits2field::<C>(prehash)?);
 
