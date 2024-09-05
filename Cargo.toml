@@ -13,3 +13,9 @@ members = [
 
 [profile.dev]
 opt-level = 2
+
+[patch.crates-io]
+sec1 = { git = "https://github.com/RustCrypto/formats.git" }
+pkcs8 = { git = "https://github.com/RustCrypto/formats.git" }
+# https://github.com/RustCrypto/traits/pull/1650
+elliptic-curve = { git = "https://github.com/baloo/traits.git", branch = "baloo/elliptic-curve/pkcs8-API-break" }

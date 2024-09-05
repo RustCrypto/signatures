@@ -15,14 +15,17 @@
 //! breaking changes when using this module.
 
 pub use pkcs8::{
-    spki, DecodePrivateKey, DecodePublicKey, Error, ObjectIdentifier, PrivateKeyInfo, Result,
+    spki, DecodePrivateKey, DecodePublicKey, Error, ObjectIdentifier, PrivateKeyInfoRef, Result,
 };
 
 #[cfg(feature = "alloc")]
 pub use pkcs8::{spki::EncodePublicKey, EncodePrivateKey};
 
 #[cfg(feature = "alloc")]
-pub use pkcs8::der::{asn1::BitStringRef, Document, SecretDocument};
+pub use pkcs8::der::{
+    asn1::{BitStringRef, OctetStringRef},
+    Document, SecretDocument,
+};
 
 #[cfg(feature = "zeroize")]
 use zeroize::Zeroize;
@@ -122,10 +125,14 @@ impl EncodePrivateKey for KeypairBytes {
         private_key[1] = 0x39;
         private_key[2..].copy_from_slice(&self.secret_key);
 
-        let private_key_info = PrivateKeyInfo {
+        let private_key_info = PrivateKeyInfoRef {
             algorithm: ALGORITHM_ID,
-            private_key: &private_key,
-            public_key: self.public_key.as_ref().map(|pk| pk.0.as_slice()),
+            private_key: OctetStringRef::new(&private_key)?,
+            public_key: self
+                .public_key
+                .as_ref()
+                .map(|pk| BitStringRef::new(0, &pk.0))
+                .transpose()?,
         };
         let result = SecretDocument::encode_msg(&private_key_info)?;
 
@@ -136,10 +143,10 @@ impl EncodePrivateKey for KeypairBytes {
     }
 }
 
-impl TryFrom<PrivateKeyInfo<'_>> for KeypairBytes {
+impl TryFrom<PrivateKeyInfoRef<'_>> for KeypairBytes {
     type Error = Error;
 
-    fn try_from(private_key: PrivateKeyInfo<'_>) -> Result<Self> {
+    fn try_from(private_key: PrivateKeyInfoRef<'_>) -> Result<Self> {
         private_key.algorithm.assert_algorithm_oid(ALGORITHM_OID)?;
 
         if private_key.algorithm.parameters.is_some() {
@@ -154,13 +161,14 @@ impl TryFrom<PrivateKeyInfo<'_>> for KeypairBytes {
         //
         // - 0x04: OCTET STRING tag
         // - 0x39: 57-byte length
-        let secret_key = match private_key.private_key {
+        let secret_key = match private_key.private_key.as_bytes() {
             [0x04, 0x39, rest @ ..] => rest.try_into().map_err(|_| Error::KeyMalformed),
             _ => Err(Error::KeyMalformed),
         }?;
 
         let public_key = private_key
             .public_key
+            .and_then(|bs| bs.as_bytes())
             .map(|bytes| bytes.try_into().map_err(|_| Error::KeyMalformed))
             .transpose()?
             .map(PublicKeyBytes);
