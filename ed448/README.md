@@ -57,7 +57,7 @@ dual licensed as above, without any additional terms or conditions.
 
 [//]: # (badges)
 
-[crate-image]: https://buildstats.info/crate/ed448-signature
+[crate-image]: https://img.shields.io/crates/v/ed448-signature
 [crate-link]: https://crates.io/crates/ed448-signature
 [docs-image]: https://docs.rs/ed448-signature/badge.svg
 [docs-link]: https://docs.rs/ed448-signature/

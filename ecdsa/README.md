@@ -63,7 +63,7 @@ dual licensed as above, without any additional terms or conditions.
 
 [//]: # (badges)
 
-[crate-image]: https://buildstats.info/crate/ecdsa
+[crate-image]: https://img.shields.io/crates/v/ecdsa
 [crate-link]: https://crates.io/crates/ecdsa
 [docs-image]: https://docs.rs/ecdsa/badge.svg
 [docs-link]: https://docs.rs/ecdsa/

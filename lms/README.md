@@ -77,7 +77,7 @@ dual licensed as above, without any additional terms or conditions.
 
 [//]: # (badges)
 
-[crate-image]: https://buildstats.info/crate/lms-signature
+[crate-image]: https://img.shields.io/crates/v/lms-signature
 [crate-link]: https://crates.io/crates/lms-signature
 [docs-image]: https://docs.rs/lms-signature/badge.svg
 [docs-link]: https://docs.rs/lms-signature/
