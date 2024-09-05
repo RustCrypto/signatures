@@ -407,6 +407,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "signature",
+ "zeroize",
 ]
 
 [[package]]

@@ -24,6 +24,9 @@ pub use pkcs8::{spki::EncodePublicKey, EncodePrivateKey};
 #[cfg(feature = "alloc")]
 pub use pkcs8::der::{asn1::BitStringRef, Document, SecretDocument};
 
+#[cfg(feature = "zeroize")]
+use zeroize::Zeroize;
+
 use core::fmt;
 
 /// Algorithm [`ObjectIdentifier`] for the Ed448 digital signature algorithm
@@ -103,11 +106,17 @@ impl KeypairBytes {
     }
 }
 
+impl Drop for KeypairBytes {
+    fn drop(&mut self) {
+        #[cfg(feature = "zeroize")]
+        self.secret_key.zeroize()
+    }
+}
+
 #[cfg(feature = "alloc")]
 impl EncodePrivateKey for KeypairBytes {
     fn to_pkcs8_der(&self) -> Result<SecretDocument> {
         // Serialize private key as nested OCTET STRING
-        // TODO(tarcieri): zeroize `private_key`
         let mut private_key = [0u8; 2 + (Self::BYTE_SIZE / 2)];
         private_key[0] = 0x04;
         private_key[1] = 0x39;
@@ -118,8 +127,12 @@ impl EncodePrivateKey for KeypairBytes {
             private_key: &private_key,
             public_key: self.public_key.as_ref().map(|pk| pk.0.as_slice()),
         };
+        let result = SecretDocument::encode_msg(&private_key_info)?;
 
-        Ok(SecretDocument::encode_msg(&private_key_info)?)
+        #[cfg(feature = "zeroize")]
+        private_key.zeroize();
+
+        Ok(result)
     }
 }
 
