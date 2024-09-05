@@ -11,8 +11,11 @@ use digest::{core_api::BlockSizeUser, Digest, FixedOutputReset};
 use num_bigint::BigUint;
 use num_traits::Zero;
 use pkcs8::{
-    der::{asn1::UintRef, AnyRef, Decode, Encode},
-    AlgorithmIdentifierRef, EncodePrivateKey, PrivateKeyInfo, SecretDocument,
+    der::{
+        asn1::{OctetStringRef, UintRef},
+        AnyRef, Decode, Encode,
+    },
+    AlgorithmIdentifierRef, EncodePrivateKey, PrivateKeyInfoRef, SecretDocument,
 };
 use signature::{
     hazmat::{PrehashSigner, RandomizedPrehashSigner},
@@ -182,7 +185,8 @@ impl EncodePrivateKey for SigningKey {
         let x = UintRef::new(&x_bytes)?;
         let mut signing_key = x.to_der()?;
 
-        let signing_key_info = PrivateKeyInfo::new(algorithm, &signing_key);
+        let signing_key_info =
+            PrivateKeyInfoRef::new(algorithm, OctetStringRef::new(&signing_key)?);
         let secret_document = signing_key_info.try_into()?;
 
         signing_key.zeroize();
@@ -192,19 +196,19 @@ impl EncodePrivateKey for SigningKey {
     }
 }
 
-impl<'a> TryFrom<PrivateKeyInfo<'a>> for SigningKey {
+impl<'a> TryFrom<PrivateKeyInfoRef<'a>> for SigningKey {
     type Error = pkcs8::Error;
 
-    fn try_from(value: PrivateKeyInfo<'a>) -> Result<Self, Self::Error> {
+    fn try_from(value: PrivateKeyInfoRef<'a>) -> Result<Self, Self::Error> {
         value.algorithm.assert_algorithm_oid(OID)?;
 
         let parameters = value.algorithm.parameters_any()?;
         let components = parameters.decode_as::<Components>()?;
 
-        let x = UintRef::from_der(value.private_key)?;
+        let x = UintRef::from_der(value.private_key.as_bytes())?;
         let x = BigUint::from_bytes_be(x.as_bytes());
 
-        let y = if let Some(y_bytes) = value.public_key {
+        let y = if let Some(y_bytes) = value.public_key.as_ref().and_then(|bs| bs.as_bytes()) {
             let y = UintRef::from_der(y_bytes)?;
             BigUint::from_bytes_be(y.as_bytes())
         } else {
