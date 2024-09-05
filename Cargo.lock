@@ -419,7 +419,7 @@ checksum = "11157ac094ffbdde99aa67b23417ebdd801842852b500e395a45a9c0aac03e4a"
 [[package]]
 name = "elliptic-curve"
 version = "0.14.0-pre.6"
-source = "git+https://github.com/baloo/traits.git?branch=baloo/elliptic-curve/pkcs8-API-break#1b036fe61696772d74f5195db9f9338936795929"
+source = "git+https://github.com/RustCrypto/traits.git#64277691b0abeef47b6a8725939ad90cd1727b7e"
 dependencies = [
  "base16ct",
  "crypto-bigint",
