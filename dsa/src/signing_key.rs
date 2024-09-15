@@ -51,6 +51,7 @@ impl SigningKey {
         })
     }
 
+    #[cfg(feature = "hazmat")]
     /// Generate a new DSA keypair
     #[inline]
     pub fn generate(rng: &mut impl CryptoRngCore, components: Components) -> SigningKey {
@@ -70,6 +71,7 @@ impl SigningKey {
         &self.x
     }
 
+    #[cfg(feature = "hazmat")]
     /// Try to sign the given message digest deterministically with a prehashed digest.
     /// The parameter `D` must match the hash function used to sign the digest.
     ///

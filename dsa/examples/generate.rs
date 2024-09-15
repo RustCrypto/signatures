@@ -1,3 +1,5 @@
+#![cfg(feature = "hazmat")]
+
 use dsa::{Components, KeySize, SigningKey};
 
 fn main() {

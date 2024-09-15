@@ -1,3 +1,5 @@
+#![cfg(feature = "hazmat")]
+
 use dsa::{Components, KeySize, SigningKey};
 use pkcs8::{EncodePrivateKey, EncodePublicKey, LineEnding};
 use std::{fs::File, io::Write};

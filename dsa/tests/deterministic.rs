@@ -1,3 +1,5 @@
+#![cfg(feature = "hazmat")]
+
 use digest::{core_api::BlockSizeUser, Digest, FixedOutputReset};
 use dsa::{Components, Signature, SigningKey, VerifyingKey};
 use num_bigint::BigUint;

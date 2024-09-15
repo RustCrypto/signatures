@@ -46,8 +46,11 @@
 
 extern crate alloc;
 
+#[cfg(feature = "hazmat")]
+pub use crate::signing_key::SigningKey;
+
 pub use crate::{
-    components::Components, signing_key::SigningKey, size::KeySize, verifying_key::VerifyingKey,
+    components::Components, size::KeySize, verifying_key::VerifyingKey,
 };
 
 pub use num_bigint::BigUint;
