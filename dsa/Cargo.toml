@@ -34,3 +34,15 @@ sha1 = "=0.11.0-pre.4"
 [features]
 std = []
 hazmat = []
+
+[[example]]
+name = "sign"
+required-features = ["hazmat"]
+
+[[example]]
+name = "generate"
+required-features = ["hazmat"]
+
+[[example]]
+name = "export"
+required-features = ["hazmat"]
