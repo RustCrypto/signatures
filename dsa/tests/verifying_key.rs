@@ -5,7 +5,6 @@
 use dsa::VerifyingKey;
 use pkcs8::{DecodePublicKey, EncodePublicKey, LineEnding};
 
-
 #[cfg(feature = "hazmat")]
 use dsa::{Components, KeySize, SigningKey};
 #[cfg(feature = "hazmat")]
