@@ -64,7 +64,8 @@ where
     ) -> Array<u8, Self::N> {
         let mut mac = Hmac::<Sha256>::new_from_slice(sk_prf.as_ref()).unwrap();
         mac.update(opt_rand.as_slice());
-        msg.iter().for_each(|msg_part| mac.update(msg_part.as_ref()));
+        msg.iter()
+            .for_each(|msg_part| mac.update(msg_part.as_ref()));
         let result = mac.finalize().into_bytes();
         Array::clone_from_slice(&result[..Self::N::USIZE])
     }
@@ -224,7 +225,8 @@ where
     ) -> Array<u8, Self::N> {
         let mut mac = Hmac::<Sha512>::new_from_slice(sk_prf.as_ref()).unwrap();
         mac.update(opt_rand.as_slice());
-        msg.iter().for_each(|msg_part| mac.update(msg_part.as_ref()));
+        msg.iter()
+            .for_each(|msg_part| mac.update(msg_part.as_ref()));
         let result = mac.finalize().into_bytes();
         Array::clone_from_slice(&result[..Self::N::USIZE])
     }

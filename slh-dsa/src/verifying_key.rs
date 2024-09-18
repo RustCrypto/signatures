@@ -50,7 +50,11 @@ impl<P: ParameterSet + VerifyingKeyLen> VerifyingKey<P> {
     /// Verify a raw message (without context).
     /// Implements [slh_verify_internal] as defined in FIPS-205.
     /// Published for KAT validation purposes but not intended for general use.
-    pub fn slh_verify_internal(&self, msg: &[&[u8]], signature: &Signature<P>) -> Result<(), Error> {
+    pub fn slh_verify_internal(
+        &self,
+        msg: &[&[u8]],
+        signature: &Signature<P>,
+    ) -> Result<(), Error> {
         let pk_seed = &self.pk_seed;
         let randomizer = &signature.randomizer;
         let fors_sig = &signature.fors_sig;

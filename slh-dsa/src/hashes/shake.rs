@@ -39,7 +39,8 @@ where
         let mut hasher = Shake256::default();
         hasher.update(sk_prf.as_ref());
         hasher.update(opt_rand.as_slice());
-        msg.iter().for_each(|msg_part| hasher.update(msg_part.as_ref()));
+        msg.iter()
+            .for_each(|msg_part| hasher.update(msg_part.as_ref()));
         let mut output = Array::<u8, Self::N>::default();
         hasher.finalize_xof_into(&mut output);
         output
@@ -55,7 +56,8 @@ where
         hasher.update(rand.as_slice());
         hasher.update(pk_seed.as_ref());
         hasher.update(pk_root.as_ref());
-        msg.iter().for_each(|msg_part| hasher.update(msg_part.as_ref()));
+        msg.iter()
+            .for_each(|msg_part| hasher.update(msg_part.as_ref()));
         let mut output = Array::<u8, Self::M>::default();
         hasher.finalize_xof_into(&mut output);
         output
