@@ -103,7 +103,7 @@ impl<P: ParameterSet> SigningKey<P> {
     /// Implements [slh_sign_internal] as defined in FIPS-205.
     /// Published for KAT validation purposes but not intended for general use.
     /// opt_rand must be a P::N length slice, panics otherwise.
-    pub fn slh_sign_internal(&self, msg: &[u8], opt_rand: Option<&[u8]>) -> Signature<P> {
+    pub fn slh_sign_internal(&self, msg: &[&[u8]], opt_rand: Option<&[u8]>) -> Signature<P> {
         let rand = opt_rand
             .unwrap_or(&self.verifying_key.pk_seed.0)
             .try_into()
@@ -142,8 +142,7 @@ impl<P: ParameterSet> SigningKey<P> {
         let ctx_len = u8::try_from(ctx.len()).map_err(|_| Error::new())?;
         let ctx_len_bytes = ctx_len.to_be_bytes();
 
-        // TODO - figure out what to do about this allocation. Maybe pass a chained iterator to slh_sign_internal?
-        let ctx_msg = [&[0], &ctx_len_bytes, ctx, msg].concat();
+        let ctx_msg = [&[0], &ctx_len_bytes, ctx, msg];
         Ok(self.slh_sign_internal(&ctx_msg, opt_rand))
     }
 

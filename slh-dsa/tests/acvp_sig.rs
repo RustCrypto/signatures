@@ -39,7 +39,7 @@ macro_rules! parameter_case {
             .additionalRandomness
             .as_ref()
             .map(|x| x.data.as_slice());
-        let sig = sk.slh_sign_internal($test_case.message.data.as_slice(), opt_rand);
+        let sig = sk.slh_sign_internal(&[$test_case.message.data.as_slice()], opt_rand);
         assert_eq!(sig.to_vec(), $test_case.signature.data);
     }};
 }

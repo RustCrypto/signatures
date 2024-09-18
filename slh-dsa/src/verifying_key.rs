@@ -50,7 +50,7 @@ impl<P: ParameterSet + VerifyingKeyLen> VerifyingKey<P> {
     /// Verify a raw message (without context).
     /// Implements [slh_verify_internal] as defined in FIPS-205.
     /// Published for KAT validation purposes but not intended for general use.
-    pub fn slh_verify_internal(&self, msg: &[u8], signature: &Signature<P>) -> Result<(), Error> {
+    pub fn slh_verify_internal(&self, msg: &[&[u8]], signature: &Signature<P>) -> Result<(), Error> {
         let pk_seed = &self.pk_seed;
         let randomizer = &signature.randomizer;
         let fors_sig = &signature.fors_sig;
@@ -79,8 +79,7 @@ impl<P: ParameterSet + VerifyingKeyLen> VerifyingKey<P> {
         let ctx_len = u8::try_from(ctx.len()).map_err(|_| Error::new())?;
         let ctx_len_bytes = ctx_len.to_be_bytes();
 
-        // TODO - figure out what to do about this allocation. Maybe pass a chained iterator to slh_sign_internal?
-        let ctx_msg = [&[0], &ctx_len_bytes, ctx, msg].concat();
+        let ctx_msg = [&[0], &ctx_len_bytes, ctx, msg];
         self.slh_verify_internal(&ctx_msg, signature) // TODO - context processing
     }
 
