@@ -370,14 +370,14 @@ dependencies = [
 
 [[package]]
 name = "ecdsa"
-version = "0.17.0-pre.8"
+version = "0.17.0-pre.9"
 dependencies = [
  "der",
  "digest 0.11.0-pre.9",
  "elliptic-curve",
  "hex-literal",
  "rfc6979",
- "serdect 0.2.0",
+ "serdect",
  "sha2 0.11.0-pre.4",
  "signature",
  "spki",
@@ -433,7 +433,7 @@ dependencies = [
  "pkcs8",
  "rand_core",
  "sec1",
- "serdect 0.3.0-rc.0",
+ "serdect",
  "subtle",
  "zeroize",
 ]
@@ -1041,7 +1041,7 @@ dependencies = [
  "der",
  "hybrid-array",
  "pkcs8",
- "serdect 0.3.0-rc.0",
+ "serdect",
  "subtle",
  "zeroize",
 ]
@@ -1084,16 +1084,6 @@ dependencies = [
  "itoa",
  "memchr",
  "ryu",
- "serde",
-]
-
-[[package]]
-name = "serdect"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a84f14a19e9a014bb9f4512488d9829a68e04ecabffb0f9904cd1ace94598177"
-dependencies = [
- "base16ct",
  "serde",
 ]
 
