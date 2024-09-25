@@ -30,7 +30,7 @@ cfg-if = "1.0"
 hex-literal = "0.4"
 
 [target.'cfg(all(target_os = "zkvm", target_vendor = "succinct"))'.dependencies]
-sp1-lib = "1.2.0-rc1"
+sp1-lib = { git = "https://github.com/succinctlabs/sp1.git", branch = "ratan/impl-add-assign-fixes" }
 anyhow = "1.0"
 
 [dev-dependencies]
