@@ -7,7 +7,7 @@ license = "Apache-2.0 OR MIT"
 homepage = "https://github.com/RustCrypto/signatures/tree/master/lms"
 repository = "https://github.com/RustCrypto/signatures"
 readme = "README.md"
-rust-version = "1.73"
+rust-version = "1.81"
 categories = ["cryptography"]
 keywords = ["crypto", "signature"]
 
