@@ -30,10 +30,7 @@ pub use pkcs8::der::{
 use core::fmt;
 
 #[cfg(feature = "pem")]
-use {
-    alloc::string::{String, ToString},
-    core::str,
-};
+use core::str;
 
 #[cfg(feature = "zeroize")]
 use zeroize::Zeroize;
@@ -323,10 +320,13 @@ impl str::FromStr for PublicKeyBytes {
 }
 
 #[cfg(feature = "pem")]
-impl ToString for PublicKeyBytes {
-    fn to_string(&self) -> String {
-        self.to_public_key_pem(Default::default())
-            .expect("PEM serialization error")
+impl fmt::Display for PublicKeyBytes {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(
+            &self
+                .to_public_key_pem(Default::default())
+                .expect("PEM serialization error"),
+        )
     }
 }
 
