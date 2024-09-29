@@ -8,7 +8,7 @@ use crate::ots::signature::Signature;
 use crate::types::Identifier;
 use digest::{Output, OutputSizeUser};
 
-use generic_array::{ArrayLength, GenericArray};
+use hybrid_array::{Array, ArraySize};
 use signature::{Error, Verifier};
 use std::cmp::Ordering;
 use std::ops::Add;
@@ -44,7 +44,7 @@ impl<Mode: LmsOtsMode> Verifier<Signature<Mode>> for VerifyingKey<Mode>
 where
     // required to concat Q and cksm(Q)
     <Mode::Hasher as OutputSizeUser>::OutputSize: Add<U2>,
-    Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U2>: ArrayLength<u8>,
+    Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U2>: ArraySize,
 {
     // this implements algorithm 4a of https://datatracker.ietf.org/doc/html/rfc8554#section-4.6
     fn verify(&self, msg: &[u8], signature: &Signature<Mode>) -> Result<(), Error> {
@@ -62,14 +62,14 @@ where
 
 /// Converts a [`VerifyingKey`] into its byte representation
 impl<Mode: LmsOtsMode> From<VerifyingKey<Mode>>
-    for GenericArray<u8, Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U24>>
+    for Array<u8, Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U24>>
 where
     <Mode::Hasher as OutputSizeUser>::OutputSize: Add<U24>,
-    Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U24>: ArrayLength<u8>,
+    Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U24>: ArraySize,
 {
     fn from(pk: VerifyingKey<Mode>) -> Self {
         // Return u32str(type) || I || u32str(q) || K
-        GenericArray::from_exact_iter(
+        Array::try_from_iter(
             std::iter::empty()
                 .chain(Mode::TYPECODE.to_be_bytes())
                 .chain(pk.id)
@@ -108,7 +108,7 @@ impl<'a, Mode: LmsOtsMode> TryFrom<&'a [u8]> for VerifyingKey<Mode> {
                 Ok(Self {
                     q: u32::from_be_bytes(q.try_into().expect("ok")),
                     id: i.try_into().expect("ok"),
-                    k: GenericArray::clone_from_slice(k),
+                    k: Array::try_from(k).expect("ok"),
                 })
             }
         }
@@ -122,14 +122,14 @@ mod tests {
     use crate::ots::modes::{LmsOtsSha256N32W4, LmsOtsSha256N32W8};
     use crate::ots::private::SigningKey;
     use crate::ots::public::VerifyingKey;
-    use generic_array::GenericArray;
+    use hybrid_array::Array;
     use rand::thread_rng;
 
     #[test]
     fn test_serde() {
         let pk =
             SigningKey::<LmsOtsSha256N32W8>::new(0, [0xbb; ID_LEN], &mut thread_rng()).public();
-        let pk_serialized: GenericArray<u8, _> = pk.clone().into();
+        let pk_serialized: Array<u8, _> = pk.clone().into();
         let bytes = pk_serialized.as_slice();
         let pk_deserialized = VerifyingKey::<LmsOtsSha256N32W8>::try_from(bytes);
 

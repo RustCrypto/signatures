@@ -488,7 +488,6 @@ checksum = "85649ca51fd72272d7821adaf274ad91c288277713d9c18820d8499a7ff69e9a"
 dependencies = [
  "typenum",
  "version_check",
- "zeroize",
 ]
 
 [[package]]
@@ -564,9 +563,9 @@ dependencies = [
 
 [[package]]
 name = "hybrid-array"
-version = "0.2.0-rc.9"
+version = "0.2.0-rc.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4d306b679262030ad8813a82d4915fc04efff97776e4db7f8eb5137039d56400"
+checksum = "a5a41e5b0754cae5aaf7915f1df1147ba8d316fc6e019cfcc00fbaba96d5e030"
 dependencies = [
  "typenum",
  "zeroize",
@@ -654,15 +653,15 @@ checksum = "01cda141df6706de531b6c46c3a33ecca755538219bd484262fa09410c13539c"
 
 [[package]]
 name = "lms-signature"
-version = "0.0.1"
+version = "0.1.0-pre"
 dependencies = [
- "digest 0.10.7",
- "generic-array",
+ "digest 0.11.0-pre.9",
  "hex",
  "hex-literal",
+ "hybrid-array",
  "rand",
  "rand_core",
- "sha2 0.10.8",
+ "sha2 0.11.0-pre.4",
  "signature",
  "static_assertions",
  "typenum",

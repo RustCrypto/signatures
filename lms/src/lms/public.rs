@@ -8,7 +8,7 @@ use crate::lms::Signature;
 use crate::types::Typecode;
 use crate::{constants::D_INTR, lms::LmsMode};
 use digest::{Digest, OutputSizeUser};
-use generic_array::{ArrayLength, GenericArray};
+use hybrid_array::{Array, ArraySize};
 use signature::{Error, Verifier};
 use typenum::{Sum, U24};
 
@@ -99,14 +99,14 @@ impl<Mode: LmsMode> Verifier<Signature<Mode>> for VerifyingKey<Mode> {
 
 /// Converts a [`VerifyingKey`] into its byte representation
 impl<Mode: LmsMode> From<VerifyingKey<Mode>>
-    for GenericArray<u8, Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U24>>
+    for Array<u8, Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U24>>
 where
     <Mode::Hasher as OutputSizeUser>::OutputSize: Add<U24>,
-    Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U24>: ArrayLength<u8>,
+    Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U24>: ArraySize,
 {
     fn from(pk: VerifyingKey<Mode>) -> Self {
         // Return u32(type) || u32(otstype) || id || k
-        GenericArray::from_exact_iter(
+        Array::try_from_iter(
             std::iter::empty()
                 .chain(Mode::TYPECODE.to_be_bytes())
                 .chain(Mode::OtsMode::TYPECODE.to_be_bytes())
@@ -149,7 +149,7 @@ impl<'a, Mode: LmsMode> TryFrom<&'a [u8]> for VerifyingKey<Mode> {
 
         Ok(Self {
             id: id.try_into().unwrap(),
-            k: GenericArray::clone_from_slice(k),
+            k: Array::try_from(k).expect("size invariant violation"),
         })
     }
 }
@@ -165,8 +165,8 @@ mod tests {
         ots::{LmsOtsSha256N32W4, LmsOtsSha256N32W8},
     };
     use digest::OutputSizeUser;
-    use generic_array::{ArrayLength, GenericArray};
     use hex_literal::hex;
+    use hybrid_array::{Array, ArraySize};
     use typenum::{Sum, U24};
 
     // RFC 8554 Appendix F. Test Case 1
@@ -222,7 +222,7 @@ mod tests {
     #[test]
     fn test_kat1_round_trip() {
         let pk = VerifyingKey::<LmsSha256M32H5<LmsOtsSha256N32W8>>::try_from(&KAT1[..]).unwrap();
-        let pk_serialized: GenericArray<u8, _> = pk.clone().into();
+        let pk_serialized: Array<u8, _> = pk.clone().into();
         let bytes = pk_serialized.as_slice();
         assert_eq!(bytes, &KAT1[..]);
     }
@@ -244,9 +244,10 @@ mod tests {
             c92124404d45fa53cf161c28f1ad5a8e
         "
         );
-        let lms_priv = SigningKey::<LmsSha256M32H10<LmsOtsSha256N32W4>>::new_from_seed(id, seed);
+        let lms_priv =
+            SigningKey::<LmsSha256M32H10<LmsOtsSha256N32W4>>::new_from_seed(id, seed).unwrap();
         let lms_pub = lms_priv.public();
-        let lms_pub_serialized: GenericArray<u8, _> = lms_pub.into();
+        let lms_pub_serialized: Array<u8, _> = lms_pub.into();
         let bytes = lms_pub_serialized.as_slice();
         assert_eq!(bytes, &expected_pubkey[..]);
     }
@@ -255,15 +256,13 @@ mod tests {
     where
         VerifyingKey<Mode>: std::fmt::Debug,
         <Mode::Hasher as OutputSizeUser>::OutputSize: Add<U24>,
-        Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U24>: ArrayLength<u8>,
+        Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U24>: ArraySize,
     {
         let rng = rand::thread_rng();
         let lms_priv = SigningKey::<Mode>::new(rng);
         let lms_pub = lms_priv.public();
-        let lms_pub_serialized: GenericArray<
-            u8,
-            Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U24>,
-        > = lms_pub.clone().into();
+        let lms_pub_serialized: Array<u8, Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U24>> =
+            lms_pub.clone().into();
         let bytes = lms_pub_serialized.as_slice();
         let lms_pub_deserialized = VerifyingKey::<Mode>::try_from(bytes).unwrap();
         assert_eq!(lms_pub, lms_pub_deserialized);
