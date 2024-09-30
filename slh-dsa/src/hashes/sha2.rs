@@ -9,7 +9,7 @@ use crate::{
     xmss::XmssParams, ParameterSet,
 };
 use crate::{PkSeed, SkPrf, SkSeed};
-use digest::{Digest, Mac};
+use digest::{Digest, KeyInit, Mac};
 use hmac::Hmac;
 use hybrid_array::{Array, ArraySize};
 use sha2::{Sha256, Sha512};
