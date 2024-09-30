@@ -24,8 +24,8 @@ pub mod tests {
     use crate::ots::private::SigningKey;
     use digest::Digest;
     use digest::OutputSizeUser;
-    use generic_array::{ArrayLength, GenericArray};
     use hex_literal::hex;
+    use hybrid_array::{Array, ArraySize};
     use rand::thread_rng;
     use rand_core::{CryptoRng, RngCore};
     use signature::RandomizedSignerMut;
@@ -39,7 +39,7 @@ pub mod tests {
     fn test_sign<Mode: LmsOtsMode>()
     where
         <Mode::Hasher as OutputSizeUser>::OutputSize: Add<U2>,
-        Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U2>: ArrayLength<u8>,
+        Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U2>: ArraySize,
     {
         let mut rng = thread_rng();
         let mut sk = SigningKey::<Mode>::new(0, [0xcc; ID_LEN], &mut rng);
@@ -63,7 +63,7 @@ pub mod tests {
     fn test_sign_fail_verify<Mode: LmsOtsMode>()
     where
         <Mode::Hasher as OutputSizeUser>::OutputSize: Add<U2>,
-        Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U2>: ArrayLength<u8>,
+        Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U2>: ArraySize,
     {
         let mut rng = thread_rng();
         let mut sk = SigningKey::<Mode>::new(0, [0xcc; ID_LEN], &mut rng);
@@ -175,8 +175,8 @@ pub mod tests {
         let msg = "The enumeration in the Constitution, of certain rights, shall not be construed to deny or disparage others retained by the people.\n".as_bytes();
         let sig = sk.try_sign_with_rng(&mut rng, msg).unwrap();
 
-        assert_eq!(&sig.c, GenericArray::from_slice(&c));
-        assert_eq!(&sig.y[0], GenericArray::from_slice(&y0));
+        assert_eq!(sig.c, Array::from(c));
+        assert_eq!(sig.y[0], Array::from(y0));
     }
 
     #[test]

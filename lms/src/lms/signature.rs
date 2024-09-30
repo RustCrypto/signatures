@@ -4,7 +4,7 @@ use crate::error::LmsDeserializeError;
 use crate::lms::LmsMode;
 use crate::ots::modes::LmsOtsMode;
 use crate::ots::Signature as OtsSignature;
-use generic_array::{ArrayLength, GenericArray};
+use hybrid_array::{Array, ArraySize};
 use signature::SignatureEncoding;
 
 use std::{
@@ -18,7 +18,7 @@ use typenum::{Prod, Sum, U1, U4};
 pub struct Signature<Mode: LmsMode> {
     pub(crate) q: u32, // TODO: do these really need to be public?
     pub(crate) lmots_sig: OtsSignature<Mode::OtsMode>,
-    pub(crate) path: GenericArray<digest::Output<Mode::Hasher>, Mode::HLen>,
+    pub(crate) path: Array<digest::Output<Mode::Hasher>, Mode::HLen>,
 }
 
 // manual implementation is required to not require bounds on Mode
@@ -48,9 +48,9 @@ where
     Sum<
         Prod<<Mode::OtsMode as LmsOtsMode>::NLen, Sum<<Mode::OtsMode as LmsOtsMode>::PLen, U1>>,
         U4,
-    >: ArrayLength<u8>,
+    >: ArraySize,
 {
-    type Repr = Vec<u8>; // TODO: GenericArray
+    type Repr = Vec<u8>; // TODO: Array
 }
 
 impl<Mode: LmsMode> From<Signature<Mode>> for Vec<u8>
@@ -62,12 +62,12 @@ where
     Sum<
         Prod<<Mode::OtsMode as LmsOtsMode>::NLen, Sum<<Mode::OtsMode as LmsOtsMode>::PLen, U1>>,
         U4,
-    >: ArrayLength<u8>,
+    >: ArraySize,
 {
     fn from(val: Signature<Mode>) -> Self {
         let mut sig = Vec::new();
         sig.extend_from_slice(&val.q.to_be_bytes());
-        let lms_sig: GenericArray<u8, _> = val.lmots_sig.into();
+        let lms_sig: Array<u8, _> = val.lmots_sig.into();
         sig.extend_from_slice(&lms_sig);
         sig.extend_from_slice(&Mode::TYPECODE.to_be_bytes());
         for node in val.path {
@@ -121,7 +121,7 @@ impl<Mode: LmsMode> TryFrom<&[u8]> for Signature<Mode> {
         // Path length is already validated by initial length check
         let path = path
             .chunks_exact(Mode::M)
-            .map(GenericArray::clone_from_slice)
+            .map(|chunk| Array::try_from(chunk).expect("size invariant violation"))
             .collect();
 
         Ok(Self {
@@ -139,8 +139,8 @@ mod tests {
     use crate::lms::modes::*;
     use crate::lms::{Signature, SigningKey, VerifyingKey};
     use crate::ots::modes::*;
-    use generic_array::ArrayLength;
     use hex_literal::hex;
+    use hybrid_array::ArraySize;
     use rand::thread_rng;
     use signature::{RandomizedSignerMut, Verifier};
     use typenum::{Prod, Sum, U1, U4};
@@ -264,7 +264,7 @@ mod tests {
         Sum<
             Prod<<Mode::OtsMode as LmsOtsMode>::NLen, Sum<<Mode::OtsMode as LmsOtsMode>::PLen, U1>>,
             U4,
-        >: ArrayLength<u8>,
+        >: ArraySize,
     {
         let mut rng = thread_rng();
         let mut sk = SigningKey::<Mode>::new(&mut rng);

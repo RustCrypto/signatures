@@ -2,8 +2,7 @@
 use crate::ots::modes::LmsOtsMode;
 use crate::types::Typecode;
 use digest::Digest;
-use digest::Output;
-use generic_array::ArrayLength;
+use hybrid_array::ArraySize;
 use std::ops::Add;
 use std::{
     marker::PhantomData,
@@ -18,9 +17,9 @@ pub trait LmsMode: Typecode + Clone {
     /// The underlying LM-OTS mode
     type OtsMode: LmsOtsMode;
     /// Length of the internal Merkle tree, computed as `2^(h+1)-1`
-    type TreeLen: ArrayLength<Output<Self::Hasher>>;
+    type TreeLen: ArraySize;
     /// `h` as a type
-    type HLen: ArrayLength<Output<Self::Hasher>>;
+    type HLen: ArraySize;
     /// The length of the hash function output as a type
     const M: usize;
     /// `h` as a [usize]
@@ -35,7 +34,7 @@ pub trait LmsMode: Typecode + Clone {
 pub struct LmsModeInternal<
     OtsMode: LmsOtsMode,
     Hasher: Digest,
-    HLen: ArrayLength<Output<Hasher>>,
+    HLen: ArraySize,
     const M: usize,
     const H: usize,
     const TC: u32,
@@ -48,7 +47,7 @@ pub struct LmsModeInternal<
 impl<
         OtsMode: LmsOtsMode,
         Hasher: Digest,
-        TreeLen: ArrayLength<Output<Hasher>>,
+        TreeLen: ArraySize,
         const M: usize,
         const H: usize,
         const TC: u32,
@@ -62,7 +61,7 @@ impl<
 impl<
         OtsMode: LmsOtsMode,
         Hasher: Digest,
-        TreeLen: ArrayLength<Output<Hasher>>,
+        TreeLen: ArraySize,
         const M: usize,
         const H: usize,
         const TC: u32,
@@ -73,7 +72,7 @@ impl<
 impl<
         OtsMode: LmsOtsMode,
         Hasher: Digest,
-        HLen: ArrayLength<Output<Hasher>>,
+        HLen: ArraySize,
         const M: usize,
         const H: usize,
         const TC: u32,
@@ -82,7 +81,7 @@ where
     HLen: Add<typenum::B1>,
     U1: Shl<<HLen as Add<B1>>::Output>,
     Shleft<U1, <HLen as Add<B1>>::Output>: Sub<B1>,
-    Sub1<Shleft<U1, <HLen as Add<B1>>::Output>>: ArrayLength<Output<Hasher>>,
+    Sub1<Shleft<U1, <HLen as Add<B1>>::Output>>: ArraySize,
 {
     type OtsMode = OtsMode;
     type Hasher = Hasher;
@@ -97,7 +96,7 @@ where
 impl<
         Hasher: Digest,
         OtsMode: LmsOtsMode,
-        TreeLen: ArrayLength<Output<Hasher>>,
+        TreeLen: ArraySize,
         const M: usize,
         const H: usize,
         const TC: u32,

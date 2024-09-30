@@ -5,7 +5,7 @@ use crate::error::LmsDeserializeError;
 use crate::ots::modes::LmsOtsMode;
 use crate::types::Identifier;
 use digest::Digest;
-use generic_array::{ArrayLength, GenericArray};
+use hybrid_array::{Array, ArraySize};
 use signature::SignatureEncoding;
 use std::cmp::Ordering;
 use std::ops::{Add, Mul};
@@ -17,7 +17,7 @@ use super::VerifyingKey;
 /// Opaque struct representing a LM-OTS signature
 pub struct Signature<Mode: LmsOtsMode> {
     pub(crate) c: digest::Output<Mode::Hasher>,
-    pub(crate) y: GenericArray<digest::Output<Mode::Hasher>, Mode::PLen>,
+    pub(crate) y: Array<digest::Output<Mode::Hasher>, Mode::PLen>,
 }
 
 // manual implementation is required to not require bounds on Mode
@@ -37,11 +37,9 @@ impl<Mode: LmsOtsMode> PartialEq for Signature<Mode> {
     }
 }
 
-/// Useful type alias to get the [`GenericArray`] representation
-pub type Output<Mode> = GenericArray<
-    u8,
-    Sum<Prod<<Mode as LmsOtsMode>::NLen, Sum<<Mode as LmsOtsMode>::PLen, U1>>, U4>,
->;
+/// Useful type alias to get the [`Array`] representation
+pub type Output<Mode> =
+    Array<u8, Sum<Prod<<Mode as LmsOtsMode>::NLen, Sum<<Mode as LmsOtsMode>::PLen, U1>>, U4>>;
 
 /// Converts a [`Signature`] into its byte representation
 impl<Mode: LmsOtsMode> From<Signature<Mode>> for Output<Mode>
@@ -50,10 +48,10 @@ where
     Mode::PLen: Add<U1>,
     Mode::NLen: Mul<Sum<Mode::PLen, U1>>,
     Prod<Mode::NLen, Sum<Mode::PLen, U1>>: Add<U4>,
-    Sum<Prod<Mode::NLen, Sum<Mode::PLen, U1>>, U4>: ArrayLength<u8>,
+    Sum<Prod<Mode::NLen, Sum<Mode::PLen, U1>>, U4>: ArraySize,
 {
     fn from(sig: Signature<Mode>) -> Self {
-        GenericArray::from_exact_iter(
+        Array::try_from_iter(
             std::iter::empty()
                 .chain(Mode::TYPECODE.to_be_bytes())
                 .chain(sig.c.clone())
@@ -88,12 +86,14 @@ impl<'a, Mode: LmsOtsMode> TryFrom<&'a [u8]> for Signature<Mode> {
                 // sig is now guaranteed to be of the form C || y[0] || ... || y[p - 1]
                 let (c, y) = sig.split_at(Mode::N);
 
-                let c = GenericArray::clone_from_slice(c);
+                let c = Array::try_from(c).expect("size invariant violation");
 
-                // ys is an iterator over GenericArray<u8, Mode::NLen> of length p
-                let ys = y.chunks_exact(Mode::N).map(GenericArray::clone_from_slice);
+                // ys is an iterator over Array<u8, Mode::NLen> of length p
+                let ys = y
+                    .chunks_exact(Mode::N)
+                    .map(|chunk| Array::try_from(chunk).expect("size invariant violation"));
                 debug_assert!(ys.len() == Mode::P);
-                let y = GenericArray::from_iter(ys);
+                let y = Array::from_iter(ys);
 
                 Ok(Self { c, y })
             }
@@ -124,7 +124,7 @@ impl<Mode: LmsOtsMode> Signature<Mode> {
             .chain_update(q.to_be_bytes())
             .chain_update(D_PBLC);
 
-        let mut tmp = GenericArray::default();
+        let mut tmp = Array::default();
         for (i, a) in Mode::expand(&msg_hash).into_iter().enumerate() {
             tmp.clone_from(&self.y[i]);
 
@@ -158,7 +158,7 @@ where
     Mode::PLen: Add<U1>,
     Mode::NLen: Mul<Sum<Mode::PLen, U1>>,
     Prod<Mode::NLen, Sum<Mode::PLen, U1>>: Add<U4>,
-    Sum<Prod<Mode::NLen, Sum<Mode::PLen, U1>>, U4>: ArrayLength<u8>,
+    Sum<Prod<Mode::NLen, Sum<Mode::PLen, U1>>, U4>: ArraySize,
 {
     type Repr = Output<Mode>;
 }

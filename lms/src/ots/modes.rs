@@ -1,7 +1,7 @@
 use crate::ots::util::coefs;
 use crate::types::Typecode;
 use digest::{Digest, Output};
-use generic_array::{ArrayLength, GenericArray};
+use hybrid_array::{Array, ArraySize};
 use sha2::Sha256;
 use static_assertions::const_assert_eq;
 use std::marker::PhantomData;
@@ -13,9 +13,9 @@ pub trait LmsOtsMode: Typecode {
     /// The underlying hash function
     type Hasher: Digest;
     /// The length of the hash function output as a type
-    type NLen: ArrayLength<u8>;
+    type NLen: ArraySize;
     /// The value of P as a type
-    type PLen: ArrayLength<Output<Self::Hasher>> + ArrayLength<u8>;
+    type PLen: ArraySize;
     /// The length of the hash function output as a [usize]
     const N: usize;
     /// The Winternitz window, which should be a value that divides 8
@@ -32,7 +32,7 @@ pub trait LmsOtsMode: Typecode {
     const SIG_LEN: usize;
 
     /// Expands a message into its Winternitz coefficients and checksum
-    fn expand(message: &Output<Self::Hasher>) -> GenericArray<u8, Self::PLen> {
+    fn expand(message: &Output<Self::Hasher>) -> Array<u8, Self::PLen> {
         // Returns an array containing Coefs(message, w, U) || Coefs(checksum, w, V)
         // where Coefs(M, w, L) is an array containing coef(M, i, w) for each i in 0..L
         // See RFC 8554 section 3.1.3.
@@ -40,7 +40,7 @@ pub trait LmsOtsMode: Typecode {
         // Expand the message into its coefficients
         // Immediately allocates full expanded length, but only the first U coefficients are used
         // in this step
-        let mut arr: GenericArray<u8, <Self as LmsOtsMode>::PLen> = GenericArray::default();
+        let mut arr: Array<u8, <Self as LmsOtsMode>::PLen> = Array::default();
         for (i, c) in coefs(message, Self::W).enumerate().take(Self::U) {
             arr[i] = c;
         }
@@ -70,21 +70,12 @@ pub trait LmsOtsMode: Typecode {
 }
 
 #[derive(Debug)]
-pub struct LmsOtsModeInternal<
-    Hasher: Digest,
-    const W: usize,
-    PP: ArrayLength<GenericArray<u8, Hasher::OutputSize>> + ArrayLength<u8>,
-    const TC: u32,
-> {
+pub struct LmsOtsModeInternal<Hasher: Digest, const W: usize, PP: ArraySize, const TC: u32> {
     _phantomdata: PhantomData<(Hasher, PP)>,
 }
 
-impl<
-        Hasher: Digest,
-        const W: usize,
-        PP: ArrayLength<GenericArray<u8, Hasher::OutputSize>> + ArrayLength<u8>,
-        const TC: u32,
-    > Typecode for LmsOtsModeInternal<Hasher, W, PP, TC>
+impl<Hasher: Digest, const W: usize, PP: ArraySize, const TC: u32> Typecode
+    for LmsOtsModeInternal<Hasher, W, PP, TC>
 {
     const TYPECODE: u32 = TC;
 }
@@ -94,12 +85,8 @@ impl<
 ///
 /// NLen and N are calculated using the associated OutputSize of the given Digest, as specified by
 /// https://datatracker.ietf.org/doc/html/rfc8554#section-4.1
-impl<
-        Hasher: Digest,
-        const W: usize,
-        PP: ArrayLength<GenericArray<u8, Hasher::OutputSize>> + ArrayLength<u8>,
-        const TC: u32,
-    > LmsOtsMode for LmsOtsModeInternal<Hasher, W, PP, TC>
+impl<Hasher: Digest, const W: usize, PP: ArraySize, const TC: u32> LmsOtsMode
+    for LmsOtsModeInternal<Hasher, W, PP, TC>
 {
     type Hasher = Hasher;
     type NLen = Hasher::OutputSize;
@@ -177,13 +164,13 @@ const_assert_eq!(LmsOtsSha256N32W8::SIG_LEN, 1124);
 
 #[cfg(test)]
 mod test {
-    use generic_array::GenericArray;
+    use hybrid_array::Array;
 
     use super::LmsOtsMode;
     #[test]
     fn test_checksum_zero_w1() {
         let arr = [0u8; super::LmsOtsSha256N32W1::N];
-        let cksm = super::LmsOtsSha256N32W1::expand(GenericArray::from_slice(&arr));
+        let cksm = super::LmsOtsSha256N32W1::expand(&Array::from(arr));
         assert_eq!(
             &cksm[super::LmsOtsSha256N32W1::U..],
             &[1, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -193,7 +180,7 @@ mod test {
     #[test]
     fn test_checksum_ones_w1() {
         let arr = [255u8; super::LmsOtsSha256N32W1::N];
-        let cksm = super::LmsOtsSha256N32W1::expand(GenericArray::from_slice(&arr));
+        let cksm = super::LmsOtsSha256N32W1::expand(&Array::from(arr));
         assert_eq!(
             &cksm[super::LmsOtsSha256N32W1::U..],
             &[0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -203,14 +190,14 @@ mod test {
     #[test]
     fn test_checksum_ten_w4() {
         let arr = [0xaa; super::LmsOtsSha256N32W4::N];
-        let cksm = super::LmsOtsSha256N32W4::expand(GenericArray::from_slice(&arr));
+        let cksm = super::LmsOtsSha256N32W4::expand(&Array::from(arr));
         assert_eq!(&cksm[super::LmsOtsSha256N32W4::U..], &[0x01, 0x04, 0x00]);
     }
 
     #[test]
     fn test_expand_zero_w8() {
         let arr = [0u8; super::LmsOtsSha256N32W8::N];
-        let expanded = super::LmsOtsSha256N32W8::expand(GenericArray::from_slice(&arr));
+        let expanded = super::LmsOtsSha256N32W8::expand(&Array::from(arr));
         let mut expected = [0u8; super::LmsOtsSha256N32W8::P];
         expected[super::LmsOtsSha256N32W8::U] = 0x1f;
         expected[super::LmsOtsSha256N32W8::U + 1] = 0xe0;

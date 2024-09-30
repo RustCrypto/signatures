@@ -6,10 +6,11 @@ use crate::ots::SigningKey as OtsPrivateKey;
 use crate::types::{Identifier, Typecode};
 
 use digest::{Digest, Output, OutputSizeUser};
-use generic_array::{ArrayLength, GenericArray};
+use hybrid_array::{Array, ArraySize};
 use rand::{CryptoRng, Rng};
 use signature::{Error, RandomizedSignerMut};
 
+use core::array::TryFromSliceError;
 use std::cmp::Ordering;
 use std::ops::Add;
 use typenum::{Sum, U28};
@@ -23,7 +24,7 @@ use typenum::{Sum, U28};
 pub struct SigningKey<Mode: LmsMode> {
     id: Identifier,
     seed: Output<Mode::Hasher>, // Re-generate the leaf privkeys as-needed from a seed
-    auth_tree: GenericArray<Output<Mode::Hasher>, Mode::TreeLen>, // TODO: Decide whether/when to precompute
+    auth_tree: Array<Output<Mode::Hasher>, Mode::TreeLen>, // TODO: Decide whether/when to precompute
     q: u32,
 }
 
@@ -36,27 +37,26 @@ impl<Mode: LmsMode> SigningKey<Mode> {
 
         let mut seed = Output::<Mode::Hasher>::default();
         rng.fill_bytes(seed.as_mut());
-        Self::new_from_seed(id, seed)
+        Self::new_from_seed(id, seed).expect("size invariant violation")
     }
 
     // Returns a new LMS private key generated pseudorandomly from an identifier
     // and secret seed. The seed must be equal to the hash output length of the
     // LMS mode ([Mode::M])
-    //
-    // TODO: Return error rather than panic? Or just make the input a
-    // GenericArray? This is the algorithm from Appendix A of
-    // <https://datatracker.ietf.org/doc/html/rfc8554#appendix-A>
-    pub fn new_from_seed(id: Identifier, seed: impl AsRef<[u8]>) -> Self {
+    pub fn new_from_seed(
+        id: Identifier,
+        seed: impl AsRef<[u8]>,
+    ) -> Result<Self, TryFromSliceError> {
         //let seed = seed.as_ref();
-        let seed = GenericArray::clone_from_slice(seed.as_ref());
+        let seed = Array::try_from(seed.as_ref())?;
         let mut sk = Self {
             id,
             seed,
-            auth_tree: GenericArray::default(),
+            auth_tree: Array::default(),
             q: 0, // we set q = 0 when generating keys; it will change
         };
         sk.gen_pk_tree(); // TODO: Use lazy generation / MTT
-        sk
+        Ok(sk)
     }
 
     /// Generates a Merkle tree of OTS public key hashes, using the indexing scheme of RFC 8554 offset by 1
@@ -135,14 +135,14 @@ impl<Mode: LmsMode> RandomizedSignerMut<Signature<Mode>> for SigningKey<Mode> {
 
 /// Converts a [PrivateKey] into its byte representation
 impl<Mode: LmsMode> From<SigningKey<Mode>>
-    for GenericArray<u8, Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U28>>
+    for Array<u8, Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U28>>
 where
     <Mode::Hasher as OutputSizeUser>::OutputSize: Add<U28>,
-    Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U28>: ArrayLength<u8>,
+    Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U28>: ArraySize,
 {
     fn from(pk: SigningKey<Mode>) -> Self {
         // Return u32(type) || u32(otstype) || u32(q) || id || seed
-        GenericArray::from_exact_iter(
+        Array::try_from_iter(
             std::iter::empty()
                 .chain(Mode::TYPECODE.to_be_bytes())
                 .chain(Mode::OtsMode::TYPECODE.to_be_bytes())
@@ -188,8 +188,8 @@ impl<'a, Mode: LmsMode> TryFrom<&'a [u8]> for SigningKey<Mode> {
                 let mut key = Self {
                     q: u32::from_be_bytes(q.try_into().expect("ok")),
                     id: id.try_into().expect("ok"),
-                    seed: GenericArray::clone_from_slice(seed),
-                    auth_tree: GenericArray::default(),
+                    seed: Array::try_from(seed).expect("ok"),
+                    auth_tree: Array::default(),
                 };
                 key.gen_pk_tree();
                 Ok(key)
@@ -215,7 +215,8 @@ mod tests {
         let id = hex!("d08fabd4a2091ff0a8cb4ed834e74534");
         let expected_k = hex!("32a58885cd9ba0431235466bff9651c6c92124404d45fa53cf161c28f1ad5a8e");
 
-        let lms_priv = SigningKey::<LmsSha256M32H10<LmsOtsSha256N32W4>>::new_from_seed(id, seed);
+        let lms_priv =
+            SigningKey::<LmsSha256M32H10<LmsOtsSha256N32W4>>::new_from_seed(id, seed).unwrap();
         let lms_pub = lms_priv.public();
         assert_eq!(lms_pub.k(), expected_k);
         assert_eq!(lms_pub.id(), &id);
@@ -229,7 +230,8 @@ mod tests {
         let id = hex!("215f83b7ccb9acbcd08db97b0d04dc2b");
         let expected_k = hex!("a1cd035833e0e90059603f26e07ad2aad152338e7a5e5984bcd5f7bb4eba40b7");
 
-        let lms_priv = SigningKey::<LmsSha256M32H5<LmsOtsSha256N32W8>>::new_from_seed(id, seed);
+        let lms_priv =
+            SigningKey::<LmsSha256M32H5<LmsOtsSha256N32W8>>::new_from_seed(id, seed).unwrap();
         let lms_pub = lms_priv.public();
         assert_eq!(lms_pub.k(), expected_k);
         assert_eq!(lms_pub.id(), &id);
@@ -339,7 +341,8 @@ mod tests {
         let id = hex!("215f83b7ccb9acbcd08db97b0d04dc2b");
         let _expected_k = hex!("a1cd035833e0e90059603f26e07ad2aad152338e7a5e5984bcd5f7bb4eba40b7");
 
-        let mut lms_priv = SigningKey::<LmsSha256M32H5<LmsOtsSha256N32W8>>::new_from_seed(id, seed);
+        let mut lms_priv =
+            SigningKey::<LmsSha256M32H5<LmsOtsSha256N32W8>>::new_from_seed(id, seed).unwrap();
         lms_priv.q = 4;
         let _lms_pub = lms_priv.public();
 
