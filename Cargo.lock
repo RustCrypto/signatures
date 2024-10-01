@@ -433,6 +433,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "78ca9ab1a0babb1e7d5695e3530886289c18cf2f87ec19a575a0abdce112e3a3"
 
 [[package]]
+name = "num-bigint"
+version = "0.4.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a5e44f723f1133c9deac646763579fdb3ac745e418f2a7af9cd0c431da1f20b9"
+dependencies = [
+ "num-integer",
+ "num-traits",
+]
+
+[[package]]
 name = "num-bigint-dig"
 version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -814,12 +824,13 @@ dependencies = [
 [[package]]
 name = "sp1-lib"
 version = "2.0.0"
-source = "git+https://github.com/succinctlabs/sp1.git?branch=ratan/impl-add-assign-fixes#377dfc7f433f87e3c2e7bd7de4caf3b504310c8b"
+source = "git+https://github.com/succinctlabs/sp1.git?branch=ratan/impl-add-assign-fixes#41bcc85f1a956af6ac851a93f44e7aebc32c27de"
 dependencies = [
  "anyhow",
  "bincode",
  "cfg-if",
  "hex",
+ "num-bigint",
  "serde",
  "snowbridge-amcl",
 ]
