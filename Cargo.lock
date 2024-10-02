@@ -1095,6 +1095,7 @@ version = "0.2.0-pre"
 dependencies = [
  "aes",
  "cipher",
+ "const-oid",
  "criterion",
  "ctr",
  "digest",
@@ -1104,6 +1105,7 @@ dependencies = [
  "hybrid-array",
  "num-bigint",
  "paste",
+ "pkcs8",
  "proptest",
  "quickcheck",
  "quickcheck_macros",
