@@ -15,7 +15,7 @@ repository = "https://github.com/RustCrypto/signatures"
 readme = "README.md"
 categories = ["cryptography", "no-std"]
 keywords = ["crypto", "curve448", "ecc", "signature", "signing"]
-rust-version = "1.72"
+rust-version = "1.81"
 
 [dependencies]
 # TODO(tarcieri): relax requirement back to `2` before next release
