@@ -73,6 +73,9 @@ pub trait ParameterSet:
 {
     /// Human-readable name for parameter set, matching the FIPS-205 designations
     const NAME: &'static str;
+
+    /// Associated OID with the Parameter
+    const ALGORITHM_OID: pkcs8::ObjectIdentifier;
 }
 
 #[cfg(test)]
