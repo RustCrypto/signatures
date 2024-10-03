@@ -679,7 +679,7 @@ checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
 [[package]]
 name = "sp1-lib"
 version = "2.0.0"
-source = "git+https://github.com/succinctlabs/sp1.git?branch=ratan/impl-add-assign-fixes#42868aeecc192d8a4caf93938b50c043b48fa8d3"
+source = "git+https://github.com/succinctlabs/sp1.git?branch=tamir/v1.3.0-rc2#a8db6b19673ed7f5bf7007faff1d2ef177713e3b"
 dependencies = [
  "bincode",
  "serde",

@@ -11,8 +11,7 @@ use elliptic_curve::Field;
 use sp1_lib::io::{self, FD_ECRECOVER_HOOK};
 use sp1_lib::unconstrained;
 use sp1_lib::{
-    secp256k1::Secp256k1AffinePoint, syscall_secp256k1_decompress,
-    utils::AffinePoint as Sp1AffinePoint,
+    secp256k1::Secp256k1Point, syscall_secp256k1_decompress, utils::AffinePoint as Sp1AffinePoint,
 };
 
 use crate::{hazmat::bits2field, Signature, SignatureSize, VerifyingKey};
@@ -69,7 +68,7 @@ where
     ///
     /// Accepts the following arguments:
     /// - `pubkey`: The public key to verify the signature against. The public key is in uncompressed form. The points
-    /// are represented as big-endian bytes and need to be converted to little endian to instantiate the Secp256k1AffinePoint.
+    /// are represented as big-endian bytes and need to be converted to little endian to instantiate the Secp256k1Point.
     /// - `msg_hash`: The prehashed message to verify the signature against.
     /// - `signature`: The signature to verify.
     /// - `s_inverse`: The inverse of the scalar `s` in the signature.
@@ -87,7 +86,7 @@ where
         let mut pubkey_y_le_bytes = pubkey[33..].to_vec();
         pubkey_y_le_bytes.reverse();
         let affine =
-            Secp256k1AffinePoint::from_le_bytes(&[pubkey_x_le_bytes, pubkey_y_le_bytes].concat());
+            Secp256k1Point::from_le_bytes(&[pubkey_x_le_bytes, pubkey_y_le_bytes].concat());
 
         // Split the signature into its two scalars.
         let (r, s) = signature.split_scalars();
@@ -111,9 +110,9 @@ where
         let u2_le_bits = be_bytes_to_le_bits(u2_be_bytes.as_slice().try_into().unwrap());
 
         // Compute the MSM.
-        let res = Secp256k1AffinePoint::multi_scalar_multiplication(
+        let res = Secp256k1Point::multi_scalar_multiplication(
             &u1_le_bits,
-            Secp256k1AffinePoint::new(Secp256k1AffinePoint::GENERATOR),
+            Secp256k1Point::new(Secp256k1Point::GENERATOR),
             &u2_le_bits,
             affine,
         )
