@@ -113,7 +113,7 @@ where
         // Compute the MSM.
         let res = Secp256k1AffinePoint::multi_scalar_multiplication(
             &u1_le_bits,
-            Secp256k1AffinePoint(Secp256k1AffinePoint::GENERATOR),
+            Secp256k1AffinePoint::new(Secp256k1AffinePoint::GENERATOR),
             &u2_le_bits,
             affine,
         )
