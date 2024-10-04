@@ -8,7 +8,14 @@ use crate::{fors::ForsSignature, Shake128s};
 use ::signature::{Error, SignatureEncoding};
 use hybrid_array::sizes::{U16224, U17088, U29792, U35664, U49856, U7856};
 use hybrid_array::{Array, ArraySize};
+use pkcs8::{der::AnyRef, spki::AssociatedAlgorithmIdentifier, AlgorithmIdentifierRef};
 use typenum::Unsigned;
+
+#[cfg(feature = "alloc")]
+use pkcs8::{
+    der::{self, asn1::BitString},
+    spki::SignatureBitStringEncoding,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 /// A parsed SLH-DSA signature for a given parameter set
@@ -93,6 +100,22 @@ impl<P: ParameterSet> SignatureEncoding for Signature<P> {
     fn encoded_len(&self) -> usize {
         P::SigLen::USIZE
     }
+}
+
+#[cfg(feature = "alloc")]
+impl<P: ParameterSet> SignatureBitStringEncoding for Signature<P> {
+    fn to_bitstring(&self) -> der::Result<BitString> {
+        BitString::new(0, self.to_vec())
+    }
+}
+
+impl<P: ParameterSet> AssociatedAlgorithmIdentifier for Signature<P> {
+    type Params = AnyRef<'static>;
+
+    const ALGORITHM_IDENTIFIER: AlgorithmIdentifierRef<'static> = AlgorithmIdentifierRef {
+        oid: P::ALGORITHM_OID,
+        parameters: None,
+    };
 }
 
 impl<P: ParameterSet> From<Signature<P>> for Array<u8, P::SigLen> {
