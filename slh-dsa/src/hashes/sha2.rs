@@ -60,11 +60,12 @@ where
     fn prf_msg(
         sk_prf: &SkPrf<Self::N>,
         opt_rand: &Array<u8, Self::N>,
-        msg: impl AsRef<[u8]>,
+        msg: &[impl AsRef<[u8]>],
     ) -> Array<u8, Self::N> {
         let mut mac = Hmac::<Sha256>::new_from_slice(sk_prf.as_ref()).unwrap();
         mac.update(opt_rand.as_slice());
-        mac.update(msg.as_ref());
+        msg.iter()
+            .for_each(|msg_part| mac.update(msg_part.as_ref()));
         let result = mac.finalize().into_bytes();
         Array::clone_from_slice(&result[..Self::N::USIZE])
     }
@@ -73,13 +74,13 @@ where
         rand: &Array<u8, Self::N>,
         pk_seed: &PkSeed<Self::N>,
         pk_root: &Array<u8, Self::N>,
-        msg: impl AsRef<[u8]>,
+        msg: &[impl AsRef<[u8]>],
     ) -> Array<u8, Self::M> {
         let mut h = Sha256::new();
         h.update(rand);
         h.update(pk_seed);
         h.update(pk_root);
-        h.update(msg.as_ref());
+        msg.iter().for_each(|msg_part| h.update(msg_part.as_ref()));
         let result = Array(h.finalize().into());
         let seed = rand.clone().concat(pk_seed.0.clone()).concat(result);
         mgf1::<Sha256, Self::M>(&seed)
@@ -220,11 +221,12 @@ where
     fn prf_msg(
         sk_prf: &SkPrf<Self::N>,
         opt_rand: &Array<u8, Self::N>,
-        msg: impl AsRef<[u8]>,
+        msg: &[impl AsRef<[u8]>],
     ) -> Array<u8, Self::N> {
         let mut mac = Hmac::<Sha512>::new_from_slice(sk_prf.as_ref()).unwrap();
         mac.update(opt_rand.as_slice());
-        mac.update(msg.as_ref());
+        msg.iter()
+            .for_each(|msg_part| mac.update(msg_part.as_ref()));
         let result = mac.finalize().into_bytes();
         Array::clone_from_slice(&result[..Self::N::USIZE])
     }
@@ -233,13 +235,13 @@ where
         rand: &Array<u8, Self::N>,
         pk_seed: &PkSeed<Self::N>,
         pk_root: &Array<u8, Self::N>,
-        msg: impl AsRef<[u8]>,
+        msg: &[impl AsRef<[u8]>],
     ) -> Array<u8, Self::M> {
         let mut h = Sha512::new();
         h.update(rand);
         h.update(pk_seed);
         h.update(pk_root);
-        h.update(msg.as_ref());
+        msg.iter().for_each(|msg_part| h.update(msg_part.as_ref()));
         let result = Array(h.finalize().into());
         let seed = rand.clone().concat(pk_seed.0.clone()).concat(result);
         mgf1::<Sha512, Self::M>(&seed)

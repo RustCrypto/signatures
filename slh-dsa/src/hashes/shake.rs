@@ -34,12 +34,13 @@ where
     fn prf_msg(
         sk_prf: &SkPrf<Self::N>,
         opt_rand: &Array<u8, Self::N>,
-        msg: impl AsRef<[u8]>,
+        msg: &[impl AsRef<[u8]>],
     ) -> Array<u8, Self::N> {
         let mut hasher = Shake256::default();
         hasher.update(sk_prf.as_ref());
         hasher.update(opt_rand.as_slice());
-        hasher.update(msg.as_ref());
+        msg.iter()
+            .for_each(|msg_part| hasher.update(msg_part.as_ref()));
         let mut output = Array::<u8, Self::N>::default();
         hasher.finalize_xof_into(&mut output);
         output
@@ -49,13 +50,14 @@ where
         rand: &Array<u8, Self::N>,
         pk_seed: &PkSeed<Self::N>,
         pk_root: &Array<u8, Self::N>,
-        msg: impl AsRef<[u8]>,
+        msg: &[impl AsRef<[u8]>],
     ) -> Array<u8, Self::M> {
         let mut hasher = Shake256::default();
         hasher.update(rand.as_slice());
         hasher.update(pk_seed.as_ref());
         hasher.update(pk_root.as_ref());
-        hasher.update(msg.as_ref());
+        msg.iter()
+            .for_each(|msg_part| hasher.update(msg_part.as_ref()));
         let mut output = Array::<u8, Self::M>::default();
         hasher.finalize_xof_into(&mut output);
         output
@@ -267,7 +269,7 @@ mod tests {
 
         let expected = hex!("bc5c062307df0a41aeeae19ad655f7b2");
 
-        let result = H::prf_msg(&sk_prf, &opt_rand, msg);
+        let result = H::prf_msg(&sk_prf, &opt_rand, &[msg]);
 
         assert_eq!(result.as_slice(), expected);
     }
