@@ -2,7 +2,7 @@
 //! Generate a per-message secret number
 //!
 
-use crate::{Components, SigningKey};
+use crate::{signing_key::SigningKey, Components};
 use alloc::{vec, vec::Vec};
 use core::cmp::min;
 use digest::{core_api::BlockSizeUser, Digest, FixedOutputReset};
