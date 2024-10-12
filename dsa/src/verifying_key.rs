@@ -16,8 +16,12 @@ use pkcs8::{
 };
 use signature::{hazmat::PrehashVerifier, DigestVerifier, Verifier};
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 /// DSA public key.
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[must_use]
 pub struct VerifyingKey {
     /// common components
