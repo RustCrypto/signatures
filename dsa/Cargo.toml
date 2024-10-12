@@ -21,6 +21,7 @@ num-bigint = { package = "num-bigint-dig", version = "0.8", default-features = f
 num-traits = { version = "0.2", default-features = false }
 pkcs8 = { version = "=0.11.0-rc.1", default-features = false, features = ["alloc"] }
 rfc6979 = { version = "=0.5.0-pre.4", path = "../rfc6979" }
+serde = { version = "1.0", default-features = false, features = ["derive"], optional = true }
 sha2 = { version = "=0.11.0-pre.4", default-features = false }
 signature = { version = "=2.3.0-pre.4", default-features = false, features = ["alloc", "digest", "rand_core"] }
 zeroize = { version = "1", default-features = false }
@@ -32,4 +33,12 @@ rand_chacha = "0.3"
 sha1 = "=0.11.0-pre.4"
 
 [features]
+serde = [
+    "dep:serde",
+    "num-bigint/serde",
+]
+serde_secrets = [
+    "serde",
+    "zeroize/serde",
+]
 std = []

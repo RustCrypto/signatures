@@ -24,11 +24,15 @@ use signature::{
 };
 use zeroize::{Zeroize, Zeroizing};
 
+#[cfg(feature = "serde_secrets")]
+use serde::{Deserialize, Serialize};
+
 /// DSA private key.
 ///
 /// The [`(try_)sign_digest_with_rng`](::signature::RandomizedDigestSigner) API uses regular non-deterministic signatures,
 /// while the [`(try_)sign_digest`](::signature::DigestSigner) API uses deterministic signatures as described in RFC 6979
 #[derive(Clone, PartialEq)]
+#[cfg_attr(feature = "serde_secrets", derive(Deserialize, Serialize))]
 #[must_use]
 pub struct SigningKey {
     /// Public key

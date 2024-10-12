@@ -75,8 +75,12 @@ use pkcs8::der::{
 };
 use signature::SignatureEncoding;
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 /// Container of the DSA signature
 #[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[must_use]
 pub struct Signature {
     /// Signature part r

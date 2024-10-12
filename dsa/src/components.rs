@@ -11,10 +11,14 @@ use pkcs8::der::{
 };
 use signature::rand_core::CryptoRngCore;
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 /// The common components of an DSA keypair
 ///
 /// (the prime p, quotient q and generator g)
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[must_use]
 pub struct Components {
     /// Prime p

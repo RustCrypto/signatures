@@ -332,6 +332,7 @@ dependencies = [
  "rand",
  "rand_chacha",
  "rfc6979",
+ "serde",
  "sha1",
  "sha2",
  "signature",
@@ -662,6 +663,7 @@ dependencies = [
  "num-iter",
  "num-traits",
  "rand",
+ "serde",
  "smallvec",
  "zeroize",
 ]
@@ -1427,3 +1429,6 @@ name = "zeroize"
 version = "1.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ced3678a2879b30306d323f4542626697a464a97c0a07c9aebf7ebca65cd4dde"
+dependencies = [
+ "serde",
+]
