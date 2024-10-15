@@ -19,14 +19,14 @@ rust-version = "1.81"
 digest = "=0.11.0-pre.9"
 num-bigint = { package = "num-bigint-dig", version = "0.8", default-features = false, features = ["prime", "rand", "zeroize"] }
 num-traits = { version = "0.2", default-features = false }
-pkcs8 = { version = "=0.11.0-rc.1", default-features = false, features = ["alloc"] }
+pkcs8 = { version = "0.11.0-rc.1", default-features = false, features = ["alloc"] }
 rfc6979 = { version = "=0.5.0-pre.4" }
 sha2 = { version = "=0.11.0-pre.4", default-features = false }
 signature = { version = "=2.3.0-pre.4", default-features = false, features = ["alloc", "digest", "rand_core"] }
 zeroize = { version = "1", default-features = false }
 
 [dev-dependencies]
-pkcs8 = { version = "=0.11.0-rc.1", default-features = false, features = ["pem"] }
+pkcs8 = { version = "0.11.0-rc.1", default-features = false, features = ["pem"] }
 rand = "0.8"
 rand_chacha = "0.3"
 sha1 = "=0.11.0-pre.4"
