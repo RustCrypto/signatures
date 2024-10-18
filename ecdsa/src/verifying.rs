@@ -37,6 +37,9 @@ use elliptic_curve::pkcs8::{
     AssociatedOid, ObjectIdentifier,
 };
 
+#[cfg(feature = "serde")]
+use serdect::serde::{de, ser, Deserialize, Serialize};
+
 #[cfg(feature = "sha2")]
 use {
     crate::{
@@ -47,9 +50,6 @@ use {
 
 #[cfg(all(feature = "alloc", feature = "pkcs8"))]
 use elliptic_curve::pkcs8::EncodePublicKey;
-
-#[cfg(all(feature = "pem", feature = "serde"))]
-use serdect::serde::{de, ser, Deserialize, Serialize};
 
 /// ECDSA public key used for verifying signatures. Generic over prime order
 /// elliptic curves (e.g. NIST P-curves).
@@ -453,7 +453,7 @@ where
     }
 }
 
-#[cfg(all(feature = "pem", feature = "serde"))]
+#[cfg(feature = "serde")]
 impl<C> Serialize for VerifyingKey<C>
 where
     C: EcdsaCurve + AssociatedOid + CurveArithmetic + PointCompression,
@@ -468,7 +468,7 @@ where
     }
 }
 
-#[cfg(all(feature = "pem", feature = "serde"))]
+#[cfg(feature = "serde")]
 impl<'de, C> Deserialize<'de> for VerifyingKey<C>
 where
     C: EcdsaCurve + AssociatedOid + CurveArithmetic + PointCompression,
