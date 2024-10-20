@@ -36,7 +36,7 @@ macro_rules! parameter_case {
     ($param:ident, $test_case:expr) => {{
         let sk = VerifyingKey::<$param>::try_from($test_case.pk.data.as_slice()).unwrap();
         if let Ok(sig) = $test_case.signature.data.as_slice().try_into() {
-            let success = sk.slh_verify_internal($test_case.message.data.as_slice(), &sig);
+            let success = sk.slh_verify_internal(&[$test_case.message.data.as_slice()], &sig);
             assert_eq!($test_case.testPassed, success.is_ok());
         } else {
             assert!(!$test_case.testPassed);
