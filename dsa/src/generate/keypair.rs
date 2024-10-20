@@ -1,8 +1,9 @@
+#![cfg(feature = "hazmat")]
 //!
 //! Generate a DSA keypair
 //!
 
-use crate::{generate::components, Components, SigningKey, VerifyingKey};
+use crate::{generate::components, signing_key::SigningKey, Components, VerifyingKey};
 use num_bigint::{BigUint, RandBigInt};
 use num_traits::One;
 use signature::rand_core::CryptoRngCore;
