@@ -200,10 +200,11 @@ impl<'a, Mode: LmsMode> TryFrom<&'a [u8]> for SigningKey<Mode> {
 
 #[cfg(test)]
 mod tests {
-    use super::SigningKey;
+    use super::{SigningKey, VerifyingKey};
     use crate::lms::modes::{LmsSha256M32H10, LmsSha256M32H5};
     use crate::ots::modes::{LmsOtsSha256N32W4, LmsOtsSha256N32W8};
     use hex_literal::hex;
+    use hybrid_array::Array;
     use signature::{RandomizedSignerMut, SignatureEncoding};
 
     // Known-Answer Test vectors from <https://datatracker.ietf.org/doc/html/rfc8554#appendix-F>
@@ -358,5 +359,44 @@ mod tests {
             .to_bytes();
         assert_eq!(sig.len(), expected_signature.len());
         assert_eq!(sig, expected_signature)
+    }
+
+    #[test]
+    fn test_signing_key_to_bytes_and_back() {
+        let seed = hex!("558b8966c48ae9cb898b423c83443aae014a72f1b1ab5cc85cf1d892903b5439");
+        let id = hex!("d08fabd4a2091ff0a8cb4ed834e74534");
+        let expected_k = hex!("32a58885cd9ba0431235466bff9651c6c92124404d45fa53cf161c28f1ad5a8e");
+
+        let lms_priv =
+            SigningKey::<LmsSha256M32H10<LmsOtsSha256N32W4>>::new_from_seed(id, seed).unwrap();
+
+        let lms_priv_bytes: Array<_, _> = lms_priv.into();
+        let lms_priv_bytes: &[u8] = &*lms_priv_bytes;
+        let lms_priv: SigningKey<LmsSha256M32H10<LmsOtsSha256N32W4>> =
+            lms_priv_bytes.try_into().unwrap();
+
+        let lms_pub = lms_priv.public();
+        assert_eq!(lms_pub.k(), expected_k);
+        assert_eq!(lms_pub.id(), &id);
+    }
+
+    #[test]
+    fn test_public_key_to_bytes_and_back() {
+        let seed = hex!("558b8966c48ae9cb898b423c83443aae014a72f1b1ab5cc85cf1d892903b5439");
+        let id = hex!("d08fabd4a2091ff0a8cb4ed834e74534");
+        let expected_k = hex!("32a58885cd9ba0431235466bff9651c6c92124404d45fa53cf161c28f1ad5a8e");
+
+        let lms_priv =
+            SigningKey::<LmsSha256M32H10<LmsOtsSha256N32W4>>::new_from_seed(id, seed).unwrap();
+
+        let lms_pub = lms_priv.public();
+
+        let lms_pub_bytes: Array<_, _> = lms_pub.into();
+        let lms_pub_bytes: &[u8] = &*lms_pub_bytes;
+        let lms_pub: VerifyingKey<LmsSha256M32H10<LmsOtsSha256N32W4>> =
+            lms_pub_bytes.try_into().unwrap();
+
+        assert_eq!(lms_pub.k(), expected_k);
+        assert_eq!(lms_pub.id(), &id);
     }
 }
