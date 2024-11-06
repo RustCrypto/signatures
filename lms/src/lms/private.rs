@@ -176,7 +176,7 @@ impl<'a, Mode: LmsMode> TryFrom<&'a [u8]> for SigningKey<Mode> {
             Ordering::Greater => Err(LmsDeserializeError::TooLong),
             Ordering::Equal => {
                 // pk is now guaranteed to be of the form otstype || q || id || seed
-                let (otstype, qk) = pk.split_at(ID_LEN);
+                let (otstype, qk) = pk.split_at(4);
                 let (q, idseed) = qk.split_at(4);
                 let (id, seed) = idseed.split_at(ID_LEN);
 
