@@ -14,5 +14,17 @@ readme = "README.md"
 categories = ["cryptography"]
 keywords = ["crypto", "signature"]
 
+[features]
+default = ["std"]
+std = [] #["sha3/std"]
+zeroize = ["dep:zeroize"]
+
 [dependencies]
+hybrid-array = { version = "0.2.0-rc.9", features = ["extra-sizes"] }
+sha3 = "0.10.8"
 signature = { version = "2.3.0-pre.4", features = ["rand_core"] }
+zeroize = { version = "1.8.1", optional = true, default-features = false }
+
+[dev-dependencies]
+hex-literal = "0.4.1"
+rand = "0.8.5"
