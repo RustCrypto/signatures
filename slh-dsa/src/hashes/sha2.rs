@@ -9,6 +9,7 @@ use crate::{
     xmss::XmssParams, ParameterSet,
 };
 use crate::{PkSeed, SkPrf, SkSeed};
+use const_oid::db::fips205;
 use digest::{Digest, KeyInit, Mac};
 use hmac::Hmac;
 use hybrid_array::{Array, ArraySize};
@@ -169,6 +170,7 @@ impl ForsParams for Sha2_128s {
 }
 impl ParameterSet for Sha2_128s {
     const NAME: &'static str = "SLH-DSA-SHA2-128s";
+    const ALGORITHM_OID: pkcs8::ObjectIdentifier = fips205::ID_SLH_DSA_SHA_2_128_S;
 }
 
 /// SHA2 at L1 security with fast signatures
@@ -191,6 +193,7 @@ impl ForsParams for Sha2_128f {
 }
 impl ParameterSet for Sha2_128f {
     const NAME: &'static str = "SLH-DSA-SHA2-128f";
+    const ALGORITHM_OID: pkcs8::ObjectIdentifier = fips205::ID_SLH_DSA_SHA_2_128_F;
 }
 
 /// Implementation of the component hash functions using SHA2 at Security Category 3 and 5
@@ -330,6 +333,7 @@ impl ForsParams for Sha2_192s {
 }
 impl ParameterSet for Sha2_192s {
     const NAME: &'static str = "SLH-DSA-SHA2-192s";
+    const ALGORITHM_OID: pkcs8::ObjectIdentifier = fips205::ID_SLH_DSA_SHA_2_192_S;
 }
 
 /// SHA2 at L3 security with fast signatures
@@ -352,6 +356,7 @@ impl ForsParams for Sha2_192f {
 }
 impl ParameterSet for Sha2_192f {
     const NAME: &'static str = "SLH-DSA-SHA2-192f";
+    const ALGORITHM_OID: pkcs8::ObjectIdentifier = fips205::ID_SLH_DSA_SHA_2_192_F;
 }
 
 /// SHA2 at L5 security with small signatures
@@ -374,6 +379,7 @@ impl ForsParams for Sha2_256s {
 }
 impl ParameterSet for Sha2_256s {
     const NAME: &'static str = "SLH-DSA-SHA2-256s";
+    const ALGORITHM_OID: pkcs8::ObjectIdentifier = fips205::ID_SLH_DSA_SHA_2_256_S;
 }
 
 /// SHA2 at L5 security with fast signatures
@@ -396,4 +402,5 @@ impl ForsParams for Sha2_256f {
 }
 impl ParameterSet for Sha2_256f {
     const NAME: &'static str = "SLH-DSA-SHA2-256f";
+    const ALGORITHM_OID: pkcs8::ObjectIdentifier = fips205::ID_SLH_DSA_SHA_2_256_F;
 }

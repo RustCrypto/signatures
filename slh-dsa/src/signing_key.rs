@@ -5,7 +5,17 @@ use crate::verifying_key::VerifyingKey;
 use crate::{ParameterSet, PkSeed, Sha2L1, Sha2L35, Shake, VerifyingKeyLen};
 use ::signature::{Error, KeypairRef, RandomizedSigner, Signer};
 use hybrid_array::{Array, ArraySize};
+use pkcs8::{
+    der::AnyRef,
+    spki::{AlgorithmIdentifier, AssociatedAlgorithmIdentifier, SignatureAlgorithmIdentifier},
+};
 use typenum::{Unsigned, U, U16, U24, U32};
+
+#[cfg(feature = "alloc")]
+use pkcs8::{
+    der::{self, asn1::OctetStringRef},
+    EncodePrivateKey,
+};
 
 // NewTypes for ensuring hash argument order correctness
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -213,6 +223,47 @@ impl<P: ParameterSet> AsRef<VerifyingKey<P>> for SigningKey<P> {
 
 impl<P: ParameterSet> KeypairRef for SigningKey<P> {
     type VerifyingKey = VerifyingKey<P>;
+}
+
+impl<P> TryFrom<pkcs8::PrivateKeyInfoRef<'_>> for SigningKey<P>
+where
+    P: ParameterSet,
+{
+    type Error = pkcs8::Error;
+
+    fn try_from(private_key_info: pkcs8::PrivateKeyInfoRef<'_>) -> pkcs8::Result<Self> {
+        private_key_info
+            .algorithm
+            .assert_algorithm_oid(P::ALGORITHM_OID)?;
+
+        Self::try_from(private_key_info.private_key.as_bytes())
+            .map_err(|_| pkcs8::Error::KeyMalformed)
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<P> EncodePrivateKey for SigningKey<P>
+where
+    P: ParameterSet,
+{
+    fn to_pkcs8_der(&self) -> pkcs8::Result<der::SecretDocument> {
+        let algorithm_identifier = pkcs8::AlgorithmIdentifierRef {
+            oid: P::ALGORITHM_OID,
+            parameters: None,
+        };
+
+        let private_key = self.to_bytes();
+        let pkcs8_key =
+            pkcs8::PrivateKeyInfoRef::new(algorithm_identifier, OctetStringRef::new(&private_key)?);
+        Ok(der::SecretDocument::encode_msg(&pkcs8_key)?)
+    }
+}
+
+impl<P: ParameterSet> SignatureAlgorithmIdentifier for SigningKey<P> {
+    type Params = AnyRef<'static>;
+
+    const SIGNATURE_ALGORITHM_IDENTIFIER: AlgorithmIdentifier<Self::Params> =
+        Signature::<P>::ALGORITHM_IDENTIFIER;
 }
 
 impl<M> SigningKeyLen for Sha2L1<U16, M> {
