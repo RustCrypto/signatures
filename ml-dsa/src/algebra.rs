@@ -41,6 +41,15 @@ impl FieldElement {
 
     // Algorithm 15 CoeffFromHalfByte
     fn from_half_byte(b: u8, eta: Eta) -> Option<Self> {
+        if matches!(eta, Eta::Two) && b < 15 {
+            Some(Self(2) - Self((b as Integer) % 5))
+        } else if matches!(eta, Eta::Four) && b < 9 {
+            Some(Self(4) - Self(b as Integer))
+        } else {
+            None
+        }
+
+        /* XXX(RLB) Slightly more elegant version IMO
         match eta {
             Eta::Two if b < 15 => {
                 let b = (b as Integer) % 5;
@@ -60,6 +69,7 @@ impl FieldElement {
             }
             _ => None,
         }
+        */
     }
 
     fn from_byte(z: u8, eta: Eta) -> (Option<Self>, Option<Self>) {
@@ -90,7 +100,7 @@ impl FieldElement {
         const POW_2_D: Integer = 1 << D;
 
         let r_plus = self.clone();
-        let r0 = self.mod_plus_minus(POW_2_D);
+        let r0 = r_plus.mod_plus_minus(POW_2_D);
         let r1 = FieldElement((r_plus - r0).0 >> D);
 
         (r1, r0)
@@ -300,7 +310,7 @@ impl<K: ArraySize> PolynomialVector<K> {
     // different sizes.  So the caller has to call twice:
     //
     //    let s1 = PolynomialVector::<K>::expand_s(rho, 0);
-    //    let s2 = PolynomialVector::<L>::expand_s(rho, K::USIZE);
+    //    let s2 = PolynomialVector::<L>::expand_s(rho, L::USIZE);
     pub fn expand_s(rho: &[u8], eta: Eta, base: usize) -> Self {
         Self(Array::from_fn(|r| {
             let r = (r + base) as u16;
@@ -360,8 +370,8 @@ impl NttPolynomial {
         let mut j = 0;
         let mut ctx = G::default();
         ctx.absorb(rho);
-        ctx.absorb(&[r]);
         ctx.absorb(&[s]);
+        ctx.absorb(&[r]);
 
         let mut a = Self::default();
         let mut s = [0u8; 3];
