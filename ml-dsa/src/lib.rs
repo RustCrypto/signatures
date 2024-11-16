@@ -16,13 +16,16 @@
 mod algebra;
 mod crypto;
 mod encode;
+mod hint;
 mod param;
 mod util;
 
-use hybrid_array::typenum::*;
+use hybrid_array::{typenum::*, Array};
 
 use crate::algebra::*;
 use crate::crypto::*;
+use crate::encode::W1Encode;
+use crate::hint::*;
 use crate::param::*;
 use crate::util::*;
 
@@ -30,6 +33,13 @@ use crate::util::*;
 pub use crate::param::{
     EncodedSigningKey, EncodedVerificationKey, SigningKeyParams, VerificationKeyParams,
 };
+
+/// An ML-DSA signature
+pub struct Signature<P: SignatureParams> {
+    c_tilde: Array<u8, P::Lambda>,
+    z: PolynomialVector<P::L>,
+    h: Hint<P>,
+}
 
 /// An ML-DSA signing key
 pub struct SigningKey<P: ParameterSet> {
@@ -94,7 +104,71 @@ impl<P: ParameterSet> SigningKey<P> {
         (vk, sk)
     }
 
-    /// Encode the signing key as a byte string
+    // Algorithm 7 ML-DSA.Sign_internal
+    fn sign_internal(&self, Mp: &[u8], rnd: B32) -> Signature<P>
+    where
+        P: SignatureParams,
+    {
+        // TODO(RLB) pre-compute these and store them on the signing key struct
+        let s1_hat = self.s1.ntt();
+        let s2_hat = self.s2.ntt();
+        let t0_hat = self.t0.ntt();
+        let A_hat = NttMatrix::<P::K, P::L>::expand_a(&self.rho);
+
+        // Compute the message representative
+        // XXX(RLB) Should the API represent this as an input?
+        let mut h = H::default();
+        h.absorb(&self.tr); // XXX(RLB) might need to run bytes_to_bits()?
+        h.absorb(&Mp);
+        let mu: B64 = h.squeeze_new();
+
+        // Compute the private random seed
+        let mut h = H::default();
+        h.absorb(&self.K);
+        h.absorb(&rnd);
+        h.absorb(&mu);
+        let rhopp: B64 = h.squeeze_new();
+
+        // Rejection sampling loop
+        for kappa in (0..u16::MAX).step_by(P::L::USIZE) {
+            let y = PolynomialVector::<P::L>::expand_mask::<P::Gamma1>(&rhopp, kappa);
+            let w = (&A_hat * &y.ntt()).ntt_inverse();
+            let w1 = w.high_bits();
+
+            let mut h = H::default();
+            h.absorb(&mu);
+            h.absorb(&w1.w1_encode());
+            let c_tilde = h.squeeze_new::<P::Lambda>();
+            let c = Polynomial::sample_in_ball(&c_tilde, P::TAU);
+            let c_hat = c.ntt();
+
+            let cs1 = (&c_hat * &s1_hat).ntt_inverse();
+            let cs2 = (&c_hat * &s2_hat).ntt_inverse();
+
+            let z = &y + &cs1;
+            let r0 = (&w - &cs2).low_bits();
+
+            let gamma1_threshold = P::Gamma1::U32 - P::BETA;
+            let gamma2_threshold = P::Gamma2::U32 - P::BETA;
+            if z.infinity_norm() > gamma1_threshold || r0.infinity_norm() > gamma2_threshold {
+                continue;
+            }
+
+            let ct0 = (&c_hat * &t0_hat).ntt_inverse();
+            let h = Hint::<P>::new(-&ct0, &(&w - &cs2) + &ct0);
+
+            if ct0.infinity_norm() > P::Gamma2::U32 || h.hamming_weight() > P::Omega::USIZE {
+                continue;
+            }
+
+            let z = z.mod_plus_minus(FieldElement(FieldElement::Q));
+            return Signature { c_tilde, z, h };
+        }
+
+        // TODO(RLB) Make this method fallible
+        panic!("Rejection sampling failed to find a valid signature");
+    }
+
     // Algorithm 24 skEncode
     pub fn encode(&self) -> EncodedSigningKey<P>
     where
@@ -130,8 +204,48 @@ impl<P: ParameterSet> VerificationKey<P> {
         let t1 = P::encode_t1(&self.t1);
         P::concat_vk(self.rho.clone(), t1)
     }
+
+    pub fn verify(&self, Mp: &[u8], sigma: Signature<P>) -> bool
+    where
+        P: VerificationKeyParams + SignatureParams,
+    {
+        // TODO(RLB) pre-compute these and store them on the signing key struct
+        let A_hat = NttMatrix::<P::K, P::L>::expand_a(&self.rho);
+        let t1_hat = (FieldElement(1 << 13) * &self.t1).ntt();
+
+        let mut h = H::default();
+        h.absorb(&self.encode());
+        let tr: B64 = h.squeeze_new();
+
+        // Compute the message representative
+        let mut h = H::default();
+        h.absorb(&tr); // XXX(RLB) might need to run bytes_to_bits()?
+        h.absorb(&Mp);
+        let mu: B64 = h.squeeze_new();
+
+        // Reconstruct w
+        let c = Polynomial::sample_in_ball(&sigma.c_tilde, P::TAU);
+
+        let z_hat = sigma.z.ntt();
+        let c_hat = c.ntt();
+        let Az_hat = &A_hat * &z_hat;
+        let ct1_hat = &c_hat * &t1_hat;
+
+        let wp_approx = (&Az_hat - &ct1_hat).ntt_inverse();
+        let w1p = sigma.h.use_hint(&wp_approx);
+
+        let mut h = H::default();
+        h.absorb(&mu);
+        h.absorb(&w1p.w1_encode());
+        let cp_tilde = h.squeeze_new::<P::Lambda>();
+
+        let gamma1_threshold = P::Gamma1::U32 - P::BETA;
+        return sigma.z.infinity_norm() < gamma1_threshold && sigma.c_tilde == cp_tilde;
+    }
 }
 
+// XXX(RLB) Parameter sets are disabled until we can define the extra integers required
+/*
 /// `MlDsa44` is the parameter set for security category 2.
 #[derive(Default, Clone, Debug, PartialEq)]
 pub struct MlDsa44;
@@ -140,6 +254,10 @@ impl ParameterSet for MlDsa44 {
     type K = U4;
     type L = U4;
     type Eta = U2;
+    type Gamma1 = Shleft<U1, U17>;
+    type Lambda = U32;
+    type Omega = U80;
+    const TAU: usize = 39;
 }
 
 /// `MlDsa65` is the parameter set for security category 3.
@@ -150,6 +268,10 @@ impl ParameterSet for MlDsa65 {
     type K = U6;
     type L = U5;
     type Eta = U4;
+    type Gamma1 = Shleft<U1, U19>;
+    type Lambda = U48;
+    type Omega = U55;
+    const TAU: usize = 49;
 }
 
 /// `MlKem87` is the parameter set for security category 5.
@@ -160,7 +282,12 @@ impl ParameterSet for MlDsa87 {
     type K = U8;
     type L = U7;
     type Eta = U2;
+    type Gamma1 = Shleft<U1, U19>;
+    type Lambda = U64;
+    type Omega = U75;
+    const TAU: usize = 60;
 }
+*/
 
 #[cfg(test)]
 mod test {

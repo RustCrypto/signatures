@@ -77,7 +77,7 @@ where
     simple_bit_pack::<RangeEncodingBits<A, B>, FieldElement>(&to_encode)
 }
 
-// FAlgorithm 17 BitPack
+// Algorithm 17 BitPack
 fn bit_unpack<A, B>(bytes: &RangeEncodedPolynomial<A, B>) -> DecodedValue<FieldElement>
 where
     (A, B): RangeEncodingSize,
@@ -182,6 +182,23 @@ where
                 .map(|x| <Polynomial as BitPack<A, B>>::unpack(x))
                 .collect(),
         )
+    }
+}
+
+/// W1Encode
+pub trait W1Encode {
+    type EncodedSize: ArraySize;
+    fn w1_encode(&self) -> Array<u8, Self::EncodedSize>;
+}
+
+impl<K> W1Encode for PolynomialVector<K>
+where
+    K: ArraySize,
+{
+    type EncodedSize = U32;
+    fn w1_encode(&self) -> Array<u8, Self::EncodedSize> {
+        // XXX(RLB) This will require some access to Gamma2
+        todo!();
     }
 }
 

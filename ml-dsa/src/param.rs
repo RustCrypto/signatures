@@ -147,6 +147,24 @@ pub trait ParameterSet {
 
     /// Private key range
     type Eta: SamplingSize;
+
+    /// Error size bound for y
+    type Gamma1: ArraySize;
+
+    /// Low-order rounding range
+    type Gamma2: ArraySize;
+
+    /// Collision strength of c_tilde, in bytes (lambda / 4 in the spec)
+    type Lambda: ArraySize;
+
+    /// Max number of true values in the hint
+    type Omega: ArraySize;
+
+    /// Number of nonzero values in the polynomial c
+    const TAU: usize;
+
+    /// Beta = Tau * Eta
+    const BETA: u32 = (Self::TAU as u32) * Self::Eta::U32;
 }
 
 pub trait SigningKeyParams: ParameterSet {
@@ -277,4 +295,17 @@ where
     fn concat_vk(rho: B32, t1: EncodedT1<Self>) -> EncodedVerificationKey<Self> {
         rho.concat(t1)
     }
+}
+
+pub trait SignatureParams: ParameterSet {
+    type HintSize: ArraySize;
+}
+
+impl<P> SignatureParams for P
+where
+    P: ParameterSet,
+    U32: Mul<P::K>,
+    Prod<U32, P::K>: ArraySize,
+{
+    type HintSize = Prod<U32, P::K>;
 }

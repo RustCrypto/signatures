@@ -79,12 +79,12 @@ impl FieldElement {
         )
     }
 
-    fn mod_plus_minus(&self, m: u32) -> Self {
-        let raw_mod = Self(self.0 % m);
-        if raw_mod.0 <= m >> 1 {
+    fn mod_plus_minus(&self, m: Self) -> Self {
+        let raw_mod = Self(self.0 % m.0);
+        if raw_mod.0 <= m.0 >> 1 {
             raw_mod
         } else {
-            raw_mod - FieldElement(m)
+            raw_mod - m
         }
     }
 
@@ -100,7 +100,7 @@ impl FieldElement {
         const POW_2_D: Integer = 1 << D;
 
         let r_plus = self.clone();
-        let r0 = r_plus.mod_plus_minus(POW_2_D);
+        let r0 = r_plus.mod_plus_minus(Self(POW_2_D));
         let r1 = FieldElement((r_plus - r0).0 >> D);
 
         (r1, r0)
@@ -187,6 +187,10 @@ fn bit_set(z: &[u8], i: usize) -> bool {
 pub struct Polynomial(pub Array<FieldElement, U256>);
 
 impl Polynomial {
+    fn mod_plus_minus(&self, m: FieldElement) -> Self {
+        Self(self.0.iter().map(|x| x.mod_plus_minus(m)).collect())
+    }
+
     // Algorithm 29 SampleInBall
     pub fn sample_in_ball(rho: &[u8], tau: usize) -> Self {
         const ONE: FieldElement = FieldElement(1);
@@ -291,6 +295,14 @@ impl Sub<&Polynomial> for &Polynomial {
     }
 }
 
+impl Neg for &Polynomial {
+    type Output = Polynomial;
+
+    fn neg(self) -> Polynomial {
+        Polynomial(self.0.iter().map(|&x| -x).collect())
+    }
+}
+
 impl Mul<&Polynomial> for FieldElement {
     type Output = Polynomial;
 
@@ -304,6 +316,10 @@ impl Mul<&Polynomial> for FieldElement {
 pub struct PolynomialVector<K: ArraySize>(pub Array<Polynomial, K>);
 
 impl<K: ArraySize> PolynomialVector<K> {
+    pub fn mod_plus_minus(&self, m: FieldElement) -> Self {
+        Self(self.0.iter().map(|x| x.mod_plus_minus(m)).collect())
+    }
+
     // Algorithm 33 ExpandS
     //
     // We only do half of the algorithm here, because it's inconvenient to return two vectors of
@@ -316,6 +332,25 @@ impl<K: ArraySize> PolynomialVector<K> {
             let r = (r + base) as u16;
             Polynomial::rej_bounded_poly(rho, eta, r)
         }))
+    }
+
+    pub fn expand_mask<Gamma1>(rhopp: &[u8], kappa: u16) -> Self
+    where
+        Gamma1: ArraySize,
+    {
+        todo!();
+    }
+
+    pub fn high_bits(&self) -> Self {
+        todo!();
+    }
+
+    pub fn low_bits(&self) -> Self {
+        todo!();
+    }
+
+    pub fn infinity_norm(&self) -> u32 {
+        todo!();
     }
 
     // Algorithm 35 Power2Round
@@ -342,6 +377,36 @@ impl<K: ArraySize> Add<&PolynomialVector<K>> for &PolynomialVector<K> {
                 .map(|(x, y)| x + y)
                 .collect(),
         )
+    }
+}
+
+impl<K: ArraySize> Sub<&PolynomialVector<K>> for &PolynomialVector<K> {
+    type Output = PolynomialVector<K>;
+
+    fn sub(self, rhs: &PolynomialVector<K>) -> PolynomialVector<K> {
+        PolynomialVector(
+            self.0
+                .iter()
+                .zip(rhs.0.iter())
+                .map(|(x, y)| x - y)
+                .collect(),
+        )
+    }
+}
+
+impl<K: ArraySize> Neg for &PolynomialVector<K> {
+    type Output = PolynomialVector<K>;
+
+    fn neg(self) -> PolynomialVector<K> {
+        PolynomialVector(self.0.iter().map(|x| -x).collect())
+    }
+}
+
+impl<K: ArraySize> Mul<&PolynomialVector<K>> for FieldElement {
+    type Output = PolynomialVector<K>;
+
+    fn mul(self, rhs: &PolynomialVector<K>) -> PolynomialVector<K> {
+        PolynomialVector(rhs.0.iter().map(|x| self * x).collect())
     }
 }
 
@@ -406,6 +471,20 @@ impl Add<&NttPolynomial> for &NttPolynomial {
                 .iter()
                 .zip(rhs.0.iter())
                 .map(|(&x, &y)| x + y)
+                .collect(),
+        )
+    }
+}
+
+impl Sub<&NttPolynomial> for &NttPolynomial {
+    type Output = NttPolynomial;
+
+    fn sub(self, rhs: &NttPolynomial) -> NttPolynomial {
+        NttPolynomial(
+            self.0
+                .iter()
+                .zip(rhs.0.iter())
+                .map(|(&x, &y)| x - y)
                 .collect(),
         )
     }
@@ -621,6 +700,29 @@ impl<K: ArraySize> Add<&NttVector<K>> for &NttVector<K> {
                 .map(|(x, y)| x + y)
                 .collect(),
         )
+    }
+}
+
+impl<K: ArraySize> Sub<&NttVector<K>> for &NttVector<K> {
+    type Output = NttVector<K>;
+
+    fn sub(self, rhs: &NttVector<K>) -> NttVector<K> {
+        NttVector(
+            self.0
+                .iter()
+                .zip(rhs.0.iter())
+                .map(|(x, y)| x - y)
+                .collect(),
+        )
+    }
+}
+
+// Algorithm 47 ScalarVectorNTT
+impl<K: ArraySize> Mul<&NttVector<K>> for &NttPolynomial {
+    type Output = NttVector<K>;
+
+    fn mul(self, rhs: &NttVector<K>) -> NttVector<K> {
+        NttVector(rhs.0.iter().map(|x| self * x).collect())
     }
 }
 
