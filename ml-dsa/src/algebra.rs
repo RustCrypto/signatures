@@ -197,8 +197,7 @@ impl Polynomial {
         const MINUS_ONE: FieldElement = FieldElement(FieldElement::Q - 1);
 
         let mut c = Self::default();
-        let mut ctx = H::default();
-        ctx.absorb(rho);
+        let mut ctx = H::default().absorb(rho);
 
         let mut s = [0u8; 8];
         ctx.squeeze(&mut s);
@@ -226,9 +225,7 @@ impl Polynomial {
     // Algorithm 31 RejBoundedPoly
     fn rej_bounded_poly(rho: &[u8], eta: Eta, r: u16) -> Self {
         let mut j = 0;
-        let mut ctx = H::default();
-        ctx.absorb(rho);
-        ctx.absorb(&r.to_le_bytes());
+        let mut ctx = H::default().absorb(rho).absorb(&r.to_le_bytes());
 
         let mut a = Self::default();
         let mut z = [0u8];
@@ -433,10 +430,7 @@ impl NttPolynomial {
     // Algorithm 30 RejNTTPoly
     fn rej_ntt_poly(rho: &[u8], r: u8, s: u8) -> Self {
         let mut j = 0;
-        let mut ctx = G::default();
-        ctx.absorb(rho);
-        ctx.absorb(&[s]);
-        ctx.absorb(&[r]);
+        let mut ctx = G::default().absorb(rho).absorb(&[s]).absorb(&[r]);
 
         let mut a = Self::default();
         let mut s = [0u8; 3];

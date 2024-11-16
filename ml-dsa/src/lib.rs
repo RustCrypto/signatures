@@ -61,10 +61,10 @@ impl<P: ParameterSet> SigningKey<P> {
         P: SigningKeyParams + VerificationKeyParams,
     {
         // Derive seeds
-        let mut h = H::default();
-        h.absorb(xi);
-        h.absorb(&[P::K::U8]);
-        h.absorb(&[P::L::U8]);
+        let mut h = H::default()
+            .absorb(xi)
+            .absorb(&[P::K::U8])
+            .absorb(&[P::L::U8]);
 
         let rho: B32 = h.squeeze_new();
         let rhop: B64 = h.squeeze_new();
@@ -87,9 +87,7 @@ impl<P: ParameterSet> SigningKey<P> {
             t1,
         };
 
-        let mut h = H::default();
-        h.absorb(&vk.encode());
-        let tr = h.squeeze_new();
+        let tr = H::default().absorb(&vk.encode()).squeeze_new();
 
         let sk = Self {
             rho,
@@ -117,17 +115,15 @@ impl<P: ParameterSet> SigningKey<P> {
 
         // Compute the message representative
         // XXX(RLB) Should the API represent this as an input?
-        let mut h = H::default();
-        h.absorb(&self.tr); // XXX(RLB) might need to run bytes_to_bits()?
-        h.absorb(&Mp);
-        let mu: B64 = h.squeeze_new();
+        // XXX(RLB) might need to run bytes_to_bits()?
+        let mu: B64 = H::default().absorb(&self.tr).absorb(&Mp).squeeze_new();
 
         // Compute the private random seed
-        let mut h = H::default();
-        h.absorb(&self.K);
-        h.absorb(&rnd);
-        h.absorb(&mu);
-        let rhopp: B64 = h.squeeze_new();
+        let rhopp: B64 = H::default()
+            .absorb(&self.K)
+            .absorb(&rnd)
+            .absorb(&mu)
+            .squeeze_new();
 
         // Rejection sampling loop
         for kappa in (0..u16::MAX).step_by(P::L::USIZE) {
@@ -135,10 +131,10 @@ impl<P: ParameterSet> SigningKey<P> {
             let w = (&A_hat * &y.ntt()).ntt_inverse();
             let w1 = w.high_bits();
 
-            let mut h = H::default();
-            h.absorb(&mu);
-            h.absorb(&w1.w1_encode());
-            let c_tilde = h.squeeze_new::<P::Lambda>();
+            let c_tilde = H::default()
+                .absorb(&mu)
+                .absorb(&w1.w1_encode())
+                .squeeze_new::<P::Lambda>();
             let c = Polynomial::sample_in_ball(&c_tilde, P::TAU);
             let c_hat = c.ntt();
 
@@ -212,16 +208,11 @@ impl<P: ParameterSet> VerificationKey<P> {
         // TODO(RLB) pre-compute these and store them on the signing key struct
         let A_hat = NttMatrix::<P::K, P::L>::expand_a(&self.rho);
         let t1_hat = (FieldElement(1 << 13) * &self.t1).ntt();
-
-        let mut h = H::default();
-        h.absorb(&self.encode());
-        let tr: B64 = h.squeeze_new();
+        let tr: B64 = H::default().absorb(&self.encode()).squeeze_new();
 
         // Compute the message representative
-        let mut h = H::default();
-        h.absorb(&tr); // XXX(RLB) might need to run bytes_to_bits()?
-        h.absorb(&Mp);
-        let mu: B64 = h.squeeze_new();
+        // XXX(RLB) might need to run bytes_to_bits()?
+        let mu: B64 = H::default().absorb(&tr).absorb(&Mp).squeeze_new();
 
         // Reconstruct w
         let c = Polynomial::sample_in_ball(&sigma.c_tilde, P::TAU);
@@ -234,10 +225,10 @@ impl<P: ParameterSet> VerificationKey<P> {
         let wp_approx = (&Az_hat - &ct1_hat).ntt_inverse();
         let w1p = sigma.h.use_hint(&wp_approx);
 
-        let mut h = H::default();
-        h.absorb(&mu);
-        h.absorb(&w1p.w1_encode());
-        let cp_tilde = h.squeeze_new::<P::Lambda>();
+        let cp_tilde = H::default()
+            .absorb(&mu)
+            .absorb(&w1p.w1_encode())
+            .squeeze_new::<P::Lambda>();
 
         let gamma1_threshold = P::Gamma1::U32 - P::BETA;
         return sigma.z.infinity_norm() < gamma1_threshold && sigma.c_tilde == cp_tilde;

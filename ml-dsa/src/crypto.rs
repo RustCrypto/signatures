@@ -18,14 +18,16 @@ impl<Shake: ExtendableOutput + Default> Default for ShakeState<Shake> {
 }
 
 impl<Shake: ExtendableOutput + Default + Clone> ShakeState<Shake> {
-    pub fn absorb(&mut self, input: &[u8]) {
-        match self {
+    pub fn absorb(mut self, input: &[u8]) -> Self {
+        match &mut self {
             Self::Absorbing(sponge) => sponge.update(input),
             Self::Squeezing(_) => unreachable!(),
         }
+
+        self
     }
 
-    pub fn squeeze(&mut self, output: &mut [u8]) {
+    pub fn squeeze(&mut self, output: &mut [u8]) -> &mut Self {
         match self {
             Self::Absorbing(sponge) => {
                 // Clone required to satisfy borrow checker
@@ -37,6 +39,8 @@ impl<Shake: ExtendableOutput + Default + Clone> ShakeState<Shake> {
                 reader.read(output.as_mut());
             }
         }
+
+        self
     }
 
     pub fn squeeze_new<N: ArraySize>(&mut self) -> Array<u8, N> {
