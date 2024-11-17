@@ -11,11 +11,11 @@
 //! that the size of an encoded vector is `K` times the size of an encoded polynomial.
 
 use core::fmt::Debug;
-use core::ops::{Add, Div, Mul, Rem};
+use core::ops::{Add, Div, Mul, Rem, Sub};
 
 use hybrid_array::{typenum::*, Array};
 
-use crate::algebra::PolynomialVector;
+use crate::algebra::{Polynomial, PolynomialVector};
 use crate::encode::{BitPack, SimpleBitPack};
 use crate::util::{Flatten, Unflatten, B32, B64};
 
@@ -102,6 +102,25 @@ pub type RangeEncodedPolynomialSize<A, B> =
     <RangeEncodingBits<A, B> as EncodingSize>::EncodedPolynomialSize;
 pub type RangeEncodedPolynomial<A, B> = Array<u8, RangeEncodedPolynomialSize<A, B>>;
 
+/// An integer that describes a mask sampling size
+pub trait MaskSamplingSize: ArraySize {
+    type SampleSize: ArraySize;
+
+    fn unpack(v: &Array<u8, Self::SampleSize>) -> Polynomial;
+}
+
+impl<G> MaskSamplingSize for G
+where
+    G: ArraySize + Sub<U1>,
+    (Diff<G, U1>, G): RangeEncodingSize,
+{
+    type SampleSize = RangeEncodedPolynomialSize<Diff<G, U1>, G>;
+
+    fn unpack(v: &Array<u8, Self::SampleSize>) -> Polynomial {
+        BitPack::<Diff<G, U1>, G>::unpack(v)
+    }
+}
+
 /// An integer that can describe encoded vectors.
 pub trait VectorEncodingSize<K>: EncodingSize
 where
@@ -149,10 +168,13 @@ pub trait ParameterSet {
     type Eta: SamplingSize;
 
     /// Error size bound for y
-    type Gamma1: ArraySize;
+    type Gamma1: MaskSamplingSize;
 
     /// Low-order rounding range
     type Gamma2: ArraySize;
+
+    /// Encoding width of the W1 polynomial, namely bitlen((q - 1) / (2 * gamma2) - 1)
+    type W1Bits: EncodingSize;
 
     /// Collision strength of c_tilde, in bytes (lambda / 4 in the spec)
     type Lambda: ArraySize;
@@ -298,14 +320,24 @@ where
 }
 
 pub trait SignatureParams: ParameterSet {
-    type HintSize: ArraySize;
+    type W1Size: ArraySize;
+
+    fn encode_w1(t1: &PolynomialVector<Self::K>) -> EncodedW1<Self>;
 }
+
+pub type EncodedW1<P> = Array<u8, <P as SignatureParams>::W1Size>;
 
 impl<P> SignatureParams for P
 where
     P: ParameterSet,
-    U32: Mul<P::K>,
-    Prod<U32, P::K>: ArraySize,
+    U32: Mul<P::W1Bits>,
+    EncodedPolynomialSize<P::W1Bits>: Mul<P::K>,
+    Prod<EncodedPolynomialSize<P::W1Bits>, P::K>:
+        ArraySize + Div<P::K, Output = EncodedPolynomialSize<P::W1Bits>> + Rem<P::K, Output = U0>,
 {
-    type HintSize = Prod<U32, P::K>;
+    type W1Size = EncodedPolynomialVectorSize<Self::W1Bits, P::K>;
+
+    fn encode_w1(w1: &PolynomialVector<P::K>) -> EncodedW1<Self> {
+        SimpleBitPack::<Self::W1Bits>::pack(w1)
+    }
 }

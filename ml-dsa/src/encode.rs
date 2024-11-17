@@ -185,23 +185,6 @@ where
     }
 }
 
-/// W1Encode
-pub trait W1Encode {
-    type EncodedSize: ArraySize;
-    fn w1_encode(&self) -> Array<u8, Self::EncodedSize>;
-}
-
-impl<K> W1Encode for PolynomialVector<K>
-where
-    K: ArraySize,
-{
-    type EncodedSize = U32;
-    fn w1_encode(&self) -> Array<u8, Self::EncodedSize> {
-        // XXX(RLB) This will require some access to Gamma2
-        todo!();
-    }
-}
-
 #[cfg(test)]
 pub(crate) mod test {
     use super::*;

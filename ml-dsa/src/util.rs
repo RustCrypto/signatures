@@ -34,9 +34,11 @@ macro_rules! define_truncate {
     };
 }
 
+// TODO(RLB): Audit these to make sure they're all necessary
 define_truncate!(u32, u16);
 define_truncate!(u64, u32);
 define_truncate!(usize, u8);
+define_truncate!(usize, u16);
 define_truncate!(u128, u32);
 define_truncate!(u128, u16);
 define_truncate!(u128, u8);

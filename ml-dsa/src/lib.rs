@@ -24,7 +24,6 @@ use hybrid_array::{typenum::*, Array};
 
 use crate::algebra::*;
 use crate::crypto::*;
-use crate::encode::W1Encode;
 use crate::hint::*;
 use crate::param::*;
 use crate::util::*;
@@ -103,7 +102,7 @@ impl<P: ParameterSet> SigningKey<P> {
     }
 
     // Algorithm 7 ML-DSA.Sign_internal
-    fn sign_internal(&self, Mp: &[u8], rnd: B32) -> Signature<P>
+    pub fn sign_internal(&self, Mp: &[u8], rnd: B32) -> Signature<P>
     where
         P: SignatureParams,
     {
@@ -129,11 +128,12 @@ impl<P: ParameterSet> SigningKey<P> {
         for kappa in (0..u16::MAX).step_by(P::L::USIZE) {
             let y = PolynomialVector::<P::L>::expand_mask::<P::Gamma1>(&rhopp, kappa);
             let w = (&A_hat * &y.ntt()).ntt_inverse();
-            let w1 = w.high_bits();
+            let w1 = w.high_bits::<P::Gamma2>();
 
+            let w1_tilde = P::encode_w1(&w1);
             let c_tilde = H::default()
                 .absorb(&mu)
-                .absorb(&w1.w1_encode())
+                .absorb(&w1_tilde)
                 .squeeze_new::<P::Lambda>();
             let c = Polynomial::sample_in_ball(&c_tilde, P::TAU);
             let c_hat = c.ntt();
@@ -142,7 +142,7 @@ impl<P: ParameterSet> SigningKey<P> {
             let cs2 = (&c_hat * &s2_hat).ntt_inverse();
 
             let z = &y + &cs1;
-            let r0 = (&w - &cs2).low_bits();
+            let r0 = (&w - &cs2).low_bits::<P::Gamma2>();
 
             let gamma1_threshold = P::Gamma1::U32 - P::BETA;
             let gamma2_threshold = P::Gamma2::U32 - P::BETA;
@@ -225,9 +225,10 @@ impl<P: ParameterSet> VerificationKey<P> {
         let wp_approx = (&Az_hat - &ct1_hat).ntt_inverse();
         let w1p = sigma.h.use_hint(&wp_approx);
 
+        let w1p_tilde = P::encode_w1(&w1p);
         let cp_tilde = H::default()
             .absorb(&mu)
-            .absorb(&w1p.w1_encode())
+            .absorb(&w1p_tilde)
             .squeeze_new::<P::Lambda>();
 
         let gamma1_threshold = P::Gamma1::U32 - P::BETA;

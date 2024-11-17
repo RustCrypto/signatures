@@ -1,8 +1,11 @@
 use core::ops::{Add, Mul, Neg, Sub};
-use hybrid_array::{typenum::U256, Array};
+use hybrid_array::{
+    typenum::{Unsigned, U256},
+    Array,
+};
 
 use crate::crypto::{G, H};
-use crate::param::{ArraySize, Eta};
+use crate::param::{ArraySize, Eta, MaskSamplingSize};
 use crate::util::Truncate;
 
 #[cfg(feature = "zeroize")]
@@ -106,6 +109,45 @@ impl FieldElement {
         (r1, r0)
     }
 
+    // Algorithm 36 Decompose
+    pub fn decompose<Gamma2: Unsigned>(&self) -> (Self, Self) {
+        let r_plus = self.clone();
+        let r0 = r_plus.mod_plus_minus(Self(2 * Gamma2::U32));
+        if r_plus - r0 == FieldElement(FieldElement::Q - 1) {
+            (FieldElement(0), FieldElement(r0.0 - 1))
+        } else {
+            let mut r1 = r_plus - r0;
+            r1.0 /= 2 * Gamma2::U32;
+            (r1, r0)
+        }
+    }
+
+    // Algorithm 37 HighBits
+    pub fn high_bits<Gamma2: Unsigned>(&self) -> Self {
+        self.decompose::<Gamma2>().0
+    }
+
+    // Algorithm 38 LowBits
+    fn low_bits<Gamma2: Unsigned>(&self) -> Self {
+        self.decompose::<Gamma2>().1
+    }
+
+    // FIPS 204 defines the infinity norm differently for signed vs. unsigned integers:
+    //
+    // * For w in Z, |w|_\infinity = |w|, the absolute value of w
+    // * For w in Z_q, |W|_infinity = |w mod^\pm q|
+    //
+    // Note that these two definitions are equivalent if |w| < q/2.  This property holds for all of
+    // the signed integers used in this crate, so we can safely use the unsigned version.  However,
+    // since mod_plus_minus is also unsigned, we need to unwrap the "negative" values.
+    pub fn infinity_norm(&self) -> u32 {
+        if self.0 <= Self::Q >> 1 {
+            self.0
+        } else {
+            Self::Q - self.0
+        }
+    }
+
     // A fast modular reduction for small numbers `x < 2*q`
     fn small_reduce(x: u32) -> u32 {
         if x < Self::Q {
@@ -189,6 +231,18 @@ pub struct Polynomial(pub Array<FieldElement, U256>);
 impl Polynomial {
     fn mod_plus_minus(&self, m: FieldElement) -> Self {
         Self(self.0.iter().map(|x| x.mod_plus_minus(m)).collect())
+    }
+
+    fn high_bits<Gamma2: Unsigned>(&self) -> Self {
+        Self(self.0.iter().map(|x| x.high_bits::<Gamma2>()).collect())
+    }
+
+    fn low_bits<Gamma2: Unsigned>(&self) -> Self {
+        Self(self.0.iter().map(|x| x.low_bits::<Gamma2>()).collect())
+    }
+
+    fn infinity_norm(&self) -> u32 {
+        self.0.iter().map(|x| x.infinity_norm()).max().unwrap()
     }
 
     // Algorithm 29 SampleInBall
@@ -331,23 +385,31 @@ impl<K: ArraySize> PolynomialVector<K> {
         }))
     }
 
-    pub fn expand_mask<Gamma1>(rhopp: &[u8], kappa: u16) -> Self
+    pub fn expand_mask<Gamma1>(rho: &[u8], mu: u16) -> Self
     where
-        Gamma1: ArraySize,
+        Gamma1: MaskSamplingSize,
     {
-        todo!();
+        Self(Array::from_fn(|r| {
+            let r16: u16 = r.truncate();
+            let v = H::default()
+                .absorb(rho)
+                .absorb(&(mu + r16).to_le_bytes())
+                .squeeze_new::<Gamma1::SampleSize>();
+
+            Gamma1::unpack(&v)
+        }))
     }
 
-    pub fn high_bits(&self) -> Self {
-        todo!();
+    pub fn high_bits<Gamma2: Unsigned>(&self) -> Self {
+        Self(self.0.iter().map(|x| x.high_bits::<Gamma2>()).collect())
     }
 
-    pub fn low_bits(&self) -> Self {
-        todo!();
+    pub fn low_bits<Gamma2: Unsigned>(&self) -> Self {
+        Self(self.0.iter().map(|x| x.low_bits::<Gamma2>()).collect())
     }
 
     pub fn infinity_norm(&self) -> u32 {
-        todo!();
+        self.0.iter().map(|x| x.infinity_norm()).max().unwrap()
     }
 
     // Algorithm 35 Power2Round
