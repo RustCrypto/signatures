@@ -113,7 +113,7 @@ where
         y
     }
 
-    pub fn bit_unpack(y: EncodedHint<P>) -> Option<Self> {
+    pub fn bit_unpack(y: &EncodedHint<P>) -> Option<Self> {
         let mut h = Self::default();
         let mut index = 0;
         let omega = P::Omega::USIZE;

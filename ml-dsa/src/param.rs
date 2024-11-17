@@ -197,8 +197,14 @@ pub trait SigningKeyParams: ParameterSet {
     type SigningKeySize: ArraySize;
 
     fn encode_s1(s1: &PolynomialVector<Self::L>) -> EncodedS1<Self>;
+    fn decode_s1(enc: &EncodedS1<Self>) -> PolynomialVector<Self::L>;
+
     fn encode_s2(s2: &PolynomialVector<Self::K>) -> EncodedS2<Self>;
+    fn decode_s2(enc: &EncodedS2<Self>) -> PolynomialVector<Self::K>;
+
     fn encode_t0(t0: &PolynomialVector<Self::K>) -> EncodedT0<Self>;
+    fn decode_t0(enc: &EncodedT0<Self>) -> PolynomialVector<Self::K>;
+
     fn concat_sk(
         rho: B32,
         K: B32,
@@ -207,6 +213,16 @@ pub trait SigningKeyParams: ParameterSet {
         s2: EncodedS2<Self>,
         t0: EncodedT0<Self>,
     ) -> EncodedSigningKey<Self>;
+    fn split_sk(
+        enc: &EncodedSigningKey<Self>,
+    ) -> (
+        &B32,
+        &B32,
+        &B64,
+        &EncodedS1<Self>,
+        &EncodedS2<Self>,
+        &EncodedT0<Self>,
+    );
 }
 
 pub type EncodedS1<P> = Array<u8, <P as SigningKeyParams>::S1Size>;
@@ -236,19 +252,32 @@ where
     Prod<U416, P::K>: ArraySize + Div<P::K, Output = U416> + Rem<P::K, Output = U0>,
     // Signing key encoding rules
     U128: Add<Prod<EncodedPolynomialSize<Length<Sum<P::Eta, P::Eta>>>, P::L>>,
-    Sum<U128, Prod<EncodedPolynomialSize<Length<Sum<P::Eta, P::Eta>>>, P::L>>:
-        ArraySize + Add<Prod<EncodedPolynomialSize<Length<Sum<P::Eta, P::Eta>>>, P::K>>,
+    Sum<U128, Prod<EncodedPolynomialSize<Length<Sum<P::Eta, P::Eta>>>, P::L>>: ArraySize
+        + Add<Prod<EncodedPolynomialSize<Length<Sum<P::Eta, P::Eta>>>, P::K>>
+        + Sub<U128, Output = Prod<EncodedPolynomialSize<Length<Sum<P::Eta, P::Eta>>>, P::L>>,
     Sum<
         Sum<U128, Prod<EncodedPolynomialSize<Length<Sum<P::Eta, P::Eta>>>, P::L>>,
         Prod<EncodedPolynomialSize<Length<Sum<P::Eta, P::Eta>>>, P::K>,
-    >: ArraySize + Add<Prod<U416, P::K>>,
+    >: ArraySize
+        + Add<Prod<U416, P::K>>
+        + Sub<
+            Sum<U128, Prod<EncodedPolynomialSize<Length<Sum<P::Eta, P::Eta>>>, P::L>>,
+            Output = Prod<EncodedPolynomialSize<Length<Sum<P::Eta, P::Eta>>>, P::K>,
+        >,
     Sum<
         Sum<
             Sum<U128, Prod<EncodedPolynomialSize<Length<Sum<P::Eta, P::Eta>>>, P::L>>,
             Prod<EncodedPolynomialSize<Length<Sum<P::Eta, P::Eta>>>, P::K>,
         >,
         Prod<U416, P::K>,
-    >: ArraySize,
+    >: ArraySize
+        + Sub<
+            Sum<
+                Sum<U128, Prod<EncodedPolynomialSize<Length<Sum<P::Eta, P::Eta>>>, P::L>>,
+                Prod<EncodedPolynomialSize<Length<Sum<P::Eta, P::Eta>>>, P::K>,
+            >,
+            Output = Prod<U416, P::K>,
+        >,
 {
     type S1Size = EncodedPolynomialVectorSize<RangeEncodingBits<P::Eta, P::Eta>, P::L>;
     type S2Size = EncodedPolynomialVectorSize<RangeEncodingBits<P::Eta, P::Eta>, P::K>;
@@ -266,12 +295,24 @@ where
         BitPack::<P::Eta, P::Eta>::pack(s1)
     }
 
+    fn decode_s1(enc: &EncodedS1<Self>) -> PolynomialVector<Self::L> {
+        BitPack::<P::Eta, P::Eta>::unpack(enc)
+    }
+
     fn encode_s2(s2: &PolynomialVector<Self::K>) -> EncodedS2<Self> {
         BitPack::<P::Eta, P::Eta>::pack(s2)
     }
 
+    fn decode_s2(enc: &EncodedS2<Self>) -> PolynomialVector<Self::K> {
+        BitPack::<P::Eta, P::Eta>::unpack(enc)
+    }
+
     fn encode_t0(t0: &PolynomialVector<Self::K>) -> EncodedT0<Self> {
         BitPack::<Pow2DMinus1Minus1, Pow2DMinus1>::pack(t0)
+    }
+
+    fn decode_t0(enc: &EncodedT0<Self>) -> PolynomialVector<Self::K> {
+        BitPack::<Pow2DMinus1Minus1, Pow2DMinus1>::unpack(enc)
     }
 
     fn concat_sk(
@@ -284,6 +325,24 @@ where
     ) -> EncodedSigningKey<Self> {
         rho.concat(K).concat(tr).concat(s1).concat(s2).concat(t0)
     }
+
+    fn split_sk(
+        enc: &EncodedSigningKey<Self>,
+    ) -> (
+        &B32,
+        &B32,
+        &B64,
+        &EncodedS1<Self>,
+        &EncodedS2<Self>,
+        &EncodedT0<Self>,
+    ) {
+        let (enc, t0) = enc.split_ref();
+        let (enc, s2) = enc.split_ref();
+        let (enc, s1) = enc.split_ref();
+        let (enc, tr) = enc.split_ref::<U64>();
+        let (rho, K) = enc.split_ref();
+        (rho, K, tr, s1, s2, t0)
+    }
 }
 
 pub trait VerificationKeyParams: ParameterSet {
@@ -291,7 +350,10 @@ pub trait VerificationKeyParams: ParameterSet {
     type VerificationKeySize: ArraySize;
 
     fn encode_t1(t1: &PolynomialVector<Self::K>) -> EncodedT1<Self>;
+    fn decode_t1(enc: &EncodedT1<Self>) -> PolynomialVector<Self::K>;
+
     fn concat_vk(rho: B32, t1: EncodedT1<Self>) -> EncodedVerificationKey<Self>;
+    fn split_vk(enc: &EncodedVerificationKey<Self>) -> (&B32, &EncodedT1<Self>);
 }
 
 pub type EncodedT1<P> = Array<u8, <P as VerificationKeyParams>::T1Size>;
@@ -306,7 +368,7 @@ where
     // Verification key encoding rules
     U32: Add<Prod<U320, P::K>>,
     Sum<U32, U32>: ArraySize,
-    Sum<U32, Prod<U320, P::K>>: ArraySize,
+    Sum<U32, Prod<U320, P::K>>: ArraySize + Sub<U32, Output = Prod<U320, P::K>>,
 {
     type T1Size = EncodedPolynomialVectorSize<BitlenQMinusD, P::K>;
     type VerificationKeySize = Sum<U32, Self::T1Size>;
@@ -315,8 +377,16 @@ where
         SimpleBitPack::<BitlenQMinusD>::pack(t1)
     }
 
+    fn decode_t1(enc: &EncodedT1<Self>) -> PolynomialVector<Self::K> {
+        SimpleBitPack::<BitlenQMinusD>::unpack(enc)
+    }
+
     fn concat_vk(rho: B32, t1: EncodedT1<Self>) -> EncodedVerificationKey<Self> {
         rho.concat(t1)
+    }
+
+    fn split_vk(enc: &EncodedVerificationKey<Self>) -> (&B32, &EncodedT1<Self>) {
+        enc.split_ref()
     }
 }
 
@@ -327,13 +397,19 @@ pub trait SignatureParams: ParameterSet {
     type SignatureSize: ArraySize;
 
     fn encode_w1(t1: &PolynomialVector<Self::K>) -> EncodedW1<Self>;
+    fn decode_w1(enc: &EncodedW1<Self>) -> PolynomialVector<Self::K>;
+
     fn encode_z(z: &PolynomialVector<Self::L>) -> EncodedZ<Self>;
+    fn decode_z(enc: &EncodedZ<Self>) -> PolynomialVector<Self::L>;
 
     fn concat_sig(
         c_tilde: EncodedCTilde<Self>,
         z: EncodedZ<Self>,
         h: EncodedHint<Self>,
     ) -> EncodedSignature<Self>;
+    fn split_sig(
+        enc: &EncodedSignature<Self>,
+    ) -> (&EncodedCTilde<Self>, &EncodedZ<Self>, &EncodedHint<Self>);
 }
 
 pub type EncodedCTilde<P> = Array<u8, <P as ParameterSet>::Lambda>;
@@ -363,30 +439,53 @@ where
     // Signature
     P::Lambda: Add<Prod<RangeEncodedPolynomialSize<Diff<P::Gamma1, U1>, P::Gamma1>, P::L>>,
     Sum<P::Lambda, Prod<RangeEncodedPolynomialSize<Diff<P::Gamma1, U1>, P::Gamma1>, P::L>>:
-        ArraySize + Add<Sum<P::Omega, P::K>>,
+        ArraySize
+            + Add<Sum<P::Omega, P::K>>
+            + Sub<
+                P::Lambda,
+                Output = Prod<RangeEncodedPolynomialSize<Diff<P::Gamma1, U1>, P::Gamma1>, P::L>,
+            >,
     Sum<
         Sum<P::Lambda, Prod<RangeEncodedPolynomialSize<Diff<P::Gamma1, U1>, P::Gamma1>, P::L>>,
         Sum<P::Omega, P::K>,
-    >: ArraySize,
+    >: ArraySize
+        + Sub<
+            Sum<P::Lambda, Prod<RangeEncodedPolynomialSize<Diff<P::Gamma1, U1>, P::Gamma1>, P::L>>,
+            Output = Sum<P::Omega, P::K>,
+        >,
 {
     type W1Size = EncodedPolynomialVectorSize<Self::W1Bits, P::K>;
     type ZSize = Prod<RangeEncodedPolynomialSize<Diff<P::Gamma1, U1>, P::Gamma1>, P::L>;
     type HintSize = Sum<P::Omega, P::K>;
     type SignatureSize = Sum<Sum<P::Lambda, Self::ZSize>, Self::HintSize>;
 
-    fn encode_w1(w1: &PolynomialVector<P::K>) -> EncodedW1<Self> {
+    fn encode_w1(w1: &PolynomialVector<Self::K>) -> EncodedW1<Self> {
         SimpleBitPack::<Self::W1Bits>::pack(w1)
     }
 
-    fn encode_z(z: &PolynomialVector<P::L>) -> EncodedZ<Self> {
+    fn decode_w1(enc: &EncodedW1<Self>) -> PolynomialVector<Self::K> {
+        SimpleBitPack::<Self::W1Bits>::unpack(enc)
+    }
+
+    fn encode_z(z: &PolynomialVector<Self::L>) -> EncodedZ<Self> {
         BitPack::<Diff<P::Gamma1, U1>, P::Gamma1>::pack(z)
     }
 
+    fn decode_z(enc: &EncodedZ<Self>) -> PolynomialVector<Self::L> {
+        BitPack::<Diff<P::Gamma1, U1>, P::Gamma1>::unpack(enc)
+    }
+
     fn concat_sig(
-        c_tilde: EncodedCTilde<Self>,
+        c_tilde: EncodedCTilde<P>,
         z: EncodedZ<P>,
         h: EncodedHint<P>,
     ) -> EncodedSignature<P> {
         c_tilde.concat(z).concat(h)
+    }
+
+    fn split_sig(enc: &EncodedSignature<P>) -> (&EncodedCTilde<P>, &EncodedZ<P>, &EncodedHint<P>) {
+        let (enc, h) = enc.split_ref();
+        let (c_tilde, z) = enc.split_ref();
+        (c_tilde, z, h)
     }
 }

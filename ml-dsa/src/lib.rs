@@ -41,11 +41,22 @@ pub struct Signature<P: SignatureParams> {
 }
 
 impl<P: SignatureParams> Signature<P> {
+    // Algorithm 26 sigEncode
     pub fn encode(&self) -> EncodedSignature<P> {
         let c_tilde = self.c_tilde.clone();
         let z = P::encode_z(&self.z);
         let h = self.h.bit_pack();
         P::concat_sig(c_tilde, z, h)
+    }
+
+    // Algorithm 27 sigDecode
+    pub fn parse(enc: &EncodedSignature<P>) -> Option<Self> {
+        let (c_tilde, z, h) = P::split_sig(&enc);
+        Some(Self {
+            c_tilde: c_tilde.clone(),
+            z: P::decode_z(z),
+            h: Hint::bit_unpack(h)?,
+        })
     }
 }
 
@@ -57,9 +68,6 @@ pub struct SigningKey<P: ParameterSet> {
     s1: PolynomialVector<P::L>,
     s2: PolynomialVector<P::K>,
     t0: PolynomialVector<P::K>,
-
-    #[allow(dead_code)] // XXX(RLB) Will be used once signing is implemented
-    A: NttMatrix<P::K, P::L>,
 }
 
 impl<P: ParameterSet> SigningKey<P> {
@@ -104,7 +112,6 @@ impl<P: ParameterSet> SigningKey<P> {
             s1,
             s2,
             t0,
-            A,
         };
 
         (vk, sk)
@@ -191,6 +198,22 @@ impl<P: ParameterSet> SigningKey<P> {
             t0_enc,
         )
     }
+
+    // Algorithm 25 skDecode
+    pub fn parse(enc: &EncodedSigningKey<P>) -> Self
+    where
+        P: SigningKeyParams,
+    {
+        let (rho, K, tr, s1_enc, s2_enc, t0_enc) = P::split_sk(enc);
+        Self {
+            rho: rho.clone(),
+            K: K.clone(),
+            tr: tr.clone(),
+            s1: P::decode_s1(s1_enc),
+            s2: P::decode_s2(s2_enc),
+            t0: P::decode_t0(t0_enc),
+        }
+    }
 }
 
 /// An ML-DSA verification key
@@ -200,16 +223,6 @@ pub struct VerificationKey<P: ParameterSet> {
 }
 
 impl<P: ParameterSet> VerificationKey<P> {
-    /// Encode the verification key as a byte string
-    // Algorithm 22 pkEncode
-    pub fn encode(&self) -> EncodedVerificationKey<P>
-    where
-        P: VerificationKeyParams,
-    {
-        let t1 = P::encode_t1(&self.t1);
-        P::concat_vk(self.rho.clone(), t1)
-    }
-
     pub fn verify(&self, Mp: &[u8], sigma: Signature<P>) -> bool
     where
         P: VerificationKeyParams + SignatureParams,
@@ -242,6 +255,27 @@ impl<P: ParameterSet> VerificationKey<P> {
 
         let gamma1_threshold = P::Gamma1::U32 - P::BETA;
         return sigma.z.infinity_norm() < gamma1_threshold && sigma.c_tilde == cp_tilde;
+    }
+
+    // Algorithm 22 pkEncode
+    pub fn encode(&self) -> EncodedVerificationKey<P>
+    where
+        P: VerificationKeyParams,
+    {
+        let t1 = P::encode_t1(&self.t1);
+        P::concat_vk(self.rho.clone(), t1)
+    }
+
+    // Algorithm 23 pkDecode
+    pub fn parse(enc: &EncodedVerificationKey<P>) -> Self
+    where
+        P: VerificationKeyParams,
+    {
+        let (rho, t1_enc) = P::split_vk(enc);
+        Self {
+            rho: rho.clone(),
+            t1: P::decode_t1(t1_enc),
+        }
     }
 }
 
