@@ -236,8 +236,6 @@ impl<P: ParameterSet> VerificationKey<P> {
     }
 }
 
-// XXX(RLB) Parameter sets are disabled until we can define the extra integers required
-/*
 /// `MlDsa44` is the parameter set for security category 2.
 #[derive(Default, Clone, Debug, PartialEq)]
 pub struct MlDsa44;
@@ -247,6 +245,8 @@ impl ParameterSet for MlDsa44 {
     type L = U4;
     type Eta = U2;
     type Gamma1 = Shleft<U1, U17>;
+    type Gamma2 = Quot<QMinus1, U88>;
+    type W1Bits = Length<Diff<Prod<U88, U2>, U1>>;
     type Lambda = U32;
     type Omega = U80;
     const TAU: usize = 39;
@@ -261,6 +261,8 @@ impl ParameterSet for MlDsa65 {
     type L = U5;
     type Eta = U4;
     type Gamma1 = Shleft<U1, U19>;
+    type Gamma2 = Quot<QMinus1, U32>;
+    type W1Bits = Length<Diff<Prod<U32, U2>, U1>>;
     type Lambda = U48;
     type Omega = U55;
     const TAU: usize = 49;
@@ -275,11 +277,12 @@ impl ParameterSet for MlDsa87 {
     type L = U7;
     type Eta = U2;
     type Gamma1 = Shleft<U1, U19>;
+    type Gamma2 = Quot<QMinus1, U32>;
+    type W1Bits = Length<Diff<Prod<U32, U2>, U1>>;
     type Lambda = U64;
     type Omega = U75;
     const TAU: usize = 60;
 }
-*/
 
 #[cfg(test)]
 mod test {
@@ -304,8 +307,6 @@ mod test {
     fn key_generation() {
         key_generation_test::<MlDsa44>();
         key_generation_test::<MlDsa65>();
-
-        // XXX(RLB) Requires new `typenum` values
-        // key_generation_test::<MlDsa87>();
+        key_generation_test::<MlDsa87>();
     }
 }

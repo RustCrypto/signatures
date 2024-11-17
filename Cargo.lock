@@ -280,7 +280,7 @@ version = "0.6.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e43027691f1c055da3da4f7d96af09fcec420d435d5616e51f29afd0811c56a7"
 dependencies = [
- "hybrid-array",
+ "hybrid-array 0.2.0-rc.11",
  "num-traits",
  "rand_core",
  "subtle",
@@ -304,7 +304,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b0b8ce8218c97789f16356e7896b3714f26c2ee1079b79c0b7ae7064bb9089fa"
 dependencies = [
  "getrandom",
- "hybrid-array",
+ "hybrid-array 0.2.0-rc.11",
  "rand_core",
 ]
 
@@ -427,7 +427,7 @@ dependencies = [
  "ff",
  "group",
  "hex-literal",
- "hybrid-array",
+ "hybrid-array 0.2.0-rc.11",
  "pem-rfc7468",
  "pkcs8",
  "rand_core",
@@ -562,12 +562,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "hybrid-array"
+version = "0.2.2"
+dependencies = [
+ "typenum",
+]
+
+[[package]]
 name = "inout"
 version = "0.2.0-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "161ac07241f4d11c21b6d82f1fef1c05aec030c0bf568b35281efe453ea450a7"
 dependencies = [
- "hybrid-array",
+ "hybrid-array 0.2.0-rc.11",
 ]
 
 [[package]]
@@ -657,7 +664,7 @@ dependencies = [
  "digest 0.11.0-pre.9",
  "hex",
  "hex-literal",
- "hybrid-array",
+ "hybrid-array 0.2.0-rc.11",
  "rand",
  "rand_core",
  "sha2",
@@ -685,7 +692,7 @@ version = "0.1.0-pre"
 dependencies = [
  "hex",
  "hex-literal",
- "hybrid-array",
+ "hybrid-array 0.2.2",
  "rand",
  "serde",
  "serde_json",
@@ -1045,7 +1052,7 @@ checksum = "ce9453a41af5251f8439173d21b0ed2ae5d4a7c411abb76661806a44811a9d2c"
 dependencies = [
  "base16ct",
  "der",
- "hybrid-array",
+ "hybrid-array 0.2.0-rc.11",
  "pkcs8",
  "serdect",
  "subtle",
@@ -1167,7 +1174,7 @@ dependencies = [
  "hex",
  "hex-literal",
  "hmac",
- "hybrid-array",
+ "hybrid-array 0.2.0-rc.11",
  "num-bigint",
  "paste",
  "proptest",

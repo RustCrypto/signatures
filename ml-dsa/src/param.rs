@@ -27,6 +27,7 @@ impl<T> ArraySize for T where T: hybrid_array::ArraySize + PartialEq + Debug {}
 /// Some useful compile-time constants
 pub type SpecQ = Diff<Diff<Shleft<U1, U23>, Shleft<U1, U13>>, U1>;
 pub type SpecD = U13;
+pub type QMinus1 = Diff<SpecQ, U1>;
 pub type BitlenQMinusD = Diff<Length<SpecQ>, SpecD>;
 pub type Pow2DMinus1 = Shleft<U1, Diff<SpecD, U1>>;
 pub type Pow2DMinus1Minus1 = Diff<Pow2DMinus1, U1>;
@@ -103,7 +104,7 @@ pub type RangeEncodedPolynomialSize<A, B> =
 pub type RangeEncodedPolynomial<A, B> = Array<u8, RangeEncodedPolynomialSize<A, B>>;
 
 /// An integer that describes a mask sampling size
-pub trait MaskSamplingSize: ArraySize {
+pub trait MaskSamplingSize: Unsigned {
     type SampleSize: ArraySize;
 
     fn unpack(v: &Array<u8, Self::SampleSize>) -> Polynomial;
@@ -111,7 +112,7 @@ pub trait MaskSamplingSize: ArraySize {
 
 impl<G> MaskSamplingSize for G
 where
-    G: ArraySize + Sub<U1>,
+    G: Unsigned + Sub<U1>,
     (Diff<G, U1>, G): RangeEncodingSize,
 {
     type SampleSize = RangeEncodedPolynomialSize<Diff<G, U1>, G>;
@@ -171,7 +172,7 @@ pub trait ParameterSet {
     type Gamma1: MaskSamplingSize;
 
     /// Low-order rounding range
-    type Gamma2: ArraySize;
+    type Gamma2: Unsigned;
 
     /// Encoding width of the W1 polynomial, namely bitlen((q - 1) / (2 * gamma2) - 1)
     type W1Bits: EncodingSize;

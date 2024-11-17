@@ -19,10 +19,7 @@ fn acvp_key_gen() {
             match tg.parameter_set {
                 acvp::ParameterSet::MlDsa44 => verify::<MlDsa44>(&tc),
                 acvp::ParameterSet::MlDsa65 => verify::<MlDsa65>(&tc),
-                acvp::ParameterSet::MlDsa87 => {
-                    // TODO(RLB) Re-enable after the required values are in `typenum`
-                    // verify::<MlDsa87>(&tc),
-                }
+                acvp::ParameterSet::MlDsa87 => verify::<MlDsa87>(&tc),
             }
         }
     }
