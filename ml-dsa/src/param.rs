@@ -322,28 +322,71 @@ where
 
 pub trait SignatureParams: ParameterSet {
     type W1Size: ArraySize;
+    type ZSize: ArraySize;
     type HintSize: ArraySize;
+    type SignatureSize: ArraySize;
 
     fn encode_w1(t1: &PolynomialVector<Self::K>) -> EncodedW1<Self>;
+    fn encode_z(z: &PolynomialVector<Self::L>) -> EncodedZ<Self>;
+
+    fn concat_sig(
+        c_tilde: EncodedCTilde<Self>,
+        z: EncodedZ<Self>,
+        h: EncodedHint<Self>,
+    ) -> EncodedSignature<Self>;
 }
 
+pub type EncodedCTilde<P> = Array<u8, <P as ParameterSet>::Lambda>;
 pub type EncodedW1<P> = Array<u8, <P as SignatureParams>::W1Size>;
+pub type EncodedZ<P> = Array<u8, <P as SignatureParams>::ZSize>;
 pub type EncodedHint<P> = Array<u8, <P as SignatureParams>::HintSize>;
+pub type EncodedSignature<P> = Array<u8, <P as SignatureParams>::SignatureSize>;
 
 impl<P> SignatureParams for P
 where
     P: ParameterSet,
+    // W1
     U32: Mul<P::W1Bits>,
     EncodedPolynomialSize<P::W1Bits>: Mul<P::K>,
     Prod<EncodedPolynomialSize<P::W1Bits>, P::K>:
         ArraySize + Div<P::K, Output = EncodedPolynomialSize<P::W1Bits>> + Rem<P::K, Output = U0>,
+    // Z
+    P::Gamma1: Sub<U1>,
+    (Diff<P::Gamma1, U1>, P::Gamma1): RangeEncodingSize,
+    RangeEncodedPolynomialSize<Diff<P::Gamma1, U1>, P::Gamma1>: Mul<P::L>,
+    Prod<RangeEncodedPolynomialSize<Diff<P::Gamma1, U1>, P::Gamma1>, P::L>: ArraySize
+        + Div<P::L, Output = RangeEncodedPolynomialSize<Diff<P::Gamma1, U1>, P::Gamma1>>
+        + Rem<P::L, Output = U0>,
+    // Hint
     P::Omega: Add<P::K>,
     Sum<P::Omega, P::K>: ArraySize,
+    // Signature
+    P::Lambda: Add<Prod<RangeEncodedPolynomialSize<Diff<P::Gamma1, U1>, P::Gamma1>, P::L>>,
+    Sum<P::Lambda, Prod<RangeEncodedPolynomialSize<Diff<P::Gamma1, U1>, P::Gamma1>, P::L>>:
+        ArraySize + Add<Sum<P::Omega, P::K>>,
+    Sum<
+        Sum<P::Lambda, Prod<RangeEncodedPolynomialSize<Diff<P::Gamma1, U1>, P::Gamma1>, P::L>>,
+        Sum<P::Omega, P::K>,
+    >: ArraySize,
 {
     type W1Size = EncodedPolynomialVectorSize<Self::W1Bits, P::K>;
+    type ZSize = Prod<RangeEncodedPolynomialSize<Diff<P::Gamma1, U1>, P::Gamma1>, P::L>;
     type HintSize = Sum<P::Omega, P::K>;
+    type SignatureSize = Sum<Sum<P::Lambda, Self::ZSize>, Self::HintSize>;
 
     fn encode_w1(w1: &PolynomialVector<P::K>) -> EncodedW1<Self> {
         SimpleBitPack::<Self::W1Bits>::pack(w1)
+    }
+
+    fn encode_z(z: &PolynomialVector<P::L>) -> EncodedZ<Self> {
+        BitPack::<Diff<P::Gamma1, U1>, P::Gamma1>::pack(z)
+    }
+
+    fn concat_sig(
+        c_tilde: EncodedCTilde<Self>,
+        z: EncodedZ<P>,
+        h: EncodedHint<P>,
+    ) -> EncodedSignature<P> {
+        c_tilde.concat(z).concat(h)
     }
 }

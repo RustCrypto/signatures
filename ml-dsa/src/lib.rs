@@ -40,6 +40,15 @@ pub struct Signature<P: SignatureParams> {
     h: Hint<P>,
 }
 
+impl<P: SignatureParams> Signature<P> {
+    pub fn encode(&self) -> EncodedSignature<P> {
+        let c_tilde = self.c_tilde.clone();
+        let z = P::encode_z(&self.z);
+        let h = self.h.bit_pack();
+        P::concat_sig(c_tilde, z, h)
+    }
+}
+
 /// An ML-DSA signing key
 pub struct SigningKey<P: ParameterSet> {
     rho: B32,
