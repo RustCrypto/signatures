@@ -5,6 +5,7 @@ use hybrid_array::{
 
 use crate::algebra::*;
 use crate::param::*;
+use crate::util::Truncate;
 
 fn make_hint<Gamma2: Unsigned>(z: FieldElement, r: FieldElement) -> bool {
     // XXX(RLB): Maybe propagate the Gamma2 into these methods
@@ -33,6 +34,15 @@ fn use_hint<Gamma2: Unsigned>(h: bool, r: FieldElement) -> FieldElement {
 pub struct Hint<P>(Array<Array<bool, U256>, P::K>)
 where
     P: SignatureParams;
+
+impl<P> Default for Hint<P>
+where
+    P: SignatureParams,
+{
+    fn default() -> Self {
+        Self(Array::default())
+    }
+}
 
 impl<P> Hint<P>
 where
@@ -81,5 +91,56 @@ where
                 })
                 .collect(),
         )
+    }
+
+    pub fn bit_pack(&self) -> EncodedHint<P> {
+        let mut y: EncodedHint<P> = Default::default();
+        let mut index = 0;
+        let omega = P::Omega::USIZE;
+
+        for i in 0..P::K::U8 {
+            let i_usize: usize = i.into();
+            for j in 0..255 {
+                if self.0[i_usize][j] {
+                    y[index] = j.truncate();
+                    index += 1
+                }
+            }
+
+            y[omega + i_usize] = index.truncate();
+        }
+
+        y
+    }
+
+    pub fn bit_unpack(y: EncodedHint<P>) -> Option<Self> {
+        let mut h = Self::default();
+        let mut index = 0;
+        let omega = P::Omega::USIZE;
+
+        for i in 0..P::K::U8 {
+            let i_usize: usize = i.into();
+            let end: usize = y[omega + i_usize].into();
+            if end < index || end > omega {
+                return None;
+            }
+
+            let start = index;
+            while index < end {
+                if index > start && y[index - 1] >= y[index] {
+                    return None;
+                }
+
+                let j: usize = y[index].into();
+                h.0[i_usize][j] = true;
+                index += 1;
+            }
+        }
+
+        if y[index..omega].iter().any(|x| *x != 0) {
+            return None;
+        }
+
+        Some(h)
     }
 }

@@ -321,11 +321,13 @@ where
 
 pub trait SignatureParams: ParameterSet {
     type W1Size: ArraySize;
+    type HintSize: ArraySize;
 
     fn encode_w1(t1: &PolynomialVector<Self::K>) -> EncodedW1<Self>;
 }
 
 pub type EncodedW1<P> = Array<u8, <P as SignatureParams>::W1Size>;
+pub type EncodedHint<P> = Array<u8, <P as SignatureParams>::HintSize>;
 
 impl<P> SignatureParams for P
 where
@@ -334,8 +336,11 @@ where
     EncodedPolynomialSize<P::W1Bits>: Mul<P::K>,
     Prod<EncodedPolynomialSize<P::W1Bits>, P::K>:
         ArraySize + Div<P::K, Output = EncodedPolynomialSize<P::W1Bits>> + Rem<P::K, Output = U0>,
+    P::Omega: Add<P::K>,
+    Sum<P::Omega, P::K>: ArraySize,
 {
     type W1Size = EncodedPolynomialVectorSize<Self::W1Bits, P::K>;
+    type HintSize = Sum<P::Omega, P::K>;
 
     fn encode_w1(w1: &PolynomialVector<P::K>) -> EncodedW1<Self> {
         SimpleBitPack::<Self::W1Bits>::pack(w1)
