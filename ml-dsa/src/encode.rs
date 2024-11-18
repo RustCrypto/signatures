@@ -88,7 +88,7 @@ where
     decoded
         .iter()
         .map(|z| {
-            assert!(z.0 < (a + b).0);
+            assert!(z.0 <= (a + b).0);
             b - *z
         })
         .collect()

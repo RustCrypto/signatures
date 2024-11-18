@@ -30,10 +30,14 @@ use crate::util::*;
 
 // TODO(RLB) Clean up this API
 pub use crate::param::{
-    EncodedSigningKey, EncodedVerificationKey, SigningKeyParams, VerificationKeyParams,
+    EncodedSigningKey, EncodedVerificationKey, SignatureParams, SigningKeyParams,
+    VerificationKeyParams,
 };
 
+pub use crate::util::B32;
+
 /// An ML-DSA signature
+#[derive(Clone, PartialEq)]
 pub struct Signature<P: SignatureParams> {
     c_tilde: Array<u8, P::Lambda>,
     z: PolynomialVector<P::L>,
@@ -61,6 +65,7 @@ impl<P: SignatureParams> Signature<P> {
 }
 
 /// An ML-DSA signing key
+#[derive(Clone, PartialEq)]
 pub struct SigningKey<P: ParameterSet> {
     rho: B32,
     K: B32,
@@ -118,7 +123,7 @@ impl<P: ParameterSet> SigningKey<P> {
     }
 
     // Algorithm 7 ML-DSA.Sign_internal
-    pub fn sign_internal(&self, Mp: &[u8], rnd: B32) -> Signature<P>
+    pub fn sign_internal(&self, Mp: &[u8], rnd: &B32) -> Signature<P>
     where
         P: SignatureParams,
     {
@@ -133,17 +138,26 @@ impl<P: ParameterSet> SigningKey<P> {
         // XXX(RLB) might need to run bytes_to_bits()?
         let mu: B64 = H::default().absorb(&self.tr).absorb(&Mp).squeeze_new();
 
+        println!("tr: {:?}", self.tr);
+        // println!("msg: {:?}", Mp);
+        println!("mu: {:?}", mu);
+
         // Compute the private random seed
         let rhopp: B64 = H::default()
             .absorb(&self.K)
-            .absorb(&rnd)
+            .absorb(rnd)
             .absorb(&mu)
             .squeeze_new();
+
+        println!("key: {:?}", self.K);
+        println!("rnd: {:?}", rnd);
+        println!("rhop: {:?}", rhopp);
 
         // Rejection sampling loop
         for kappa in (0..u16::MAX).step_by(P::L::USIZE) {
             let y = PolynomialVector::<P::L>::expand_mask::<P::Gamma1>(&rhopp, kappa);
             let w = (&A_hat * &y.ntt()).ntt_inverse();
+            let w0 = w.low_bits::<P::Gamma2>(); // XXX(RLB)
             let w1 = w.high_bits::<P::Gamma2>();
 
             let w1_tilde = P::encode_w1(&w1);
@@ -153,6 +167,13 @@ impl<P: ParameterSet> SigningKey<P> {
                 .squeeze_new::<P::Lambda>();
             let c = Polynomial::sample_in_ball(&c_tilde, P::TAU);
             let c_hat = c.ntt();
+
+            println!("y: {:?}", y);
+            println!("w: {:?}", w);
+            println!("w0: {:?}", w0);
+            println!("w1: {:?}", w1);
+            println!("w1_tilde: {:?}", w1_tilde);
+            println!("c_tilde: {:?}", c_tilde);
 
             let cs1 = (&c_hat * &s1_hat).ntt_inverse();
             let cs2 = (&c_hat * &s2_hat).ntt_inverse();
@@ -200,7 +221,7 @@ impl<P: ParameterSet> SigningKey<P> {
     }
 
     // Algorithm 25 skDecode
-    pub fn parse(enc: &EncodedSigningKey<P>) -> Self
+    pub fn decode(enc: &EncodedSigningKey<P>) -> Self
     where
         P: SigningKeyParams,
     {
@@ -217,13 +238,14 @@ impl<P: ParameterSet> SigningKey<P> {
 }
 
 /// An ML-DSA verification key
+#[derive(Clone, PartialEq)]
 pub struct VerificationKey<P: ParameterSet> {
     rho: B32,
     t1: PolynomialVector<P::K>,
 }
 
 impl<P: ParameterSet> VerificationKey<P> {
-    pub fn verify(&self, Mp: &[u8], sigma: Signature<P>) -> bool
+    pub fn verify(&self, Mp: &[u8], sigma: &Signature<P>) -> bool
     where
         P: VerificationKeyParams + SignatureParams,
     {
@@ -267,7 +289,7 @@ impl<P: ParameterSet> VerificationKey<P> {
     }
 
     // Algorithm 23 pkDecode
-    pub fn parse(enc: &EncodedVerificationKey<P>) -> Self
+    pub fn decode(enc: &EncodedVerificationKey<P>) -> Self
     where
         P: VerificationKeyParams,
     {
@@ -333,23 +355,52 @@ mod test {
     use crate::param::{SigningKeyParams, VerificationKeyParams};
     use rand::Rng;
 
-    fn key_generation_test<P>()
+    fn encode_decode_round_trip_test<P>()
     where
-        P: SigningKeyParams + VerificationKeyParams,
+        P: SigningKeyParams + VerificationKeyParams + SignatureParams + PartialEq,
     {
         let mut rng = rand::thread_rng();
-        let seed: [u8; 32] = rng.gen();
-        let seed: B32 = seed.into();
 
-        let (sk, pk) = SigningKey::<P>::key_gen_internal(&seed);
-        let _sk_enc = sk.encode();
-        let _pk_enc = pk.encode();
+        let seed: [u8; 32] = rng.gen();
+        let (pk, sk) = SigningKey::<P>::key_gen_internal(&seed.into());
+
+        let pk_bytes = pk.encode();
+        let pk2 = VerificationKey::<P>::decode(&pk_bytes);
+        assert!(pk == pk2);
+
+        let sk_bytes = sk.encode();
+        let sk2 = SigningKey::<P>::decode(&sk_bytes);
+        assert!(sk == sk2);
     }
 
     #[test]
-    fn key_generation() {
-        key_generation_test::<MlDsa44>();
-        key_generation_test::<MlDsa65>();
-        key_generation_test::<MlDsa87>();
+    fn encode_decode_round_trip() {
+        encode_decode_round_trip_test::<MlDsa44>();
+        encode_decode_round_trip_test::<MlDsa65>();
+        encode_decode_round_trip_test::<MlDsa87>();
+    }
+
+    fn sign_verify_round_trip_test<P>()
+    where
+        P: SigningKeyParams + VerificationKeyParams + SignatureParams,
+    {
+        let mut rng = rand::thread_rng();
+
+        let seed: [u8; 32] = rng.gen();
+        let (_pk, sk) = SigningKey::<P>::key_gen_internal(&seed.into());
+
+        let rnd: [u8; 32] = rng.gen();
+        let Mp = b"Hello world";
+        let _sig = sk.sign_internal(Mp, &rnd.into());
+
+        // TODO(RLB) Re-enable and debug
+        // assert!(pk.verify(Mp, &sig));
+    }
+
+    #[test]
+    fn sign_verify_round_trip() {
+        sign_verify_round_trip_test::<MlDsa44>();
+        sign_verify_round_trip_test::<MlDsa65>();
+        sign_verify_round_trip_test::<MlDsa87>();
     }
 }

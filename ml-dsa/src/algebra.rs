@@ -117,6 +117,7 @@ impl FieldElement {
             (FieldElement(0), FieldElement(r0.0 - 1))
         } else {
             let mut r1 = r_plus - r0;
+            assert!(r1.0 < Self::Q);
             r1.0 /= 2 * Gamma2::U32;
             (r1, r0)
         }

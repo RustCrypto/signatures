@@ -31,6 +31,7 @@ fn use_hint<Gamma2: Unsigned>(h: bool, r: FieldElement) -> FieldElement {
     }
 }
 
+#[derive(Clone, PartialEq)]
 pub struct Hint<P>(Array<Array<bool, U256>, P::K>)
 where
     P: SignatureParams;
