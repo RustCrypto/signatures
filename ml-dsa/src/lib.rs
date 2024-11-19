@@ -30,7 +30,7 @@ use crate::util::*;
 
 // TODO(RLB) Clean up this API
 pub use crate::param::{
-    EncodedSigningKey, EncodedVerificationKey, SignatureParams, SigningKeyParams,
+    EncodedSignature, EncodedSigningKey, EncodedVerificationKey, SignatureParams, SigningKeyParams,
     VerificationKeyParams,
 };
 
@@ -54,7 +54,7 @@ impl<P: SignatureParams> Signature<P> {
     }
 
     // Algorithm 27 sigDecode
-    pub fn parse(enc: &EncodedSignature<P>) -> Option<Self> {
+    pub fn decode(enc: &EncodedSignature<P>) -> Option<Self> {
         let (c_tilde, z, h) = P::split_sig(&enc);
         Some(Self {
             c_tilde: c_tilde.clone(),
@@ -148,7 +148,6 @@ impl<P: ParameterSet> SigningKey<P> {
         for kappa in (0..u16::MAX).step_by(P::L::USIZE) {
             let y = PolynomialVector::<P::L>::expand_mask::<P::Gamma1>(&rhopp, kappa);
             let w = (&A_hat * &y.ntt()).ntt_inverse();
-            let w0 = w.low_bits::<P::Gamma2>(); // XXX(RLB)
             let w1 = w.high_bits::<P::Gamma2>();
 
             let w1_tilde = P::encode_w1(&w1);

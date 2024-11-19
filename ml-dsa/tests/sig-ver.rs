@@ -3,10 +3,10 @@ use ml_dsa::*;
 use std::{fs::read_to_string, path::PathBuf};
 
 #[test]
-fn acvp_sig_gen() {
+fn acvp_sig_ver() {
     // Load the JSON test file
     let mut p = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    p.push("tests/sig-gen.json");
+    p.push("tests/sig-ver.json");
     let tv_json = read_to_string(p.as_path()).unwrap();
 
     // Parse the test vectors
@@ -14,35 +14,27 @@ fn acvp_sig_gen() {
 
     // Verify the test vectors
     for tg in tv.test_groups {
-        if tg.deterministic {
-            // TODO(RLB): Implement the ML-DSA deterministic signature mode and use it for these
-            // tests
-            continue;
-        }
-
-        for tc in tg.tests {
+        for tc in tg.tests.iter() {
             match tg.parameter_set {
-                acvp::ParameterSet::MlDsa44 => verify::<MlDsa44>(&tc),
-                acvp::ParameterSet::MlDsa65 => verify::<MlDsa65>(&tc),
-                acvp::ParameterSet::MlDsa87 => verify::<MlDsa87>(&tc),
+                acvp::ParameterSet::MlDsa44 => verify::<MlDsa44>(&tg, &tc),
+                acvp::ParameterSet::MlDsa65 => verify::<MlDsa65>(&tg, &tc),
+                acvp::ParameterSet::MlDsa87 => verify::<MlDsa87>(&tg, &tc),
             }
         }
     }
 }
 
-fn verify<P: SigningKeyParams + VerificationKeyParams + SignatureParams>(tc: &acvp::TestCase) {
-    // Import the signing key
-    let sk_bytes = EncodedSigningKey::<P>::try_from(tc.sk.as_slice()).unwrap();
-    let sk = SigningKey::<P>::decode(&sk_bytes);
+fn verify<P: VerificationKeyParams + SignatureParams>(tg: &acvp::TestGroup, tc: &acvp::TestCase) {
+    // Import the verification key
+    let pk_bytes = EncodedVerificationKey::<P>::try_from(tg.pk.as_slice()).unwrap();
+    let pk = VerificationKey::<P>::decode(&pk_bytes);
 
-    // Verify correctness
-    let rnd = B32::try_from(tc.rnd.as_slice()).unwrap();
-    let sig = sk.sign_internal(&tc.message, &rnd);
-    let sig_bytes = sig.encode();
+    // Import the signature
+    let sig_bytes = EncodedSignature::<P>::try_from(tc.signature.as_slice()).unwrap();
+    let sig = Signature::<P>::decode(&sig_bytes).unwrap();
 
-    println!("act: {}", hex::encode(sig_bytes.as_slice()));
-    println!("exp: {}", hex::encode(tc.signature.as_slice()));
-    assert_eq!(tc.signature.as_slice(), sig_bytes.as_slice());
+    // Verify the signature
+    assert!(pk.verify(tc.message.as_slice(), &sig));
 }
 
 mod acvp {
@@ -62,7 +54,8 @@ mod acvp {
         #[serde(rename = "parameterSet")]
         pub parameter_set: ParameterSet,
 
-        pub deterministic: bool,
+        #[serde(with = "hex::serde")]
+        pub pk: Vec<u8>,
 
         pub tests: Vec<TestCase>,
     }
@@ -85,15 +78,9 @@ mod acvp {
         pub id: usize,
 
         #[serde(with = "hex::serde")]
-        pub sk: Vec<u8>,
-
-        #[serde(with = "hex::serde")]
         pub message: Vec<u8>,
 
         #[serde(with = "hex::serde")]
         pub signature: Vec<u8>,
-
-        #[serde(default, with = "hex::serde")]
-        pub rnd: Vec<u8>,
     }
 }
