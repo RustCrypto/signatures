@@ -135,12 +135,7 @@ impl<P: ParameterSet> SigningKey<P> {
 
         // Compute the message representative
         // XXX(RLB) Should the API represent this as an input?
-        // XXX(RLB) might need to run bytes_to_bits()?
         let mu: B64 = H::default().absorb(&self.tr).absorb(&Mp).squeeze_new();
-
-        println!("tr: {:?}", self.tr);
-        // println!("msg: {:?}", Mp);
-        println!("mu: {:?}", mu);
 
         // Compute the private random seed
         let rhopp: B64 = H::default()
@@ -148,10 +143,6 @@ impl<P: ParameterSet> SigningKey<P> {
             .absorb(rnd)
             .absorb(&mu)
             .squeeze_new();
-
-        println!("key: {:?}", self.K);
-        println!("rnd: {:?}", rnd);
-        println!("rhop: {:?}", rhopp);
 
         // Rejection sampling loop
         for kappa in (0..u16::MAX).step_by(P::L::USIZE) {
@@ -167,13 +158,6 @@ impl<P: ParameterSet> SigningKey<P> {
                 .squeeze_new::<P::Lambda>();
             let c = Polynomial::sample_in_ball(&c_tilde, P::TAU);
             let c_hat = c.ntt();
-
-            println!("y: {:?}", y);
-            println!("w: {:?}", w);
-            println!("w0: {:?}", w0);
-            println!("w1: {:?}", w1);
-            println!("w1_tilde: {:?}", w1_tilde);
-            println!("c_tilde: {:?}", c_tilde);
 
             let cs1 = (&c_hat * &s1_hat).ntt_inverse();
             let cs2 = (&c_hat * &s2_hat).ntt_inverse();

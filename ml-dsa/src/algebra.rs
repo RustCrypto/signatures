@@ -113,11 +113,11 @@ impl FieldElement {
     pub fn decompose<Gamma2: Unsigned>(&self) -> (Self, Self) {
         let r_plus = self.clone();
         let r0 = r_plus.mod_plus_minus(Self(2 * Gamma2::U32));
+
         if r_plus - r0 == FieldElement(FieldElement::Q - 1) {
             (FieldElement(0), FieldElement(r0.0 - 1))
         } else {
             let mut r1 = r_plus - r0;
-            assert!(r1.0 < Self::Q);
             r1.0 /= 2 * Gamma2::U32;
             (r1, r0)
         }

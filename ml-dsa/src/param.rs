@@ -25,7 +25,7 @@ pub trait ArraySize: hybrid_array::ArraySize + PartialEq + Debug {}
 impl<T> ArraySize for T where T: hybrid_array::ArraySize + PartialEq + Debug {}
 
 /// Some useful compile-time constants
-pub type SpecQ = Diff<Diff<Shleft<U1, U23>, Shleft<U1, U13>>, U1>;
+pub type SpecQ = Sum<Diff<Shleft<U1, U23>, Shleft<U1, U13>>, U1>;
 pub type SpecD = U13;
 pub type QMinus1 = Diff<SpecQ, U1>;
 pub type BitlenQMinusD = Diff<Length<SpecQ>, SpecD>;
