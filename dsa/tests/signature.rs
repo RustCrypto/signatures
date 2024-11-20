@@ -1,3 +1,4 @@
+#![cfg(feature = "hazmat")]
 #![allow(deprecated)]
 
 use digest::Digest;

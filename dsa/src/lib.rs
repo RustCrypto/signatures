@@ -12,7 +12,8 @@
 //!
 //! Generate a DSA keypair
 //!
-//! ```
+#![cfg_attr(feature = "hazmat", doc = "```")]
+#![cfg_attr(not(feature = "hazmat"), doc = "```ignore")]
 //! # use dsa::{KeySize, Components, SigningKey};
 //! let mut csprng = rand::thread_rng();
 //! let components = Components::generate(&mut csprng, KeySize::DSA_2048_256);
@@ -22,7 +23,8 @@
 //!
 //! Create keypair from existing components
 //!
-//! ```
+#![cfg_attr(feature = "hazmat", doc = "```")]
+#![cfg_attr(not(feature = "hazmat"), doc = "```ignore")]
 //! # use dsa::{Components, SigningKey, VerifyingKey};
 //! # use num_bigint::BigUint;
 //! # use num_traits::One;
@@ -46,9 +48,10 @@
 
 extern crate alloc;
 
-pub use crate::{
-    components::Components, signing_key::SigningKey, size::KeySize, verifying_key::VerifyingKey,
-};
+#[cfg(feature = "hazmat")]
+pub use crate::signing_key::SigningKey;
+
+pub use crate::{components::Components, size::KeySize, verifying_key::VerifyingKey};
 
 pub use num_bigint::BigUint;
 pub use pkcs8;
