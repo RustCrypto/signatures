@@ -32,7 +32,7 @@ fn use_hint<Gamma2: Unsigned>(h: bool, r: FieldElement) -> FieldElement {
 }
 
 #[derive(Clone, PartialEq)]
-pub struct Hint<P>(Array<Array<bool, U256>, P::K>)
+pub struct Hint<P>(pub Array<Array<bool, U256>, P::K>)
 where
     P: SignatureParams;
 
@@ -101,7 +101,7 @@ where
 
         for i in 0..P::K::U8 {
             let i_usize: usize = i.into();
-            for j in 0..255 {
+            for j in 0..256 {
                 if self.0[i_usize][j] {
                     y[index] = j.truncate();
                     index += 1

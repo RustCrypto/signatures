@@ -115,7 +115,7 @@ impl FieldElement {
         let r0 = r_plus.mod_plus_minus(Self(2 * Gamma2::U32));
 
         if r_plus - r0 == FieldElement(FieldElement::Q - 1) {
-            (FieldElement(0), FieldElement(r0.0 - 1))
+            (FieldElement(0), r0 - FieldElement(1))
         } else {
             let mut r1 = r_plus - r0;
             r1.0 /= 2 * Gamma2::U32;
@@ -222,7 +222,7 @@ impl Neg for FieldElement {
 fn bit_set(z: &[u8], i: usize) -> bool {
     let bit_index = i % 8;
     let byte_index = i >> 3;
-    (z[byte_index] >> bit_index) == 1
+    z[byte_index] & (1 << bit_index) != 0
 }
 
 /// An element of the ring `R_q`, i.e., a polynomial over `Z_q` of degree 255

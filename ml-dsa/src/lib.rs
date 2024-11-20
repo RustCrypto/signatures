@@ -166,7 +166,7 @@ impl<P: ParameterSet> SigningKey<P> {
 
             let gamma1_threshold = P::Gamma1::U32 - P::BETA;
             let gamma2_threshold = P::Gamma2::U32 - P::BETA;
-            if z.infinity_norm() > gamma1_threshold || r0.infinity_norm() > gamma2_threshold {
+            if r0.infinity_norm() > gamma2_threshold || z.infinity_norm() > gamma1_threshold {
                 continue;
             }
 
@@ -294,7 +294,7 @@ impl ParameterSet for MlDsa44 {
     type Eta = U2;
     type Gamma1 = Shleft<U1, U17>;
     type Gamma2 = Quot<QMinus1, U88>;
-    type W1Bits = Length<Diff<Prod<U88, U2>, U1>>;
+    type W1Bits = Length<Diff<Quot<U88, U2>, U1>>;
     type Lambda = U32;
     type Omega = U80;
     const TAU: usize = 39;
@@ -310,7 +310,7 @@ impl ParameterSet for MlDsa65 {
     type Eta = U4;
     type Gamma1 = Shleft<U1, U19>;
     type Gamma2 = Quot<QMinus1, U32>;
-    type W1Bits = Length<Diff<Prod<U32, U2>, U1>>;
+    type W1Bits = Length<Diff<Quot<U32, U2>, U1>>;
     type Lambda = U48;
     type Omega = U55;
     const TAU: usize = 49;
@@ -326,7 +326,7 @@ impl ParameterSet for MlDsa87 {
     type Eta = U2;
     type Gamma1 = Shleft<U1, U19>;
     type Gamma2 = Quot<QMinus1, U32>;
-    type W1Bits = Length<Diff<Prod<U32, U2>, U1>>;
+    type W1Bits = Length<Diff<Quot<U32, U2>, U1>>;
     type Lambda = U64;
     type Omega = U75;
     const TAU: usize = 60;

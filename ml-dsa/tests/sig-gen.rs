@@ -40,8 +40,6 @@ fn verify<P: SigningKeyParams + VerificationKeyParams + SignatureParams>(tc: &ac
     let sig = sk.sign_internal(&tc.message, &rnd);
     let sig_bytes = sig.encode();
 
-    println!("act: {}", hex::encode(sig_bytes.as_slice()));
-    println!("exp: {}", hex::encode(tc.signature.as_slice()));
     assert_eq!(tc.signature.as_slice(), sig_bytes.as_slice());
 }
 
