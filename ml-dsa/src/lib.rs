@@ -78,9 +78,44 @@ pub struct SigningKey<P: ParameterSet> {
     s1: PolynomialVector<P::L>,
     s2: PolynomialVector<P::K>,
     t0: PolynomialVector<P::K>,
+
+    // Derived values
+    s1_hat: NttVector<P::L>,
+    s2_hat: NttVector<P::K>,
+    t0_hat: NttVector<P::K>,
+    A_hat: NttMatrix<P::K, P::L>,
 }
 
 impl<P: ParameterSet> SigningKey<P> {
+    fn new(
+        rho: B32,
+        K: B32,
+        tr: B64,
+        s1: PolynomialVector<P::L>,
+        s2: PolynomialVector<P::K>,
+        t0: PolynomialVector<P::K>,
+        A_hat: Option<NttMatrix<P::K, P::L>>,
+    ) -> Self {
+        let A_hat = A_hat.unwrap_or_else(|| NttMatrix::expand_a(&rho));
+        let s1_hat = s1.ntt();
+        let s2_hat = s2.ntt();
+        let t0_hat = t0.ntt();
+
+        Self {
+            rho,
+            K,
+            tr,
+            s1,
+            s2,
+            t0,
+
+            s1_hat,
+            s2_hat,
+            t0_hat,
+            A_hat,
+        }
+    }
+
     /// Deterministically generate a signing key pair from the specified seed
     pub fn key_gen_internal(xi: &B32) -> (VerificationKey<P>, SigningKey<P>)
     where
@@ -97,32 +132,19 @@ impl<P: ParameterSet> SigningKey<P> {
         let K: B32 = h.squeeze_new();
 
         // Sample private key components
-        let A = NttMatrix::<P::K, P::L>::expand_a(&rho);
+        let A_hat = NttMatrix::<P::K, P::L>::expand_a(&rho);
         let s1 = PolynomialVector::<P::L>::expand_s(&rhop, P::Eta::ETA, 0);
         let s2 = PolynomialVector::<P::K>::expand_s(&rhop, P::Eta::ETA, P::L::USIZE);
 
         // Compute derived values
-        let As1 = &A * &s1.ntt();
-        let t = &As1.ntt_inverse() + &s2;
+        let As1_hat = &A_hat * &s1.ntt();
+        let t = &As1_hat.ntt_inverse() + &s2;
 
         // Compress and encode
         let (t1, t0) = t.power2round();
 
-        let vk = VerificationKey {
-            rho: rho.clone(),
-            t1,
-        };
-
-        let tr = H::default().absorb(&vk.encode()).squeeze_new();
-
-        let sk = Self {
-            rho,
-            K,
-            tr,
-            s1,
-            s2,
-            t0,
-        };
+        let vk = VerificationKey::new(rho, t1, Some(A_hat.clone()), None);
+        let sk = Self::new(rho, K, vk.tr.clone(), s1, s2, t0, Some(A_hat));
 
         (vk, sk)
     }
@@ -132,12 +154,6 @@ impl<P: ParameterSet> SigningKey<P> {
     where
         P: SignatureParams,
     {
-        // TODO(RLB) pre-compute these and store them on the signing key struct
-        let s1_hat = self.s1.ntt();
-        let s2_hat = self.s2.ntt();
-        let t0_hat = self.t0.ntt();
-        let A_hat = NttMatrix::<P::K, P::L>::expand_a(&self.rho);
-
         // Compute the message representative
         // XXX(RLB) Should the API represent this as an input?
         let mu: B64 = H::default().absorb(&self.tr).absorb(&Mp).squeeze_new();
@@ -152,7 +168,7 @@ impl<P: ParameterSet> SigningKey<P> {
         // Rejection sampling loop
         for kappa in (0..u16::MAX).step_by(P::L::USIZE) {
             let y = PolynomialVector::<P::L>::expand_mask::<P::Gamma1>(&rhopp, kappa);
-            let w = (&A_hat * &y.ntt()).ntt_inverse();
+            let w = (&self.A_hat * &y.ntt()).ntt_inverse();
             let w1 = w.high_bits::<P::Gamma2>();
 
             let w1_tilde = P::encode_w1(&w1);
@@ -163,8 +179,8 @@ impl<P: ParameterSet> SigningKey<P> {
             let c = Polynomial::sample_in_ball(&c_tilde, P::TAU);
             let c_hat = c.ntt();
 
-            let cs1 = (&c_hat * &s1_hat).ntt_inverse();
-            let cs2 = (&c_hat * &s2_hat).ntt_inverse();
+            let cs1 = (&c_hat * &self.s1_hat).ntt_inverse();
+            let cs2 = (&c_hat * &self.s2_hat).ntt_inverse();
 
             let z = &y + &cs1;
             let r0 = (&w - &cs2).low_bits::<P::Gamma2>();
@@ -175,7 +191,7 @@ impl<P: ParameterSet> SigningKey<P> {
                 continue;
             }
 
-            let ct0 = (&c_hat * &t0_hat).ntt_inverse();
+            let ct0 = (&c_hat * &self.t0_hat).ntt_inverse();
             let h = Hint::<P>::new(-&ct0, &(&w - &cs2) + &ct0);
 
             if ct0.infinity_norm() >= P::Gamma2::U32 || h.hamming_weight() > P::Omega::USIZE {
@@ -217,14 +233,15 @@ impl<P: ParameterSet> SigningKey<P> {
         P: SigningKeyParams,
     {
         let (rho, K, tr, s1_enc, s2_enc, t0_enc) = P::split_sk(enc);
-        Self {
-            rho: rho.clone(),
-            K: K.clone(),
-            tr: tr.clone(),
-            s1: P::decode_s1(s1_enc),
-            s2: P::decode_s2(s2_enc),
-            t0: P::decode_t0(t0_enc),
-        }
+        Self::new(
+            rho.clone(),
+            K.clone(),
+            tr.clone(),
+            P::decode_s1(s1_enc),
+            P::decode_s2(s2_enc),
+            P::decode_t0(t0_enc),
+            None,
+        )
     }
 }
 
@@ -233,31 +250,30 @@ impl<P: ParameterSet> SigningKey<P> {
 pub struct VerificationKey<P: ParameterSet> {
     rho: B32,
     t1: PolynomialVector<P::K>,
+
+    // Derived values
+    A_hat: NttMatrix<P::K, P::L>,
+    t1_2d_hat: NttVector<P::K>,
+    tr: B64,
 }
 
-impl<P: ParameterSet> VerificationKey<P> {
+impl<P: VerificationKeyParams> VerificationKey<P> {
     pub fn verify_internal(&self, Mp: &[u8], sigma: &Signature<P>) -> bool
     where
-        P: VerificationKeyParams + SignatureParams,
+        P: SignatureParams,
     {
-        // TODO(RLB) pre-compute these and store them on the signing key struct
-        let A_hat = NttMatrix::<P::K, P::L>::expand_a(&self.rho);
-        let t1 = FieldElement(1 << 13) * &self.t1;
-        let t1_hat = t1.ntt();
-        let tr: B64 = H::default().absorb(&self.encode()).squeeze_new();
-
         // Compute the message representative
-        let mu: B64 = H::default().absorb(&tr).absorb(&Mp).squeeze_new();
+        let mu: B64 = H::default().absorb(&self.tr).absorb(&Mp).squeeze_new();
 
         // Reconstruct w
         let c = Polynomial::sample_in_ball(&sigma.c_tilde, P::TAU);
 
         let z_hat = sigma.z.ntt();
         let c_hat = c.ntt();
-        let Az_hat = &A_hat * &z_hat;
-        let ct1_hat = &c_hat * &t1_hat;
+        let Az_hat = &self.A_hat * &z_hat;
+        let ct1_2d_hat = &c_hat * &self.t1_2d_hat;
 
-        let wp_approx = (&Az_hat - &ct1_hat).ntt_inverse();
+        let wp_approx = (&Az_hat - &ct1_2d_hat).ntt_inverse();
         let w1p = sigma.h.use_hint(&wp_approx);
 
         let w1p_tilde = P::encode_w1(&w1p);
@@ -266,29 +282,45 @@ impl<P: ParameterSet> VerificationKey<P> {
             .absorb(&w1p_tilde)
             .squeeze_new::<P::Lambda>();
 
-        let gamma1_threshold = P::Gamma1::U32 - P::BETA;
         sigma.c_tilde == cp_tilde
     }
 
+    fn encode_internal(rho: &B32, t1: &PolynomialVector<P::K>) -> EncodedVerificationKey<P> {
+        let t1_enc = P::encode_t1(t1);
+        P::concat_vk(rho.clone(), t1_enc)
+    }
+
+    fn new(
+        rho: B32,
+        t1: PolynomialVector<P::K>,
+        A_hat: Option<NttMatrix<P::K, P::L>>,
+        enc: Option<EncodedVerificationKey<P>>,
+    ) -> Self {
+        let A_hat = A_hat.unwrap_or_else(|| NttMatrix::expand_a(&rho));
+        let enc = enc.unwrap_or_else(|| Self::encode_internal(&rho, &t1));
+
+        let t1_2d_hat = (FieldElement(1 << 13) * &t1).ntt();
+        let tr: B64 = H::default().absorb(&enc).squeeze_new();
+
+        Self {
+            rho,
+            t1,
+            A_hat,
+            t1_2d_hat,
+            tr,
+        }
+    }
+
     // Algorithm 22 pkEncode
-    pub fn encode(&self) -> EncodedVerificationKey<P>
-    where
-        P: VerificationKeyParams,
-    {
-        let t1 = P::encode_t1(&self.t1);
-        P::concat_vk(self.rho.clone(), t1)
+    pub fn encode(&self) -> EncodedVerificationKey<P> {
+        Self::encode_internal(&self.rho, &self.t1)
     }
 
     // Algorithm 23 pkDecode
-    pub fn decode(enc: &EncodedVerificationKey<P>) -> Self
-    where
-        P: VerificationKeyParams,
-    {
+    pub fn decode(enc: &EncodedVerificationKey<P>) -> Self {
         let (rho, t1_enc) = P::split_vk(enc);
-        Self {
-            rho: rho.clone(),
-            t1: P::decode_t1(t1_enc),
-        }
+        let t1 = P::decode_t1(t1_enc);
+        Self::new(rho.clone(), t1, None, Some(enc.clone()))
     }
 }
 
