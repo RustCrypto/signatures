@@ -686,7 +686,12 @@ impl From<NttPolynomial> for Array<FieldElement, U256> {
 // Algorithm 41 NTT
 impl Polynomial {
     pub fn ntt(&self) -> NttPolynomial {
-        let mut w = self.0.clone();
+        // XXX let mut w = self.0.clone();
+        let mut w: Array<FieldElement, U256> = self
+            .0
+            .iter()
+            .map(|x| FieldElement(x.0 % FieldElement::Q))
+            .collect();
 
         let mut m = 0;
         for len in [128, 64, 32, 16, 8, 4, 2, 1] {

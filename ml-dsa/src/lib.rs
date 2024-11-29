@@ -56,11 +56,16 @@ impl<P: SignatureParams> Signature<P> {
     // Algorithm 27 sigDecode
     pub fn decode(enc: &EncodedSignature<P>) -> Option<Self> {
         let (c_tilde, z, h) = P::split_sig(&enc);
-        Some(Self {
-            c_tilde: c_tilde.clone(),
-            z: P::decode_z(z),
-            h: Hint::bit_unpack(h)?,
-        })
+
+        let c_tilde = c_tilde.clone();
+        let z = P::decode_z(z);
+        let h = Hint::bit_unpack(h)?;
+
+        if z.infinity_norm() >= P::GAMMA1_MINUS_BETA {
+            return None;
+        }
+
+        Some(Self { c_tilde, z, h })
     }
 }
 
@@ -164,16 +169,16 @@ impl<P: ParameterSet> SigningKey<P> {
             let z = &y + &cs1;
             let r0 = (&w - &cs2).low_bits::<P::Gamma2>();
 
-            let gamma1_threshold = P::Gamma1::U32 - P::BETA;
-            let gamma2_threshold = P::Gamma2::U32 - P::BETA;
-            if r0.infinity_norm() > gamma2_threshold || z.infinity_norm() > gamma1_threshold {
+            if z.infinity_norm() >= P::GAMMA1_MINUS_BETA
+                || r0.infinity_norm() >= P::GAMMA2_MINUS_BETA
+            {
                 continue;
             }
 
             let ct0 = (&c_hat * &t0_hat).ntt_inverse();
             let h = Hint::<P>::new(-&ct0, &(&w - &cs2) + &ct0);
 
-            if ct0.infinity_norm() > P::Gamma2::U32 || h.hamming_weight() > P::Omega::USIZE {
+            if ct0.infinity_norm() >= P::Gamma2::U32 || h.hamming_weight() > P::Omega::USIZE {
                 continue;
             }
 
@@ -181,7 +186,10 @@ impl<P: ParameterSet> SigningKey<P> {
             return Signature { c_tilde, z, h };
         }
 
-        // TODO(RLB) Make this method fallible
+        // XXX(RLB) We could be more parsimonious about the number of iterations here, and still
+        // have an overwhelming probability of success.
+        // XXX(RLB) I still don't love panicking.  Maybe we should expose the fact that this method
+        // can fail?
         panic!("Rejection sampling failed to find a valid signature");
     }
 
@@ -228,17 +236,17 @@ pub struct VerificationKey<P: ParameterSet> {
 }
 
 impl<P: ParameterSet> VerificationKey<P> {
-    pub fn verify(&self, Mp: &[u8], sigma: &Signature<P>) -> bool
+    pub fn verify_internal(&self, Mp: &[u8], sigma: &Signature<P>) -> bool
     where
         P: VerificationKeyParams + SignatureParams,
     {
         // TODO(RLB) pre-compute these and store them on the signing key struct
         let A_hat = NttMatrix::<P::K, P::L>::expand_a(&self.rho);
-        let t1_hat = (FieldElement(1 << 13) * &self.t1).ntt();
+        let t1 = FieldElement(1 << 13) * &self.t1;
+        let t1_hat = t1.ntt();
         let tr: B64 = H::default().absorb(&self.encode()).squeeze_new();
 
         // Compute the message representative
-        // XXX(RLB) might need to run bytes_to_bits()?
         let mu: B64 = H::default().absorb(&tr).absorb(&Mp).squeeze_new();
 
         // Reconstruct w
@@ -259,7 +267,7 @@ impl<P: ParameterSet> VerificationKey<P> {
             .squeeze_new::<P::Lambda>();
 
         let gamma1_threshold = P::Gamma1::U32 - P::BETA;
-        return sigma.z.infinity_norm() < gamma1_threshold && sigma.c_tilde == cp_tilde;
+        sigma.c_tilde == cp_tilde
     }
 
     // Algorithm 22 pkEncode
@@ -354,6 +362,12 @@ mod test {
         let sk_bytes = sk.encode();
         let sk2 = SigningKey::<P>::decode(&sk_bytes);
         assert!(sk == sk2);
+
+        let sig = sk.sign_internal(&[0, 1, 2, 3], (&[0u8; 32]).into());
+        let sig_bytes = sig.encode();
+        println!("sig_bytes: {:?}", hex::encode(&sig_bytes));
+        let sig2 = Signature::<P>::decode(&sig_bytes).unwrap();
+        assert!(sig == sig2);
     }
 
     #[test]
@@ -370,14 +384,13 @@ mod test {
         let mut rng = rand::thread_rng();
 
         let seed: [u8; 32] = rng.gen();
-        let (_pk, sk) = SigningKey::<P>::key_gen_internal(&seed.into());
+        let (pk, sk) = SigningKey::<P>::key_gen_internal(&seed.into());
 
         let rnd: [u8; 32] = rng.gen();
         let Mp = b"Hello world";
-        let _sig = sk.sign_internal(Mp, &rnd.into());
+        let sig = sk.sign_internal(Mp, &rnd.into());
 
-        // TODO(RLB) Re-enable and debug
-        // assert!(pk.verify(Mp, &sig));
+        assert!(pk.verify_internal(Mp, &sig));
     }
 
     #[test]

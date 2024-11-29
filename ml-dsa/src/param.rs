@@ -396,6 +396,11 @@ pub trait SignatureParams: ParameterSet {
     type HintSize: ArraySize;
     type SignatureSize: ArraySize;
 
+    const GAMMA1_MINUS_BETA: u32;
+    const GAMMA2_MINUS_BETA: u32;
+
+    fn split_hint(y: &EncodedHint<Self>) -> (&EncodedHintIndices<Self>, &EncodedHintCuts<Self>);
+
     fn encode_w1(t1: &PolynomialVector<Self::K>) -> EncodedW1<Self>;
     fn decode_w1(enc: &EncodedW1<Self>) -> PolynomialVector<Self::K>;
 
@@ -415,6 +420,8 @@ pub trait SignatureParams: ParameterSet {
 pub type EncodedCTilde<P> = Array<u8, <P as ParameterSet>::Lambda>;
 pub type EncodedW1<P> = Array<u8, <P as SignatureParams>::W1Size>;
 pub type EncodedZ<P> = Array<u8, <P as SignatureParams>::ZSize>;
+pub type EncodedHintIndices<P> = Array<u8, <P as ParameterSet>::Omega>;
+pub type EncodedHintCuts<P> = Array<u8, <P as ParameterSet>::K>;
 pub type EncodedHint<P> = Array<u8, <P as SignatureParams>::HintSize>;
 pub type EncodedSignature<P> = Array<u8, <P as SignatureParams>::SignatureSize>;
 
@@ -435,7 +442,7 @@ where
         + Rem<P::L, Output = U0>,
     // Hint
     P::Omega: Add<P::K>,
-    Sum<P::Omega, P::K>: ArraySize,
+    Sum<P::Omega, P::K>: ArraySize + Sub<P::Omega, Output = P::K>,
     // Signature
     P::Lambda: Add<Prod<RangeEncodedPolynomialSize<Diff<P::Gamma1, U1>, P::Gamma1>, P::L>>,
     Sum<P::Lambda, Prod<RangeEncodedPolynomialSize<Diff<P::Gamma1, U1>, P::Gamma1>, P::L>>:
@@ -458,6 +465,13 @@ where
     type ZSize = Prod<RangeEncodedPolynomialSize<Diff<P::Gamma1, U1>, P::Gamma1>, P::L>;
     type HintSize = Sum<P::Omega, P::K>;
     type SignatureSize = Sum<Sum<P::Lambda, Self::ZSize>, Self::HintSize>;
+
+    const GAMMA1_MINUS_BETA: u32 = P::Gamma1::U32 - P::BETA;
+    const GAMMA2_MINUS_BETA: u32 = P::Gamma2::U32 - P::BETA;
+
+    fn split_hint(y: &EncodedHint<Self>) -> (&EncodedHintIndices<Self>, &EncodedHintCuts<Self>) {
+        y.split_ref()
+    }
 
     fn encode_w1(w1: &PolynomialVector<Self::K>) -> EncodedW1<Self> {
         SimpleBitPack::<Self::W1Bits>::pack(w1)

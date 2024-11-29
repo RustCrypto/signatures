@@ -98,7 +98,6 @@ where
         let mut y: EncodedHint<P> = Default::default();
         let mut index = 0;
         let omega = P::Omega::USIZE;
-
         for i in 0..P::K::U8 {
             let i_usize: usize = i.into();
             for j in 0..256 {
@@ -114,32 +113,37 @@ where
         y
     }
 
-    pub fn bit_unpack(y: &EncodedHint<P>) -> Option<Self> {
-        let mut h = Self::default();
-        let mut index = 0;
-        let omega = P::Omega::USIZE;
+    fn monotonic(a: &[usize]) -> bool {
+        a.iter().enumerate().all(|(i, x)| i == 0 || a[i - 1] < *x)
+    }
 
-        for i in 0..P::K::U8 {
-            let i_usize: usize = i.into();
-            let end: usize = y[omega + i_usize].into();
-            if end < index || end > omega {
+    pub fn bit_unpack(y: &EncodedHint<P>) -> Option<Self> {
+        let (indices, cuts) = P::split_hint(y);
+        let cuts: Array<usize, P::K> = cuts.iter().map(|x| usize::from(*x)).collect();
+
+        let indices: Array<usize, P::Omega> = indices.iter().map(|x| usize::from(*x)).collect();
+        let max_cut: usize = cuts.iter().cloned().max().unwrap().into();
+        if !Self::monotonic(&cuts)
+            || max_cut > indices.len()
+            || indices[max_cut..].iter().cloned().max().unwrap_or(0) > 0
+        {
+            return None;
+        }
+
+        let mut h = Self::default();
+        let mut start = 0;
+        for (i, &end) in cuts.iter().enumerate() {
+            let indices = &indices[start..end];
+
+            if !Self::monotonic(indices) {
                 return None;
             }
 
-            let start = index;
-            while index < end {
-                if index > start && y[index - 1] >= y[index] {
-                    return None;
-                }
-
-                let j: usize = y[index].into();
-                h.0[i_usize][j] = true;
-                index += 1;
+            for &j in indices {
+                h.0[i][j] = true;
             }
-        }
 
-        if y[index..omega].iter().any(|x| *x != 0) {
-            return None;
+            start = end;
         }
 
         Some(h)

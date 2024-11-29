@@ -31,10 +31,13 @@ fn verify<P: VerificationKeyParams + SignatureParams>(tg: &acvp::TestGroup, tc: 
 
     // Import the signature
     let sig_bytes = EncodedSignature::<P>::try_from(tc.signature.as_slice()).unwrap();
-    let sig = Signature::<P>::decode(&sig_bytes).unwrap();
+    let sig = Signature::<P>::decode(&sig_bytes);
 
-    // Verify the signature
-    assert!(pk.verify(tc.message.as_slice(), &sig));
+    // Verify the signature if it successfully decoded
+    let test_passed = sig
+        .map(|sig| pk.verify_internal(tc.message.as_slice(), &sig))
+        .unwrap_or_default();
+    assert_eq!(test_passed, tc.test_passed);
 }
 
 mod acvp {
@@ -76,6 +79,11 @@ mod acvp {
     pub struct TestCase {
         #[serde(rename = "tcId")]
         pub id: usize,
+
+        #[serde(rename = "testPassed")]
+        pub test_passed: bool,
+
+        pub reason: String,
 
         #[serde(with = "hex::serde")]
         pub message: Vec<u8>,
