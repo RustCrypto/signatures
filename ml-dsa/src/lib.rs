@@ -375,8 +375,26 @@ impl ParameterSet for MlDsa87 {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::param::{SigningKeyParams, VerificationKeyParams};
     use rand::Rng;
+
+    #[test]
+    fn output_sizes() {
+        //           priv pub  sig
+        // ML-DSA-44 2560 1312 2420
+        // ML-DSA-65 4032 1952 3309
+        // ML-DSA-87 4896 2592 4627
+        assert_eq!(SigningKeySize::<MlDsa44>::USIZE, 2560);
+        assert_eq!(VerificationKeySize::<MlDsa44>::USIZE, 1312);
+        assert_eq!(SignatureSize::<MlDsa44>::USIZE, 2420);
+
+        assert_eq!(SigningKeySize::<MlDsa65>::USIZE, 4032);
+        assert_eq!(VerificationKeySize::<MlDsa65>::USIZE, 1952);
+        assert_eq!(SignatureSize::<MlDsa65>::USIZE, 3309);
+
+        assert_eq!(SigningKeySize::<MlDsa87>::USIZE, 4896);
+        assert_eq!(VerificationKeySize::<MlDsa87>::USIZE, 2592);
+        assert_eq!(SignatureSize::<MlDsa87>::USIZE, 4627);
+    }
 
     fn encode_decode_round_trip_test<P>()
     where

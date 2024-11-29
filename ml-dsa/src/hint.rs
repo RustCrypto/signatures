@@ -8,14 +8,12 @@ use crate::param::*;
 use crate::util::Truncate;
 
 fn make_hint<Gamma2: Unsigned>(z: FieldElement, r: FieldElement) -> bool {
-    // XXX(RLB): Maybe propagate the Gamma2 into these methods
     let r1 = r.high_bits::<Gamma2>();
     let v1 = (r + z).high_bits::<Gamma2>();
     r1 != v1
 }
 
 fn use_hint<Gamma2: Unsigned>(h: bool, r: FieldElement) -> FieldElement {
-    // XXX(RLB) Can we make this const?
     let m: u32 = (FieldElement::Q - 1) / (2 * Gamma2::U32);
     let (r1, r0) = r.decompose::<Gamma2>();
     if h && r0.0 <= Gamma2::U32 {

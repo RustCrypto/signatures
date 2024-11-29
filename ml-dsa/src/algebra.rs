@@ -44,15 +44,6 @@ impl FieldElement {
 
     // Algorithm 15 CoeffFromHalfByte
     fn from_half_byte(b: u8, eta: Eta) -> Option<Self> {
-        if matches!(eta, Eta::Two) && b < 15 {
-            Some(Self(2) - Self((b as Integer) % 5))
-        } else if matches!(eta, Eta::Four) && b < 9 {
-            Some(Self(4) - Self(b as Integer))
-        } else {
-            None
-        }
-
-        /* XXX(RLB) Slightly more elegant version IMO
         match eta {
             Eta::Two if b < 15 => {
                 let b = (b as Integer) % 5;
@@ -72,7 +63,6 @@ impl FieldElement {
             }
             _ => None,
         }
-        */
     }
 
     fn from_byte(z: u8, eta: Eta) -> (Option<Self>, Option<Self>) {
@@ -93,11 +83,10 @@ impl FieldElement {
 
     // Algorithm 35 Power2Round
     //
-    // XXX(RLB) In the specification, this function is specified as mapping to signed integers
-    // rather than modular integers.  To avoid the need for a whole separate type for signed
-    // integer polynomials, we represent these values using integers mod Q.  This is safe because Q
-    // is much larger than 2^13, so there's no risk of overlap between positive numbers (x)
-    // and negative numbers (Q-x).
+    // In the specification, this function maps to signed integers rather than modular integers.
+    // To avoid the need for a whole separate type for signed integer polynomials, we represent
+    // these values using integers mod Q.  This is safe because Q is much larger than 2^13, so
+    // there's no risk of overlap between positive numbers (x) and negative numbers (Q-x).
     fn power2round(&self) -> (Self, Self) {
         const D: Integer = 13;
         const POW_2_D: Integer = 1 << D;
@@ -159,7 +148,7 @@ impl FieldElement {
     }
 
     fn barrett_reduce(x: u64) -> u32 {
-        // TODO
+        // TODO(RLB) Actually implement Barrett reduction here.
         (x % Self::Q64).truncate()
 
         /*
@@ -686,12 +675,7 @@ impl From<NttPolynomial> for Array<FieldElement, U256> {
 // Algorithm 41 NTT
 impl Polynomial {
     pub fn ntt(&self) -> NttPolynomial {
-        // XXX let mut w = self.0.clone();
-        let mut w: Array<FieldElement, U256> = self
-            .0
-            .iter()
-            .map(|x| FieldElement(x.0 % FieldElement::Q))
-            .collect();
+        let mut w = self.0.clone();
 
         let mut m = 0;
         for len in [128, 64, 32, 16, 8, 4, 2, 1] {

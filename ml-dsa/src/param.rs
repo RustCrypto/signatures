@@ -225,10 +225,12 @@ pub trait SigningKeyParams: ParameterSet {
     );
 }
 
+pub type SigningKeySize<P> = <P as SigningKeyParams>::SigningKeySize;
+
 pub type EncodedS1<P> = Array<u8, <P as SigningKeyParams>::S1Size>;
 pub type EncodedS2<P> = Array<u8, <P as SigningKeyParams>::S2Size>;
 pub type EncodedT0<P> = Array<u8, <P as SigningKeyParams>::T0Size>;
-pub type EncodedSigningKey<P> = Array<u8, <P as SigningKeyParams>::SigningKeySize>;
+pub type EncodedSigningKey<P> = Array<u8, SigningKeySize<P>>;
 
 impl<P> SigningKeyParams for P
 where
@@ -356,8 +358,10 @@ pub trait VerificationKeyParams: ParameterSet {
     fn split_vk(enc: &EncodedVerificationKey<Self>) -> (&B32, &EncodedT1<Self>);
 }
 
+pub type VerificationKeySize<P> = <P as VerificationKeyParams>::VerificationKeySize;
+
 pub type EncodedT1<P> = Array<u8, <P as VerificationKeyParams>::T1Size>;
-pub type EncodedVerificationKey<P> = Array<u8, <P as VerificationKeyParams>::VerificationKeySize>;
+pub type EncodedVerificationKey<P> = Array<u8, VerificationKeySize<P>>;
 
 impl<P> VerificationKeyParams for P
 where
@@ -417,13 +421,15 @@ pub trait SignatureParams: ParameterSet {
     ) -> (&EncodedCTilde<Self>, &EncodedZ<Self>, &EncodedHint<Self>);
 }
 
+pub type SignatureSize<P> = <P as SignatureParams>::SignatureSize;
+
 pub type EncodedCTilde<P> = Array<u8, <P as ParameterSet>::Lambda>;
 pub type EncodedW1<P> = Array<u8, <P as SignatureParams>::W1Size>;
 pub type EncodedZ<P> = Array<u8, <P as SignatureParams>::ZSize>;
 pub type EncodedHintIndices<P> = Array<u8, <P as ParameterSet>::Omega>;
 pub type EncodedHintCuts<P> = Array<u8, <P as ParameterSet>::K>;
 pub type EncodedHint<P> = Array<u8, <P as SignatureParams>::HintSize>;
-pub type EncodedSignature<P> = Array<u8, <P as SignatureParams>::SignatureSize>;
+pub type EncodedSignature<P> = Array<u8, SignatureSize<P>>;
 
 impl<P> SignatureParams for P
 where
