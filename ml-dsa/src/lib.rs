@@ -19,6 +19,7 @@ mod encode;
 mod hint;
 mod ntt;
 mod param;
+mod sampling;
 mod util;
 
 use hybrid_array::{typenum::*, Array};
@@ -28,6 +29,7 @@ use crate::crypto::*;
 use crate::hint::*;
 use crate::ntt::*;
 use crate::param::*;
+use crate::sampling::*;
 use crate::util::*;
 
 // TODO(RLB) Clean up this API
@@ -98,7 +100,7 @@ impl<P: ParameterSet> SigningKey<P> {
         t0: PolynomialVector<P::K>,
         A_hat: Option<NttMatrix<P::K, P::L>>,
     ) -> Self {
-        let A_hat = A_hat.unwrap_or_else(|| NttMatrix::expand_a(&rho));
+        let A_hat = A_hat.unwrap_or_else(|| expand_a(&rho));
         let s1_hat = s1.ntt();
         let s2_hat = s2.ntt();
         let t0_hat = t0.ntt();
@@ -134,9 +136,9 @@ impl<P: ParameterSet> SigningKey<P> {
         let K: B32 = h.squeeze_new();
 
         // Sample private key components
-        let A_hat = NttMatrix::<P::K, P::L>::expand_a(&rho);
-        let s1 = PolynomialVector::<P::L>::expand_s(&rhop, P::Eta::ETA, 0);
-        let s2 = PolynomialVector::<P::K>::expand_s(&rhop, P::Eta::ETA, P::L::USIZE);
+        let A_hat = expand_a::<P::K, P::L>(&rho);
+        let s1 = expand_s::<P::L>(&rhop, P::Eta::ETA, 0);
+        let s2 = expand_s::<P::K>(&rhop, P::Eta::ETA, P::L::USIZE);
 
         // Compute derived values
         let As1_hat = &A_hat * &s1.ntt();
@@ -169,7 +171,7 @@ impl<P: ParameterSet> SigningKey<P> {
 
         // Rejection sampling loop
         for kappa in (0..u16::MAX).step_by(P::L::USIZE) {
-            let y = PolynomialVector::<P::L>::expand_mask::<P::Gamma1>(&rhopp, kappa);
+            let y = expand_mask::<P::L, P::Gamma1>(&rhopp, kappa);
             let w = (&self.A_hat * &y.ntt()).ntt_inverse();
             let w1 = w.high_bits::<P::Gamma2>();
 
@@ -178,7 +180,7 @@ impl<P: ParameterSet> SigningKey<P> {
                 .absorb(&mu)
                 .absorb(&w1_tilde)
                 .squeeze_new::<P::Lambda>();
-            let c = Polynomial::sample_in_ball(&c_tilde, P::TAU);
+            let c = sample_in_ball(&c_tilde, P::TAU);
             let c_hat = c.ntt();
 
             let cs1 = (&c_hat * &self.s1_hat).ntt_inverse();
@@ -268,7 +270,7 @@ impl<P: VerificationKeyParams> VerificationKey<P> {
         let mu: B64 = H::default().absorb(&self.tr).absorb(&Mp).squeeze_new();
 
         // Reconstruct w
-        let c = Polynomial::sample_in_ball(&sigma.c_tilde, P::TAU);
+        let c = sample_in_ball(&sigma.c_tilde, P::TAU);
 
         let z_hat = sigma.z.ntt();
         let c_hat = c.ntt();
@@ -298,7 +300,7 @@ impl<P: VerificationKeyParams> VerificationKey<P> {
         A_hat: Option<NttMatrix<P::K, P::L>>,
         enc: Option<EncodedVerificationKey<P>>,
     ) -> Self {
-        let A_hat = A_hat.unwrap_or_else(|| NttMatrix::expand_a(&rho));
+        let A_hat = A_hat.unwrap_or_else(|| expand_a(&rho));
         let enc = enc.unwrap_or_else(|| Self::encode_internal(&rho, &t1));
 
         let t1_2d_hat = (FieldElement(1 << 13) * &t1).ntt();
