@@ -17,6 +17,7 @@ mod algebra;
 mod crypto;
 mod encode;
 mod hint;
+mod ntt;
 mod param;
 mod util;
 
@@ -25,6 +26,7 @@ use hybrid_array::{typenum::*, Array};
 use crate::algebra::*;
 use crate::crypto::*;
 use crate::hint::*;
+use crate::ntt::*;
 use crate::param::*;
 use crate::util::*;
 
