@@ -1,6 +1,8 @@
+use crate::module_lattice::algebra::Field;
+use core::ops::Mul;
+
 use crate::algebra::*;
 use crate::param::ArraySize;
-use core::ops::Mul;
 
 // Since the powers of zeta used in the NTT and MultiplyNTTs are fixed, we use pre-computed tables
 // to avoid the need to compute the exponetiations at runtime.
@@ -22,20 +24,20 @@ const ZETA_POW_BITREV: [FieldElement; 256] = {
     }
 
     // Compute the powers of zeta
-    let mut pow = [FieldElement(0); 256];
+    let mut pow = [FieldElement::new(0); 256];
     let mut i = 0;
     let mut curr = 1u64;
     #[allow(clippy::integer_division_remainder_used)]
     while i < 256 {
-        pow[i] = FieldElement(curr as u32);
+        pow[i] = FieldElement::new(curr as u32);
         i += 1;
-        curr = (curr * ZETA) % FieldElement::Q64;
+        curr = (curr * ZETA) % BaseField::QL;
     }
 
     // Reorder the powers according to bitrev8
     // Note that entry 0 is left as zero, in order to match the `zetas` array in the
     // specification.
-    let mut pow_bitrev = [FieldElement(0); 256];
+    let mut pow_bitrev = [FieldElement::new(0); 256];
     let mut i = 1;
     while i < 256 {
         pow_bitrev[i] = pow[bitrev8(i)];
@@ -70,7 +72,7 @@ impl Ntt for Polynomial {
             }
         }
 
-        w.into()
+        NttPolynomial::new(w)
     }
 }
 
@@ -78,7 +80,7 @@ impl<K: ArraySize> Ntt for PolynomialVector<K> {
     type Output = NttVector<K>;
 
     fn ntt(&self) -> Self::Output {
-        NttVector(self.0.iter().map(Polynomial::ntt).collect())
+        NttVector::new(self.0.iter().map(Polynomial::ntt).collect())
     }
 }
 
@@ -108,7 +110,7 @@ impl NttInverse for NttPolynomial {
             }
         }
 
-        FieldElement(8347681) * &Polynomial(w)
+        FieldElement::new(8347681) * &Polynomial::new(w)
     }
 }
 
@@ -116,7 +118,7 @@ impl<K: ArraySize> NttInverse for NttVector<K> {
     type Output = PolynomialVector<K>;
 
     fn ntt_inverse(&self) -> Self::Output {
-        PolynomialVector(self.0.iter().map(NttPolynomial::ntt_inverse).collect())
+        PolynomialVector::new(self.0.iter().map(NttPolynomial::ntt_inverse).collect())
     }
 }
 
@@ -125,7 +127,7 @@ impl Mul<&NttPolynomial> for &NttPolynomial {
 
     // Algorithm 45 MultiplyNTT
     fn mul(self, rhs: &NttPolynomial) -> NttPolynomial {
-        NttPolynomial(
+        NttPolynomial::new(
             self.0
                 .iter()
                 .zip(rhs.0.iter())
@@ -152,9 +154,9 @@ mod test {
             for (i, x) in self.0.iter().enumerate() {
                 for (j, y) in rhs.0.iter().enumerate() {
                     let (sign, index) = if i + j < 256 {
-                        (FieldElement(1), i + j)
+                        (FieldElement::new(1), i + j)
                     } else {
-                        (FieldElement(FieldElement::Q - 1), i + j - 256)
+                        (FieldElement::new(BaseField::Q - 1), i + j - 256)
                     };
 
                     out.0[index] = out.0[index] + (sign * *x * *y);
@@ -165,16 +167,16 @@ mod test {
     }
 
     // A polynomial with only a scalar component, to make simple test cases
-    fn const_ntt(x: Integer) -> NttPolynomial {
+    fn const_ntt(x: Int) -> NttPolynomial {
         let mut p = Polynomial::default();
-        p.0[0] = FieldElement(x);
+        p.0[0] = FieldElement::new(x);
         p.ntt()
     }
 
     #[test]
     fn ntt() {
-        let f = Polynomial(Array::from_fn(|i| FieldElement(i as Integer)));
-        let g = Polynomial(Array::from_fn(|i| FieldElement(2 * i as Integer)));
+        let f = Polynomial::new(Array::from_fn(|i| FieldElement::new(i as Int)));
+        let g = Polynomial::new(Array::from_fn(|i| FieldElement::new(2 * i as Int)));
         let f_hat = f.ntt();
         let g_hat = g.ntt();
 
@@ -198,9 +200,9 @@ mod test {
     #[test]
     fn ntt_vector() {
         // Verify vector addition
-        let v1: NttVector<U3> = NttVector(Array([const_ntt(1), const_ntt(1), const_ntt(1)]));
-        let v2: NttVector<U3> = NttVector(Array([const_ntt(2), const_ntt(2), const_ntt(2)]));
-        let v3: NttVector<U3> = NttVector(Array([const_ntt(3), const_ntt(3), const_ntt(3)]));
+        let v1: NttVector<U3> = NttVector::new(Array([const_ntt(1), const_ntt(1), const_ntt(1)]));
+        let v2: NttVector<U3> = NttVector::new(Array([const_ntt(2), const_ntt(2), const_ntt(2)]));
+        let v3: NttVector<U3> = NttVector::new(Array([const_ntt(3), const_ntt(3), const_ntt(3)]));
         assert_eq!((&v1 + &v2), v3);
 
         // Verify dot product
@@ -212,13 +214,14 @@ mod test {
     #[test]
     fn ntt_matrix() {
         // Verify matrix multiplication by a vector
-        let a: NttMatrix<U3, U2> = NttMatrix(Array([
-            NttVector(Array([const_ntt(1), const_ntt(2)])),
-            NttVector(Array([const_ntt(3), const_ntt(4)])),
-            NttVector(Array([const_ntt(5), const_ntt(6)])),
+        let a: NttMatrix<U3, U2> = NttMatrix::new(Array([
+            NttVector::new(Array([const_ntt(1), const_ntt(2)])),
+            NttVector::new(Array([const_ntt(3), const_ntt(4)])),
+            NttVector::new(Array([const_ntt(5), const_ntt(6)])),
         ]));
-        let v_in: NttVector<U2> = NttVector(Array([const_ntt(1), const_ntt(2)]));
-        let v_out: NttVector<U3> = NttVector(Array([const_ntt(5), const_ntt(11), const_ntt(17)]));
+        let v_in: NttVector<U2> = NttVector::new(Array([const_ntt(1), const_ntt(2)]));
+        let v_out: NttVector<U3> =
+            NttVector::new(Array([const_ntt(5), const_ntt(11), const_ntt(17)]));
         assert_eq!(&a * &v_in, v_out);
     }
 }

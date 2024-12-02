@@ -14,12 +14,12 @@ fn make_hint<Gamma2: Unsigned>(z: FieldElement, r: FieldElement) -> bool {
 }
 
 fn use_hint<Gamma2: Unsigned>(h: bool, r: FieldElement) -> FieldElement {
-    let m: u32 = (FieldElement::Q - 1) / (2 * Gamma2::U32);
+    let m: u32 = (BaseField::Q - 1) / (2 * Gamma2::U32);
     let (r1, r0) = r.decompose::<Gamma2>();
     if h && r0.0 <= Gamma2::U32 {
-        FieldElement((r1.0 + 1) % m)
-    } else if h && r0.0 > FieldElement::Q - Gamma2::U32 {
-        FieldElement((r1.0 + m - 1) % m)
+        FieldElement::new((r1.0 + 1) % m)
+    } else if h && r0.0 > BaseField::Q - Gamma2::U32 {
+        FieldElement::new((r1.0 + m - 1) % m)
     } else if h {
         // We use the FieldElement encoding even for signed integers.  Since r0 is computed
         // mod+- 2*gamma2, it is guaranteed to be in (gamma2, gamma2].
@@ -76,13 +76,13 @@ where
         let hi = self.0.iter();
         let ri = r.0.iter();
 
-        PolynomialVector(
+        PolynomialVector::new(
             hi.zip(ri)
                 .map(|(hv, rv)| {
                     let hvi = hv.iter();
                     let rvi = rv.0.iter();
 
-                    Polynomial(
+                    Polynomial::new(
                         hvi.zip(rvi)
                             .map(|(&h, &r)| use_hint::<P::Gamma2>(h, r))
                             .collect(),

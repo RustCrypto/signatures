@@ -22,6 +22,9 @@ mod param;
 mod sampling;
 mod util;
 
+// TODO(RLB) Move module to an independent crate shared with ml_kem
+mod module_lattice;
+
 use hybrid_array::{typenum::*, Array};
 
 use crate::algebra::*;
@@ -202,7 +205,7 @@ impl<P: ParameterSet> SigningKey<P> {
                 continue;
             }
 
-            let z = z.mod_plus_minus(FieldElement(FieldElement::Q));
+            let z = z.mod_plus_minus(FieldElement::new(BaseField::Q));
             return Signature { c_tilde, z, h };
         }
 
@@ -303,7 +306,7 @@ impl<P: VerificationKeyParams> VerificationKey<P> {
         let A_hat = A_hat.unwrap_or_else(|| expand_a(&rho));
         let enc = enc.unwrap_or_else(|| Self::encode_internal(&rho, &t1));
 
-        let t1_2d_hat = (FieldElement(1 << 13) * &t1).ntt();
+        let t1_2d_hat = (FieldElement::new(1 << 13) * &t1).ntt();
         let tr: B64 = H::default().absorb(&enc).squeeze_new();
 
         Self {
