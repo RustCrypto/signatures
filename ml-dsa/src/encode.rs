@@ -51,7 +51,7 @@ where
         let x = u128::from_le_bytes(xb);
         for (j, vj) in v.iter_mut().enumerate() {
             let val: u128 = (x >> (D::USIZE * j)) & mask;
-            *vj = FieldElement::new(val.truncate());
+            vj.0 = val.truncate();
         }
     }
 
@@ -65,6 +65,7 @@ where
 {
     let a = FieldElement::new(RangeMin::<A, B>::U32);
     let b = FieldElement::new(RangeMax::<A, B>::U32);
+
     let to_encode = vals
         .iter()
         .map(|w| {
