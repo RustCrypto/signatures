@@ -1,4 +1,4 @@
-//#![no_std]
+#![no_std]
 #![doc = include_str!("../README.md")]
 #![doc = include_str!("../README.md")]
 #![doc(
@@ -8,6 +8,7 @@
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
 #![warn(clippy::pedantic)] // Be pedantic by default
 #![warn(clippy::integer_division_remainder_used)] // Be judicious about using `/` and `%`
+#![warn(clippy::as_conversions)] // Use proper conversions, not `as`
 #![allow(non_snake_case)] // Allow notation matching the spec
 #![allow(clippy::clone_on_copy)] // Be explicit about moving data
 
@@ -423,7 +424,6 @@ mod test {
 
         let sig = sk.sign_internal(&[0, 1, 2, 3], (&[0u8; 32]).into());
         let sig_bytes = sig.encode();
-        println!("sig_bytes: {:?}", hex::encode(&sig_bytes));
         let sig2 = Signature::<P>::decode(&sig_bytes).unwrap();
         assert!(sig == sig2);
     }

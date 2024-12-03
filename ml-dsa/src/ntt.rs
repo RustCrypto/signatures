@@ -176,7 +176,7 @@ mod test {
     #[test]
     fn ntt() {
         let f = Polynomial::new(Array::from_fn(|i| FieldElement::new(i as Int)));
-        let g = Polynomial::new(Array::from_fn(|i| FieldElement::new(2 * i as Int)));
+        let g = Polynomial::new(Array::from_fn(|i| FieldElement::new((2 * i) as Int)));
         let f_hat = f.ntt();
         let g_hat = g.ntt();
 

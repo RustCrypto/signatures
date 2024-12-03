@@ -13,7 +13,13 @@ pub mod algebra {
     use num_traits::PrimInt;
 
     pub trait Field: Copy + Default + Debug + PartialEq {
-        type Int: PrimInt + Default + Debug + Into<u128> + Into<Self::Long> + Truncate<u128>;
+        type Int: PrimInt
+            + Default
+            + Debug
+            + From<u8>
+            + Into<u128>
+            + Into<Self::Long>
+            + Truncate<u128>;
         type Long: PrimInt + From<Self::Int>;
         type LongLong: PrimInt;
 

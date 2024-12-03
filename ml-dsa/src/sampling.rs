@@ -29,7 +29,7 @@ fn coeff_from_three_bytes(b: &[u8; 3]) -> Option<FieldElement> {
 fn coeff_from_half_byte(b: u8, eta: Eta) -> Option<FieldElement> {
     match eta {
         Eta::Two if b < 15 => {
-            let b = (b as Int) % 5;
+            let b = (Int::from(b)) % 5;
             if b <= 2 {
                 Some(FieldElement::new(2 - b))
             } else {
@@ -37,7 +37,7 @@ fn coeff_from_half_byte(b: u8, eta: Eta) -> Option<FieldElement> {
             }
         }
         Eta::Four if b < 9 => {
-            let b = b as Int;
+            let b = Int::from(b);
             if b <= 4 {
                 Some(FieldElement::new(4 - b))
             } else {
@@ -70,11 +70,11 @@ pub fn sample_in_ball(rho: &[u8], tau: usize) -> Polynomial {
     let mut j = [0u8];
     for i in (256 - tau)..256 {
         ctx.squeeze(&mut j);
-        while (j[0] as usize) > i {
+        while usize::from(j[0]) > i {
             ctx.squeeze(&mut j);
         }
 
-        let j = j[0] as usize;
+        let j = usize::from(j[0]);
         c.0[i] = c.0[j];
         c.0[j] = if bit_set(&s, i + tau - 256) {
             MINUS_ONE
@@ -136,7 +136,9 @@ fn rej_bounded_poly(rho: &[u8], eta: Eta, r: u16) -> Polynomial {
 // Algorithm 32 ExpandA
 pub fn expand_a<K: ArraySize, L: ArraySize>(rho: &[u8]) -> NttMatrix<K, L> {
     NttMatrix::new(Array::from_fn(|r| {
-        NttVector::new(Array::from_fn(|s| rej_ntt_poly(rho, r as u8, s as u8)))
+        NttVector::new(Array::from_fn(|s| {
+            rej_ntt_poly(rho, Truncate::truncate(r), Truncate::truncate(s))
+        }))
     }))
 }
 
@@ -149,7 +151,7 @@ pub fn expand_a<K: ArraySize, L: ArraySize>(rho: &[u8]) -> NttMatrix<K, L> {
 //    let s2 = PolynomialVector::<L>::expand_s(rho, L::USIZE);
 pub fn expand_s<K: ArraySize>(rho: &[u8], eta: Eta, base: usize) -> PolynomialVector<K> {
     PolynomialVector::new(Array::from_fn(|r| {
-        let r = (r + base) as u16;
+        let r = Truncate::truncate(r + base);
         rej_bounded_poly(rho, eta, r)
     }))
 }
