@@ -80,8 +80,8 @@ pub trait ParameterSet {
     /// Error size bound for y
     type Gamma1: MaskSamplingSize;
 
-    /// Low-order rounding range
-    type Gamma2: Unsigned;
+    /// Low-order rounding range (2 * gamma2 in terms of the spec)
+    type TwoGamma2: Unsigned;
 
     /// Encoding width of the W1 polynomial, namely bitlen((q - 1) / (2 * gamma2) - 1)
     type W1Bits: EncodingSize;
@@ -381,7 +381,7 @@ where
     type SignatureSize = Sum<Sum<P::Lambda, Self::ZSize>, Self::HintSize>;
 
     const GAMMA1_MINUS_BETA: u32 = P::Gamma1::U32 - P::BETA;
-    const GAMMA2_MINUS_BETA: u32 = P::Gamma2::U32 - P::BETA;
+    const GAMMA2_MINUS_BETA: u32 = (P::TwoGamma2::U32 / 2) - P::BETA;
 
     fn split_hint(y: &EncodedHint<Self>) -> (&EncodedHintIndices<Self>, &EncodedHintCuts<Self>) {
         y.split_ref()

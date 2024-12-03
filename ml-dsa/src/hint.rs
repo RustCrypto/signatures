@@ -7,18 +7,19 @@ use hybrid_array::{
 use crate::algebra::*;
 use crate::param::*;
 
-fn make_hint<Gamma2: Unsigned>(z: FieldElement, r: FieldElement) -> bool {
-    let r1 = r.high_bits::<Gamma2>();
-    let v1 = (r + z).high_bits::<Gamma2>();
+fn make_hint<TwoGamma2: Unsigned>(z: FieldElement, r: FieldElement) -> bool {
+    let r1 = r.high_bits::<TwoGamma2>();
+    let v1 = (r + z).high_bits::<TwoGamma2>();
     r1 != v1
 }
 
-fn use_hint<Gamma2: Unsigned>(h: bool, r: FieldElement) -> FieldElement {
-    let m: u32 = (BaseField::Q - 1) / (2 * Gamma2::U32);
-    let (r1, r0) = r.decompose::<Gamma2>();
-    if h && r0.0 <= Gamma2::U32 {
+fn use_hint<TwoGamma2: Unsigned>(h: bool, r: FieldElement) -> FieldElement {
+    let m: u32 = (BaseField::Q - 1) / TwoGamma2::U32;
+    let (r1, r0) = r.decompose::<TwoGamma2>();
+    let gamma2 = TwoGamma2::U32 / 2;
+    if h && r0.0 <= gamma2 {
         FieldElement::new((r1.0 + 1) % m)
-    } else if h && r0.0 > BaseField::Q - Gamma2::U32 {
+    } else if h && r0.0 > BaseField::Q - gamma2 {
         FieldElement::new((r1.0 + m - 1) % m)
     } else if h {
         // We use the FieldElement encoding even for signed integers.  Since r0 is computed
@@ -58,7 +59,7 @@ where
                     let rvi = rv.0.iter();
 
                     zvi.zip(rvi)
-                        .map(|(&z, &r)| make_hint::<P::Gamma2>(z, r))
+                        .map(|(&z, &r)| make_hint::<P::TwoGamma2>(z, r))
                         .collect()
                 })
                 .collect(),
@@ -84,7 +85,7 @@ where
 
                     Polynomial::new(
                         hvi.zip(rvi)
-                            .map(|(&h, &r)| use_hint::<P::Gamma2>(h, r))
+                            .map(|(&h, &r)| use_hint::<P::TwoGamma2>(h, r))
                             .collect(),
                     )
                 })

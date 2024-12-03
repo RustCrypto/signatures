@@ -176,7 +176,7 @@ impl<P: ParameterSet> SigningKey<P> {
         for kappa in (0..u16::MAX).step_by(P::L::USIZE) {
             let y = expand_mask::<P::L, P::Gamma1>(&rhopp, kappa);
             let w = (&self.A_hat * &y.ntt()).ntt_inverse();
-            let w1 = w.high_bits::<P::Gamma2>();
+            let w1 = w.high_bits::<P::TwoGamma2>();
 
             let w1_tilde = P::encode_w1(&w1);
             let c_tilde = H::default()
@@ -190,7 +190,7 @@ impl<P: ParameterSet> SigningKey<P> {
             let cs2 = (&c_hat * &self.s2_hat).ntt_inverse();
 
             let z = &y + &cs1;
-            let r0 = (&w - &cs2).low_bits::<P::Gamma2>();
+            let r0 = (&w - &cs2).low_bits::<P::TwoGamma2>();
 
             if z.infinity_norm() >= P::GAMMA1_MINUS_BETA
                 || r0.infinity_norm() >= P::GAMMA2_MINUS_BETA
@@ -201,11 +201,12 @@ impl<P: ParameterSet> SigningKey<P> {
             let ct0 = (&c_hat * &self.t0_hat).ntt_inverse();
             let h = Hint::<P>::new(-&ct0, &(&w - &cs2) + &ct0);
 
-            if ct0.infinity_norm() >= P::Gamma2::U32 || h.hamming_weight() > P::Omega::USIZE {
+            if ct0.infinity_norm() >= P::TwoGamma2::U32 / 2 || h.hamming_weight() > P::Omega::USIZE
+            {
                 continue;
             }
 
-            let z = z.mod_plus_minus(FieldElement::new(BaseField::Q));
+            let z = z.mod_plus_minus::<SpecQ>();
             return Signature { c_tilde, z, h };
         }
 
@@ -340,7 +341,7 @@ impl ParameterSet for MlDsa44 {
     type L = U4;
     type Eta = U2;
     type Gamma1 = Shleft<U1, U17>;
-    type Gamma2 = Quot<QMinus1, U88>;
+    type TwoGamma2 = Quot<QMinus1, U44>;
     type W1Bits = Length<Diff<Quot<U88, U2>, U1>>;
     type Lambda = U32;
     type Omega = U80;
@@ -356,7 +357,7 @@ impl ParameterSet for MlDsa65 {
     type L = U5;
     type Eta = U4;
     type Gamma1 = Shleft<U1, U19>;
-    type Gamma2 = Quot<QMinus1, U32>;
+    type TwoGamma2 = Quot<QMinus1, U16>;
     type W1Bits = Length<Diff<Quot<U32, U2>, U1>>;
     type Lambda = U48;
     type Omega = U55;
@@ -372,7 +373,7 @@ impl ParameterSet for MlDsa87 {
     type L = U7;
     type Eta = U2;
     type Gamma1 = Shleft<U1, U19>;
-    type Gamma2 = Quot<QMinus1, U32>;
+    type TwoGamma2 = Quot<QMinus1, U16>;
     type W1Bits = Length<Diff<Quot<U32, U2>, U1>>;
     type Lambda = U64;
     type Omega = U75;

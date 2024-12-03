@@ -1,5 +1,6 @@
 pub use crate::module_lattice::algebra::Field;
-use hybrid_array::{typenum::Unsigned, ArraySize};
+pub use crate::module_lattice::util::Truncate;
+use hybrid_array::{typenum::*, ArraySize};
 
 use crate::define_field;
 use crate::module_lattice::algebra;
@@ -15,41 +16,70 @@ pub type NttPolynomial = algebra::NttPolynomial<BaseField>;
 pub type NttVector<K> = algebra::NttVector<BaseField, K>;
 pub type NttMatrix<K, L> = algebra::NttMatrix<BaseField, K, L>;
 
+// We require modular reduction for three moduli: q, 2^d, and 2 * gamma2.  All three of these are
+// greater than sqrt(q), which means that a number reduced mod q will always be less than M^2,
+// which means that barrett reduction will work.
+pub trait BarrettReduce: Unsigned {
+    const SHIFT: usize;
+    const MULTIPLIER: u64;
+
+    fn reduce(x: u32) -> u32 {
+        let m = Self::U64;
+        let x: u64 = x.into();
+        let quotient = (x * Self::MULTIPLIER) >> Self::SHIFT;
+        let remainder = x - quotient * m;
+
+        if remainder < m {
+            Truncate::truncate(remainder)
+        } else {
+            Truncate::truncate(remainder - m)
+        }
+    }
+}
+
+impl<M> BarrettReduce for M
+where
+    M: Unsigned,
+{
+    const SHIFT: usize = 2 * (M::U64.ilog2() + 1) as usize;
+    const MULTIPLIER: u64 = (1 << Self::SHIFT) / M::U64;
+}
+
 pub trait Decompose {
-    fn decompose<Gamma2: Unsigned>(self) -> (FieldElement, FieldElement);
+    fn decompose<TwoGamma2: Unsigned>(self) -> (FieldElement, FieldElement);
 }
 
 impl Decompose for FieldElement {
     // Algorithm 36 Decompose
-    fn decompose<Gamma2: Unsigned>(self) -> (FieldElement, FieldElement) {
+    fn decompose<TwoGamma2: Unsigned>(self) -> (FieldElement, FieldElement) {
         let r_plus = self.clone();
-        let r0 = r_plus.mod_plus_minus(Self(2 * Gamma2::U32));
+        let r0 = r_plus.mod_plus_minus::<TwoGamma2>();
 
         if r_plus - r0 == FieldElement::new(BaseField::Q - 1) {
             (FieldElement::new(0), r0 - FieldElement::new(1))
         } else {
             let mut r1 = r_plus - r0;
-            r1.0 /= 2 * Gamma2::U32;
+            r1.0 /= TwoGamma2::U32;
             (r1, r0)
         }
     }
 }
 
 pub trait AlgebraExt: Sized {
-    fn mod_plus_minus(&self, m: FieldElement) -> Self;
+    fn mod_plus_minus<M: Unsigned>(&self) -> Self;
     fn infinity_norm(&self) -> Int;
     fn power2round(&self) -> (Self, Self);
-    fn high_bits<Gamma2: Unsigned>(&self) -> Self;
-    fn low_bits<Gamma2: Unsigned>(&self) -> Self;
+    fn high_bits<TwoGamma2: Unsigned>(&self) -> Self;
+    fn low_bits<TwoGamma2: Unsigned>(&self) -> Self;
 }
 
 impl AlgebraExt for FieldElement {
-    fn mod_plus_minus(&self, m: FieldElement) -> Self {
-        let raw_mod = Self(self.0 % m.0);
-        if raw_mod.0 <= m.0 >> 1 {
+    fn mod_plus_minus<M: Unsigned>(&self) -> Self {
+        let raw_mod = FieldElement::new(M::reduce(self.0));
+        if raw_mod.0 <= M::U32 >> 1 {
             raw_mod
         } else {
-            raw_mod - m
+            raw_mod - FieldElement::new(M::U32)
         }
     }
 
@@ -76,30 +106,30 @@ impl AlgebraExt for FieldElement {
     // these values using integers mod Q.  This is safe because Q is much larger than 2^13, so
     // there's no risk of overlap between positive numbers (x) and negative numbers (Q-x).
     fn power2round(&self) -> (Self, Self) {
-        const D: Int = 13;
-        const POW_2_D: Int = 1 << D;
+        type D = U13;
+        type Pow2D = Shleft<U1, D>;
 
         let r_plus = self.clone();
-        let r0 = r_plus.mod_plus_minus(Self(POW_2_D));
-        let r1 = FieldElement::new((r_plus - r0).0 >> D);
+        let r0 = r_plus.mod_plus_minus::<Pow2D>();
+        let r1 = FieldElement::new((r_plus - r0).0 >> D::USIZE);
 
         (r1, r0)
     }
 
     // Algorithm 37 HighBits
-    fn high_bits<Gamma2: Unsigned>(&self) -> Self {
-        self.decompose::<Gamma2>().0
+    fn high_bits<TwoGamma2: Unsigned>(&self) -> Self {
+        self.decompose::<TwoGamma2>().0
     }
 
     // Algorithm 38 LowBits
-    fn low_bits<Gamma2: Unsigned>(&self) -> Self {
-        self.decompose::<Gamma2>().1
+    fn low_bits<TwoGamma2: Unsigned>(&self) -> Self {
+        self.decompose::<TwoGamma2>().1
     }
 }
 
 impl AlgebraExt for Polynomial {
-    fn mod_plus_minus(&self, m: FieldElement) -> Self {
-        Self(self.0.iter().map(|x| x.mod_plus_minus(m)).collect())
+    fn mod_plus_minus<M: Unsigned>(&self) -> Self {
+        Self(self.0.iter().map(|x| x.mod_plus_minus::<M>()).collect())
     }
 
     fn infinity_norm(&self) -> u32 {
@@ -117,18 +147,18 @@ impl AlgebraExt for Polynomial {
         (r1, r0)
     }
 
-    fn high_bits<Gamma2: Unsigned>(&self) -> Self {
-        Self(self.0.iter().map(|x| x.high_bits::<Gamma2>()).collect())
+    fn high_bits<TwoGamma2: Unsigned>(&self) -> Self {
+        Self(self.0.iter().map(|x| x.high_bits::<TwoGamma2>()).collect())
     }
 
-    fn low_bits<Gamma2: Unsigned>(&self) -> Self {
-        Self(self.0.iter().map(|x| x.low_bits::<Gamma2>()).collect())
+    fn low_bits<TwoGamma2: Unsigned>(&self) -> Self {
+        Self(self.0.iter().map(|x| x.low_bits::<TwoGamma2>()).collect())
     }
 }
 
 impl<K: ArraySize> AlgebraExt for PolynomialVector<K> {
-    fn mod_plus_minus(&self, m: FieldElement) -> Self {
-        Self(self.0.iter().map(|x| x.mod_plus_minus(m)).collect())
+    fn mod_plus_minus<M: Unsigned>(&self) -> Self {
+        Self(self.0.iter().map(|x| x.mod_plus_minus::<M>()).collect())
     }
 
     fn infinity_norm(&self) -> u32 {
@@ -146,11 +176,11 @@ impl<K: ArraySize> AlgebraExt for PolynomialVector<K> {
         (r1, r0)
     }
 
-    fn high_bits<Gamma2: Unsigned>(&self) -> Self {
-        Self(self.0.iter().map(|x| x.high_bits::<Gamma2>()).collect())
+    fn high_bits<TwoGamma2: Unsigned>(&self) -> Self {
+        Self(self.0.iter().map(|x| x.high_bits::<TwoGamma2>()).collect())
     }
 
-    fn low_bits<Gamma2: Unsigned>(&self) -> Self {
-        Self(self.0.iter().map(|x| x.low_bits::<Gamma2>()).collect())
+    fn low_bits<TwoGamma2: Unsigned>(&self) -> Self {
+        Self(self.0.iter().map(|x| x.low_bits::<TwoGamma2>()).collect())
     }
 }

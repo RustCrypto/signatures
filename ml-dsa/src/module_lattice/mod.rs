@@ -59,7 +59,7 @@ pub mod algebra {
                     let product = x * Self::BARRETT_MULTIPLIER;
                     let quotient = product >> Self::BARRETT_SHIFT;
                     let remainder = x - quotient * Self::QLL;
-                    Self::small_reduce(remainder as Self::Int)
+                    Self::small_reduce(Truncate::truncate(remainder))
                 }
             }
         };
@@ -401,6 +401,7 @@ pub mod util {
     }
 
     define_truncate!(u128, u32);
+    define_truncate!(u64, u32);
     define_truncate!(usize, u8);
     define_truncate!(usize, u16);
 
