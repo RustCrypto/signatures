@@ -1,142 +1,38 @@
+use crate::module_lattice::encode::*;
+use core::ops::Add;
 use hybrid_array::{typenum::*, Array};
 
 use crate::algebra::*;
-use crate::param::*;
-use crate::util::Truncate;
 
-pub type DecodedValue = Array<FieldElement, U256>;
+/// A pair of integers that describes a range
+pub trait RangeEncodingSize {
+    type Min: Unsigned;
+    type Max: Unsigned;
+    type EncodingSize: EncodingSize;
+}
 
-// Algorithm 16 SimpleBitPack
-fn simple_bit_pack<D>(vals: &DecodedValue) -> EncodedPolynomial<D>
+impl<A, B> RangeEncodingSize for (A, B)
 where
-    D: EncodingSize,
+    A: Unsigned + Add<B>,
+    B: Unsigned,
+    Sum<A, B>: Len,
+    Length<Sum<A, B>>: EncodingSize,
 {
-    let val_step = D::ValueStep::USIZE;
-    let byte_step = D::ByteStep::USIZE;
-
-    let mut bytes = EncodedPolynomial::<D>::default();
-
-    let vc = vals.chunks(val_step);
-    let bc = bytes.chunks_mut(byte_step);
-    for (v, b) in vc.zip(bc) {
-        let mut x = 0u128;
-        for (j, vj) in v.iter().enumerate() {
-            x |= u128::from(vj.0) << (D::USIZE * j);
-        }
-
-        let xb = x.to_le_bytes();
-        b.copy_from_slice(&xb[..byte_step]);
-    }
-
-    bytes
+    type Min = A;
+    type Max = B;
+    type EncodingSize = Length<Sum<A, B>>;
 }
 
-// Algorithm 18 SimpleBitUnpack
-fn simple_bit_unpack<D>(bytes: &EncodedPolynomial<D>) -> DecodedValue
-where
-    D: EncodingSize,
-{
-    let val_step = D::ValueStep::USIZE;
-    let byte_step = D::ByteStep::USIZE;
-    let mask = (1 << D::USIZE) - 1;
-
-    let mut vals = DecodedValue::default();
-
-    let vc = vals.chunks_mut(val_step);
-    let bc = bytes.chunks(byte_step);
-    for (v, b) in vc.zip(bc) {
-        let mut xb = [0u8; 16];
-        xb[..byte_step].copy_from_slice(b);
-
-        let x = u128::from_le_bytes(xb);
-        for (j, vj) in v.iter_mut().enumerate() {
-            let val: u128 = (x >> (D::USIZE * j)) & mask;
-            vj.0 = val.truncate();
-        }
-    }
-
-    vals
-}
-
-// Algorithm 17 BitPack
-fn bit_pack<A, B>(vals: &DecodedValue) -> RangeEncodedPolynomial<A, B>
-where
-    (A, B): RangeEncodingSize,
-{
-    let a = FieldElement::new(RangeMin::<A, B>::U32);
-    let b = FieldElement::new(RangeMax::<A, B>::U32);
-
-    let to_encode = vals
-        .iter()
-        .map(|w| {
-            assert!(w.0 <= b.0 || w.0 >= (-a).0);
-            b - *w
-        })
-        .collect();
-    simple_bit_pack::<RangeEncodingBits<A, B>>(&to_encode)
-}
-
-// Algorithm 17 BitPack
-fn bit_unpack<A, B>(bytes: &RangeEncodedPolynomial<A, B>) -> DecodedValue
-where
-    (A, B): RangeEncodingSize,
-{
-    let a = FieldElement::new(RangeMin::<A, B>::U32);
-    let b = FieldElement::new(RangeMax::<A, B>::U32);
-    let decoded = simple_bit_unpack::<RangeEncodingBits<A, B>>(bytes);
-    decoded
-        .iter()
-        .map(|z| {
-            assert!(z.0 <= (a + b).0);
-            b - *z
-        })
-        .collect()
-}
-
-/// SimpleBitPack
-pub trait SimpleBitPack<D> {
-    type PackedSize: ArraySize;
-    fn pack(&self) -> Array<u8, Self::PackedSize>;
-    fn unpack(enc: &Array<u8, Self::PackedSize>) -> Self;
-}
-
-impl<D> SimpleBitPack<D> for Polynomial
-where
-    D: EncodingSize,
-{
-    type PackedSize = D::EncodedPolynomialSize;
-
-    fn pack(&self) -> Array<u8, Self::PackedSize> {
-        simple_bit_pack::<D>(&self.0)
-    }
-
-    fn unpack(enc: &Array<u8, Self::PackedSize>) -> Self {
-        Self(simple_bit_unpack::<D>(enc))
-    }
-}
-
-impl<K, D> SimpleBitPack<D> for PolynomialVector<K>
-where
-    K: ArraySize,
-    D: VectorEncodingSize<K>,
-{
-    type PackedSize = D::EncodedPolynomialVectorSize;
-
-    fn pack(&self) -> Array<u8, Self::PackedSize> {
-        let polys = self.0.iter().map(|x| SimpleBitPack::<D>::pack(x)).collect();
-        D::flatten(polys)
-    }
-
-    fn unpack(enc: &Array<u8, Self::PackedSize>) -> Self {
-        let unfold = D::unflatten(enc);
-        Self(
-            unfold
-                .into_iter()
-                .map(|x| <Polynomial as SimpleBitPack<D>>::unpack(x))
-                .collect(),
-        )
-    }
-}
+pub type RangeMin<A, B> = <(A, B) as RangeEncodingSize>::Min;
+pub type RangeMax<A, B> = <(A, B) as RangeEncodingSize>::Max;
+pub type RangeEncodingBits<A, B> = <(A, B) as RangeEncodingSize>::EncodingSize;
+pub type RangeEncodedPolynomialSize<A, B> =
+    <RangeEncodingBits<A, B> as EncodingSize>::EncodedPolynomialSize;
+pub type RangeEncodedPolynomial<A, B> = Array<u8, RangeEncodedPolynomialSize<A, B>>;
+pub type RangeEncodedPolynomialVectorSize<A, B, K> =
+    <RangeEncodingBits<A, B> as VectorEncodingSize<K>>::EncodedPolynomialVectorSize;
+pub type RangeEncodedPolynomialVector<A, B, K> =
+    Array<u8, RangeEncodedPolynomialVectorSize<A, B, K>>;
 
 /// BitPack
 pub trait BitPack<A, B> {
@@ -149,14 +45,37 @@ impl<A, B> BitPack<A, B> for Polynomial
 where
     (A, B): RangeEncodingSize,
 {
-    type PackedSize = EncodedPolynomialSize<RangeEncodingBits<A, B>>;
+    type PackedSize = RangeEncodedPolynomialSize<A, B>;
 
-    fn pack(&self) -> Array<u8, Self::PackedSize> {
-        bit_pack::<A, B>(&self.0)
+    // Algorithm 17 BitPack
+    fn pack(&self) -> RangeEncodedPolynomial<A, B> {
+        let a = FieldElement::new(RangeMin::<A, B>::U32);
+        let b = FieldElement::new(RangeMax::<A, B>::U32);
+
+        let to_encode = Self::new(
+            self.0
+                .iter()
+                .map(|w| {
+                    assert!(w.0 <= b.0 || w.0 >= (-a).0);
+                    b - *w
+                })
+                .collect(),
+        );
+        Encode::<RangeEncodingBits<A, B>>::encode(&to_encode)
     }
 
-    fn unpack(enc: &Array<u8, Self::PackedSize>) -> Self {
-        Self(bit_unpack::<A, B>(enc))
+    // Algorithm 17 BitUnPack
+    fn unpack(enc: &RangeEncodedPolynomial<A, B>) -> Self {
+        let a = FieldElement::new(RangeMin::<A, B>::U32);
+        let b = FieldElement::new(RangeMax::<A, B>::U32);
+        let mut decoded: Self = Encode::<RangeEncodingBits<A, B>>::decode(enc);
+
+        for z in decoded.0.iter_mut() {
+            assert!(z.0 <= (a + b).0);
+            *z = b - *z
+        }
+
+        decoded
     }
 }
 
@@ -166,14 +85,14 @@ where
     (A, B): RangeEncodingSize,
     RangeEncodingBits<A, B>: VectorEncodingSize<K>,
 {
-    type PackedSize = EncodedPolynomialVectorSize<RangeEncodingBits<A, B>, K>;
+    type PackedSize = RangeEncodedPolynomialVectorSize<A, B, K>;
 
-    fn pack(&self) -> Array<u8, Self::PackedSize> {
+    fn pack(&self) -> RangeEncodedPolynomialVector<A, B, K> {
         let polys = self.0.iter().map(|x| BitPack::<A, B>::pack(x)).collect();
         RangeEncodingBits::<A, B>::flatten(polys)
     }
 
-    fn unpack(enc: &Array<u8, Self::PackedSize>) -> Self {
+    fn unpack(enc: &RangeEncodedPolynomialVector<A, B, K>) -> Self {
         let unfold = RangeEncodingBits::<A, B>::unflatten(enc);
         Self(
             unfold
@@ -217,10 +136,10 @@ pub(crate) mod test {
         D: EncodingSize,
     {
         // Test known answer
-        let actual_encoded = SimpleBitPack::<D>::pack(decoded);
+        let actual_encoded = Encode::<D>::encode(decoded);
         assert_eq!(actual_encoded, *encoded);
 
-        let actual_decoded: Polynomial = SimpleBitPack::<D>::unpack(encoded);
+        let actual_decoded: Polynomial = Encode::<D>::decode(encoded);
         assert_eq!(actual_decoded, *decoded);
 
         // Test random decode/encode and encode/decode round trips
@@ -230,11 +149,11 @@ pub(crate) mod test {
             FieldElement::new(x % (b + 1))
         }));
 
-        let actual_encoded = SimpleBitPack::<D>::pack(&decoded);
-        let actual_decoded: Polynomial = SimpleBitPack::<D>::unpack(&actual_encoded);
+        let actual_encoded = Encode::<D>::encode(&decoded);
+        let actual_decoded: Polynomial = Encode::<D>::decode(&actual_encoded);
         assert_eq!(actual_decoded, decoded);
 
-        let actual_reencoded = SimpleBitPack::<D>::pack(&decoded);
+        let actual_reencoded = Encode::<D>::encode(&decoded);
         assert_eq!(actual_reencoded, actual_encoded);
     }
 

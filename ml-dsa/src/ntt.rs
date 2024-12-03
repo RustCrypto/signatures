@@ -1,8 +1,8 @@
 use crate::module_lattice::algebra::Field;
+use crate::module_lattice::encode::ArraySize;
 use core::ops::Mul;
 
 use crate::algebra::*;
-use crate::param::ArraySize;
 
 // Since the powers of zeta used in the NTT and MultiplyNTTs are fixed, we use pre-computed tables
 // to avoid the need to compute the exponetiations at runtime.

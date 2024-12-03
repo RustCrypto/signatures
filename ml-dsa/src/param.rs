@@ -10,19 +10,14 @@
 //! know any details about object sizes.  For example, `VectorEncodingSize::flatten` needs to know
 //! that the size of an encoded vector is `K` times the size of an encoded polynomial.
 
-use core::fmt::Debug;
 use core::ops::{Add, Div, Mul, Rem, Sub};
 
+use crate::module_lattice::encode::*;
 use hybrid_array::{typenum::*, Array};
 
 use crate::algebra::{Polynomial, PolynomialVector};
-use crate::encode::{BitPack, SimpleBitPack};
-use crate::util::{Flatten, Unflatten, B32, B64};
-
-/// An array length with other useful properties
-pub trait ArraySize: hybrid_array::ArraySize + PartialEq + Debug {}
-
-impl<T> ArraySize for T where T: hybrid_array::ArraySize + PartialEq + Debug {}
+use crate::encode::*;
+use crate::util::{B32, B64};
 
 /// Some useful compile-time constants
 pub type SpecQ = Sum<Diff<Shleft<U1, U23>, Shleft<U1, U13>>, U1>;
@@ -51,58 +46,6 @@ impl SamplingSize for U4 {
     const ETA: Eta = Eta::Four;
 }
 
-/// An integer that can be used as a length for encoded values.
-pub trait EncodingSize: ArraySize {
-    type EncodedPolynomialSize: ArraySize;
-    type ValueStep: ArraySize;
-    type ByteStep: ArraySize;
-}
-
-type EncodingUnit<D> = Quot<Prod<D, U8>, Gcf<D, U8>>;
-
-pub type EncodedPolynomialSize<D> = <D as EncodingSize>::EncodedPolynomialSize;
-pub type EncodedPolynomial<D> = Array<u8, EncodedPolynomialSize<D>>;
-
-impl<D> EncodingSize for D
-where
-    D: ArraySize + Mul<U8> + Gcd<U8> + Mul<U32>,
-    Prod<D, U32>: ArraySize,
-    Prod<D, U8>: Div<Gcf<D, U8>>,
-    EncodingUnit<D>: Div<D> + Div<U8>,
-    Quot<EncodingUnit<D>, D>: ArraySize,
-    Quot<EncodingUnit<D>, U8>: ArraySize,
-{
-    type EncodedPolynomialSize = Prod<D, U32>;
-    type ValueStep = Quot<EncodingUnit<D>, D>;
-    type ByteStep = Quot<EncodingUnit<D>, U8>;
-}
-
-/// A pair of integers that describes a range
-pub trait RangeEncodingSize {
-    type Min: Unsigned;
-    type Max: Unsigned;
-    type EncodingSize: EncodingSize;
-}
-
-impl<A, B> RangeEncodingSize for (A, B)
-where
-    A: Unsigned + Add<B>,
-    B: Unsigned,
-    Sum<A, B>: Len,
-    Length<Sum<A, B>>: EncodingSize,
-{
-    type Min = A;
-    type Max = B;
-    type EncodingSize = Length<Sum<A, B>>;
-}
-
-pub type RangeMin<A, B> = <(A, B) as RangeEncodingSize>::Min;
-pub type RangeMax<A, B> = <(A, B) as RangeEncodingSize>::Max;
-pub type RangeEncodingBits<A, B> = <(A, B) as RangeEncodingSize>::EncodingSize;
-pub type RangeEncodedPolynomialSize<A, B> =
-    <RangeEncodingBits<A, B> as EncodingSize>::EncodedPolynomialSize;
-pub type RangeEncodedPolynomial<A, B> = Array<u8, RangeEncodedPolynomialSize<A, B>>;
-
 /// An integer that describes a mask sampling size
 pub trait MaskSamplingSize: Unsigned {
     type SampleSize: ArraySize;
@@ -119,40 +62,6 @@ where
 
     fn unpack(v: &Array<u8, Self::SampleSize>) -> Polynomial {
         BitPack::<Diff<G, U1>, G>::unpack(v)
-    }
-}
-
-/// An integer that can describe encoded vectors.
-pub trait VectorEncodingSize<K>: EncodingSize
-where
-    K: ArraySize,
-{
-    type EncodedPolynomialVectorSize: ArraySize;
-
-    fn flatten(polys: Array<EncodedPolynomial<Self>, K>) -> EncodedPolynomialVector<Self, K>;
-    fn unflatten(vec: &EncodedPolynomialVector<Self, K>) -> Array<&EncodedPolynomial<Self>, K>;
-}
-
-pub type EncodedPolynomialVectorSize<D, K> =
-    <D as VectorEncodingSize<K>>::EncodedPolynomialVectorSize;
-pub type EncodedPolynomialVector<D, K> = Array<u8, EncodedPolynomialVectorSize<D, K>>;
-
-impl<D, K> VectorEncodingSize<K> for D
-where
-    D: EncodingSize,
-    K: ArraySize,
-    D::EncodedPolynomialSize: Mul<K>,
-    Prod<D::EncodedPolynomialSize, K>:
-        ArraySize + Div<K, Output = D::EncodedPolynomialSize> + Rem<K, Output = U0>,
-{
-    type EncodedPolynomialVectorSize = Prod<D::EncodedPolynomialSize, K>;
-
-    fn flatten(polys: Array<EncodedPolynomial<Self>, K>) -> EncodedPolynomialVector<Self, K> {
-        polys.flatten()
-    }
-
-    fn unflatten(vec: &EncodedPolynomialVector<Self, K>) -> Array<&EncodedPolynomial<Self>, K> {
-        vec.unflatten()
     }
 }
 
@@ -281,16 +190,15 @@ where
             Output = Prod<U416, P::K>,
         >,
 {
-    type S1Size = EncodedPolynomialVectorSize<RangeEncodingBits<P::Eta, P::Eta>, P::L>;
-    type S2Size = EncodedPolynomialVectorSize<RangeEncodingBits<P::Eta, P::Eta>, P::K>;
-    type T0Size =
-        EncodedPolynomialVectorSize<RangeEncodingBits<Pow2DMinus1Minus1, Pow2DMinus1>, P::K>;
+    type S1Size = RangeEncodedPolynomialVectorSize<P::Eta, P::Eta, P::L>;
+    type S2Size = RangeEncodedPolynomialVectorSize<P::Eta, P::Eta, P::K>;
+    type T0Size = RangeEncodedPolynomialVectorSize<Pow2DMinus1Minus1, Pow2DMinus1, P::K>;
     type SigningKeySize = Sum<
         Sum<
-            Sum<U128, EncodedPolynomialVectorSize<RangeEncodingBits<P::Eta, P::Eta>, P::L>>,
-            EncodedPolynomialVectorSize<RangeEncodingBits<P::Eta, P::Eta>, P::K>,
+            Sum<U128, RangeEncodedPolynomialVectorSize<P::Eta, P::Eta, P::L>>,
+            RangeEncodedPolynomialVectorSize<P::Eta, P::Eta, P::K>,
         >,
-        EncodedPolynomialVectorSize<RangeEncodingBits<Pow2DMinus1Minus1, Pow2DMinus1>, P::K>,
+        RangeEncodedPolynomialVectorSize<Pow2DMinus1Minus1, Pow2DMinus1, P::K>,
     >;
 
     fn encode_s1(s1: &PolynomialVector<Self::L>) -> EncodedS1<Self> {
@@ -378,11 +286,11 @@ where
     type VerificationKeySize = Sum<U32, Self::T1Size>;
 
     fn encode_t1(t1: &PolynomialVector<P::K>) -> EncodedT1<Self> {
-        SimpleBitPack::<BitlenQMinusD>::pack(t1)
+        Encode::<BitlenQMinusD>::encode(t1)
     }
 
     fn decode_t1(enc: &EncodedT1<Self>) -> PolynomialVector<Self::K> {
-        SimpleBitPack::<BitlenQMinusD>::unpack(enc)
+        Encode::<BitlenQMinusD>::decode(enc)
     }
 
     fn concat_vk(rho: B32, t1: EncodedT1<Self>) -> EncodedVerificationKey<Self> {
@@ -468,7 +376,7 @@ where
         >,
 {
     type W1Size = EncodedPolynomialVectorSize<Self::W1Bits, P::K>;
-    type ZSize = Prod<RangeEncodedPolynomialSize<Diff<P::Gamma1, U1>, P::Gamma1>, P::L>;
+    type ZSize = RangeEncodedPolynomialVectorSize<Diff<P::Gamma1, U1>, P::Gamma1, P::L>;
     type HintSize = Sum<P::Omega, P::K>;
     type SignatureSize = Sum<Sum<P::Lambda, Self::ZSize>, Self::HintSize>;
 
@@ -480,11 +388,11 @@ where
     }
 
     fn encode_w1(w1: &PolynomialVector<Self::K>) -> EncodedW1<Self> {
-        SimpleBitPack::<Self::W1Bits>::pack(w1)
+        Encode::<Self::W1Bits>::encode(w1)
     }
 
     fn decode_w1(enc: &EncodedW1<Self>) -> PolynomialVector<Self::K> {
-        SimpleBitPack::<Self::W1Bits>::unpack(enc)
+        Encode::<Self::W1Bits>::decode(enc)
     }
 
     fn encode_z(z: &PolynomialVector<Self::L>) -> EncodedZ<Self> {

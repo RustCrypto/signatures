@@ -4,7 +4,7 @@ use sha3::{
     Shake128, Shake256,
 };
 
-use crate::param::ArraySize;
+use crate::module_lattice::encode::ArraySize;
 
 pub enum ShakeState<Shake: ExtendableOutput> {
     Absorbing(Shake),

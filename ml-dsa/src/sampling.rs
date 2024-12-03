@@ -1,9 +1,10 @@
+use crate::module_lattice::encode::ArraySize;
+use crate::module_lattice::util::Truncate;
 use hybrid_array::Array;
 
 use crate::algebra::*;
 use crate::crypto::{G, H};
-use crate::param::{ArraySize, Eta, MaskSamplingSize};
-use crate::util::Truncate;
+use crate::param::{Eta, MaskSamplingSize};
 
 // Algorithm 13 BytesToBits
 fn bit_set(z: &[u8], i: usize) -> bool {
@@ -160,10 +161,10 @@ where
     Gamma1: MaskSamplingSize,
 {
     PolynomialVector::new(Array::from_fn(|r| {
-        let r16: u16 = r.truncate();
+        let r: u16 = Truncate::truncate(r);
         let v = H::default()
             .absorb(rho)
-            .absorb(&(mu + r16).to_le_bytes())
+            .absorb(&(mu + r).to_le_bytes())
             .squeeze_new::<Gamma1::SampleSize>();
 
         Gamma1::unpack(&v)

@@ -1,3 +1,4 @@
+use crate::module_lattice::util::Truncate;
 use hybrid_array::{
     typenum::{Unsigned, U256},
     Array,
@@ -5,7 +6,6 @@ use hybrid_array::{
 
 use crate::algebra::*;
 use crate::param::*;
-use crate::util::Truncate;
 
 fn make_hint<Gamma2: Unsigned>(z: FieldElement, r: FieldElement) -> bool {
     let r1 = r.high_bits::<Gamma2>();
@@ -100,12 +100,12 @@ where
             let i_usize: usize = i.into();
             for j in 0..256 {
                 if self.0[i_usize][j] {
-                    y[index] = j.truncate();
+                    y[index] = Truncate::truncate(j);
                     index += 1
                 }
             }
 
-            y[omega + i_usize] = index.truncate();
+            y[omega + i_usize] = Truncate::truncate(index);
         }
 
         y
