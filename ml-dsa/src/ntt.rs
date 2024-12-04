@@ -16,7 +16,7 @@ use crate::algebra::*;
 // The values computed here match those provided in Appendix B of FIPS 204.  ZETA_POW_BITREV
 // corresponds to the first table, and GAMMA to the second table.
 #[allow(clippy::cast_possible_truncation)]
-const ZETA_POW_BITREV: [FieldElement; 256] = {
+const ZETA_POW_BITREV: [Elem; 256] = {
     const ZETA: u64 = 1753;
     #[allow(clippy::integer_division_remainder_used)]
     const fn bitrev8(x: usize) -> usize {
@@ -24,12 +24,12 @@ const ZETA_POW_BITREV: [FieldElement; 256] = {
     }
 
     // Compute the powers of zeta
-    let mut pow = [FieldElement::new(0); 256];
+    let mut pow = [Elem::new(0); 256];
     let mut i = 0;
     let mut curr = 1u64;
     #[allow(clippy::integer_division_remainder_used)]
     while i < 256 {
-        pow[i] = FieldElement::new(curr as u32);
+        pow[i] = Elem::new(curr as u32);
         i += 1;
         curr = (curr * ZETA) % BaseField::QL;
     }
@@ -37,7 +37,7 @@ const ZETA_POW_BITREV: [FieldElement; 256] = {
     // Reorder the powers according to bitrev8
     // Note that entry 0 is left as zero, in order to match the `zetas` array in the
     // specification.
-    let mut pow_bitrev = [FieldElement::new(0); 256];
+    let mut pow_bitrev = [Elem::new(0); 256];
     let mut i = 1;
     while i < 256 {
         pow_bitrev[i] = pow[bitrev8(i)];
@@ -76,7 +76,7 @@ impl Ntt for Polynomial {
     }
 }
 
-impl<K: ArraySize> Ntt for PolynomialVector<K> {
+impl<K: ArraySize> Ntt for Vector<K> {
     type Output = NttVector<K>;
 
     fn ntt(&self) -> Self::Output {
@@ -110,15 +110,15 @@ impl NttInverse for NttPolynomial {
             }
         }
 
-        FieldElement::new(8347681) * &Polynomial::new(w)
+        Elem::new(8347681) * &Polynomial::new(w)
     }
 }
 
 impl<K: ArraySize> NttInverse for NttVector<K> {
-    type Output = PolynomialVector<K>;
+    type Output = Vector<K>;
 
     fn ntt_inverse(&self) -> Self::Output {
-        PolynomialVector::new(self.0.iter().map(NttPolynomial::ntt_inverse).collect())
+        Vector::new(self.0.iter().map(NttPolynomial::ntt_inverse).collect())
     }
 }
 
@@ -154,9 +154,9 @@ mod test {
             for (i, x) in self.0.iter().enumerate() {
                 for (j, y) in rhs.0.iter().enumerate() {
                     let (sign, index) = if i + j < 256 {
-                        (FieldElement::new(1), i + j)
+                        (Elem::new(1), i + j)
                     } else {
-                        (FieldElement::new(BaseField::Q - 1), i + j - 256)
+                        (Elem::new(BaseField::Q - 1), i + j - 256)
                     };
 
                     out.0[index] = out.0[index] + (sign * *x * *y);
@@ -169,14 +169,14 @@ mod test {
     // A polynomial with only a scalar component, to make simple test cases
     fn const_ntt(x: Int) -> NttPolynomial {
         let mut p = Polynomial::default();
-        p.0[0] = FieldElement::new(x);
+        p.0[0] = Elem::new(x);
         p.ntt()
     }
 
     #[test]
     fn ntt() {
-        let f = Polynomial::new(Array::from_fn(|i| FieldElement::new(i as Int)));
-        let g = Polynomial::new(Array::from_fn(|i| FieldElement::new((2 * i) as Int)));
+        let f = Polynomial::new(Array::from_fn(|i| Elem::new(i as Int)));
+        let g = Polynomial::new(Array::from_fn(|i| Elem::new((2 * i) as Int)));
         let f_hat = f.ntt();
         let g_hat = g.ntt();
 

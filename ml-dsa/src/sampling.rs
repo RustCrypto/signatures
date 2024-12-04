@@ -14,7 +14,7 @@ fn bit_set(z: &[u8], i: usize) -> bool {
 }
 
 // Algorithm 14 CoeffFromThreeBytes
-fn coeff_from_three_bytes(b: &[u8; 3]) -> Option<FieldElement> {
+fn coeff_from_three_bytes(b: &[u8; 3]) -> Option<Elem> {
     let b0: Int = b[0].into();
     let b1: Int = b[1].into();
     let b2: Int = b[2].into();
@@ -22,33 +22,33 @@ fn coeff_from_three_bytes(b: &[u8; 3]) -> Option<FieldElement> {
     let b2p = if b2 > 127 { b2 - 128 } else { b2 };
 
     let z = (b2p << 16) + (b1 << 8) + b0;
-    (z < BaseField::Q).then_some(FieldElement::new(z))
+    (z < BaseField::Q).then_some(Elem::new(z))
 }
 
 // Algorithm 15 CoeffFromHalfByte
-fn coeff_from_half_byte(b: u8, eta: Eta) -> Option<FieldElement> {
+fn coeff_from_half_byte(b: u8, eta: Eta) -> Option<Elem> {
     match eta {
         Eta::Two if b < 15 => {
             let b = (Int::from(b)) % 5;
             if b <= 2 {
-                Some(FieldElement::new(2 - b))
+                Some(Elem::new(2 - b))
             } else {
-                Some(-FieldElement::new(b - 2))
+                Some(-Elem::new(b - 2))
             }
         }
         Eta::Four if b < 9 => {
             let b = Int::from(b);
             if b <= 4 {
-                Some(FieldElement::new(4 - b))
+                Some(Elem::new(4 - b))
             } else {
-                Some(-FieldElement::new(b - 4))
+                Some(-Elem::new(b - 4))
             }
         }
         _ => None,
     }
 }
 
-fn coeffs_from_byte(z: u8, eta: Eta) -> (Option<FieldElement>, Option<FieldElement>) {
+fn coeffs_from_byte(z: u8, eta: Eta) -> (Option<Elem>, Option<Elem>) {
     (
         coeff_from_half_byte(z & 0x0F, eta),
         coeff_from_half_byte(z >> 4, eta),
@@ -57,8 +57,8 @@ fn coeffs_from_byte(z: u8, eta: Eta) -> (Option<FieldElement>, Option<FieldEleme
 
 // Algorithm 29 SampleInBall
 pub fn sample_in_ball(rho: &[u8], tau: usize) -> Polynomial {
-    const ONE: FieldElement = FieldElement::new(1);
-    const MINUS_ONE: FieldElement = FieldElement::new(BaseField::Q - 1);
+    const ONE: Elem = Elem::new(1);
+    const MINUS_ONE: Elem = Elem::new(BaseField::Q - 1);
 
     let mut c = Polynomial::default();
     let mut ctx = H::default().absorb(rho);
@@ -147,22 +147,22 @@ pub fn expand_a<K: ArraySize, L: ArraySize>(rho: &[u8]) -> NttMatrix<K, L> {
 // We only do half of the algorithm here, because it's inconvenient to return two vectors of
 // different sizes.  So the caller has to call twice:
 //
-//    let s1 = PolynomialVector::<K>::expand_s(rho, 0);
-//    let s2 = PolynomialVector::<L>::expand_s(rho, L::USIZE);
-pub fn expand_s<K: ArraySize>(rho: &[u8], eta: Eta, base: usize) -> PolynomialVector<K> {
-    PolynomialVector::new(Array::from_fn(|r| {
+//    let s1 = Vector::<K>::expand_s(rho, 0);
+//    let s2 = Vector::<L>::expand_s(rho, L::USIZE);
+pub fn expand_s<K: ArraySize>(rho: &[u8], eta: Eta, base: usize) -> Vector<K> {
+    Vector::new(Array::from_fn(|r| {
         let r = Truncate::truncate(r + base);
         rej_bounded_poly(rho, eta, r)
     }))
 }
 
 // Algorithm 34 ExpandMask
-pub fn expand_mask<K, Gamma1>(rho: &[u8], mu: u16) -> PolynomialVector<K>
+pub fn expand_mask<K, Gamma1>(rho: &[u8], mu: u16) -> Vector<K>
 where
     K: ArraySize,
     Gamma1: MaskSamplingSize,
 {
-    PolynomialVector::new(Array::from_fn(|r| {
+    Vector::new(Array::from_fn(|r| {
         let r: u16 = Truncate::truncate(r);
         let v = H::default()
             .absorb(rho)
@@ -208,7 +208,7 @@ mod test {
     // For the "roughly unform" criterion,
     #[test]
     fn test_rej_ntt_poly() {
-        let sample: Array<Array<FieldElement, U256>, U16> = Array::from_fn(|i| {
+        let sample: Array<Array<Elem, U256>, U16> = Array::from_fn(|i| {
             let i = i as u8;
             let rho = [i; 32];
             rej_ntt_poly(&rho, i, i + 1).0
@@ -230,7 +230,7 @@ mod test {
         let sample = rej_bounded_poly(&rho, Eta::Two, 0).0;
         let all_in_range = sample
             .iter()
-            .map(|x| *x + FieldElement::new(2))
+            .map(|x| *x + Elem::new(2))
             .all(|x| x.0 < 5);
         assert!(all_in_range);
         // TODO measure uniformity
@@ -239,7 +239,7 @@ mod test {
         let sample = rej_bounded_poly(&rho, Eta::Four, 0).0;
         let all_in_range = sample
             .iter()
-            .map(|x| *x + FieldElement::new(4))
+            .map(|x| *x + Elem::new(4))
             .all(|x| x.0 < 9);
         assert!(all_in_range);
         // TODO measure uniformity

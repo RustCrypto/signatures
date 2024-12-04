@@ -9,9 +9,9 @@ define_field!(BaseField, u32, u64, u128, 8380417);
 
 pub type Int = <BaseField as Field>::Int;
 
-pub type FieldElement = algebra::Elem<BaseField>;
+pub type Elem = algebra::Elem<BaseField>;
 pub type Polynomial = algebra::Polynomial<BaseField>;
-pub type PolynomialVector<K> = algebra::PolynomialVector<BaseField, K>;
+pub type Vector<K> = algebra::Vector<BaseField, K>;
 pub type NttPolynomial = algebra::NttPolynomial<BaseField>;
 pub type NttVector<K> = algebra::NttVector<BaseField, K>;
 pub type NttMatrix<K, L> = algebra::NttMatrix<BaseField, K, L>;
@@ -46,17 +46,17 @@ where
 }
 
 pub trait Decompose {
-    fn decompose<TwoGamma2: Unsigned>(self) -> (FieldElement, FieldElement);
+    fn decompose<TwoGamma2: Unsigned>(self) -> (Elem, Elem);
 }
 
-impl Decompose for FieldElement {
+impl Decompose for Elem {
     // Algorithm 36 Decompose
-    fn decompose<TwoGamma2: Unsigned>(self) -> (FieldElement, FieldElement) {
+    fn decompose<TwoGamma2: Unsigned>(self) -> (Elem, Elem) {
         let r_plus = self.clone();
         let r0 = r_plus.mod_plus_minus::<TwoGamma2>();
 
-        if r_plus - r0 == FieldElement::new(BaseField::Q - 1) {
-            (FieldElement::new(0), r0 - FieldElement::new(1))
+        if r_plus - r0 == Elem::new(BaseField::Q - 1) {
+            (Elem::new(0), r0 - Elem::new(1))
         } else {
             let mut r1 = r_plus - r0;
             r1.0 /= TwoGamma2::U32;
@@ -73,13 +73,13 @@ pub trait AlgebraExt: Sized {
     fn low_bits<TwoGamma2: Unsigned>(&self) -> Self;
 }
 
-impl AlgebraExt for FieldElement {
+impl AlgebraExt for Elem {
     fn mod_plus_minus<M: Unsigned>(&self) -> Self {
-        let raw_mod = FieldElement::new(M::reduce(self.0));
+        let raw_mod = Elem::new(M::reduce(self.0));
         if raw_mod.0 <= M::U32 >> 1 {
             raw_mod
         } else {
-            raw_mod - FieldElement::new(M::U32)
+            raw_mod - Elem::new(M::U32)
         }
     }
 
@@ -111,7 +111,7 @@ impl AlgebraExt for FieldElement {
 
         let r_plus = self.clone();
         let r0 = r_plus.mod_plus_minus::<Pow2D>();
-        let r1 = FieldElement::new((r_plus - r0).0 >> D::USIZE);
+        let r1 = Elem::new((r_plus - r0).0 >> D::USIZE);
 
         (r1, r0)
     }
@@ -156,7 +156,7 @@ impl AlgebraExt for Polynomial {
     }
 }
 
-impl<K: ArraySize> AlgebraExt for PolynomialVector<K> {
+impl<K: ArraySize> AlgebraExt for Vector<K> {
     fn mod_plus_minus<M: Unsigned>(&self) -> Self {
         Self(self.0.iter().map(|x| x.mod_plus_minus::<M>()).collect())
     }

@@ -29,10 +29,10 @@ pub type RangeEncodingBits<A, B> = <(A, B) as RangeEncodingSize>::EncodingSize;
 pub type RangeEncodedPolynomialSize<A, B> =
     <RangeEncodingBits<A, B> as EncodingSize>::EncodedPolynomialSize;
 pub type RangeEncodedPolynomial<A, B> = Array<u8, RangeEncodedPolynomialSize<A, B>>;
-pub type RangeEncodedPolynomialVectorSize<A, B, K> =
-    <RangeEncodingBits<A, B> as VectorEncodingSize<K>>::EncodedPolynomialVectorSize;
-pub type RangeEncodedPolynomialVector<A, B, K> =
-    Array<u8, RangeEncodedPolynomialVectorSize<A, B, K>>;
+pub type RangeEncodedVectorSize<A, B, K> =
+    <RangeEncodingBits<A, B> as VectorEncodingSize<K>>::EncodedVectorSize;
+pub type RangeEncodedVector<A, B, K> =
+    Array<u8, RangeEncodedVectorSize<A, B, K>>;
 
 /// BitPack
 pub trait BitPack<A, B> {
@@ -49,8 +49,8 @@ where
 
     // Algorithm 17 BitPack
     fn pack(&self) -> RangeEncodedPolynomial<A, B> {
-        let a = FieldElement::new(RangeMin::<A, B>::U32);
-        let b = FieldElement::new(RangeMax::<A, B>::U32);
+        let a = Elem::new(RangeMin::<A, B>::U32);
+        let b = Elem::new(RangeMax::<A, B>::U32);
 
         let to_encode = Self::new(
             self.0
@@ -66,8 +66,8 @@ where
 
     // Algorithm 17 BitUnPack
     fn unpack(enc: &RangeEncodedPolynomial<A, B>) -> Self {
-        let a = FieldElement::new(RangeMin::<A, B>::U32);
-        let b = FieldElement::new(RangeMax::<A, B>::U32);
+        let a = Elem::new(RangeMin::<A, B>::U32);
+        let b = Elem::new(RangeMax::<A, B>::U32);
         let mut decoded: Self = Encode::<RangeEncodingBits<A, B>>::decode(enc);
 
         for z in decoded.0.iter_mut() {
@@ -79,20 +79,20 @@ where
     }
 }
 
-impl<K, A, B> BitPack<A, B> for PolynomialVector<K>
+impl<K, A, B> BitPack<A, B> for Vector<K>
 where
     K: ArraySize,
     (A, B): RangeEncodingSize,
     RangeEncodingBits<A, B>: VectorEncodingSize<K>,
 {
-    type PackedSize = RangeEncodedPolynomialVectorSize<A, B, K>;
+    type PackedSize = RangeEncodedVectorSize<A, B, K>;
 
-    fn pack(&self) -> RangeEncodedPolynomialVector<A, B, K> {
+    fn pack(&self) -> RangeEncodedVector<A, B, K> {
         let polys = self.0.iter().map(|x| BitPack::<A, B>::pack(x)).collect();
         RangeEncodingBits::<A, B>::flatten(polys)
     }
 
-    fn unpack(enc: &RangeEncodedPolynomialVector<A, B, K>) -> Self {
+    fn unpack(enc: &RangeEncodedVector<A, B, K>) -> Self {
         let unfold = RangeEncodingBits::<A, B>::unflatten(enc);
         Self(
             unfold
@@ -146,7 +146,7 @@ pub(crate) mod test {
         let mut rng = rand::thread_rng();
         let decoded = Polynomial::new(Array::from_fn(|_| {
             let x: u32 = rng.gen();
-            FieldElement::new(x % (b + 1))
+            Elem::new(x % (b + 1))
         }));
 
         let actual_encoded = Encode::<D>::encode(&decoded);
@@ -162,14 +162,14 @@ pub(crate) mod test {
         // Use a standard test pattern across all the cases
         let decoded = Polynomial::new(
             Array::<_, U8>([
-                FieldElement::new(0),
-                FieldElement::new(1),
-                FieldElement::new(2),
-                FieldElement::new(3),
-                FieldElement::new(4),
-                FieldElement::new(5),
-                FieldElement::new(6),
-                FieldElement::new(7),
+                Elem::new(0),
+                Elem::new(1),
+                Elem::new(2),
+                Elem::new(3),
+                Elem::new(4),
+                Elem::new(5),
+                Elem::new(6),
+                Elem::new(7),
             ])
             .repeat(),
         );
@@ -205,8 +205,8 @@ pub(crate) mod test {
         B: Unsigned,
         (A, B): RangeEncodingSize,
     {
-        let a = FieldElement::new(A::U32);
-        let b = FieldElement::new(B::U32);
+        let a = Elem::new(A::U32);
+        let b = Elem::new(B::U32);
 
         // Test known answer
         let actual_encoded = BitPack::<A, B>::pack(decoded);
@@ -220,7 +220,7 @@ pub(crate) mod test {
         let decoded = Polynomial::new(Array::from_fn(|_| {
             let mut x: u32 = rng.gen();
             x = x % (a.0 + b.0);
-            b - FieldElement::new(x)
+            b - Elem::new(x)
         }));
 
         let actual_encoded = BitPack::<A, B>::pack(&decoded);
@@ -237,10 +237,10 @@ pub(crate) mod test {
         // (We can't use -2 because the eta=2 case doesn't actually cover -2)
         let decoded = Polynomial::new(
             Array::<_, U4>([
-                FieldElement::new(BaseField::Q - 1),
-                FieldElement::new(0),
-                FieldElement::new(1),
-                FieldElement::new(2),
+                Elem::new(BaseField::Q - 1),
+                Elem::new(0),
+                Elem::new(1),
+                Elem::new(2),
             ])
             .repeat(),
         );

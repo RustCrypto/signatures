@@ -176,22 +176,22 @@ pub mod algebra {
         }
     }
 
-    /// A `PolynomialVector` is a vector of polynomials from `R_q` of length `K`.  Vectors can be
+    /// A `Vector` is a vector of polynomials from `R_q` of length `K`.  Vectors can be
     /// added, subtracted, negated, and multiplied by field elements.
     #[derive(Clone, Default, Debug, PartialEq)]
-    pub struct PolynomialVector<F: Field, K: ArraySize>(pub Array<Polynomial<F>, K>);
+    pub struct Vector<F: Field, K: ArraySize>(pub Array<Polynomial<F>, K>);
 
-    impl<F: Field, K: ArraySize> PolynomialVector<F, K> {
+    impl<F: Field, K: ArraySize> Vector<F, K> {
         pub const fn new(x: Array<Polynomial<F>, K>) -> Self {
             Self(x)
         }
     }
 
-    impl<F: Field, K: ArraySize> Add<&PolynomialVector<F, K>> for &PolynomialVector<F, K> {
-        type Output = PolynomialVector<F, K>;
+    impl<F: Field, K: ArraySize> Add<&Vector<F, K>> for &Vector<F, K> {
+        type Output = Vector<F, K>;
 
-        fn add(self, rhs: &PolynomialVector<F, K>) -> PolynomialVector<F, K> {
-            PolynomialVector(
+        fn add(self, rhs: &Vector<F, K>) -> Vector<F, K> {
+            Vector(
                 self.0
                     .iter()
                     .zip(rhs.0.iter())
@@ -201,11 +201,11 @@ pub mod algebra {
         }
     }
 
-    impl<F: Field, K: ArraySize> Sub<&PolynomialVector<F, K>> for &PolynomialVector<F, K> {
-        type Output = PolynomialVector<F, K>;
+    impl<F: Field, K: ArraySize> Sub<&Vector<F, K>> for &Vector<F, K> {
+        type Output = Vector<F, K>;
 
-        fn sub(self, rhs: &PolynomialVector<F, K>) -> PolynomialVector<F, K> {
-            PolynomialVector(
+        fn sub(self, rhs: &Vector<F, K>) -> Vector<F, K> {
+            Vector(
                 self.0
                     .iter()
                     .zip(rhs.0.iter())
@@ -215,19 +215,19 @@ pub mod algebra {
         }
     }
 
-    impl<F: Field, K: ArraySize> Mul<&PolynomialVector<F, K>> for Elem<F> {
-        type Output = PolynomialVector<F, K>;
+    impl<F: Field, K: ArraySize> Mul<&Vector<F, K>> for Elem<F> {
+        type Output = Vector<F, K>;
 
-        fn mul(self, rhs: &PolynomialVector<F, K>) -> PolynomialVector<F, K> {
-            PolynomialVector(rhs.0.iter().map(|x| self * x).collect())
+        fn mul(self, rhs: &Vector<F, K>) -> Vector<F, K> {
+            Vector(rhs.0.iter().map(|x| self * x).collect())
         }
     }
 
-    impl<F: Field, K: ArraySize> Neg for &PolynomialVector<F, K> {
-        type Output = PolynomialVector<F, K>;
+    impl<F: Field, K: ArraySize> Neg for &Vector<F, K> {
+        type Output = Vector<F, K>;
 
-        fn neg(self) -> PolynomialVector<F, K> {
-            PolynomialVector(self.0.iter().map(|x| -x).collect())
+        fn neg(self) -> Vector<F, K> {
+            Vector(self.0.iter().map(|x| -x).collect())
         }
     }
 
@@ -578,15 +578,15 @@ pub mod encode {
     where
         K: ArraySize,
     {
-        type EncodedPolynomialVectorSize: ArraySize;
+        type EncodedVectorSize: ArraySize;
 
-        fn flatten(polys: Array<EncodedPolynomial<Self>, K>) -> EncodedPolynomialVector<Self, K>;
-        fn unflatten(vec: &EncodedPolynomialVector<Self, K>) -> Array<&EncodedPolynomial<Self>, K>;
+        fn flatten(polys: Array<EncodedPolynomial<Self>, K>) -> EncodedVector<Self, K>;
+        fn unflatten(vec: &EncodedVector<Self, K>) -> Array<&EncodedPolynomial<Self>, K>;
     }
 
-    pub type EncodedPolynomialVectorSize<D, K> =
-        <D as VectorEncodingSize<K>>::EncodedPolynomialVectorSize;
-    pub type EncodedPolynomialVector<D, K> = Array<u8, EncodedPolynomialVectorSize<D, K>>;
+    pub type EncodedVectorSize<D, K> =
+        <D as VectorEncodingSize<K>>::EncodedVectorSize;
+    pub type EncodedVector<D, K> = Array<u8, EncodedVectorSize<D, K>>;
 
     impl<D, K> VectorEncodingSize<K> for D
     where
@@ -596,13 +596,13 @@ pub mod encode {
         Prod<D::EncodedPolynomialSize, K>:
             ArraySize + Div<K, Output = D::EncodedPolynomialSize> + Rem<K, Output = U0>,
     {
-        type EncodedPolynomialVectorSize = Prod<D::EncodedPolynomialSize, K>;
+        type EncodedVectorSize = Prod<D::EncodedPolynomialSize, K>;
 
-        fn flatten(polys: Array<EncodedPolynomial<Self>, K>) -> EncodedPolynomialVector<Self, K> {
+        fn flatten(polys: Array<EncodedPolynomial<Self>, K>) -> EncodedVector<Self, K> {
             polys.flatten()
         }
 
-        fn unflatten(vec: &EncodedPolynomialVector<Self, K>) -> Array<&EncodedPolynomial<Self>, K> {
+        fn unflatten(vec: &EncodedVector<Self, K>) -> Array<&EncodedPolynomial<Self>, K> {
             vec.unflatten()
         }
     }
@@ -679,13 +679,13 @@ pub mod encode {
         }
     }
 
-    impl<F, D, K> Encode<D> for PolynomialVector<F, K>
+    impl<F, D, K> Encode<D> for Vector<F, K>
     where
         F: Field,
         K: ArraySize,
         D: VectorEncodingSize<K>,
     {
-        type EncodedSize = D::EncodedPolynomialVectorSize;
+        type EncodedSize = D::EncodedVectorSize;
 
         fn encode(&self) -> Array<u8, Self::EncodedSize> {
             let polys = self.0.iter().map(|x| Encode::<D>::encode(x)).collect();
@@ -721,7 +721,7 @@ pub mod encode {
         D: VectorEncodingSize<K>,
         K: ArraySize,
     {
-        type EncodedSize = D::EncodedPolynomialVectorSize;
+        type EncodedSize = D::EncodedVectorSize;
 
         fn encode(&self) -> Array<u8, Self::EncodedSize> {
             let polys = self.0.iter().map(|x| Encode::<D>::encode(x)).collect();

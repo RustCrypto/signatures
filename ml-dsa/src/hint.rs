@@ -7,22 +7,22 @@ use hybrid_array::{
 use crate::algebra::*;
 use crate::param::*;
 
-fn make_hint<TwoGamma2: Unsigned>(z: FieldElement, r: FieldElement) -> bool {
+fn make_hint<TwoGamma2: Unsigned>(z: Elem, r: Elem) -> bool {
     let r1 = r.high_bits::<TwoGamma2>();
     let v1 = (r + z).high_bits::<TwoGamma2>();
     r1 != v1
 }
 
-fn use_hint<TwoGamma2: Unsigned>(h: bool, r: FieldElement) -> FieldElement {
+fn use_hint<TwoGamma2: Unsigned>(h: bool, r: Elem) -> Elem {
     let m: u32 = (BaseField::Q - 1) / TwoGamma2::U32;
     let (r1, r0) = r.decompose::<TwoGamma2>();
     let gamma2 = TwoGamma2::U32 / 2;
     if h && r0.0 <= gamma2 {
-        FieldElement::new((r1.0 + 1) % m)
+        Elem::new((r1.0 + 1) % m)
     } else if h && r0.0 > BaseField::Q - gamma2 {
-        FieldElement::new((r1.0 + m - 1) % m)
+        Elem::new((r1.0 + m - 1) % m)
     } else if h {
-        // We use the FieldElement encoding even for signed integers.  Since r0 is computed
+        // We use the Elem encoding even for signed integers.  Since r0 is computed
         // mod+- 2*gamma2, it is guaranteed to be in (gamma2, gamma2].
         unreachable!();
     } else {
@@ -48,7 +48,7 @@ impl<P> Hint<P>
 where
     P: SignatureParams,
 {
-    pub fn new(z: PolynomialVector<P::K>, r: PolynomialVector<P::K>) -> Self {
+    pub fn new(z: Vector<P::K>, r: Vector<P::K>) -> Self {
         let zi = z.0.iter();
         let ri = r.0.iter();
 
@@ -73,11 +73,11 @@ where
             .sum()
     }
 
-    pub fn use_hint(&self, r: &PolynomialVector<P::K>) -> PolynomialVector<P::K> {
+    pub fn use_hint(&self, r: &Vector<P::K>) -> Vector<P::K> {
         let hi = self.0.iter();
         let ri = r.0.iter();
 
-        PolynomialVector::new(
+        Vector::new(
             hi.zip(ri)
                 .map(|(hv, rv)| {
                     let hvi = hv.iter();

@@ -15,7 +15,7 @@ use core::ops::{Add, Div, Mul, Rem, Sub};
 use crate::module_lattice::encode::*;
 use hybrid_array::{typenum::*, Array};
 
-use crate::algebra::{Polynomial, PolynomialVector};
+use crate::algebra::{Polynomial, Vector};
 use crate::encode::*;
 use crate::util::{B32, B64};
 
@@ -105,14 +105,14 @@ pub trait SigningKeyParams: ParameterSet {
     type T0Size: ArraySize;
     type SigningKeySize: ArraySize;
 
-    fn encode_s1(s1: &PolynomialVector<Self::L>) -> EncodedS1<Self>;
-    fn decode_s1(enc: &EncodedS1<Self>) -> PolynomialVector<Self::L>;
+    fn encode_s1(s1: &Vector<Self::L>) -> EncodedS1<Self>;
+    fn decode_s1(enc: &EncodedS1<Self>) -> Vector<Self::L>;
 
-    fn encode_s2(s2: &PolynomialVector<Self::K>) -> EncodedS2<Self>;
-    fn decode_s2(enc: &EncodedS2<Self>) -> PolynomialVector<Self::K>;
+    fn encode_s2(s2: &Vector<Self::K>) -> EncodedS2<Self>;
+    fn decode_s2(enc: &EncodedS2<Self>) -> Vector<Self::K>;
 
-    fn encode_t0(t0: &PolynomialVector<Self::K>) -> EncodedT0<Self>;
-    fn decode_t0(enc: &EncodedT0<Self>) -> PolynomialVector<Self::K>;
+    fn encode_t0(t0: &Vector<Self::K>) -> EncodedT0<Self>;
+    fn decode_t0(enc: &EncodedT0<Self>) -> Vector<Self::K>;
 
     fn concat_sk(
         rho: B32,
@@ -190,38 +190,38 @@ where
             Output = Prod<U416, P::K>,
         >,
 {
-    type S1Size = RangeEncodedPolynomialVectorSize<P::Eta, P::Eta, P::L>;
-    type S2Size = RangeEncodedPolynomialVectorSize<P::Eta, P::Eta, P::K>;
-    type T0Size = RangeEncodedPolynomialVectorSize<Pow2DMinus1Minus1, Pow2DMinus1, P::K>;
+    type S1Size = RangeEncodedVectorSize<P::Eta, P::Eta, P::L>;
+    type S2Size = RangeEncodedVectorSize<P::Eta, P::Eta, P::K>;
+    type T0Size = RangeEncodedVectorSize<Pow2DMinus1Minus1, Pow2DMinus1, P::K>;
     type SigningKeySize = Sum<
         Sum<
-            Sum<U128, RangeEncodedPolynomialVectorSize<P::Eta, P::Eta, P::L>>,
-            RangeEncodedPolynomialVectorSize<P::Eta, P::Eta, P::K>,
+            Sum<U128, RangeEncodedVectorSize<P::Eta, P::Eta, P::L>>,
+            RangeEncodedVectorSize<P::Eta, P::Eta, P::K>,
         >,
-        RangeEncodedPolynomialVectorSize<Pow2DMinus1Minus1, Pow2DMinus1, P::K>,
+        RangeEncodedVectorSize<Pow2DMinus1Minus1, Pow2DMinus1, P::K>,
     >;
 
-    fn encode_s1(s1: &PolynomialVector<Self::L>) -> EncodedS1<Self> {
+    fn encode_s1(s1: &Vector<Self::L>) -> EncodedS1<Self> {
         BitPack::<P::Eta, P::Eta>::pack(s1)
     }
 
-    fn decode_s1(enc: &EncodedS1<Self>) -> PolynomialVector<Self::L> {
+    fn decode_s1(enc: &EncodedS1<Self>) -> Vector<Self::L> {
         BitPack::<P::Eta, P::Eta>::unpack(enc)
     }
 
-    fn encode_s2(s2: &PolynomialVector<Self::K>) -> EncodedS2<Self> {
+    fn encode_s2(s2: &Vector<Self::K>) -> EncodedS2<Self> {
         BitPack::<P::Eta, P::Eta>::pack(s2)
     }
 
-    fn decode_s2(enc: &EncodedS2<Self>) -> PolynomialVector<Self::K> {
+    fn decode_s2(enc: &EncodedS2<Self>) -> Vector<Self::K> {
         BitPack::<P::Eta, P::Eta>::unpack(enc)
     }
 
-    fn encode_t0(t0: &PolynomialVector<Self::K>) -> EncodedT0<Self> {
+    fn encode_t0(t0: &Vector<Self::K>) -> EncodedT0<Self> {
         BitPack::<Pow2DMinus1Minus1, Pow2DMinus1>::pack(t0)
     }
 
-    fn decode_t0(enc: &EncodedT0<Self>) -> PolynomialVector<Self::K> {
+    fn decode_t0(enc: &EncodedT0<Self>) -> Vector<Self::K> {
         BitPack::<Pow2DMinus1Minus1, Pow2DMinus1>::unpack(enc)
     }
 
@@ -259,8 +259,8 @@ pub trait VerificationKeyParams: ParameterSet {
     type T1Size: ArraySize;
     type VerificationKeySize: ArraySize;
 
-    fn encode_t1(t1: &PolynomialVector<Self::K>) -> EncodedT1<Self>;
-    fn decode_t1(enc: &EncodedT1<Self>) -> PolynomialVector<Self::K>;
+    fn encode_t1(t1: &Vector<Self::K>) -> EncodedT1<Self>;
+    fn decode_t1(enc: &EncodedT1<Self>) -> Vector<Self::K>;
 
     fn concat_vk(rho: B32, t1: EncodedT1<Self>) -> EncodedVerificationKey<Self>;
     fn split_vk(enc: &EncodedVerificationKey<Self>) -> (&B32, &EncodedT1<Self>);
@@ -282,14 +282,14 @@ where
     Sum<U32, U32>: ArraySize,
     Sum<U32, Prod<U320, P::K>>: ArraySize + Sub<U32, Output = Prod<U320, P::K>>,
 {
-    type T1Size = EncodedPolynomialVectorSize<BitlenQMinusD, P::K>;
+    type T1Size = EncodedVectorSize<BitlenQMinusD, P::K>;
     type VerificationKeySize = Sum<U32, Self::T1Size>;
 
-    fn encode_t1(t1: &PolynomialVector<P::K>) -> EncodedT1<Self> {
+    fn encode_t1(t1: &Vector<P::K>) -> EncodedT1<Self> {
         Encode::<BitlenQMinusD>::encode(t1)
     }
 
-    fn decode_t1(enc: &EncodedT1<Self>) -> PolynomialVector<Self::K> {
+    fn decode_t1(enc: &EncodedT1<Self>) -> Vector<Self::K> {
         Encode::<BitlenQMinusD>::decode(enc)
     }
 
@@ -313,11 +313,11 @@ pub trait SignatureParams: ParameterSet {
 
     fn split_hint(y: &EncodedHint<Self>) -> (&EncodedHintIndices<Self>, &EncodedHintCuts<Self>);
 
-    fn encode_w1(t1: &PolynomialVector<Self::K>) -> EncodedW1<Self>;
-    fn decode_w1(enc: &EncodedW1<Self>) -> PolynomialVector<Self::K>;
+    fn encode_w1(t1: &Vector<Self::K>) -> EncodedW1<Self>;
+    fn decode_w1(enc: &EncodedW1<Self>) -> Vector<Self::K>;
 
-    fn encode_z(z: &PolynomialVector<Self::L>) -> EncodedZ<Self>;
-    fn decode_z(enc: &EncodedZ<Self>) -> PolynomialVector<Self::L>;
+    fn encode_z(z: &Vector<Self::L>) -> EncodedZ<Self>;
+    fn decode_z(enc: &EncodedZ<Self>) -> Vector<Self::L>;
 
     fn concat_sig(
         c_tilde: EncodedCTilde<Self>,
@@ -375,8 +375,8 @@ where
             Output = Sum<P::Omega, P::K>,
         >,
 {
-    type W1Size = EncodedPolynomialVectorSize<Self::W1Bits, P::K>;
-    type ZSize = RangeEncodedPolynomialVectorSize<Diff<P::Gamma1, U1>, P::Gamma1, P::L>;
+    type W1Size = EncodedVectorSize<Self::W1Bits, P::K>;
+    type ZSize = RangeEncodedVectorSize<Diff<P::Gamma1, U1>, P::Gamma1, P::L>;
     type HintSize = Sum<P::Omega, P::K>;
     type SignatureSize = Sum<Sum<P::Lambda, Self::ZSize>, Self::HintSize>;
 
@@ -387,19 +387,19 @@ where
         y.split_ref()
     }
 
-    fn encode_w1(w1: &PolynomialVector<Self::K>) -> EncodedW1<Self> {
+    fn encode_w1(w1: &Vector<Self::K>) -> EncodedW1<Self> {
         Encode::<Self::W1Bits>::encode(w1)
     }
 
-    fn decode_w1(enc: &EncodedW1<Self>) -> PolynomialVector<Self::K> {
+    fn decode_w1(enc: &EncodedW1<Self>) -> Vector<Self::K> {
         Encode::<Self::W1Bits>::decode(enc)
     }
 
-    fn encode_z(z: &PolynomialVector<Self::L>) -> EncodedZ<Self> {
+    fn encode_z(z: &Vector<Self::L>) -> EncodedZ<Self> {
         BitPack::<Diff<P::Gamma1, U1>, P::Gamma1>::pack(z)
     }
 
-    fn decode_z(enc: &EncodedZ<Self>) -> PolynomialVector<Self::L> {
+    fn decode_z(enc: &EncodedZ<Self>) -> Vector<Self::L> {
         BitPack::<Diff<P::Gamma1, U1>, P::Gamma1>::unpack(enc)
     }
 

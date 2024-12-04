@@ -48,7 +48,7 @@ pub use crate::util::B32;
 #[derive(Clone, PartialEq)]
 pub struct Signature<P: SignatureParams> {
     c_tilde: Array<u8, P::Lambda>,
-    z: PolynomialVector<P::L>,
+    z: Vector<P::L>,
     h: Hint<P>,
 }
 
@@ -83,9 +83,9 @@ pub struct SigningKey<P: ParameterSet> {
     rho: B32,
     K: B32,
     tr: B64,
-    s1: PolynomialVector<P::L>,
-    s2: PolynomialVector<P::K>,
-    t0: PolynomialVector<P::K>,
+    s1: Vector<P::L>,
+    s2: Vector<P::K>,
+    t0: Vector<P::K>,
 
     // Derived values
     s1_hat: NttVector<P::L>,
@@ -99,9 +99,9 @@ impl<P: ParameterSet> SigningKey<P> {
         rho: B32,
         K: B32,
         tr: B64,
-        s1: PolynomialVector<P::L>,
-        s2: PolynomialVector<P::K>,
-        t0: PolynomialVector<P::K>,
+        s1: Vector<P::L>,
+        s2: Vector<P::K>,
+        t0: Vector<P::K>,
         A_hat: Option<NttMatrix<P::K, P::L>>,
     ) -> Self {
         let A_hat = A_hat.unwrap_or_else(|| expand_a(&rho));
@@ -258,7 +258,7 @@ impl<P: ParameterSet> SigningKey<P> {
 #[derive(Clone, PartialEq)]
 pub struct VerificationKey<P: ParameterSet> {
     rho: B32,
-    t1: PolynomialVector<P::K>,
+    t1: Vector<P::K>,
 
     // Derived values
     A_hat: NttMatrix<P::K, P::L>,
@@ -294,21 +294,21 @@ impl<P: VerificationKeyParams> VerificationKey<P> {
         sigma.c_tilde == cp_tilde
     }
 
-    fn encode_internal(rho: &B32, t1: &PolynomialVector<P::K>) -> EncodedVerificationKey<P> {
+    fn encode_internal(rho: &B32, t1: &Vector<P::K>) -> EncodedVerificationKey<P> {
         let t1_enc = P::encode_t1(t1);
         P::concat_vk(rho.clone(), t1_enc)
     }
 
     fn new(
         rho: B32,
-        t1: PolynomialVector<P::K>,
+        t1: Vector<P::K>,
         A_hat: Option<NttMatrix<P::K, P::L>>,
         enc: Option<EncodedVerificationKey<P>>,
     ) -> Self {
         let A_hat = A_hat.unwrap_or_else(|| expand_a(&rho));
         let enc = enc.unwrap_or_else(|| Self::encode_internal(&rho, &t1));
 
-        let t1_2d_hat = (FieldElement::new(1 << 13) * &t1).ntt();
+        let t1_2d_hat = (Elem::new(1 << 13) * &t1).ntt();
         let tr: B64 = H::default().absorb(&enc).squeeze_new();
 
         Self {
