@@ -14,29 +14,27 @@ fn acvp_sig_gen() {
 
     // Verify the test vectors
     for tg in tv.test_groups {
-        if tg.deterministic {
-            // TODO(RLB): Implement the ML-DSA deterministic signature mode and use it for these
-            // tests
-            continue;
-        }
-
         for tc in tg.tests {
             match tg.parameter_set {
-                acvp::ParameterSet::MlDsa44 => verify::<MlDsa44>(&tc),
-                acvp::ParameterSet::MlDsa65 => verify::<MlDsa65>(&tc),
-                acvp::ParameterSet::MlDsa87 => verify::<MlDsa87>(&tc),
+                acvp::ParameterSet::MlDsa44 => verify::<MlDsa44>(&tc, tg.deterministic),
+                acvp::ParameterSet::MlDsa65 => verify::<MlDsa65>(&tc, tg.deterministic),
+                acvp::ParameterSet::MlDsa87 => verify::<MlDsa87>(&tc, tg.deterministic),
             }
         }
     }
 }
 
-fn verify<P: MlDsaParams>(tc: &acvp::TestCase) {
+fn verify<P: MlDsaParams>(tc: &acvp::TestCase, deterministic: bool) {
     // Import the signing key
     let sk_bytes = EncodedSigningKey::<P>::try_from(tc.sk.as_slice()).unwrap();
     let sk = SigningKey::<P>::decode(&sk_bytes);
 
     // Verify correctness
-    let rnd = B32::try_from(tc.rnd.as_slice()).unwrap();
+    let rnd = if deterministic {
+        B32::default()
+    } else {
+        B32::try_from(tc.rnd.as_slice()).unwrap()
+    };
     let sig = sk.sign_internal(&[&tc.message], &rnd);
     let sig_bytes = sig.encode();
 
