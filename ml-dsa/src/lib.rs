@@ -1,6 +1,5 @@
 #![no_std]
 #![doc = include_str!("../README.md")]
-#![doc = include_str!("../README.md")]
 #![doc(
     html_logo_url = "https://raw.githubusercontent.com/RustCrypto/meta/master/logo.svg",
     html_favicon_url = "https://raw.githubusercontent.com/RustCrypto/meta/master/logo.svg"
@@ -14,6 +13,21 @@
 #![allow(clippy::many_single_char_names)] // Allow notation matching the spec
 #![allow(clippy::clone_on_copy)] // Be explicit about moving data
 #![deny(missing_docs)] // Require all public interfaces to be documented
+
+//! # Quickstart
+//!
+//! ```
+//! use ml_dsa::{MlDsa65, KeyGen};
+//! use signature::{Signer, Verifier};
+//!
+//! let mut rng = rand::thread_rng();
+//! let kp = MlDsa65::key_gen(&mut rng);
+//!
+//! let msg = b"Hello world";
+//! let sig = kp.signing_key.sign(msg);
+//!
+//! assert!(kp.verifying_key.verify(msg, &sig).is_ok());
+//! ```
 
 mod algebra;
 mod crypto;
@@ -256,7 +270,7 @@ impl<P: MlDsaParams> SigningKey<P> {
     /// This method will return an opaque error if the context string is more than 255 bytes long,
     /// or if it fails to get enough randomness.
     // Algorithm 2 ML-DSA.Sign
-    pub fn sign(
+    pub fn sign_randomized(
         &self,
         M: &[u8],
         ctx: &[u8],
@@ -416,7 +430,7 @@ impl<P: MlDsaParams> VerifyingKey<P> {
 
     /// This algorithm reflect the ML-DSA.Verify algorithm from FIPS 204.
     // Algorithm 3 ML-DSA.Verify
-    pub fn verify(&self, M: &[u8], ctx: &[u8], sigma: &Signature<P>) -> bool {
+    pub fn verify_with_context(&self, M: &[u8], ctx: &[u8], sigma: &Signature<P>) -> bool {
         if ctx.len() > 255 {
             return false;
         }
@@ -447,7 +461,7 @@ impl<P: MlDsaParams> VerifyingKey<P> {
 
 impl<P: MlDsaParams> signature::Verifier<Signature<P>> for VerifyingKey<P> {
     fn verify(&self, msg: &[u8], signature: &Signature<P>) -> Result<(), Error> {
-        VerifyingKey::verify(self, msg, &[], signature)
+        self.verify_with_context(msg, &[], signature)
             .then_some(())
             .ok_or(Error::new())
     }
