@@ -30,14 +30,14 @@ fn acvp_sig_gen() {
     }
 }
 
-fn verify<P: SigningKeyParams + VerificationKeyParams + SignatureParams>(tc: &acvp::TestCase) {
+fn verify<P: MlDsaParams>(tc: &acvp::TestCase) {
     // Import the signing key
     let sk_bytes = EncodedSigningKey::<P>::try_from(tc.sk.as_slice()).unwrap();
     let sk = SigningKey::<P>::decode(&sk_bytes);
 
     // Verify correctness
     let rnd = B32::try_from(tc.rnd.as_slice()).unwrap();
-    let sig = sk.sign_internal(&tc.message, &rnd);
+    let sig = sk.sign_internal(&[&tc.message], &rnd);
     let sig_bytes = sig.encode();
 
     assert_eq!(tc.signature.as_slice(), sig_bytes.as_slice());

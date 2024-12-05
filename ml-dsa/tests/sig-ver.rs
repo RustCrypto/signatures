@@ -24,10 +24,10 @@ fn acvp_sig_ver() {
     }
 }
 
-fn verify<P: VerificationKeyParams + SignatureParams>(tg: &acvp::TestGroup, tc: &acvp::TestCase) {
+fn verify<P: MlDsaParams>(tg: &acvp::TestGroup, tc: &acvp::TestCase) {
     // Import the verification key
-    let pk_bytes = EncodedVerificationKey::<P>::try_from(tg.pk.as_slice()).unwrap();
-    let pk = VerificationKey::<P>::decode(&pk_bytes);
+    let vk_bytes = EncodedVerifyingKey::<P>::try_from(tg.pk.as_slice()).unwrap();
+    let vk = VerifyingKey::<P>::decode(&vk_bytes);
 
     // Import the signature
     let sig_bytes = EncodedSignature::<P>::try_from(tc.signature.as_slice()).unwrap();
@@ -35,7 +35,7 @@ fn verify<P: VerificationKeyParams + SignatureParams>(tg: &acvp::TestGroup, tc: 
 
     // Verify the signature if it successfully decoded
     let test_passed = sig
-        .map(|sig| pk.verify_internal(tc.message.as_slice(), &sig))
+        .and_then(|sig| Some(vk.verify_internal(&[&tc.message], &sig)))
         .unwrap_or_default();
     assert_eq!(test_passed, tc.test_passed);
 }

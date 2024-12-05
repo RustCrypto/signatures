@@ -16,15 +16,17 @@ keywords = ["crypto", "signature"]
 
 [features]
 default = ["std"]
-std = [] #["sha3/std"]
+std = ["sha3/std"]
 zeroize = ["dep:zeroize"]
+rand_core = ["signature/rand_core"]
 
 [dependencies]
 # TODO reset to something like: { version = "0.2.0-rc.9", features = ["extra-sizes"] }
 hybrid-array = { path = "../../hybrid-array/", features = ["extra-sizes"]} 
 num-traits = "0.2.19"
+rand = "0.8.5"
 sha3 = "0.10.8"
-signature = { version = "2.3.0-pre.4", features = ["rand_core"] }
+signature = "2.3.0-pre.4"
 zeroize = { version = "1.8.1", optional = true, default-features = false }
 
 [dev-dependencies]

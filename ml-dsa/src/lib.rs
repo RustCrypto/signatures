@@ -26,7 +26,9 @@ mod util;
 // TODO(RLB) Move module to an independent crate shared with ml_kem
 mod module_lattice;
 
+use core::convert::{AsRef, TryFrom, TryInto};
 use hybrid_array::{typenum::*, Array};
+use rand::{CryptoRng, RngCore};
 
 use crate::algebra::*;
 use crate::crypto::*;
@@ -37,22 +39,19 @@ use crate::sampling::*;
 use crate::util::*;
 
 // TODO(RLB) Clean up this API
-pub use crate::param::{
-    EncodedSignature, EncodedSigningKey, EncodedVerificationKey, SignatureParams, SigningKeyParams,
-    VerificationKeyParams,
-};
-
+pub use crate::param::{EncodedSignature, EncodedSigningKey, EncodedVerifyingKey, MlDsaParams};
 pub use crate::util::B32;
+pub use signature::Error;
 
 /// An ML-DSA signature
 #[derive(Clone, PartialEq)]
-pub struct Signature<P: SignatureParams> {
+pub struct Signature<P: MlDsaParams> {
     c_tilde: Array<u8, P::Lambda>,
     z: Vector<P::L>,
     h: Hint<P>,
 }
 
-impl<P: SignatureParams> Signature<P> {
+impl<P: MlDsaParams> Signature<P> {
     // Algorithm 26 sigEncode
     pub fn encode(&self) -> EncodedSignature<P> {
         let c_tilde = self.c_tilde.clone();
@@ -77,9 +76,62 @@ impl<P: SignatureParams> Signature<P> {
     }
 }
 
+impl<'a, P: MlDsaParams> TryFrom<&'a [u8]> for Signature<P> {
+    type Error = Error;
+
+    fn try_from(value: &'a [u8]) -> Result<Self, Self::Error> {
+        let enc = EncodedSignature::<P>::try_from(value).map_err(|_| Error::new())?;
+        Self::decode(&enc).ok_or(Error::new())
+    }
+}
+
+impl<P: MlDsaParams> TryInto<EncodedSignature<P>> for Signature<P> {
+    type Error = Error;
+
+    fn try_into(self) -> Result<EncodedSignature<P>, Self::Error> {
+        Ok(self.encode())
+    }
+}
+
+impl<P: MlDsaParams> signature::SignatureEncoding for Signature<P> {
+    type Repr = EncodedSignature<P>;
+}
+
+// This method takes a slice of slices so that we can accommodate the varying calculations (direct
+// for test vectors, 0... for sign/sign_deterministic, 1... for the pre-hashed version) without
+// having to allocate memory for components.
+fn message_representative(tr: &[u8], Mp: &[&[u8]]) -> B64 {
+    let mut h = H::default().absorb(tr);
+
+    for m in Mp {
+        h = h.absorb(m);
+    }
+
+    h.squeeze_new()
+}
+
+/// An ML-DSA key pair
+pub struct KeyPair<P: MlDsaParams> {
+    /// The signing key of the key pair
+    pub signing_key: SigningKey<P>,
+
+    /// The verifying key of the key pair
+    pub verifying_key: VerifyingKey<P>,
+}
+
+impl<P: MlDsaParams> AsRef<VerifyingKey<P>> for KeyPair<P> {
+    fn as_ref(&self) -> &VerifyingKey<P> {
+        &self.verifying_key
+    }
+}
+
+impl<P: MlDsaParams> signature::KeypairRef for KeyPair<P> {
+    type VerifyingKey = VerifyingKey<P>;
+}
+
 /// An ML-DSA signing key
 #[derive(Clone, PartialEq)]
-pub struct SigningKey<P: ParameterSet> {
+pub struct SigningKey<P: MlDsaParams> {
     rho: B32,
     K: B32,
     tr: B64,
@@ -94,7 +146,7 @@ pub struct SigningKey<P: ParameterSet> {
     A_hat: NttMatrix<P::K, P::L>,
 }
 
-impl<P: ParameterSet> SigningKey<P> {
+impl<P: MlDsaParams> SigningKey<P> {
     fn new(
         rho: B32,
         K: B32,
@@ -124,47 +176,16 @@ impl<P: ParameterSet> SigningKey<P> {
         }
     }
 
-    /// Deterministically generate a signing key pair from the specified seed
-    pub fn key_gen_internal(xi: &B32) -> (VerificationKey<P>, SigningKey<P>)
-    where
-        P: SigningKeyParams + VerificationKeyParams,
-    {
-        // Derive seeds
-        let mut h = H::default()
-            .absorb(xi)
-            .absorb(&[P::K::U8])
-            .absorb(&[P::L::U8]);
-
-        let rho: B32 = h.squeeze_new();
-        let rhop: B64 = h.squeeze_new();
-        let K: B32 = h.squeeze_new();
-
-        // Sample private key components
-        let A_hat = expand_a::<P::K, P::L>(&rho);
-        let s1 = expand_s::<P::L>(&rhop, P::Eta::ETA, 0);
-        let s2 = expand_s::<P::K>(&rhop, P::Eta::ETA, P::L::USIZE);
-
-        // Compute derived values
-        let As1_hat = &A_hat * &s1.ntt();
-        let t = &As1_hat.ntt_inverse() + &s2;
-
-        // Compress and encode
-        let (t1, t0) = t.power2round();
-
-        let vk = VerificationKey::new(rho, t1, Some(A_hat.clone()), None);
-        let sk = Self::new(rho, K, vk.tr.clone(), s1, s2, t0, Some(A_hat));
-
-        (vk, sk)
-    }
-
     // Algorithm 7 ML-DSA.Sign_internal
-    pub fn sign_internal(&self, Mp: &[u8], rnd: &B32) -> Signature<P>
+    pub fn sign_internal(&self, Mp: &[&[u8]], rnd: &B32) -> Signature<P>
     where
-        P: SignatureParams,
+        P: MlDsaParams,
     {
         // Compute the message representative
+        // XXX(RLB): This line incorporates some of the logic from ML-DSA.sign to avoid computing
+        // the concatenated M'.
         // XXX(RLB) Should the API represent this as an input?
-        let mu: B64 = H::default().absorb(&self.tr).absorb(&Mp).squeeze_new();
+        let mu = message_representative(&self.tr, Mp);
 
         // Compute the private random seed
         let rhopp: B64 = H::default()
@@ -218,10 +239,39 @@ impl<P: ParameterSet> SigningKey<P> {
         panic!("Rejection sampling failed to find a valid signature");
     }
 
+    // Algorithm 2 ML-DSA.Sign
+    pub fn sign(
+        &self,
+        M: &[u8],
+        ctx: &[u8],
+        rng: &mut (impl CryptoRng + RngCore),
+    ) -> Result<Signature<P>, Error> {
+        if ctx.len() > 255 {
+            return Err(Error::new());
+        }
+
+        let mut rnd = B32::default();
+        rng.try_fill_bytes(&mut rnd).map_err(|_| Error::new())?;
+
+        let Mp = &[&[0], &[Truncate::truncate(ctx.len())], ctx, M];
+        Ok(self.sign_internal(Mp, &rnd))
+    }
+
+    // Algorithm 2 ML-DSA.Sign (optional deterministic variant)
+    pub fn sign_deterministic(&self, M: &[u8], ctx: &[u8]) -> Result<Signature<P>, Error> {
+        if ctx.len() > 255 {
+            return Err(Error::new());
+        }
+
+        let rnd = B32::default();
+        let Mp = &[&[0], &[Truncate::truncate(ctx.len())], ctx, M];
+        Ok(self.sign_internal(Mp, &rnd))
+    }
+
     // Algorithm 24 skEncode
     pub fn encode(&self) -> EncodedSigningKey<P>
     where
-        P: SigningKeyParams,
+        P: MlDsaParams,
     {
         let s1_enc = P::encode_s1(&self.s1);
         let s2_enc = P::encode_s2(&self.s2);
@@ -239,7 +289,7 @@ impl<P: ParameterSet> SigningKey<P> {
     // Algorithm 25 skDecode
     pub fn decode(enc: &EncodedSigningKey<P>) -> Self
     where
-        P: SigningKeyParams,
+        P: MlDsaParams,
     {
         let (rho, K, tr, s1_enc, s2_enc, t0_enc) = P::split_sk(enc);
         Self::new(
@@ -254,9 +304,31 @@ impl<P: ParameterSet> SigningKey<P> {
     }
 }
 
+/// The Signer implementation for SigningKey uses the optional deterministic variant of ML-DSA, and
+/// only supports signing with an empty context string.  If you would like to include a context
+/// string, use the [`SigningKey::sign_deterministic`] method.
+impl<P: MlDsaParams> signature::Signer<Signature<P>> for SigningKey<P> {
+    fn try_sign(&self, msg: &[u8]) -> Result<Signature<P>, Error> {
+        self.sign_deterministic(msg, &[])
+    }
+}
+
+/// The RandomizedSigner implementation for SigningKey only supports signing with an empty context
+/// string. If you would like to include a context string, use the [`SigningKey::sign`] method.
+#[cfg(feature = "rand_core")]
+impl<P: MlDsaParams> signature::RandomizedSigner<Signature<P>> for SigningKey<P> {
+    fn try_sign_with_rng(
+        &self,
+        rng: &mut impl CryptoRngCore,
+        msg: &[u8],
+    ) -> Result<Signature<P>, Error> {
+        self.sign(msg, &[], rng)
+    }
+}
+
 /// An ML-DSA verification key
 #[derive(Clone, PartialEq)]
-pub struct VerificationKey<P: ParameterSet> {
+pub struct VerifyingKey<P: ParameterSet> {
     rho: B32,
     t1: Vector<P::K>,
 
@@ -266,13 +338,35 @@ pub struct VerificationKey<P: ParameterSet> {
     tr: B64,
 }
 
-impl<P: VerificationKeyParams> VerificationKey<P> {
-    pub fn verify_internal(&self, Mp: &[u8], sigma: &Signature<P>) -> bool
+impl<P: MlDsaParams> VerifyingKey<P> {
+    fn new(
+        rho: B32,
+        t1: Vector<P::K>,
+        A_hat: Option<NttMatrix<P::K, P::L>>,
+        enc: Option<EncodedVerifyingKey<P>>,
+    ) -> Self {
+        let A_hat = A_hat.unwrap_or_else(|| expand_a(&rho));
+        let enc = enc.unwrap_or_else(|| Self::encode_internal(&rho, &t1));
+
+        let t1_2d_hat = (Elem::new(1 << 13) * &t1).ntt();
+        let tr: B64 = H::default().absorb(&enc).squeeze_new();
+
+        Self {
+            rho,
+            t1,
+            A_hat,
+            t1_2d_hat,
+            tr,
+        }
+    }
+
+    // Algorithm 8 ML-DSA.Verify_internal
+    pub fn verify_internal(&self, Mp: &[&[u8]], sigma: &Signature<P>) -> bool
     where
-        P: SignatureParams,
+        P: MlDsaParams,
     {
         // Compute the message representative
-        let mu: B64 = H::default().absorb(&self.tr).absorb(&Mp).squeeze_new();
+        let mu = message_representative(&self.tr, Mp);
 
         // Reconstruct w
         let c = sample_in_ball(&sigma.c_tilde, P::TAU);
@@ -294,42 +388,38 @@ impl<P: VerificationKeyParams> VerificationKey<P> {
         sigma.c_tilde == cp_tilde
     }
 
-    fn encode_internal(rho: &B32, t1: &Vector<P::K>) -> EncodedVerificationKey<P> {
+    pub fn verify(&self, M: &[u8], ctx: &[u8], sigma: &Signature<P>) -> bool {
+        if ctx.len() > 255 {
+            return false;
+        }
+
+        let Mp = &[&[0], &[Truncate::truncate(ctx.len())], ctx, M];
+        return self.verify_internal(Mp, sigma);
+    }
+
+    fn encode_internal(rho: &B32, t1: &Vector<P::K>) -> EncodedVerifyingKey<P> {
         let t1_enc = P::encode_t1(t1);
         P::concat_vk(rho.clone(), t1_enc)
     }
 
-    fn new(
-        rho: B32,
-        t1: Vector<P::K>,
-        A_hat: Option<NttMatrix<P::K, P::L>>,
-        enc: Option<EncodedVerificationKey<P>>,
-    ) -> Self {
-        let A_hat = A_hat.unwrap_or_else(|| expand_a(&rho));
-        let enc = enc.unwrap_or_else(|| Self::encode_internal(&rho, &t1));
-
-        let t1_2d_hat = (Elem::new(1 << 13) * &t1).ntt();
-        let tr: B64 = H::default().absorb(&enc).squeeze_new();
-
-        Self {
-            rho,
-            t1,
-            A_hat,
-            t1_2d_hat,
-            tr,
-        }
-    }
-
     // Algorithm 22 pkEncode
-    pub fn encode(&self) -> EncodedVerificationKey<P> {
+    pub fn encode(&self) -> EncodedVerifyingKey<P> {
         Self::encode_internal(&self.rho, &self.t1)
     }
 
     // Algorithm 23 pkDecode
-    pub fn decode(enc: &EncodedVerificationKey<P>) -> Self {
+    pub fn decode(enc: &EncodedVerifyingKey<P>) -> Self {
         let (rho, t1_enc) = P::split_vk(enc);
         let t1 = P::decode_t1(t1_enc);
         Self::new(rho.clone(), t1, None, Some(enc.clone()))
+    }
+}
+
+impl<P: MlDsaParams> signature::Verifier<Signature<P>> for VerifyingKey<P> {
+    fn verify(&self, msg: &[u8], signature: &Signature<P>) -> Result<(), Error> {
+        VerifyingKey::verify(self, msg, &[], signature)
+            .then_some(())
+            .ok_or(Error::new())
     }
 }
 
@@ -381,10 +471,73 @@ impl ParameterSet for MlDsa87 {
     const TAU: usize = 60;
 }
 
+/// A parameter set that knows how to generate key pairs
+pub trait KeyGen: MlDsaParams {
+    type KeyPair: signature::Keypair;
+
+    /// Generate a signing key pair from the specified RNG
+    fn key_gen(rng: &mut (impl CryptoRng + RngCore)) -> Self::KeyPair;
+
+    /// Deterministically generate a signing key pair from the specified seed
+    fn key_gen_internal(xi: &B32) -> Self::KeyPair;
+}
+
+impl<P> KeyGen for P
+where
+    P: MlDsaParams,
+{
+    type KeyPair = KeyPair<P>;
+
+    /// Generate a signing key pair from the specified RNG
+    // Algorithm 1 ML-DSA.KeyGen()
+    fn key_gen(rng: &mut (impl CryptoRng + RngCore)) -> KeyPair<P> {
+        let mut xi = B32::default();
+        rng.fill_bytes(&mut xi);
+        Self::key_gen_internal(&xi)
+    }
+
+    /// Deterministically generate a signing key pair from the specified seed
+    // Algorithm 6 ML-DSA.KeyGen_internal
+    fn key_gen_internal(xi: &B32) -> KeyPair<P>
+    where
+        P: MlDsaParams,
+    {
+        // Derive seeds
+        let mut h = H::default()
+            .absorb(xi)
+            .absorb(&[P::K::U8])
+            .absorb(&[P::L::U8]);
+
+        let rho: B32 = h.squeeze_new();
+        let rhop: B64 = h.squeeze_new();
+        let K: B32 = h.squeeze_new();
+
+        // Sample private key components
+        let A_hat = expand_a::<P::K, P::L>(&rho);
+        let s1 = expand_s::<P::L>(&rhop, P::Eta::ETA, 0);
+        let s2 = expand_s::<P::K>(&rhop, P::Eta::ETA, P::L::USIZE);
+
+        // Compute derived values
+        let As1_hat = &A_hat * &s1.ntt();
+        let t = &As1_hat.ntt_inverse() + &s2;
+
+        // Compress and encode
+        let (t1, t0) = t.power2round();
+
+        let verifying_key = VerifyingKey::new(rho, t1, Some(A_hat.clone()), None);
+        let signing_key =
+            SigningKey::new(rho, K, verifying_key.tr.clone(), s1, s2, t0, Some(A_hat));
+
+        KeyPair {
+            signing_key,
+            verifying_key,
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
-    use rand::Rng;
 
     #[test]
     fn output_sizes() {
@@ -393,36 +546,37 @@ mod test {
         // ML-DSA-65 4032 1952 3309
         // ML-DSA-87 4896 2592 4627
         assert_eq!(SigningKeySize::<MlDsa44>::USIZE, 2560);
-        assert_eq!(VerificationKeySize::<MlDsa44>::USIZE, 1312);
+        assert_eq!(VerifyingKeySize::<MlDsa44>::USIZE, 1312);
         assert_eq!(SignatureSize::<MlDsa44>::USIZE, 2420);
 
         assert_eq!(SigningKeySize::<MlDsa65>::USIZE, 4032);
-        assert_eq!(VerificationKeySize::<MlDsa65>::USIZE, 1952);
+        assert_eq!(VerifyingKeySize::<MlDsa65>::USIZE, 1952);
         assert_eq!(SignatureSize::<MlDsa65>::USIZE, 3309);
 
         assert_eq!(SigningKeySize::<MlDsa87>::USIZE, 4896);
-        assert_eq!(VerificationKeySize::<MlDsa87>::USIZE, 2592);
+        assert_eq!(VerifyingKeySize::<MlDsa87>::USIZE, 2592);
         assert_eq!(SignatureSize::<MlDsa87>::USIZE, 4627);
     }
 
     fn encode_decode_round_trip_test<P>()
     where
-        P: SigningKeyParams + VerificationKeyParams + SignatureParams + PartialEq,
+        P: MlDsaParams + PartialEq,
     {
-        let mut rng = rand::thread_rng();
+        let kp = P::key_gen(&mut rand::thread_rng());
+        let sk = kp.signing_key;
+        let vk = kp.verifying_key;
 
-        let seed: [u8; 32] = rng.gen();
-        let (pk, sk) = SigningKey::<P>::key_gen_internal(&seed.into());
-
-        let pk_bytes = pk.encode();
-        let pk2 = VerificationKey::<P>::decode(&pk_bytes);
-        assert!(pk == pk2);
+        let vk_bytes = vk.encode();
+        let vk2 = VerifyingKey::<P>::decode(&vk_bytes);
+        assert!(vk == vk2);
 
         let sk_bytes = sk.encode();
         let sk2 = SigningKey::<P>::decode(&sk_bytes);
         assert!(sk == sk2);
 
-        let sig = sk.sign_internal(&[0, 1, 2, 3], (&[0u8; 32]).into());
+        let M = b"Hello world";
+        let rnd = Array([0u8; 32]);
+        let sig = sk.sign_internal(&[M], &rnd);
         let sig_bytes = sig.encode();
         let sig2 = Signature::<P>::decode(&sig_bytes).unwrap();
         assert!(sig == sig2);
@@ -437,18 +591,18 @@ mod test {
 
     fn sign_verify_round_trip_test<P>()
     where
-        P: SigningKeyParams + VerificationKeyParams + SignatureParams,
+        P: MlDsaParams,
     {
         let mut rng = rand::thread_rng();
+        let kp = P::key_gen(&mut rng);
+        let sk = kp.signing_key;
+        let vk = kp.verifying_key;
 
-        let seed: [u8; 32] = rng.gen();
-        let (pk, sk) = SigningKey::<P>::key_gen_internal(&seed.into());
+        let M = b"Hello world";
+        let rnd = Array([0u8; 32]);
+        let sig = sk.sign_internal(&[M], &rnd);
 
-        let rnd: [u8; 32] = rng.gen();
-        let Mp = b"Hello world";
-        let sig = sk.sign_internal(Mp, &rnd.into());
-
-        assert!(pk.verify_internal(Mp, &sig));
+        assert!(vk.verify_internal(&[M], &sig));
     }
 
     #[test]

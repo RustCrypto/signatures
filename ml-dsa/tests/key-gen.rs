@@ -25,21 +25,23 @@ fn acvp_key_gen() {
     }
 }
 
-fn verify<P: SigningKeyParams + VerificationKeyParams + PartialEq>(tc: &acvp::TestCase) {
+fn verify<P: MlDsaParams>(tc: &acvp::TestCase) {
     // Import test data into the relevant array structures
     let seed = Array::try_from(tc.seed.as_slice()).unwrap();
-    let pk_bytes = EncodedVerificationKey::<P>::try_from(tc.pk.as_slice()).unwrap();
+    let vk_bytes = EncodedVerifyingKey::<P>::try_from(tc.pk.as_slice()).unwrap();
     let sk_bytes = EncodedSigningKey::<P>::try_from(tc.sk.as_slice()).unwrap();
 
-    let (pk, sk) = SigningKey::<P>::key_gen_internal(&seed);
+    let kp = P::key_gen_internal(&seed);
+    let sk = kp.signing_key;
+    let vk = kp.verifying_key;
 
     // Verify correctness via serialization
-    assert_eq!(pk.encode(), pk_bytes);
     assert_eq!(sk.encode(), sk_bytes);
+    assert_eq!(vk.encode(), vk_bytes);
 
     // Verify correctness via deserialization
-    assert!(pk == VerificationKey::<P>::decode(&pk_bytes));
     assert!(sk == SigningKey::<P>::decode(&sk_bytes));
+    assert!(vk == VerifyingKey::<P>::decode(&vk_bytes));
 }
 
 mod acvp {

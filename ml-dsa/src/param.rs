@@ -10,6 +10,7 @@
 //! know any details about object sizes.  For example, `VectorEncodingSize::flatten` needs to know
 //! that the size of an encoded vector is `K` times the size of an encoded polynomial.
 
+use core::fmt::Debug;
 use core::ops::{Add, Div, Mul, Rem, Sub};
 
 use crate::module_lattice::encode::*;
@@ -255,35 +256,35 @@ where
     }
 }
 
-pub trait VerificationKeyParams: ParameterSet {
+pub trait VerifyingKeyParams: ParameterSet {
     type T1Size: ArraySize;
-    type VerificationKeySize: ArraySize;
+    type VerifyingKeySize: ArraySize;
 
     fn encode_t1(t1: &Vector<Self::K>) -> EncodedT1<Self>;
     fn decode_t1(enc: &EncodedT1<Self>) -> Vector<Self::K>;
 
-    fn concat_vk(rho: B32, t1: EncodedT1<Self>) -> EncodedVerificationKey<Self>;
-    fn split_vk(enc: &EncodedVerificationKey<Self>) -> (&B32, &EncodedT1<Self>);
+    fn concat_vk(rho: B32, t1: EncodedT1<Self>) -> EncodedVerifyingKey<Self>;
+    fn split_vk(enc: &EncodedVerifyingKey<Self>) -> (&B32, &EncodedT1<Self>);
 }
 
-pub type VerificationKeySize<P> = <P as VerificationKeyParams>::VerificationKeySize;
+pub type VerifyingKeySize<P> = <P as VerifyingKeyParams>::VerifyingKeySize;
 
-pub type EncodedT1<P> = Array<u8, <P as VerificationKeyParams>::T1Size>;
-pub type EncodedVerificationKey<P> = Array<u8, VerificationKeySize<P>>;
+pub type EncodedT1<P> = Array<u8, <P as VerifyingKeyParams>::T1Size>;
+pub type EncodedVerifyingKey<P> = Array<u8, VerifyingKeySize<P>>;
 
-impl<P> VerificationKeyParams for P
+impl<P> VerifyingKeyParams for P
 where
     P: ParameterSet,
     // T1 encoding rules
     U320: Mul<P::K>,
     Prod<U320, P::K>: ArraySize + Div<P::K, Output = U320> + Rem<P::K, Output = U0>,
-    // Verification key encoding rules
+    // Verifying key encoding rules
     U32: Add<Prod<U320, P::K>>,
     Sum<U32, U32>: ArraySize,
     Sum<U32, Prod<U320, P::K>>: ArraySize + Sub<U32, Output = Prod<U320, P::K>>,
 {
     type T1Size = EncodedVectorSize<BitlenQMinusD, P::K>;
-    type VerificationKeySize = Sum<U32, Self::T1Size>;
+    type VerifyingKeySize = Sum<U32, Self::T1Size>;
 
     fn encode_t1(t1: &Vector<P::K>) -> EncodedT1<Self> {
         Encode::<BitlenQMinusD>::encode(t1)
@@ -293,11 +294,11 @@ where
         Encode::<BitlenQMinusD>::decode(enc)
     }
 
-    fn concat_vk(rho: B32, t1: EncodedT1<Self>) -> EncodedVerificationKey<Self> {
+    fn concat_vk(rho: B32, t1: EncodedT1<Self>) -> EncodedVerifyingKey<Self> {
         rho.concat(t1)
     }
 
-    fn split_vk(enc: &EncodedVerificationKey<Self>) -> (&B32, &EncodedT1<Self>) {
+    fn split_vk(enc: &EncodedVerifyingKey<Self>) -> (&B32, &EncodedT1<Self>) {
         enc.split_ref()
     }
 }
@@ -416,4 +417,20 @@ where
         let (c_tilde, z) = enc.split_ref();
         (c_tilde, z, h)
     }
+}
+
+pub trait MlDsaParams:
+    SigningKeyParams + VerifyingKeyParams + SignatureParams + Debug + Default + PartialEq + Clone
+{
+}
+
+impl<T> MlDsaParams for T where
+    T: SigningKeyParams
+        + VerifyingKeyParams
+        + SignatureParams
+        + Debug
+        + Default
+        + PartialEq
+        + Clone
+{
 }
