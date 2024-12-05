@@ -16,9 +16,9 @@ fn acvp_sig_ver() {
     for tg in tv.test_groups {
         for tc in tg.tests.iter() {
             match tg.parameter_set {
-                acvp::ParameterSet::MlDsa44 => verify::<MlDsa44>(&tg, &tc),
-                acvp::ParameterSet::MlDsa65 => verify::<MlDsa65>(&tg, &tc),
-                acvp::ParameterSet::MlDsa87 => verify::<MlDsa87>(&tg, &tc),
+                acvp::ParameterSet::MlDsa44 => verify::<MlDsa44>(&tg, tc),
+                acvp::ParameterSet::MlDsa65 => verify::<MlDsa65>(&tg, tc),
+                acvp::ParameterSet::MlDsa87 => verify::<MlDsa87>(&tg, tc),
             }
         }
     }
@@ -35,7 +35,7 @@ fn verify<P: MlDsaParams>(tg: &acvp::TestGroup, tc: &acvp::TestCase) {
 
     // Verify the signature if it successfully decoded
     let test_passed = sig
-        .and_then(|sig| Some(vk.verify_internal(&[&tc.message], &sig)))
+        .map(|sig| vk.verify_internal(&[&tc.message], &sig))
         .unwrap_or_default();
     assert_eq!(test_passed, tc.test_passed);
 }

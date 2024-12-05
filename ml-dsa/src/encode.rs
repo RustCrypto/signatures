@@ -1,8 +1,11 @@
-use crate::module_lattice::encode::*;
+use crate::module_lattice::encode::{ArraySize, Encode, EncodingSize, VectorEncodingSize};
 use core::ops::Add;
-use hybrid_array::{typenum::*, Array};
+use hybrid_array::{
+    typenum::{Len, Length, Sum, Unsigned},
+    Array,
+};
 
-use crate::algebra::*;
+use crate::algebra::{Elem, Polynomial, Vector};
 
 /// A pair of integers that describes a range
 pub trait RangeEncodingSize {
@@ -31,10 +34,9 @@ pub type RangeEncodedPolynomialSize<A, B> =
 pub type RangeEncodedPolynomial<A, B> = Array<u8, RangeEncodedPolynomialSize<A, B>>;
 pub type RangeEncodedVectorSize<A, B, K> =
     <RangeEncodingBits<A, B> as VectorEncodingSize<K>>::EncodedVectorSize;
-pub type RangeEncodedVector<A, B, K> =
-    Array<u8, RangeEncodedVectorSize<A, B, K>>;
+pub type RangeEncodedVector<A, B, K> = Array<u8, RangeEncodedVectorSize<A, B, K>>;
 
-/// BitPack
+/// `BitPack` represents range-encoding logic
 pub trait BitPack<A, B> {
     type PackedSize: ArraySize;
     fn pack(&self) -> Array<u8, Self::PackedSize>;
@@ -70,9 +72,9 @@ where
         let b = Elem::new(RangeMax::<A, B>::U32);
         let mut decoded: Self = Encode::<RangeEncodingBits<A, B>>::decode(enc);
 
-        for z in decoded.0.iter_mut() {
+        for z in &mut decoded.0 {
             assert!(z.0 <= (a + b).0);
-            *z = b - *z
+            *z = b - *z;
         }
 
         decoded
@@ -106,11 +108,16 @@ where
 #[cfg(test)]
 pub(crate) mod test {
     use super::*;
+    use crate::module_lattice::encode::*;
     use core::ops::Rem;
     use hybrid_array::typenum::{
-        marker_traits::Zero, operator_aliases::Mod, U1, U10, U2, U3, U4, U6, U8,
+        marker_traits::Zero,
+        operator_aliases::{Diff, Mod, Shleft},
+        U1, U10, U13, U17, U19, U2, U3, U4, U6, U7, U8, U9,
     };
     use rand::Rng;
+
+    use crate::algebra::*;
 
     // A helper trait to construct larger arrays by repeating smaller ones
     trait Repeat<T: Clone, D: ArraySize> {
@@ -219,7 +226,7 @@ pub(crate) mod test {
         let mut rng = rand::thread_rng();
         let decoded = Polynomial::new(Array::from_fn(|_| {
             let mut x: u32 = rng.gen();
-            x = x % (a.0 + b.0);
+            x %= a.0 + b.0;
             b - Elem::new(x)
         }));
 
@@ -233,6 +240,16 @@ pub(crate) mod test {
 
     #[test]
     fn bit_pack() {
+        type D = U13;
+        type Pow2D = Shleft<U1, D>;
+        type Pow2DMin = Diff<Pow2D, U1>;
+
+        type Gamma1Lo = Shleft<U1, U17>;
+        type Gamma1LoMin = Diff<Gamma1Lo, U1>;
+
+        type Gamma1Hi = Shleft<U1, U19>;
+        type Gamma1HiMin = Diff<Gamma1Hi, U1>;
+
         // Use a standard test pattern across all the cases
         // (We can't use -2 because the eta=2 case doesn't actually cover -2)
         let decoded = Polynomial::new(
@@ -253,22 +270,15 @@ pub(crate) mod test {
         bit_pack_test::<U4, U4>(&decoded, &encoded);
 
         // BitPack(_, 2^d - 1, 2^d), d = 13
-        type D = U13;
-        type Pow2D = Shleft<U1, D>;
-        type Pow2DMin = Diff<Pow2D, U1>;
         let encoded: RangeEncodedPolynomial<Pow2DMin, Pow2D> =
             Array::<_, U7>([0x01, 0x20, 0x00, 0xf8, 0xff, 0xf9, 0x7f]).repeat();
         bit_pack_test::<Pow2DMin, Pow2D>(&decoded, &encoded);
 
         // BitPack(_, gamma1 - 1, gamma1), gamma1 = 2^17, 2^19
-        type Gamma1Lo = Shleft<U1, U17>;
-        type Gamma1LoMin = Diff<Gamma1Lo, U1>;
         let encoded: RangeEncodedPolynomial<Gamma1LoMin, Gamma1Lo> =
             Array::<_, U9>([0x01, 0x00, 0x02, 0x00, 0xf8, 0xff, 0x9f, 0xff, 0x7f]).repeat();
         bit_pack_test::<Gamma1LoMin, Gamma1Lo>(&decoded, &encoded);
 
-        type Gamma1Hi = Shleft<U1, U19>;
-        type Gamma1HiMin = Diff<Gamma1Hi, U1>;
         let encoded: RangeEncodedPolynomial<Gamma1HiMin, Gamma1Hi> =
             Array::<_, U10>([0x00, 0x00, 0xf8, 0xff, 0x7f, 0xfe, 0xff, 0xd7, 0xff, 0x7f]).repeat();
         bit_pack_test::<Gamma1Hi, Gamma1HiMin>(&decoded, &encoded);

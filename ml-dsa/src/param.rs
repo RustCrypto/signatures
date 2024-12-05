@@ -13,11 +13,21 @@
 use core::fmt::Debug;
 use core::ops::{Add, Div, Mul, Rem, Sub};
 
-use crate::module_lattice::encode::*;
-use hybrid_array::{typenum::*, Array};
+use crate::module_lattice::encode::{
+    ArraySize, Encode, EncodedPolynomialSize, EncodedVectorSize, EncodingSize,
+};
+use hybrid_array::{
+    typenum::{
+        Diff, Len, Length, Prod, Shleft, Sum, Unsigned, U0, U1, U128, U13, U2, U23, U32, U320, U4,
+        U416, U64,
+    },
+    Array,
+};
 
 use crate::algebra::{Polynomial, Vector};
-use crate::encode::*;
+use crate::encode::{
+    BitPack, RangeEncodedPolynomialSize, RangeEncodedVectorSize, RangeEncodingSize,
+};
 use crate::util::{B32, B64};
 
 /// Some useful compile-time constants
@@ -81,13 +91,16 @@ pub trait ParameterSet {
     /// Error size bound for y
     type Gamma1: MaskSamplingSize;
 
+    /// Low-order rounding range
+    type Gamma2: Unsigned;
+
     /// Low-order rounding range (2 * gamma2 in terms of the spec)
     type TwoGamma2: Unsigned;
 
     /// Encoding width of the W1 polynomial, namely bitlen((q - 1) / (2 * gamma2) - 1)
     type W1Bits: EncodingSize;
 
-    /// Collision strength of c_tilde, in bytes (lambda / 4 in the spec)
+    /// Collision strength of `c_tilde`, in bytes (lambda / 4 in the spec)
     type Lambda: ArraySize;
 
     /// Max number of true values in the hint
@@ -97,6 +110,8 @@ pub trait ParameterSet {
     const TAU: usize;
 
     /// Beta = Tau * Eta
+    #[allow(clippy::as_conversions)]
+    #[allow(clippy::cast_possible_truncation)]
     const BETA: u32 = (Self::TAU as u32) * Self::Eta::U32;
 }
 
@@ -135,11 +150,13 @@ pub trait SigningKeyParams: ParameterSet {
     );
 }
 
-pub type SigningKeySize<P> = <P as SigningKeyParams>::SigningKeySize;
-
 pub type EncodedS1<P> = Array<u8, <P as SigningKeyParams>::S1Size>;
 pub type EncodedS2<P> = Array<u8, <P as SigningKeyParams>::S2Size>;
 pub type EncodedT0<P> = Array<u8, <P as SigningKeyParams>::T0Size>;
+
+pub type SigningKeySize<P> = <P as SigningKeyParams>::SigningKeySize;
+
+/// A signing key encoded as a byte array
 pub type EncodedSigningKey<P> = Array<u8, SigningKeySize<P>>;
 
 impl<P> SigningKeyParams for P
@@ -270,6 +287,8 @@ pub trait VerifyingKeyParams: ParameterSet {
 pub type VerifyingKeySize<P> = <P as VerifyingKeyParams>::VerifyingKeySize;
 
 pub type EncodedT1<P> = Array<u8, <P as VerifyingKeyParams>::T1Size>;
+
+/// A verifying key encoded as a byte array
 pub type EncodedVerifyingKey<P> = Array<u8, VerifyingKeySize<P>>;
 
 impl<P> VerifyingKeyParams for P
@@ -338,6 +357,8 @@ pub type EncodedZ<P> = Array<u8, <P as SignatureParams>::ZSize>;
 pub type EncodedHintIndices<P> = Array<u8, <P as ParameterSet>::Omega>;
 pub type EncodedHintCuts<P> = Array<u8, <P as ParameterSet>::K>;
 pub type EncodedHint<P> = Array<u8, <P as SignatureParams>::HintSize>;
+
+/// A signature encoded as a byte array
 pub type EncodedSignature<P> = Array<u8, SignatureSize<P>>;
 
 impl<P> SignatureParams for P
@@ -382,7 +403,7 @@ where
     type SignatureSize = Sum<Sum<P::Lambda, Self::ZSize>, Self::HintSize>;
 
     const GAMMA1_MINUS_BETA: u32 = P::Gamma1::U32 - P::BETA;
-    const GAMMA2_MINUS_BETA: u32 = (P::TwoGamma2::U32 / 2) - P::BETA;
+    const GAMMA2_MINUS_BETA: u32 = P::Gamma2::U32 - P::BETA;
 
     fn split_hint(y: &EncodedHint<Self>) -> (&EncodedHintIndices<Self>, &EncodedHintCuts<Self>) {
         y.split_ref()
@@ -419,6 +440,9 @@ where
     }
 }
 
+/// An instance of `MlDsaParams` defines all of the parameters necessary for ML-DSA operations.
+/// Typically this is done by implementing `ParameterSet` with values that will fit into the
+/// blanket implementations of `SigningKeyParams`, `VerifyingKeyParams`, and `SignatureParams`.
 pub trait MlDsaParams:
     SigningKeyParams + VerifyingKeyParams + SignatureParams + Debug + Default + PartialEq + Clone
 {

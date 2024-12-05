@@ -1,6 +1,6 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use hybrid_array::{Array, ArraySize};
-use ml_dsa::*;
+use ml_dsa::{KeyGen, MlDsa65, Signature, SigningKey, VerifyingKey, B32};
 use rand::{CryptoRng, RngCore};
 
 pub fn rand<L: ArraySize>(rng: &mut (impl RngCore + CryptoRng)) -> Array<u8, L> {

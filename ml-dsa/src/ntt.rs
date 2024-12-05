@@ -2,23 +2,23 @@ use crate::module_lattice::algebra::Field;
 use crate::module_lattice::encode::ArraySize;
 use core::ops::Mul;
 
-use crate::algebra::*;
+use crate::algebra::{BaseField, Elem, NttPolynomial, NttVector, Polynomial, Vector};
 
 // Since the powers of zeta used in the NTT and MultiplyNTTs are fixed, we use pre-computed tables
 // to avoid the need to compute the exponetiations at runtime.
 //
-//   ZETA_POW_BITREV[i] = zeta^{BitRev_7(i)}
+//   ZETA_POW_BITREV[i] = zeta^{BitRev_8(i)}
 //
 // Note that the const environment here imposes some annoying conditions.  Because operator
 // overloading can't be const, we have to do all the reductions here manually.  Because `for` loops
 // are forbidden in `const` functions, we do them manually with `while` loops.
 //
-// The values computed here match those provided in Appendix B of FIPS 204.  ZETA_POW_BITREV
-// corresponds to the first table, and GAMMA to the second table.
+// The values computed here match those provided in Appendix B of FIPS 204.
 #[allow(clippy::cast_possible_truncation)]
+#[allow(clippy::as_conversions)]
+#[allow(clippy::integer_division_remainder_used)]
 const ZETA_POW_BITREV: [Elem; 256] = {
     const ZETA: u64 = 1753;
-    #[allow(clippy::integer_division_remainder_used)]
     const fn bitrev8(x: usize) -> usize {
         (x as u8).reverse_bits() as usize
     }
@@ -27,7 +27,6 @@ const ZETA_POW_BITREV: [Elem; 256] = {
     let mut pow = [Elem::new(0); 256];
     let mut i = 0;
     let mut curr = 1u64;
-    #[allow(clippy::integer_division_remainder_used)]
     while i < 256 {
         pow[i] = Elem::new(curr as u32);
         i += 1;
@@ -84,6 +83,7 @@ impl<K: ArraySize> Ntt for Vector<K> {
     }
 }
 
+#[allow(clippy::module_name_repetitions)]
 pub trait NttInverse {
     type Output;
     fn ntt_inverse(&self) -> Self::Output;
@@ -94,6 +94,8 @@ impl NttInverse for NttPolynomial {
 
     // Algorithm 42 NTT^{−1}
     fn ntt_inverse(&self) -> Self::Output {
+        const INVERSE_256: Elem = Elem::new(8_347_681);
+
         let mut w = self.0.clone();
 
         let mut m = 256;
@@ -110,7 +112,7 @@ impl NttInverse for NttPolynomial {
             }
         }
 
-        Elem::new(8347681) * &Polynomial::new(w)
+        INVERSE_256 * &Polynomial::new(w)
     }
 }
 
@@ -138,12 +140,16 @@ impl Mul<&NttPolynomial> for &NttPolynomial {
 }
 
 #[cfg(test)]
+#[allow(clippy::as_conversions)]
+#[allow(clippy::cast_possible_truncation)]
 mod test {
     use super::*;
     use hybrid_array::{
         typenum::{U2, U3},
         Array,
     };
+
+    use crate::algebra::*;
 
     // Multiplication in R_q, modulo X^256 + 1
     impl Mul<&Polynomial> for &Polynomial {

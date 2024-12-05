@@ -10,9 +10,10 @@
 #![warn(clippy::integer_division_remainder_used)] // Be judicious about using `/` and `%`
 #![warn(clippy::as_conversions)] // Use proper conversions, not `as`
 #![allow(non_snake_case)] // Allow notation matching the spec
+#![allow(clippy::similar_names)] // Allow notation matching the spec
+#![allow(clippy::many_single_char_names)] // Allow notation matching the spec
 #![allow(clippy::clone_on_copy)] // Be explicit about moving data
-
-// TODO(RLB) Re-enable #![deny(missing_docs)] // Require all public interfaces to be documented
+#![deny(missing_docs)] // Require all public interfaces to be documented
 
 mod algebra;
 mod crypto;
@@ -27,16 +28,22 @@ mod util;
 mod module_lattice;
 
 use core::convert::{AsRef, TryFrom, TryInto};
-use hybrid_array::{typenum::*, Array};
+use hybrid_array::{
+    typenum::{
+        Diff, Length, Prod, Quot, Shleft, Unsigned, U1, U17, U19, U2, U32, U4, U48, U5, U55, U6,
+        U64, U7, U75, U8, U80, U88,
+    },
+    Array,
+};
 use rand::{CryptoRng, RngCore};
 
-use crate::algebra::*;
-use crate::crypto::*;
-use crate::hint::*;
-use crate::ntt::*;
-use crate::param::*;
-use crate::sampling::*;
-use crate::util::*;
+use crate::algebra::{AlgebraExt, Elem, NttMatrix, NttVector, Truncate, Vector};
+use crate::crypto::H;
+use crate::hint::Hint;
+use crate::ntt::{Ntt, NttInverse};
+use crate::param::{ParameterSet, QMinus1, SamplingSize, SpecQ};
+use crate::sampling::{expand_a, expand_mask, expand_s, sample_in_ball};
+use crate::util::B64;
 
 // TODO(RLB) Clean up this API
 pub use crate::param::{EncodedSignature, EncodedSigningKey, EncodedVerifyingKey, MlDsaParams};
@@ -52,6 +59,7 @@ pub struct Signature<P: MlDsaParams> {
 }
 
 impl<P: MlDsaParams> Signature<P> {
+    /// Encode the signature in a fixed-size byte array.
     // Algorithm 26 sigEncode
     pub fn encode(&self) -> EncodedSignature<P> {
         let c_tilde = self.c_tilde.clone();
@@ -60,9 +68,10 @@ impl<P: MlDsaParams> Signature<P> {
         P::concat_sig(c_tilde, z, h)
     }
 
+    /// Decode the signature from an appropriately sized byte array.
     // Algorithm 27 sigDecode
     pub fn decode(enc: &EncodedSignature<P>) -> Option<Self> {
-        let (c_tilde, z, h) = P::split_sig(&enc);
+        let (c_tilde, z, h) = P::split_sig(enc);
 
         let c_tilde = c_tilde.clone();
         let z = P::decode_z(z);
@@ -176,7 +185,11 @@ impl<P: MlDsaParams> SigningKey<P> {
         }
     }
 
+    /// This method reflects the ML-DSA.Sign_internal algorithm from FIPS 204. It does not
+    /// include the domain separator that distinguishes between the normal and pre-hashed cases,
+    /// and it does not separate the context string from the rest of the message.
     // Algorithm 7 ML-DSA.Sign_internal
+    // TODO(RLB) Only expose based on a feature.  Tests need access, but normal code shouldn't.
     pub fn sign_internal(&self, Mp: &[&[u8]], rnd: &B32) -> Signature<P>
     where
         P: MlDsaParams,
@@ -221,10 +234,11 @@ impl<P: MlDsaParams> SigningKey<P> {
             }
 
             let ct0 = (&c_hat * &self.t0_hat).ntt_inverse();
-            let h = Hint::<P>::new(-&ct0, &(&w - &cs2) + &ct0);
+            let minus_ct0 = -&ct0;
+            let w_cs2_ct0 = &(&w - &cs2) + &ct0;
+            let h = Hint::<P>::new(&minus_ct0, &w_cs2_ct0);
 
-            if ct0.infinity_norm() >= P::TwoGamma2::U32 / 2 || h.hamming_weight() > P::Omega::USIZE
-            {
+            if ct0.infinity_norm() >= P::Gamma2::U32 || h.hamming_weight() > P::Omega::USIZE {
                 continue;
             }
 
@@ -232,13 +246,15 @@ impl<P: MlDsaParams> SigningKey<P> {
             return Signature { c_tilde, z, h };
         }
 
-        // XXX(RLB) We could be more parsimonious about the number of iterations here, and still
-        // have an overwhelming probability of success.
-        // XXX(RLB) I still don't love panicking.  Maybe we should expose the fact that this method
-        // can fail?
-        panic!("Rejection sampling failed to find a valid signature");
+        unreachable!("Rejection sampling failed to find a valid signature");
     }
 
+    /// This method reflects the randomized ML-DSA.Sign algorithm.
+    ///
+    /// # Errors
+    ///
+    /// This method will return an opaque error if the context string is more than 255 bytes long,
+    /// or if it fails to get enough randomness.
     // Algorithm 2 ML-DSA.Sign
     pub fn sign(
         &self,
@@ -257,6 +273,11 @@ impl<P: MlDsaParams> SigningKey<P> {
         Ok(self.sign_internal(Mp, &rnd))
     }
 
+    /// This method reflects the optional deterministic variant of the ML-DSA.Sign algorithm.
+    ///
+    /// # Errors
+    ///
+    /// This method will return an opaque error if the context string is more than 255 bytes long.
     // Algorithm 2 ML-DSA.Sign (optional deterministic variant)
     pub fn sign_deterministic(&self, M: &[u8], ctx: &[u8]) -> Result<Signature<P>, Error> {
         if ctx.len() > 255 {
@@ -268,6 +289,7 @@ impl<P: MlDsaParams> SigningKey<P> {
         Ok(self.sign_internal(Mp, &rnd))
     }
 
+    /// Encode the key in a fixed-size byte array.
     // Algorithm 24 skEncode
     pub fn encode(&self) -> EncodedSigningKey<P>
     where
@@ -286,6 +308,7 @@ impl<P: MlDsaParams> SigningKey<P> {
         )
     }
 
+    /// Decode the key from an appropriately sized byte array.
     // Algorithm 25 skDecode
     pub fn decode(enc: &EncodedSigningKey<P>) -> Self
     where
@@ -304,7 +327,7 @@ impl<P: MlDsaParams> SigningKey<P> {
     }
 }
 
-/// The Signer implementation for SigningKey uses the optional deterministic variant of ML-DSA, and
+/// The `Signer` implementation for `SigningKey` uses the optional deterministic variant of ML-DSA, and
 /// only supports signing with an empty context string.  If you would like to include a context
 /// string, use the [`SigningKey::sign_deterministic`] method.
 impl<P: MlDsaParams> signature::Signer<Signature<P>> for SigningKey<P> {
@@ -360,6 +383,9 @@ impl<P: MlDsaParams> VerifyingKey<P> {
         }
     }
 
+    /// This algorithm reflects the ML-DSA.Verify_internal algorithm from FIPS 204.  It does not
+    /// include the domain separator that distinguishes between the normal and pre-hashed cases,
+    /// and it does not separate the context string from the rest of the message.
     // Algorithm 8 ML-DSA.Verify_internal
     pub fn verify_internal(&self, Mp: &[&[u8]], sigma: &Signature<P>) -> bool
     where
@@ -388,13 +414,15 @@ impl<P: MlDsaParams> VerifyingKey<P> {
         sigma.c_tilde == cp_tilde
     }
 
+    /// This algorithm reflect the ML-DSA.Verify algorithm from FIPS 204.
+    // Algorithm 3 ML-DSA.Verify
     pub fn verify(&self, M: &[u8], ctx: &[u8], sigma: &Signature<P>) -> bool {
         if ctx.len() > 255 {
             return false;
         }
 
         let Mp = &[&[0], &[Truncate::truncate(ctx.len())], ctx, M];
-        return self.verify_internal(Mp, sigma);
+        self.verify_internal(Mp, sigma)
     }
 
     fn encode_internal(rho: &B32, t1: &Vector<P::K>) -> EncodedVerifyingKey<P> {
@@ -402,11 +430,13 @@ impl<P: MlDsaParams> VerifyingKey<P> {
         P::concat_vk(rho.clone(), t1_enc)
     }
 
+    /// Encode the key in a fixed-size byte array.
     // Algorithm 22 pkEncode
     pub fn encode(&self) -> EncodedVerifyingKey<P> {
         Self::encode_internal(&self.rho, &self.t1)
     }
 
+    /// Decode the key from an appropriately sized byte array.
     // Algorithm 23 pkDecode
     pub fn decode(enc: &EncodedVerifyingKey<P>) -> Self {
         let (rho, t1_enc) = P::split_vk(enc);
@@ -432,7 +462,8 @@ impl ParameterSet for MlDsa44 {
     type L = U4;
     type Eta = U2;
     type Gamma1 = Shleft<U1, U17>;
-    type TwoGamma2 = Quot<QMinus1, U44>;
+    type Gamma2 = Quot<QMinus1, U88>;
+    type TwoGamma2 = Prod<U2, Self::Gamma2>;
     type W1Bits = Length<Diff<Quot<U88, U2>, U1>>;
     type Lambda = U32;
     type Omega = U80;
@@ -448,7 +479,8 @@ impl ParameterSet for MlDsa65 {
     type L = U5;
     type Eta = U4;
     type Gamma1 = Shleft<U1, U19>;
-    type TwoGamma2 = Quot<QMinus1, U16>;
+    type Gamma2 = Quot<QMinus1, U32>;
+    type TwoGamma2 = Prod<U2, Self::Gamma2>;
     type W1Bits = Length<Diff<Quot<U32, U2>, U1>>;
     type Lambda = U48;
     type Omega = U55;
@@ -464,7 +496,8 @@ impl ParameterSet for MlDsa87 {
     type L = U7;
     type Eta = U2;
     type Gamma1 = Shleft<U1, U19>;
-    type TwoGamma2 = Quot<QMinus1, U16>;
+    type Gamma2 = Quot<QMinus1, U32>;
+    type TwoGamma2 = Prod<U2, Self::Gamma2>;
     type W1Bits = Length<Diff<Quot<U32, U2>, U1>>;
     type Lambda = U64;
     type Omega = U75;
@@ -473,12 +506,14 @@ impl ParameterSet for MlDsa87 {
 
 /// A parameter set that knows how to generate key pairs
 pub trait KeyGen: MlDsaParams {
+    /// The type that is returned by key generation
     type KeyPair: signature::Keypair;
 
     /// Generate a signing key pair from the specified RNG
     fn key_gen(rng: &mut (impl CryptoRng + RngCore)) -> Self::KeyPair;
 
     /// Deterministically generate a signing key pair from the specified seed
+    // TODO(RLB): Only expose this based on a feature.
     fn key_gen_internal(xi: &B32) -> Self::KeyPair;
 }
 
@@ -538,6 +573,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::param::*;
 
     #[test]
     fn output_sizes() {

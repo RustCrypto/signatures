@@ -1,7 +1,10 @@
 use core::mem::ManuallyDrop;
 use core::ops::{Div, Mul, Rem};
 use core::ptr;
-use hybrid_array::{typenum::*, Array, ArraySize};
+use hybrid_array::{
+    typenum::{Prod, Quot, Unsigned, U0},
+    Array, ArraySize,
+};
 
 /// Safely truncate an unsigned integer value to shorter representation
 pub trait Truncate<T> {
@@ -105,6 +108,10 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
+    use hybrid_array::{
+        typenum::{U2, U5},
+        Array,
+    };
 
     #[test]
     fn flatten() {

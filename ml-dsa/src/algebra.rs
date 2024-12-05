@@ -1,11 +1,14 @@
 pub use crate::module_lattice::algebra::Field;
 pub use crate::module_lattice::util::Truncate;
-use hybrid_array::{typenum::*, ArraySize};
+use hybrid_array::{
+    typenum::{Shleft, Unsigned, U1, U13},
+    ArraySize,
+};
 
 use crate::define_field;
 use crate::module_lattice::algebra;
 
-define_field!(BaseField, u32, u64, u128, 8380417);
+define_field!(BaseField, u32, u64, u128, 8_380_417);
 
 pub type Int = <BaseField as Field>::Int;
 
@@ -41,7 +44,9 @@ impl<M> BarrettReduce for M
 where
     M: Unsigned,
 {
+    #[allow(clippy::as_conversions)]
     const SHIFT: usize = 2 * (M::U64.ilog2() + 1) as usize;
+    #[allow(clippy::integer_division_remainder_used)]
     const MULTIPLIER: u64 = (1 << Self::SHIFT) / M::U64;
 }
 
@@ -65,6 +70,7 @@ impl Decompose for Elem {
     }
 }
 
+#[allow(clippy::module_name_repetitions)] // I can't think of a better name
 pub trait AlgebraExt: Sized {
     fn mod_plus_minus<M: Unsigned>(&self) -> Self;
     fn infinity_norm(&self) -> Int;
@@ -129,11 +135,11 @@ impl AlgebraExt for Elem {
 
 impl AlgebraExt for Polynomial {
     fn mod_plus_minus<M: Unsigned>(&self) -> Self {
-        Self(self.0.iter().map(|x| x.mod_plus_minus::<M>()).collect())
+        Self(self.0.iter().map(AlgebraExt::mod_plus_minus::<M>).collect())
     }
 
     fn infinity_norm(&self) -> u32 {
-        self.0.iter().map(|x| x.infinity_norm()).max().unwrap()
+        self.0.iter().map(AlgebraExt::infinity_norm).max().unwrap()
     }
 
     fn power2round(&self) -> (Self, Self) {
@@ -148,21 +154,31 @@ impl AlgebraExt for Polynomial {
     }
 
     fn high_bits<TwoGamma2: Unsigned>(&self) -> Self {
-        Self(self.0.iter().map(|x| x.high_bits::<TwoGamma2>()).collect())
+        Self(
+            self.0
+                .iter()
+                .map(AlgebraExt::high_bits::<TwoGamma2>)
+                .collect(),
+        )
     }
 
     fn low_bits<TwoGamma2: Unsigned>(&self) -> Self {
-        Self(self.0.iter().map(|x| x.low_bits::<TwoGamma2>()).collect())
+        Self(
+            self.0
+                .iter()
+                .map(AlgebraExt::low_bits::<TwoGamma2>)
+                .collect(),
+        )
     }
 }
 
 impl<K: ArraySize> AlgebraExt for Vector<K> {
     fn mod_plus_minus<M: Unsigned>(&self) -> Self {
-        Self(self.0.iter().map(|x| x.mod_plus_minus::<M>()).collect())
+        Self(self.0.iter().map(AlgebraExt::mod_plus_minus::<M>).collect())
     }
 
     fn infinity_norm(&self) -> u32 {
-        self.0.iter().map(|x| x.infinity_norm()).max().unwrap()
+        self.0.iter().map(AlgebraExt::infinity_norm).max().unwrap()
     }
 
     fn power2round(&self) -> (Self, Self) {
@@ -177,10 +193,20 @@ impl<K: ArraySize> AlgebraExt for Vector<K> {
     }
 
     fn high_bits<TwoGamma2: Unsigned>(&self) -> Self {
-        Self(self.0.iter().map(|x| x.high_bits::<TwoGamma2>()).collect())
+        Self(
+            self.0
+                .iter()
+                .map(AlgebraExt::high_bits::<TwoGamma2>)
+                .collect(),
+        )
     }
 
     fn low_bits<TwoGamma2: Unsigned>(&self) -> Self {
-        Self(self.0.iter().map(|x| x.low_bits::<TwoGamma2>()).collect())
+        Self(
+            self.0
+                .iter()
+                .map(AlgebraExt::low_bits::<TwoGamma2>)
+                .collect(),
+        )
     }
 }

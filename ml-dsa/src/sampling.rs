@@ -2,19 +2,21 @@ use crate::module_lattice::encode::ArraySize;
 use crate::module_lattice::util::Truncate;
 use hybrid_array::Array;
 
-use crate::algebra::*;
+use crate::algebra::{
+    BaseField, Elem, Field, Int, NttMatrix, NttPolynomial, NttVector, Polynomial, Vector,
+};
 use crate::crypto::{G, H};
 use crate::param::{Eta, MaskSamplingSize};
 
 // Algorithm 13 BytesToBits
 fn bit_set(z: &[u8], i: usize) -> bool {
-    let bit_index = i % 8;
+    let bit_index = i & 0x07;
     let byte_index = i >> 3;
     z[byte_index] & (1 << bit_index) != 0
 }
 
 // Algorithm 14 CoeffFromThreeBytes
-fn coeff_from_three_bytes(b: &[u8; 3]) -> Option<Elem> {
+fn coeff_from_three_bytes(b: [u8; 3]) -> Option<Elem> {
     let b0: Int = b[0].into();
     let b1: Int = b[1].into();
     let b2: Int = b[2].into();
@@ -29,7 +31,12 @@ fn coeff_from_three_bytes(b: &[u8; 3]) -> Option<Elem> {
 fn coeff_from_half_byte(b: u8, eta: Eta) -> Option<Elem> {
     match eta {
         Eta::Two if b < 15 => {
-            let b = (Int::from(b)) % 5;
+            let b = Int::from(match b {
+                b if b < 5 => b,
+                b if b < 10 => b - 5,
+                _ => b - 10,
+            });
+
             if b <= 2 {
                 Some(Elem::new(2 - b))
             } else {
@@ -95,7 +102,7 @@ fn rej_ntt_poly(rho: &[u8], r: u8, s: u8) -> NttPolynomial {
     let mut s = [0u8; 3];
     while j < 256 {
         ctx.squeeze(&mut s);
-        if let Some(x) = coeff_from_three_bytes(&s) {
+        if let Some(x) = coeff_from_three_bytes(s) {
             a.0[j] = x;
             j += 1;
         }
@@ -174,11 +181,13 @@ where
 }
 
 #[cfg(test)]
+#[allow(clippy::as_conversions)]
+#[allow(clippy::cast_possible_truncation)]
 mod test {
     use super::*;
     use hybrid_array::typenum::{U16, U256};
 
-    fn max_abs_1(p: Polynomial) -> bool {
+    fn max_abs_1(p: &Polynomial) -> bool {
         p.0.iter()
             .all(|x| x.0 == 0 || x.0 == 1 || x.0 == BaseField::Q - 1)
     }
@@ -195,11 +204,11 @@ mod test {
     #[test]
     fn test_sample_in_ball() {
         for tau in 1..65 {
-            for seed in 0..255 {
+            for seed in 0_usize..255 {
                 let rho = ((tau as u16) << 8) + (seed as u16);
                 let p = sample_in_ball(&rho.to_be_bytes(), tau);
                 assert_eq!(hamming_weight(&p), tau);
-                assert!(max_abs_1(p));
+                assert!(max_abs_1(&p));
             }
         }
     }
@@ -228,19 +237,13 @@ mod test {
 
         // Eta = 2
         let sample = rej_bounded_poly(&rho, Eta::Two, 0).0;
-        let all_in_range = sample
-            .iter()
-            .map(|x| *x + Elem::new(2))
-            .all(|x| x.0 < 5);
+        let all_in_range = sample.iter().map(|x| *x + Elem::new(2)).all(|x| x.0 < 5);
         assert!(all_in_range);
         // TODO measure uniformity
 
         // Eta = 4
         let sample = rej_bounded_poly(&rho, Eta::Four, 0).0;
-        let all_in_range = sample
-            .iter()
-            .map(|x| *x + Elem::new(4))
-            .all(|x| x.0 < 9);
+        let all_in_range = sample.iter().map(|x| *x + Elem::new(4)).all(|x| x.0 < 9);
         assert!(all_in_range);
         // TODO measure uniformity
     }

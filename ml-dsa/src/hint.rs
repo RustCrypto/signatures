@@ -4,8 +4,8 @@ use hybrid_array::{
     Array,
 };
 
-use crate::algebra::*;
-use crate::param::*;
+use crate::algebra::{AlgebraExt, BaseField, Decompose, Elem, Field, Polynomial, Vector};
+use crate::param::{EncodedHint, SignatureParams};
 
 fn make_hint<TwoGamma2: Unsigned>(z: Elem, r: Elem) -> bool {
     let r1 = r.high_bits::<TwoGamma2>();
@@ -13,6 +13,9 @@ fn make_hint<TwoGamma2: Unsigned>(z: Elem, r: Elem) -> bool {
     r1 != v1
 }
 
+// The method only deals with public data, so we don't need to worry that / and % are not
+// constant-time.
+#[allow(clippy::integer_division_remainder_used)]
 fn use_hint<TwoGamma2: Unsigned>(h: bool, r: Elem) -> Elem {
     let m: u32 = (BaseField::Q - 1) / TwoGamma2::U32;
     let (r1, r0) = r.decompose::<TwoGamma2>();
@@ -48,7 +51,7 @@ impl<P> Hint<P>
 where
     P: SignatureParams,
 {
-    pub fn new(z: Vector<P::K>, r: Vector<P::K>) -> Self {
+    pub fn new(z: &Vector<P::K>, r: &Vector<P::K>) -> Self {
         let zi = z.0.iter();
         let ri = r.0.iter();
 
@@ -94,7 +97,7 @@ where
     }
 
     pub fn bit_pack(&self) -> EncodedHint<P> {
-        let mut y: EncodedHint<P> = Default::default();
+        let mut y: EncodedHint<P> = Array::default();
         let mut index = 0;
         let omega = P::Omega::USIZE;
         for i in 0..P::K::U8 {
@@ -102,7 +105,7 @@ where
             for j in 0..256 {
                 if self.0[i_usize][j] {
                     y[index] = Truncate::truncate(j);
-                    index += 1
+                    index += 1;
                 }
             }
 
@@ -121,10 +124,10 @@ where
         let cuts: Array<usize, P::K> = cuts.iter().map(|x| usize::from(*x)).collect();
 
         let indices: Array<usize, P::Omega> = indices.iter().map(|x| usize::from(*x)).collect();
-        let max_cut: usize = cuts.iter().cloned().max().unwrap().into();
+        let max_cut: usize = cuts.iter().copied().max().unwrap();
         if !Self::monotonic(&cuts)
             || max_cut > indices.len()
-            || indices[max_cut..].iter().cloned().max().unwrap_or(0) > 0
+            || indices[max_cut..].iter().copied().max().unwrap_or(0) > 0
         {
             return None;
         }

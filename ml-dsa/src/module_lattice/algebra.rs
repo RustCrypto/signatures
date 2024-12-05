@@ -21,9 +21,19 @@ pub trait Field: Copy + Default + Debug + PartialEq {
     fn barrett_reduce(x: Self::Long) -> Self::Int;
 }
 
+/// The `define_field` macro creates a zero-sized struct and an implementation of the Field trait
+/// for that struct.  The caller must specify:
+///
+/// * `$field`: The name of the zero-sized struct to be created
+/// * `$q`: The prime number that defines the field.
+/// * `$int`: The primitive integer type to be used to represent members of the field
+/// * `$long`: The primitive integer type to be used to represent products of two field members.
+///   This type should have roughly twice the bits of `$int`.
+/// * `$longlong`: The primitive integer type to be used to represent products of three field
+///   members. This type should have roughly four times the bits of `$int`.
 #[macro_export]
 macro_rules! define_field {
-    ($field: ident, $int:ty, $long:ty, $longlong:ty, $q:literal) => {
+    ($field:ident, $int:ty, $long:ty, $longlong:ty, $q:literal) => {
         #[derive(Copy, Clone, Default, Debug, PartialEq)]
         pub struct $field;
 
@@ -36,7 +46,9 @@ macro_rules! define_field {
             const QL: Self::Long = $q;
             const QLL: Self::LongLong = $q;
 
+            #[allow(clippy::as_conversions)]
             const BARRETT_SHIFT: usize = 2 * (Self::Q.ilog2() + 1) as usize;
+            #[allow(clippy::integer_division_remainder_used)]
             const BARRETT_MULTIPLIER: Self::LongLong = (1 << Self::BARRETT_SHIFT) / Self::QLL;
 
             fn small_reduce(x: Self::Int) -> Self::Int {

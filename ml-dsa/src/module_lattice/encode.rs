@@ -1,9 +1,12 @@
 use core::fmt::Debug;
 use core::ops::{Div, Mul, Rem};
-use hybrid_array::{typenum::*, Array};
+use hybrid_array::{
+    typenum::{Gcd, Gcf, Prod, Quot, Unsigned, U0, U256, U32, U8},
+    Array,
+};
 use num_traits::One;
 
-use super::algebra::*;
+use super::algebra::{Elem, Field, NttPolynomial, NttVector, Polynomial, Vector};
 use super::util::{Flatten, Truncate, Unflatten};
 
 /// An array length with other useful properties
