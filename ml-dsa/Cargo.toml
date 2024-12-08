@@ -21,8 +21,7 @@ zeroize = ["dep:zeroize"]
 rand_core = ["signature/rand_core"]
 
 [dependencies]
-# TODO reset to something like: { version = "0.2.0-rc.9", features = ["extra-sizes"] }
-hybrid-array = { path = "../../hybrid-array/", features = ["extra-sizes"]} 
+hybrid-array = { version = "0.2.3", features = ["extra-sizes"]} 
 num-traits = "0.2.19"
 rand = "0.8.5"
 sha3 = "0.10.8"
