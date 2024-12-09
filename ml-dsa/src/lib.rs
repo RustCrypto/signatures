@@ -53,6 +53,9 @@ use hybrid_array::{
 #[cfg(feature = "rand_core")]
 use rand_core::CryptoRngCore;
 
+#[cfg(feature = "zeroize")]
+use zeroize::{Zeroize, ZeroizeOnDrop};
+
 use crate::algebra::{AlgebraExt, Elem, NttMatrix, NttVector, Truncate, Vector};
 use crate::crypto::H;
 use crate::hint::Hint;
@@ -61,7 +64,6 @@ use crate::param::{ParameterSet, QMinus1, SamplingSize, SpecQ};
 use crate::sampling::{expand_a, expand_mask, expand_s, sample_in_ball};
 use crate::util::B64;
 
-// TODO(RLB) Clean up this API
 pub use crate::param::{EncodedSignature, EncodedSigningKey, EncodedVerifyingKey, MlDsaParams};
 pub use crate::util::B32;
 pub use signature::Error;
@@ -170,6 +172,21 @@ pub struct SigningKey<P: MlDsaParams> {
     t0_hat: NttVector<P::K>,
     A_hat: NttMatrix<P::K, P::L>,
 }
+
+#[cfg(feature = "zeroize")]
+impl<P: MlDsaParams> Drop for SigningKey<P> {
+    fn drop(&mut self) {
+        self.rho.zeroize();
+        self.K.zeroize();
+        self.tr.zeroize();
+        self.s1.zeroize();
+        self.s2.zeroize();
+        self.t0.zeroize();
+    }
+}
+
+#[cfg(feature = "zeroize")]
+impl<P: MlDsaParams> ZeroizeOnDrop for SigningKey<P> {}
 
 impl<P: MlDsaParams> SigningKey<P> {
     fn new(

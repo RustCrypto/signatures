@@ -5,6 +5,9 @@ use core::ops::{Add, Mul, Neg, Sub};
 use hybrid_array::{typenum::U256, Array, ArraySize};
 use num_traits::PrimInt;
 
+#[cfg(feature = "zeroize")]
+use zeroize::Zeroize;
+
 pub trait Field: Copy + Default + Debug + PartialEq {
     type Int: PrimInt + Default + Debug + From<u8> + Into<u128> + Into<Self::Long> + Truncate<u128>;
     type Long: PrimInt + From<Self::Int>;
@@ -84,6 +87,16 @@ impl<F: Field> Elem<F> {
     }
 }
 
+#[cfg(feature = "zeroize")]
+impl<F: Field> Zeroize for Elem<F>
+where
+    F::Int: Zeroize,
+{
+    fn zeroize(&mut self) {
+        self.0.zeroize();
+    }
+}
+
 impl<F: Field> Neg for Elem<F> {
     type Output = Elem<F>;
 
@@ -128,6 +141,16 @@ pub struct Polynomial<F: Field>(pub Array<Elem<F>, U256>);
 impl<F: Field> Polynomial<F> {
     pub const fn new(x: Array<Elem<F>, U256>) -> Self {
         Self(x)
+    }
+}
+
+#[cfg(feature = "zeroize")]
+impl<F: Field> Zeroize for Polynomial<F>
+where
+    F::Int: Zeroize,
+{
+    fn zeroize(&mut self) {
+        self.0.zeroize();
     }
 }
 
@@ -183,6 +206,16 @@ pub struct Vector<F: Field, K: ArraySize>(pub Array<Polynomial<F>, K>);
 impl<F: Field, K: ArraySize> Vector<F, K> {
     pub const fn new(x: Array<Polynomial<F>, K>) -> Self {
         Self(x)
+    }
+}
+
+#[cfg(feature = "zeroize")]
+impl<F: Field, K: ArraySize> Zeroize for Vector<F, K>
+where
+    F::Int: Zeroize,
+{
+    fn zeroize(&mut self) {
+        self.0.zeroize();
     }
 }
 
@@ -244,6 +277,16 @@ impl<F: Field> NttPolynomial<F> {
     }
 }
 
+#[cfg(feature = "zeroize")]
+impl<F: Field> Zeroize for NttPolynomial<F>
+where
+    F::Int: Zeroize,
+{
+    fn zeroize(&mut self) {
+        self.0.zeroize();
+    }
+}
+
 impl<F: Field> Add<&NttPolynomial<F>> for &NttPolynomial<F> {
     type Output = NttPolynomial<F>;
 
@@ -298,6 +341,16 @@ pub struct NttVector<F: Field, K: ArraySize>(pub Array<NttPolynomial<F>, K>);
 impl<F: Field, K: ArraySize> NttVector<F, K> {
     pub const fn new(x: Array<NttPolynomial<F>, K>) -> Self {
         Self(x)
+    }
+}
+
+#[cfg(feature = "zeroize")]
+impl<F: Field, K: ArraySize> Zeroize for NttVector<F, K>
+where
+    F::Int: Zeroize,
+{
+    fn zeroize(&mut self) {
+        self.0.zeroize();
     }
 }
 
