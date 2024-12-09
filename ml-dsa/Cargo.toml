@@ -15,15 +15,15 @@ categories = ["cryptography"]
 keywords = ["crypto", "signature"]
 
 [features]
-default = ["std"]
+default = ["std", "rand_core"]
 std = ["sha3/std"]
 zeroize = ["dep:zeroize"]
-rand_core = ["signature/rand_core"]
+rand_core = ["dep:rand_core", "signature/rand_core"]
 
 [dependencies]
 hybrid-array = { version = "0.2.3", features = ["extra-sizes"]} 
 num-traits = "0.2.19"
-rand = "0.8.5"
+rand_core = { version = "0.6.4", optional = true }
 sha3 = "0.10.8"
 signature = "2.3.0-pre.4"
 zeroize = { version = "1.8.1", optional = true, default-features = false }

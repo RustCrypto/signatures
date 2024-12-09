@@ -49,7 +49,9 @@ use hybrid_array::{
     },
     Array,
 };
-use rand::{CryptoRng, RngCore};
+
+#[cfg(feature = "rand_core")]
+use rand_core::CryptoRngCore;
 
 use crate::algebra::{AlgebraExt, Elem, NttMatrix, NttVector, Truncate, Vector};
 use crate::crypto::H;
@@ -270,11 +272,12 @@ impl<P: MlDsaParams> SigningKey<P> {
     /// This method will return an opaque error if the context string is more than 255 bytes long,
     /// or if it fails to get enough randomness.
     // Algorithm 2 ML-DSA.Sign
+    #[cfg(feature = "rand_core")]
     pub fn sign_randomized(
         &self,
         M: &[u8],
         ctx: &[u8],
-        rng: &mut (impl CryptoRng + RngCore),
+        rng: &mut impl CryptoRngCore,
     ) -> Result<Signature<P>, Error> {
         if ctx.len() > 255 {
             return Err(Error::new());
@@ -359,7 +362,7 @@ impl<P: MlDsaParams> signature::RandomizedSigner<Signature<P>> for SigningKey<P>
         rng: &mut impl CryptoRngCore,
         msg: &[u8],
     ) -> Result<Signature<P>, Error> {
-        self.sign(msg, &[], rng)
+        self.sign_randomized(msg, &[], rng)
     }
 }
 
@@ -524,7 +527,8 @@ pub trait KeyGen: MlDsaParams {
     type KeyPair: signature::Keypair;
 
     /// Generate a signing key pair from the specified RNG
-    fn key_gen(rng: &mut (impl CryptoRng + RngCore)) -> Self::KeyPair;
+    #[cfg(feature = "rand_core")]
+    fn key_gen(rng: &mut impl CryptoRngCore) -> Self::KeyPair;
 
     /// Deterministically generate a signing key pair from the specified seed
     // TODO(RLB): Only expose this based on a feature.
@@ -539,7 +543,8 @@ where
 
     /// Generate a signing key pair from the specified RNG
     // Algorithm 1 ML-DSA.KeyGen()
-    fn key_gen(rng: &mut (impl CryptoRng + RngCore)) -> KeyPair<P> {
+    #[cfg(feature = "rand_core")]
+    fn key_gen(rng: &mut impl CryptoRngCore) -> KeyPair<P> {
         let mut xi = B32::default();
         rng.fill_bytes(&mut xi);
         Self::key_gen_internal(&xi)
@@ -612,7 +617,12 @@ mod test {
     where
         P: MlDsaParams + PartialEq,
     {
+        #[cfg(feature = "rand_core")]
         let kp = P::key_gen(&mut rand::thread_rng());
+
+        #[cfg(not(feature = "rand_core"))]
+        let kp = P::key_gen_internal(&Default::default());
+
         let sk = kp.signing_key;
         let vk = kp.verifying_key;
 
@@ -643,8 +653,12 @@ mod test {
     where
         P: MlDsaParams,
     {
-        let mut rng = rand::thread_rng();
-        let kp = P::key_gen(&mut rng);
+        #[cfg(feature = "rand_core")]
+        let kp = P::key_gen(&mut rand::thread_rng());
+
+        #[cfg(not(feature = "rand_core"))]
+        let kp = P::key_gen_internal(&Default::default());
+
         let sk = kp.signing_key;
         let vk = kp.verifying_key;
 
