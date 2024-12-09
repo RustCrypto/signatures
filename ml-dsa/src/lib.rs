@@ -617,12 +617,7 @@ mod test {
     where
         P: MlDsaParams + PartialEq,
     {
-        #[cfg(feature = "rand_core")]
-        let kp = P::key_gen(&mut rand::thread_rng());
-
-        #[cfg(not(feature = "rand_core"))]
         let kp = P::key_gen_internal(&Default::default());
-
         let sk = kp.signing_key;
         let vk = kp.verifying_key;
 
@@ -653,12 +648,7 @@ mod test {
     where
         P: MlDsaParams,
     {
-        #[cfg(feature = "rand_core")]
-        let kp = P::key_gen(&mut rand::thread_rng());
-
-        #[cfg(not(feature = "rand_core"))]
         let kp = P::key_gen_internal(&Default::default());
-
         let sk = kp.signing_key;
         let vk = kp.verifying_key;
 
