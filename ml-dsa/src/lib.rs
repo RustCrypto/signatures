@@ -353,8 +353,9 @@ impl<P: MlDsaParams> signature::Signer<Signature<P>> for SigningKey<P> {
     }
 }
 
-/// The RandomizedSigner implementation for SigningKey only supports signing with an empty context
-/// string. If you would like to include a context string, use the [`SigningKey::sign`] method.
+/// The `RandomizedSigner` implementation for `SigningKey` only supports signing with an empty
+/// context string. If you would like to include a context string, use the [`SigningKey::sign`]
+/// method.
 #[cfg(feature = "rand_core")]
 impl<P: MlDsaParams> signature::RandomizedSigner<Signature<P>> for SigningKey<P> {
     fn try_sign_with_rng(
