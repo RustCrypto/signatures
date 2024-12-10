@@ -49,6 +49,7 @@ pub fn split_digest<P: ForsParams>(digest: &Array<u8, P::M>) -> (&Array<u8, P::M
 
 #[cfg(test)]
 pub mod macros {
+    /// Generate a test case
     #[macro_export]
     macro_rules! gen_test {
         ($name:ident, $t:ty) => {
