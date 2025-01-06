@@ -8,7 +8,7 @@
 [![Project Chat][chat-image]][chat-link]
 
 Pure Rust implementation of the Module-Lattice-Based Digital Signature Standard
-(ML-DSA) as described in the [FIPS-204 Inital Public Draft] (WIP).
+(ML-DSA) as described in the [FIPS-204 Initial Public Draft] (WIP).
 
 ## About
 
