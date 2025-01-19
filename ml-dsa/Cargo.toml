@@ -14,5 +14,28 @@ readme = "README.md"
 categories = ["cryptography"]
 keywords = ["crypto", "signature"]
 
+[features]
+default = ["std", "rand_core"]
+std = ["sha3/std"]
+zeroize = ["dep:zeroize", "hybrid-array/zeroize"]
+rand_core = ["dep:rand_core", "signature/rand_core"]
+
 [dependencies]
-signature = { version = "2.3.0-pre.4", features = ["rand_core"] }
+hybrid-array = { version = "0.2.3", features = ["extra-sizes"]} 
+num-traits = "0.2.19"
+rand_core = { version = "0.6.4", optional = true }
+sha3 = "0.10.8"
+signature = "2.3.0-pre.4"
+zeroize = { version = "1.8.1", optional = true, default-features = false }
+
+[dev-dependencies]
+criterion = "0.5.1"
+hex = { version = "0.4.3", features = ["serde"] }
+hex-literal = "0.4.1"
+rand = "0.8.5"
+serde = { version = "1.0.215", features = ["derive"] }
+serde_json = "1.0.132"
+
+[[bench]]
+name = "ml_dsa"
+harness = false
