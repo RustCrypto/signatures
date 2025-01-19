@@ -1,3 +1,4 @@
+#![cfg(feature = "hazmat")]
 // We abused the deprecated attribute for unsecure key sizes
 // But we want to use those small key sizes for fast tests
 #![allow(deprecated)]

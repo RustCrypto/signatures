@@ -2,13 +2,19 @@
 // But we want to use those small key sizes for fast tests
 #![allow(deprecated)]
 
-use dsa::{Components, KeySize, SigningKey, VerifyingKey};
-use num_bigint::BigUint;
-use num_traits::One;
+use dsa::VerifyingKey;
 use pkcs8::{DecodePublicKey, EncodePublicKey, LineEnding};
+
+#[cfg(feature = "hazmat")]
+use dsa::{Components, KeySize, SigningKey};
+#[cfg(feature = "hazmat")]
+use num_bigint::BigUint;
+#[cfg(feature = "hazmat")]
+use num_traits::One;
 
 const OPENSSL_PEM_PUBLIC_KEY: &str = include_str!("pems/public.pem");
 
+#[cfg(feature = "hazmat")]
 fn generate_verifying_key() -> VerifyingKey {
     let mut rng = rand::thread_rng();
     let components = Components::generate(&mut rng, KeySize::DSA_1024_160);
@@ -29,6 +35,7 @@ fn decode_encode_openssl_verifying_key() {
     assert_eq!(reencoded_verifying_key, OPENSSL_PEM_PUBLIC_KEY);
 }
 
+#[cfg(feature = "hazmat")]
 #[test]
 fn encode_decode_verifying_key() {
     let verifying_key = generate_verifying_key();
@@ -38,6 +45,7 @@ fn encode_decode_verifying_key() {
     assert_eq!(verifying_key, decoded_verifying_key);
 }
 
+#[cfg(feature = "hazmat")]
 #[test]
 fn validate_verifying_key() {
     let verifying_key = generate_verifying_key();
