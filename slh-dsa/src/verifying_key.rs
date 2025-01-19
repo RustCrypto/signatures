@@ -7,7 +7,11 @@ use crate::Sha2L35;
 use crate::Shake;
 use ::signature::{Error, Verifier};
 use hybrid_array::{Array, ArraySize};
+use pkcs8::{der, spki};
 use typenum::{Unsigned, U, U16, U24, U32};
+
+#[cfg(feature = "alloc")]
+use pkcs8::EncodePublicKey;
 
 /// A trait specifying the length of a serialized verifying key for a given parameter set
 pub trait VerifyingKeyLen {
@@ -147,6 +151,40 @@ impl<P: ParameterSet> TryFrom<&[u8]> for VerifyingKey<P> {
 impl<P: ParameterSet> Verifier<Signature<P>> for VerifyingKey<P> {
     fn verify(&self, msg: &[u8], signature: &Signature<P>) -> Result<(), Error> {
         self.try_verify_with_context(msg, &[], signature) // TODO - context processing
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<P: ParameterSet> EncodePublicKey for VerifyingKey<P> {
+    fn to_public_key_der(&self) -> pkcs8::spki::Result<der::Document> {
+        let algorithm_identifier = pkcs8::AlgorithmIdentifierRef {
+            oid: P::ALGORITHM_OID,
+            parameters: None,
+        };
+
+        let public_key = self.to_bytes();
+        let subject_public_key = der::asn1::BitStringRef::new(0, &public_key)?;
+
+        pkcs8::SubjectPublicKeyInfo {
+            algorithm: algorithm_identifier,
+            subject_public_key,
+        }
+        .try_into()
+    }
+}
+
+impl<P: ParameterSet> TryFrom<pkcs8::SubjectPublicKeyInfoRef<'_>> for VerifyingKey<P> {
+    type Error = spki::Error;
+
+    fn try_from(spki: pkcs8::SubjectPublicKeyInfoRef<'_>) -> spki::Result<Self> {
+        spki.algorithm.assert_algorithm_oid(P::ALGORITHM_OID)?;
+
+        Ok(Self::try_from(
+            spki.subject_public_key
+                .as_bytes()
+                .ok_or_else(|| der::Tag::BitString.value_error())?,
+        )
+        .map_err(|_| pkcs8::Error::KeyMalformed)?)
     }
 }
 
