@@ -5,8 +5,13 @@ use crate::{Error, Result};
 #[cfg(feature = "signing")]
 use {
     crate::{hazmat::sign_prehashed_rfc6979, SigningKey},
-    elliptic_curve::subtle::CtOption,
-    signature::{hazmat::PrehashSigner, DigestSigner, Signer},
+    elliptic_curve::{subtle::CtOption, FieldBytes},
+    signature::{
+        digest::FixedOutput,
+        hazmat::{PrehashSigner, RandomizedPrehashSigner},
+        rand_core::CryptoRngCore,
+        DigestSigner, RandomizedDigestSigner, Signer,
+    },
 };
 
 #[cfg(feature = "verifying")]
@@ -178,6 +183,19 @@ where
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
+    /// Sign the given message prehash, using the given rng for the RFC6979 Section 3.6 "additional
+    /// data", returning a signature and recovery ID.
+    pub fn sign_prehash_recoverable_with_rng(
+        &self,
+        rng: &mut impl CryptoRngCore,
+        prehash: &[u8],
+    ) -> Result<(Signature<C>, RecoveryId)> {
+        let z = bits2field::<C>(prehash)?;
+        let mut ad = FieldBytes::<C>::default();
+        rng.fill_bytes(&mut ad);
+        sign_prehashed_rfc6979::<C, C::Digest>(self.as_nonzero_scalar(), &z, &ad)
+    }
+
     /// Sign the given message prehash, returning a signature and recovery ID.
     pub fn sign_prehash_recoverable(&self, prehash: &[u8]) -> Result<(Signature<C>, RecoveryId)> {
         let z = bits2field::<C>(prehash)?;
@@ -209,6 +227,39 @@ where
 {
     fn try_sign_digest(&self, msg_digest: D) -> Result<(Signature<C>, RecoveryId)> {
         self.sign_digest_recoverable(msg_digest)
+    }
+}
+
+#[cfg(feature = "signing")]
+impl<C> RandomizedPrehashSigner<(Signature<C>, RecoveryId)> for SigningKey<C>
+where
+    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
+    SignatureSize<C>: ArraySize,
+{
+    fn sign_prehash_with_rng(
+        &self,
+        rng: &mut impl CryptoRngCore,
+        prehash: &[u8],
+    ) -> Result<(Signature<C>, RecoveryId)> {
+        self.sign_prehash_recoverable_with_rng(rng, prehash)
+    }
+}
+
+#[cfg(feature = "signing")]
+impl<C, D> RandomizedDigestSigner<D, (Signature<C>, RecoveryId)> for SigningKey<C>
+where
+    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
+    D: Digest + FixedOutput,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
+    SignatureSize<C>: ArraySize,
+{
+    fn try_sign_digest_with_rng(
+        &self,
+        rng: &mut impl CryptoRngCore,
+        msg_digest: D,
+    ) -> Result<(Signature<C>, RecoveryId)> {
+        self.sign_prehash_with_rng(rng, &msg_digest.finalize_fixed())
     }
 }
 
