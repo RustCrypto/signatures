@@ -4,9 +4,9 @@ description = """
 Pure Rust implementation of ML-DSA (formerly known as CRYSTALS-Dilithium) as
 described in the FIPS-204 Inital Public Draft
 """
-version = "0.1.0-pre"
+version = "0.1.0-pre.0"
 edition = "2021"
-rust-version = "1.75"
+rust-version = "1.81"
 license = "Apache-2.0 OR MIT"
 homepage = "https://github.com/RustCrypto/signatures/tree/master/ml-dsa"
 repository = "https://github.com/RustCrypto/signatures"
@@ -21,7 +21,7 @@ zeroize = ["dep:zeroize", "hybrid-array/zeroize"]
 rand_core = ["dep:rand_core", "signature/rand_core"]
 
 [dependencies]
-hybrid-array = { version = "0.2.3", features = ["extra-sizes"]} 
+hybrid-array = { version = "0.2.3", features = ["extra-sizes"] }
 num-traits = "0.2.19"
 rand_core = { version = "0.6.4", optional = true }
 sha3 = "0.10.8"
