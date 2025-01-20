@@ -2,7 +2,7 @@
 name = "ml-dsa"
 description = """
 Pure Rust implementation of ML-DSA (formerly known as CRYSTALS-Dilithium) as
-described in the FIPS-204 Inital Public Draft
+described in FIPS-204 (final)
 """
 version = "0.1.0-pre.0"
 edition = "2021"
