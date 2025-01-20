@@ -8,7 +8,7 @@
 [![Project Chat][chat-image]][chat-link]
 
 Pure Rust implementation of the Module-Lattice-Based Digital Signature Standard
-(ML-DSA) as described in the [FIPS-204 Inital Public Draft] (WIP).
+(ML-DSA) as described in the [FIPS 204] (final).
 
 ## About
 
@@ -49,12 +49,12 @@ dual licensed as above, without any additional terms or conditions.
 [build-image]: https://github.com/RustCrypto/signatures/actions/workflows/ml-dsa.yml/badge.svg
 [build-link]: https://github.com/RustCrypto/signatures/actions/workflows/ml-dsa.yml
 [license-image]: https://img.shields.io/badge/license-Apache2.0/MIT-blue.svg
-[rustc-image]: https://img.shields.io/badge/rustc-1.75+-blue.svg
+[rustc-image]: https://img.shields.io/badge/rustc-1.81+-blue.svg
 [chat-image]: https://img.shields.io/badge/zulip-join_chat-blue.svg
 [chat-link]: https://rustcrypto.zulipchat.com/#narrow/stream/260048-signatures
 
 [//]: # (links)
 
 [RustCrypto]: https://github.com/RustCrypto
-[FIPS-204 Inital Public Draft]: https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.205.ipd.pdf
+[FIPS 204]: https://csrc.nist.gov/pubs/fips/204/final
 [CRYSTALS-Dilithium]: https://pq-crystals.org/dilithium/
