@@ -273,12 +273,24 @@ mod serde;
 pub use signature::{self, Error, SignatureEncoding};
 
 #[cfg(feature = "pkcs8")]
-pub use crate::pkcs8::{KeypairBytes, PublicKeyBytes};
+pub use crate::pkcs8::{
+    spki::{
+        der::{oid::ObjectIdentifier, AnyRef},
+        AlgorithmIdentifierRef, AssociatedAlgorithmIdentifier,
+    },
+    KeypairBytes, PublicKeyBytes,
+};
 
 use core::fmt;
 
 #[cfg(feature = "alloc")]
 use alloc::vec::Vec;
+
+#[cfg(all(feature = "alloc", feature = "pkcs8"))]
+use pkcs8::spki::{
+    der::{self, asn1::BitString},
+    SignatureBitStringEncoding,
+};
 
 /// Size of a single component of an Ed25519 signature.
 const COMPONENT_SIZE: usize = 32;
@@ -369,6 +381,23 @@ impl SignatureEncoding for Signature {
     fn to_bytes(&self) -> SignatureBytes {
         self.to_bytes()
     }
+}
+
+#[cfg(all(feature = "alloc", feature = "pkcs8"))]
+impl SignatureBitStringEncoding for Signature {
+    fn to_bitstring(&self) -> der::Result<BitString> {
+        BitString::new(0, self.to_vec())
+    }
+}
+
+#[cfg(feature = "pkcs8")]
+impl AssociatedAlgorithmIdentifier for Signature {
+    type Params = AnyRef<'static>;
+
+    const ALGORITHM_IDENTIFIER: AlgorithmIdentifierRef<'static> = AlgorithmIdentifierRef {
+        oid: ObjectIdentifier::new_unwrap("1.3.101.112"),
+        parameters: None,
+    };
 }
 
 impl From<Signature> for SignatureBytes {
