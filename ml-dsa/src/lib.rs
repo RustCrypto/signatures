@@ -56,6 +56,26 @@ use rand_core::CryptoRngCore;
 #[cfg(feature = "zeroize")]
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
+#[cfg(feature = "pkcs8")]
+use {
+    const_oid::db::fips204,
+    pkcs8::{
+        der::{self, AnyRef},
+        spki::{
+            self, AlgorithmIdentifier, AssociatedAlgorithmIdentifier, SignatureAlgorithmIdentifier,
+            SubjectPublicKeyInfoRef,
+        },
+        AlgorithmIdentifierRef, PrivateKeyInfoRef,
+    },
+};
+
+#[cfg(all(feature = "alloc", feature = "pkcs8"))]
+use pkcs8::{
+    der::asn1::{BitString, BitStringRef},
+    spki::{SignatureBitStringEncoding, SubjectPublicKeyInfo},
+    EncodePublicKey,
+};
+
 use crate::algebra::{AlgebraExt, Elem, NttMatrix, NttVector, Truncate, Vector};
 use crate::crypto::H;
 use crate::hint::Hint;
@@ -124,6 +144,24 @@ impl<P: MlDsaParams> signature::SignatureEncoding for Signature<P> {
     type Repr = EncodedSignature<P>;
 }
 
+#[cfg(feature = "alloc")]
+impl<P: MlDsaParams> SignatureBitStringEncoding for Signature<P> {
+    fn to_bitstring(&self) -> der::Result<BitString> {
+        BitString::new(0, self.encode().to_vec())
+    }
+}
+
+#[cfg(feature = "pkcs8")]
+impl<P> AssociatedAlgorithmIdentifier for Signature<P>
+where
+    P: MlDsaParams,
+    P: AssociatedAlgorithmIdentifier<Params = AnyRef<'static>>,
+{
+    type Params = AnyRef<'static>;
+
+    const ALGORITHM_IDENTIFIER: AlgorithmIdentifierRef<'static> = P::ALGORITHM_IDENTIFIER;
+}
+
 // This method takes a slice of slices so that we can accommodate the varying calculations (direct
 // for test vectors, 0... for sign/sign_deterministic, 1... for the pre-hashed version) without
 // having to allocate memory for components.
@@ -154,6 +192,46 @@ impl<P: MlDsaParams> AsRef<VerifyingKey<P>> for KeyPair<P> {
 
 impl<P: MlDsaParams> signature::KeypairRef for KeyPair<P> {
     type VerifyingKey = VerifyingKey<P>;
+}
+
+#[cfg(feature = "pkcs8")]
+impl<P> TryFrom<PrivateKeyInfoRef<'_>> for KeyPair<P>
+where
+    P: MlDsaParams,
+    P: AssociatedAlgorithmIdentifier<Params = AnyRef<'static>>,
+{
+    type Error = pkcs8::Error;
+
+    fn try_from(private_key_info: pkcs8::PrivateKeyInfoRef<'_>) -> pkcs8::Result<Self> {
+        match private_key_info.algorithm {
+            alg if alg == P::ALGORITHM_IDENTIFIER => {}
+            other => return Err(spki::Error::OidUnknown { oid: other.oid }.into()),
+        };
+
+        let seed = Array::try_from(private_key_info.private_key.as_bytes())
+            .map_err(|_| pkcs8::Error::KeyMalformed)?;
+        Ok(P::key_gen_internal(&seed))
+    }
+}
+
+/// The `Signer` implementation for `KeyPair` uses the optional deterministic variant of ML-DSA, and
+/// only supports signing with an empty context string.
+impl<P: MlDsaParams> signature::Signer<Signature<P>> for KeyPair<P> {
+    fn try_sign(&self, msg: &[u8]) -> Result<Signature<P>, Error> {
+        self.signing_key.sign_deterministic(msg, &[])
+    }
+}
+
+#[cfg(feature = "pkcs8")]
+impl<P> SignatureAlgorithmIdentifier for KeyPair<P>
+where
+    P: MlDsaParams,
+    P: AssociatedAlgorithmIdentifier<Params = AnyRef<'static>>,
+{
+    type Params = AnyRef<'static>;
+
+    const SIGNATURE_ALGORITHM_IDENTIFIER: AlgorithmIdentifier<Self::Params> =
+        Signature::<P>::ALGORITHM_IDENTIFIER;
 }
 
 /// An ML-DSA signing key
@@ -384,8 +462,35 @@ impl<P: MlDsaParams> signature::RandomizedSigner<Signature<P>> for SigningKey<P>
     }
 }
 
+#[cfg(feature = "pkcs8")]
+impl<P> SignatureAlgorithmIdentifier for SigningKey<P>
+where
+    P: MlDsaParams,
+    P: AssociatedAlgorithmIdentifier<Params = AnyRef<'static>>,
+{
+    type Params = AnyRef<'static>;
+
+    const SIGNATURE_ALGORITHM_IDENTIFIER: AlgorithmIdentifier<Self::Params> =
+        Signature::<P>::ALGORITHM_IDENTIFIER;
+}
+
+#[cfg(feature = "pkcs8")]
+impl<P> TryFrom<PrivateKeyInfoRef<'_>> for SigningKey<P>
+where
+    P: MlDsaParams,
+    P: AssociatedAlgorithmIdentifier<Params = AnyRef<'static>>,
+{
+    type Error = pkcs8::Error;
+
+    fn try_from(private_key_info: pkcs8::PrivateKeyInfoRef<'_>) -> pkcs8::Result<Self> {
+        let keypair = KeyPair::try_from(private_key_info)?;
+
+        Ok(keypair.signing_key)
+    }
+}
+
 /// An ML-DSA verification key
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct VerifyingKey<P: ParameterSet> {
     rho: B32,
     t1: Vector<P::K>,
@@ -488,6 +593,61 @@ impl<P: MlDsaParams> signature::Verifier<Signature<P>> for VerifyingKey<P> {
     }
 }
 
+#[cfg(feature = "pkcs8")]
+impl<P> SignatureAlgorithmIdentifier for VerifyingKey<P>
+where
+    P: MlDsaParams,
+    P: AssociatedAlgorithmIdentifier<Params = AnyRef<'static>>,
+{
+    type Params = AnyRef<'static>;
+
+    const SIGNATURE_ALGORITHM_IDENTIFIER: AlgorithmIdentifier<Self::Params> =
+        Signature::<P>::ALGORITHM_IDENTIFIER;
+}
+
+#[cfg(feature = "alloc")]
+impl<P> EncodePublicKey for VerifyingKey<P>
+where
+    P: MlDsaParams,
+    P: AssociatedAlgorithmIdentifier<Params = AnyRef<'static>>,
+{
+    fn to_public_key_der(&self) -> spki::Result<der::Document> {
+        let public_key = self.encode();
+        let subject_public_key = BitStringRef::new(0, &public_key)?;
+
+        SubjectPublicKeyInfo {
+            algorithm: P::ALGORITHM_IDENTIFIER,
+            subject_public_key,
+        }
+        .try_into()
+    }
+}
+
+#[cfg(feature = "pkcs8")]
+impl<P> TryFrom<SubjectPublicKeyInfoRef<'_>> for VerifyingKey<P>
+where
+    P: MlDsaParams,
+    P: AssociatedAlgorithmIdentifier<Params = AnyRef<'static>>,
+{
+    type Error = spki::Error;
+
+    fn try_from(spki: SubjectPublicKeyInfoRef<'_>) -> spki::Result<Self> {
+        match spki.algorithm {
+            alg if alg == P::ALGORITHM_IDENTIFIER => {}
+            other => return Err(spki::Error::OidUnknown { oid: other.oid }),
+        };
+
+        Ok(Self::decode(
+            &EncodedVerifyingKey::<P>::try_from(
+                spki.subject_public_key
+                    .as_bytes()
+                    .ok_or_else(|| der::Tag::BitString.value_error())?,
+            )
+            .map_err(|_| pkcs8::Error::KeyMalformed)?,
+        ))
+    }
+}
+
 /// `MlDsa44` is the parameter set for security category 2.
 #[derive(Default, Clone, Debug, PartialEq)]
 pub struct MlDsa44;
@@ -503,6 +663,16 @@ impl ParameterSet for MlDsa44 {
     type Lambda = U32;
     type Omega = U80;
     const TAU: usize = 39;
+}
+
+#[cfg(feature = "pkcs8")]
+impl AssociatedAlgorithmIdentifier for MlDsa44 {
+    type Params = AnyRef<'static>;
+
+    const ALGORITHM_IDENTIFIER: AlgorithmIdentifierRef<'static> = AlgorithmIdentifierRef {
+        oid: fips204::ID_ML_DSA_44,
+        parameters: None,
+    };
 }
 
 /// `MlDsa65` is the parameter set for security category 3.
@@ -522,6 +692,16 @@ impl ParameterSet for MlDsa65 {
     const TAU: usize = 49;
 }
 
+#[cfg(feature = "pkcs8")]
+impl AssociatedAlgorithmIdentifier for MlDsa65 {
+    type Params = AnyRef<'static>;
+
+    const ALGORITHM_IDENTIFIER: AlgorithmIdentifierRef<'static> = AlgorithmIdentifierRef {
+        oid: fips204::ID_ML_DSA_65,
+        parameters: None,
+    };
+}
+
 /// `MlKem87` is the parameter set for security category 5.
 #[derive(Default, Clone, Debug, PartialEq)]
 pub struct MlDsa87;
@@ -537,6 +717,16 @@ impl ParameterSet for MlDsa87 {
     type Lambda = U64;
     type Omega = U75;
     const TAU: usize = 60;
+}
+
+#[cfg(feature = "pkcs8")]
+impl AssociatedAlgorithmIdentifier for MlDsa87 {
+    type Params = AnyRef<'static>;
+
+    const ALGORITHM_IDENTIFIER: AlgorithmIdentifierRef<'static> = AlgorithmIdentifierRef {
+        oid: fips204::ID_ML_DSA_87,
+        parameters: None,
+    };
 }
 
 /// A parameter set that knows how to generate key pairs
