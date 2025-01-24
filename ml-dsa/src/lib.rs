@@ -18,15 +18,15 @@
 //!
 //! ```
 //! use ml_dsa::{MlDsa65, KeyGen};
-//! use signature::{Signer, Verifier};
+//! use signature::{Keypair, Signer, Verifier};
 //!
 //! let mut rng = rand::thread_rng();
 //! let kp = MlDsa65::key_gen(&mut rng);
 //!
 //! let msg = b"Hello world";
-//! let sig = kp.signing_key.sign(msg);
+//! let sig = kp.signing_key().sign(msg);
 //!
-//! assert!(kp.verifying_key.verify(msg, &sig).is_ok());
+//! assert!(kp.verifying_key().verify(msg, &sig).is_ok());
 //! ```
 
 mod algebra;
@@ -178,10 +178,17 @@ fn message_representative(tr: &[u8], Mp: &[&[u8]]) -> B64 {
 /// An ML-DSA key pair
 pub struct KeyPair<P: MlDsaParams> {
     /// The signing key of the key pair
-    pub signing_key: SigningKey<P>,
+    signing_key: SigningKey<P>,
 
     /// The verifying key of the key pair
-    pub verifying_key: VerifyingKey<P>,
+    verifying_key: VerifyingKey<P>,
+}
+
+impl<P: MlDsaParams> KeyPair<P> {
+    /// The signing key of the key pair
+    pub fn signing_key(&self) -> &SigningKey<P> {
+        &self.signing_key
+    }
 }
 
 impl<P: MlDsaParams> AsRef<VerifyingKey<P>> for KeyPair<P> {

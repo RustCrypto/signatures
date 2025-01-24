@@ -18,7 +18,7 @@ fn private_key_serialization() {
     {
         let sk = SigningKey::<P>::from_pkcs8_pem(private_bytes).expect("parse private key");
         let kp = KeyPair::<P>::from_pkcs8_pem(private_bytes).expect("parse private key");
-        assert!(sk == kp.signing_key);
+        assert!(sk == *kp.signing_key());
 
         let pk = VerifyingKey::<P>::from_public_key_pem(public_bytes).expect("parse public key");
         assert_eq!(

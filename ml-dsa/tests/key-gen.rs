@@ -1,6 +1,7 @@
 use ml_dsa::*;
 
 use hybrid_array::Array;
+use signature::Keypair;
 use std::{fs::read_to_string, path::PathBuf};
 
 #[test]
@@ -32,8 +33,8 @@ fn verify<P: MlDsaParams>(tc: &acvp::TestCase) {
     let sk_bytes = EncodedSigningKey::<P>::try_from(tc.sk.as_slice()).unwrap();
 
     let kp = P::key_gen_internal(&seed);
-    let sk = kp.signing_key;
-    let vk = kp.verifying_key;
+    let sk = kp.signing_key().clone();
+    let vk = kp.verifying_key().clone();
 
     // Verify correctness via serialization
     assert_eq!(sk.encode(), sk_bytes);
