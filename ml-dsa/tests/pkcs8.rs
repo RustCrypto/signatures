@@ -5,7 +5,7 @@ use ml_dsa::{KeyPair, MlDsa44, MlDsa65, MlDsa87, MlDsaParams, SigningKey, Verify
 use pkcs8::{
     der::{pem::LineEnding, AnyRef},
     spki::AssociatedAlgorithmIdentifier,
-    DecodePrivateKey, DecodePublicKey, EncodePublicKey,
+    DecodePrivateKey, DecodePublicKey, EncodePrivateKey, EncodePublicKey,
 };
 use signature::Keypair;
 
@@ -19,6 +19,12 @@ fn private_key_serialization() {
         let sk = SigningKey::<P>::from_pkcs8_pem(private_bytes).expect("parse private key");
         let kp = KeyPair::<P>::from_pkcs8_pem(private_bytes).expect("parse private key");
         assert!(sk == *kp.signing_key());
+        assert_eq!(
+            kp.to_pkcs8_pem(LineEnding::LF)
+                .expect("serialize private seed")
+                .deref(),
+            private_bytes
+        );
 
         let pk = VerifyingKey::<P>::from_public_key_pem(public_bytes).expect("parse public key");
         assert_eq!(

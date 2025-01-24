@@ -71,9 +71,9 @@ use {
 
 #[cfg(all(feature = "alloc", feature = "pkcs8"))]
 use pkcs8::{
-    der::asn1::{BitString, BitStringRef},
+    der::asn1::{BitString, BitStringRef, OctetStringRef},
     spki::{SignatureBitStringEncoding, SubjectPublicKeyInfo},
-    EncodePublicKey,
+    EncodePrivateKey, EncodePublicKey,
 };
 
 use crate::algebra::{AlgebraExt, Elem, NttMatrix, NttVector, Truncate, Vector};
@@ -182,6 +182,9 @@ pub struct KeyPair<P: MlDsaParams> {
 
     /// The verifying key of the key pair
     verifying_key: VerifyingKey<P>,
+
+    /// The seed this signing key was derived from
+    seed: B32,
 }
 
 impl<P: MlDsaParams> KeyPair<P> {
@@ -239,6 +242,21 @@ where
 
     const SIGNATURE_ALGORITHM_IDENTIFIER: AlgorithmIdentifier<Self::Params> =
         Signature::<P>::ALGORITHM_IDENTIFIER;
+}
+
+#[cfg(all(feature = "alloc", feature = "pkcs8"))]
+impl<P> EncodePrivateKey for KeyPair<P>
+where
+    P: MlDsaParams,
+    P: AssociatedAlgorithmIdentifier<Params = AnyRef<'static>>,
+{
+    fn to_pkcs8_der(&self) -> pkcs8::Result<der::SecretDocument> {
+        let pkcs8_key = pkcs8::PrivateKeyInfoRef::new(
+            P::ALGORITHM_IDENTIFIER,
+            OctetStringRef::new(&self.seed)?,
+        );
+        Ok(der::SecretDocument::encode_msg(&pkcs8_key)?)
+    }
 }
 
 /// An ML-DSA signing key
@@ -800,6 +818,7 @@ where
         KeyPair {
             signing_key,
             verifying_key,
+            seed: xi.clone(),
         }
     }
 }
