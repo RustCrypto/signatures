@@ -15,8 +15,7 @@ categories = ["cryptography"]
 keywords = ["crypto", "signature"]
 
 [features]
-default = ["std", "rand_core"]
-std = ["sha3/std"]
+default = ["rand_core"]
 zeroize = ["dep:zeroize", "hybrid-array/zeroize"]
 rand_core = ["dep:rand_core", "signature/rand_core"]
 
