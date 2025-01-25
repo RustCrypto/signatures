@@ -19,7 +19,7 @@ default = ["rand_core", "alloc", "pkcs8"]
 zeroize = ["dep:zeroize", "hybrid-array/zeroize"]
 rand_core = ["dep:rand_core", "signature/rand_core"]
 alloc = ["pkcs8?/alloc"]
-pkcs8 = ["const-oid", "dep:pkcs8"]
+pkcs8 = ["dep:const-oid", "dep:pkcs8"]
 
 [dependencies]
 hybrid-array = { version = "0.2.3", features = ["extra-sizes"] }
