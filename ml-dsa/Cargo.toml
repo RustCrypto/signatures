@@ -15,9 +15,11 @@ categories = ["cryptography"]
 keywords = ["crypto", "signature"]
 
 [features]
-default = ["rand_core"]
+default = ["rand_core", "alloc", "pkcs8"]
 zeroize = ["dep:zeroize", "hybrid-array/zeroize"]
 rand_core = ["dep:rand_core", "signature/rand_core"]
+alloc = ["pkcs8?/alloc"]
+pkcs8 = ["dep:const-oid", "dep:pkcs8"]
 
 [dependencies]
 hybrid-array = { version = "0.2.3", features = ["extra-sizes"] }
@@ -27,10 +29,14 @@ sha3 = "0.10.8"
 signature = "2.3.0-pre.4"
 zeroize = { version = "1.8.1", optional = true, default-features = false }
 
+const-oid = { version = "0.10.0-rc.1", features = ["db"], optional = true }
+pkcs8 = { version = "=0.11.0-rc.1", default-features = false, optional = true }
+
 [dev-dependencies]
 criterion = "0.5.1"
 hex = { version = "0.4.3", features = ["serde"] }
 hex-literal = "0.4.1"
+pkcs8 = { version = "=0.11.0-rc.1", features = ["pem"] }
 rand = "0.8.5"
 serde = { version = "1.0.215", features = ["derive"] }
 serde_json = "1.0.132"
