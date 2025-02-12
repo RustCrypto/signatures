@@ -26,7 +26,7 @@ fn use_hint<TwoGamma2: Unsigned>(h: bool, r: Elem) -> Elem {
         Elem::new((r1.0 + m - 1) % m)
     } else if h {
         // We use the Elem encoding even for signed integers.  Since r0 is computed
-        // mod+- 2*gamma2, it is guaranteed to be in (gamma2, gamma2].
+        // mod+- 2*gamma2, it is guaranteed to be in (-gamma2, gamma2].
         unreachable!();
     } else {
         r1
@@ -138,7 +138,6 @@ where
             let indices = &indices[start..end];
 
             if !Self::monotonic(indices) {
-                println!("indices not monotonic: {:?}", indices);
                 return None;
             }
 
