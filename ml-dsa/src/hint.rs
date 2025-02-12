@@ -22,11 +22,11 @@ fn use_hint<TwoGamma2: Unsigned>(h: bool, r: Elem) -> Elem {
     let gamma2 = TwoGamma2::U32 / 2;
     if h && r0.0 <= gamma2 {
         Elem::new((r1.0 + 1) % m)
-    } else if h && r0.0 > BaseField::Q - gamma2 {
+    } else if h && r0.0 >= BaseField::Q - gamma2 {
         Elem::new((r1.0 + m - 1) % m)
     } else if h {
         // We use the Elem encoding even for signed integers.  Since r0 is computed
-        // mod+- 2*gamma2, it is guaranteed to be in (-gamma2, gamma2].
+        // mod+- 2*gamma2 (possibly minus 1), it is guaranteed to be in [-gamma2, gamma2].
         unreachable!();
     } else {
         r1

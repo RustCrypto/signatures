@@ -927,7 +927,7 @@ mod test {
             let sig_dec = Signature::<P>::decode(&sig_enc).unwrap();
 
             assert_eq!(sig_dec, sig);
-            assert!(vk.verify_internal(&[M], &sig));
+            assert!(vk.verify_internal(&[M], &sig_dec));
         }
     }
 

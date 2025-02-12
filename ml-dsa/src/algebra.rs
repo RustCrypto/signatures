@@ -210,3 +210,44 @@ impl<K: ArraySize> AlgebraExt for Vector<K> {
         )
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use crate::{MlDsa65, ParameterSet};
+
+    type TwoGamma2 = <MlDsa65 as ParameterSet>::TwoGamma2;
+    const TWO_GAMMA_2: u32 = TwoGamma2::U32;
+
+    #[test]
+    fn mod_plus_minus() {
+        for x in 0..BaseField::Q {
+            let x = Elem::new(x);
+            let x0 = x.mod_plus_minus::<TwoGamma2>();
+
+            // Outputs from mod+- should be in the half-open interval (-gamma2, gamma2]
+            let positive_bound = x0.0 <= TWO_GAMMA_2 / 2;
+            let negative_bound = x0.0 > BaseField::Q - TWO_GAMMA_2 / 2;
+            assert!(positive_bound || negative_bound);
+        }
+    }
+
+    #[test]
+    fn decompose() {
+        for x in 0..BaseField::Q {
+            let x = Elem::new(x);
+            let (x1, x0) = x.decompose::<TwoGamma2>();
+
+            // The low-order output from decompose() is a mod+- output, optionally minus one.  So
+            // they should be in the closed interval [-gamma2, gamma2].
+            let positive_bound = x0.0 <= TWO_GAMMA_2 / 2;
+            let negative_bound = x0.0 >= BaseField::Q - TWO_GAMMA_2 / 2;
+            assert!(positive_bound || negative_bound);
+
+            // The low-order and high-order values
+            let xx = (TWO_GAMMA_2 * x1.0 + x0.0) % BaseField::Q;
+            assert_eq!(xx, x.0);
+        }
+    }
+}
