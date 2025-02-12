@@ -17,8 +17,7 @@
 //! # Quickstart
 //!
 //! ```
-//! use ml_dsa::{MlDsa65, KeyGen};
-//! use signature::{Keypair, Signer, Verifier};
+//! use ml_dsa::{MlDsa65, KeyGen, signature::{Keypair, Signer, Verifier}};
 //!
 //! let mut rng = rand::thread_rng();
 //! let kp = MlDsa65::key_gen(&mut rng);
@@ -86,10 +85,10 @@ use crate::util::B64;
 
 pub use crate::param::{EncodedSignature, EncodedSigningKey, EncodedVerifyingKey, MlDsaParams};
 pub use crate::util::B32;
-pub use signature::Error;
+pub use signature::{self, Error};
 
 /// An ML-DSA signature
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct Signature<P: MlDsaParams> {
     c_tilde: Array<u8, P::Lambda>,
     z: Vector<P::L>,

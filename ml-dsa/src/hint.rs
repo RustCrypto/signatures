@@ -33,7 +33,7 @@ fn use_hint<TwoGamma2: Unsigned>(h: bool, r: Elem) -> Elem {
     }
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct Hint<P>(pub Array<Array<bool, U256>, P::K>)
 where
     P: SignatureParams;

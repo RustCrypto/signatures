@@ -690,6 +690,7 @@ dependencies = [
  "hybrid-array",
  "num-traits",
  "pkcs8",
+ "proptest",
  "rand",
  "rand_core",
  "serde",
