@@ -1,7 +1,6 @@
 use ml_dsa::*;
 
 use hybrid_array::Array;
-use signature::Keypair;
 use std::{fs::read_to_string, path::PathBuf};
 
 #[test]
