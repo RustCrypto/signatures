@@ -1,4 +1,4 @@
-#![no_std]
+// XXX #![no_std]
 #![doc = include_str!("../README.md")]
 #![doc(
     html_logo_url = "https://raw.githubusercontent.com/RustCrypto/meta/master/logo.svg",
@@ -89,7 +89,7 @@ pub use crate::util::B32;
 pub use signature::Error;
 
 /// An ML-DSA signature
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct Signature<P: MlDsaParams> {
     c_tilde: Array<u8, P::Lambda>,
     z: Vector<P::L>,
@@ -898,5 +898,63 @@ mod test {
         sign_verify_round_trip_test::<MlDsa44>();
         sign_verify_round_trip_test::<MlDsa65>();
         sign_verify_round_trip_test::<MlDsa87>();
+    }
+
+    fn many_round_trip_test<P>()
+    where
+        P: MlDsaParams,
+    {
+        use rand::Rng;
+
+        const ITERATIONS: usize = 1000;
+
+        let mut rng = rand::thread_rng();
+        let mut seed = B32::default();
+
+        for _i in 0..ITERATIONS {
+            let seed_data: &mut [u8] = seed.as_mut();
+            rng.fill(seed_data);
+
+            let kp = P::key_gen_internal(&seed);
+            let sk = kp.signing_key;
+            let vk = kp.verifying_key;
+
+            let M = b"Hello world";
+            let rnd = Array([0u8; 32]);
+            let sig = sk.sign_internal(&[M], &rnd);
+
+            let sig_enc = sig.encode();
+            let sig_dec = Signature::<P>::decode(&sig_enc).unwrap();
+
+            assert_eq!(sig_dec, sig);
+            assert!(vk.verify_internal(&[M], &sig));
+        }
+    }
+
+    #[test]
+    fn many_round_trip() {
+        many_round_trip_test::<MlDsa44>();
+        many_round_trip_test::<MlDsa65>();
+        many_round_trip_test::<MlDsa87>();
+    }
+
+    #[test]
+    fn encode_decode_fail() {
+        use signature::Signer;
+
+        const SEED: [u8; 32] = [
+            197, 185, 159, 59, 216, 233, 208, 40, 244, 4, 182, 73, 109, 244, 205, 113, 116, 55,
+            206, 145, 214, 205, 247, 130, 41, 113, 93, 14, 140, 194, 191, 232,
+        ];
+        const MESSAGE: &[u8] = b"There seems to be a round tripping issue somewhere in here";
+
+        let mut seed = B32::default();
+        seed.0.copy_from_slice(&SEED);
+
+        let seed = SEED.into();
+        let kp = MlDsa65::key_gen_internal(&seed);
+        let sig = kp.signing_key().sign(MESSAGE);
+        let sig_enc = sig.encode();
+        let _sig = Signature::<MlDsa65>::decode(&sig_enc).unwrap();
     }
 }

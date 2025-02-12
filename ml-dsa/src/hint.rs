@@ -33,7 +33,7 @@ fn use_hint<TwoGamma2: Unsigned>(h: bool, r: Elem) -> Elem {
     }
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct Hint<P>(pub Array<Array<bool, U256>, P::K>)
 where
     P: SignatureParams;
@@ -116,7 +116,7 @@ where
     }
 
     fn monotonic(a: &[usize]) -> bool {
-        a.iter().enumerate().all(|(i, x)| i == 0 || a[i - 1] < *x)
+        a.iter().enumerate().all(|(i, x)| i == 0 || a[i - 1] <= *x)
     }
 
     pub fn bit_unpack(y: &EncodedHint<P>) -> Option<Self> {
@@ -138,6 +138,7 @@ where
             let indices = &indices[start..end];
 
             if !Self::monotonic(indices) {
+                println!("indices not monotonic: {:?}", indices);
                 return None;
             }
 
