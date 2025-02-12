@@ -7,7 +7,6 @@ use pkcs8::{
     spki::AssociatedAlgorithmIdentifier,
     DecodePrivateKey, DecodePublicKey, EncodePrivateKey, EncodePublicKey,
 };
-use signature::Keypair;
 
 #[test]
 fn private_key_serialization() {
@@ -34,7 +33,7 @@ fn private_key_serialization() {
             public_bytes
         );
 
-        assert_eq!(kp.verifying_key(), pk);
+        assert_eq!(kp.verifying_key(), &pk);
     }
 
     test_roundtrip::<MlDsa44>(

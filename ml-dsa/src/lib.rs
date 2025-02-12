@@ -17,8 +17,7 @@
 //! # Quickstart
 //!
 //! ```
-//! use ml_dsa::{MlDsa65, KeyGen};
-//! use signature::{Keypair, Signer, Verifier};
+//! use ml_dsa::{MlDsa65, KeyGen, signature::{Keypair, Signer, Verifier}};
 //!
 //! let mut rng = rand::thread_rng();
 //! let kp = MlDsa65::key_gen(&mut rng);
@@ -83,10 +82,11 @@ use crate::ntt::{Ntt, NttInverse};
 use crate::param::{ParameterSet, QMinus1, SamplingSize, SpecQ};
 use crate::sampling::{expand_a, expand_mask, expand_s, sample_in_ball};
 use crate::util::B64;
+use core::fmt;
 
 pub use crate::param::{EncodedSignature, EncodedSigningKey, EncodedVerifyingKey, MlDsaParams};
 pub use crate::util::B32;
-pub use signature::Error;
+pub use signature::{self, Error};
 
 /// An ML-DSA signature
 #[derive(Clone, PartialEq, Debug)]
@@ -192,11 +192,24 @@ impl<P: MlDsaParams> KeyPair<P> {
     pub fn signing_key(&self) -> &SigningKey<P> {
         &self.signing_key
     }
+
+    /// The verifying key of the key pair
+    pub fn verifying_key(&self) -> &VerifyingKey<P> {
+        &self.verifying_key
+    }
 }
 
 impl<P: MlDsaParams> AsRef<VerifyingKey<P>> for KeyPair<P> {
     fn as_ref(&self) -> &VerifyingKey<P> {
         &self.verifying_key
+    }
+}
+
+impl<P: MlDsaParams> fmt::Debug for KeyPair<P> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("KeyPair")
+            .field("verifying_key", &self.verifying_key)
+            .finish_non_exhaustive()
     }
 }
 
@@ -274,6 +287,12 @@ pub struct SigningKey<P: MlDsaParams> {
     s2_hat: NttVector<P::K>,
     t0_hat: NttVector<P::K>,
     A_hat: NttMatrix<P::K, P::L>,
+}
+
+impl<P: MlDsaParams> fmt::Debug for SigningKey<P> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("SigningKey").finish_non_exhaustive()
+    }
 }
 
 #[cfg(feature = "zeroize")]
