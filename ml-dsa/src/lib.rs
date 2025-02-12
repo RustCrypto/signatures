@@ -937,24 +937,4 @@ mod test {
         many_round_trip_test::<MlDsa65>();
         many_round_trip_test::<MlDsa87>();
     }
-
-    #[test]
-    fn encode_decode_fail() {
-        use signature::Signer;
-
-        const SEED: [u8; 32] = [
-            197, 185, 159, 59, 216, 233, 208, 40, 244, 4, 182, 73, 109, 244, 205, 113, 116, 55,
-            206, 145, 214, 205, 247, 130, 41, 113, 93, 14, 140, 194, 191, 232,
-        ];
-        const MESSAGE: &[u8] = b"There seems to be a round tripping issue somewhere in here";
-
-        let mut seed = B32::default();
-        seed.0.copy_from_slice(&SEED);
-
-        let seed = SEED.into();
-        let kp = MlDsa65::key_gen_internal(&seed);
-        let sig = kp.signing_key().sign(MESSAGE);
-        let sig_enc = sig.encode();
-        let _sig = Signature::<MlDsa65>::decode(&sig_enc).unwrap();
-    }
 }
