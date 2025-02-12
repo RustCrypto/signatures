@@ -217,36 +217,45 @@ mod test {
 
     use crate::{MlDsa65, ParameterSet};
 
-    type TwoGamma2 = <MlDsa65 as ParameterSet>::TwoGamma2;
-    const TWO_GAMMA_2: u32 = TwoGamma2::U32;
+    type Mod = <MlDsa65 as ParameterSet>::TwoGamma2;
+    const MOD: u32 = Mod::U32;
+    const MOD_ELEM: Elem = Elem::new(MOD);
 
     #[test]
     fn mod_plus_minus() {
-        for x in 0..BaseField::Q {
+        for x in 0..MOD {
+            // BaseField::Q {
             let x = Elem::new(x);
-            let x0 = x.mod_plus_minus::<TwoGamma2>();
+            let x0 = x.mod_plus_minus::<Mod>();
 
             // Outputs from mod+- should be in the half-open interval (-gamma2, gamma2]
-            let positive_bound = x0.0 <= TWO_GAMMA_2 / 2;
-            let negative_bound = x0.0 > BaseField::Q - TWO_GAMMA_2 / 2;
+            let positive_bound = x0.0 <= MOD / 2;
+            let negative_bound = x0.0 > BaseField::Q - MOD / 2;
             assert!(positive_bound || negative_bound);
+
+            // The output should be equivalent to the input, mod 2 * gamma2.  We add 2 * gamma2
+            // before comparing so that both values are "positive", avoiding interactions between
+            // the mod-Q and mod-M operations.
+            let xn = x + MOD_ELEM;
+            let x0n = x0 + MOD_ELEM;
+            assert_eq!(xn.0 % MOD, x0n.0 % MOD);
         }
     }
 
     #[test]
     fn decompose() {
-        for x in 0..BaseField::Q {
+        for x in 0..MOD {
             let x = Elem::new(x);
-            let (x1, x0) = x.decompose::<TwoGamma2>();
+            let (x1, x0) = x.decompose::<Mod>();
 
             // The low-order output from decompose() is a mod+- output, optionally minus one.  So
             // they should be in the closed interval [-gamma2, gamma2].
-            let positive_bound = x0.0 <= TWO_GAMMA_2 / 2;
-            let negative_bound = x0.0 >= BaseField::Q - TWO_GAMMA_2 / 2;
+            let positive_bound = x0.0 <= MOD / 2;
+            let negative_bound = x0.0 >= BaseField::Q - MOD / 2;
             assert!(positive_bound || negative_bound);
 
-            // The low-order and high-order values
-            let xx = (TWO_GAMMA_2 * x1.0 + x0.0) % BaseField::Q;
+            // The low-order and high-order outputs should combine to form the input.
+            let xx = (MOD * x1.0 + x0.0) % BaseField::Q;
             assert_eq!(xx, x.0);
         }
     }
