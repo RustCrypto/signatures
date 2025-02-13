@@ -15,6 +15,7 @@ defaults:
 env:
   CARGO_INCREMENTAL: 0
   RUSTFLAGS: "-Dwarnings"
+  RUST_MIN_STACK: 6291456
 
 jobs:
   test:
