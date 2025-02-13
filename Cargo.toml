@@ -6,10 +6,11 @@ members = [
     "ed448",
     "ed25519",
     "lms",
-    "ml-dsa",
+    #"ml-dsa",
     "rfc6979",
     "slh-dsa"
 ]
+exclude = ["ml-dsa"] # using rand_core v0.9
 
 [profile.dev]
 opt-level = 2
@@ -17,11 +18,11 @@ opt-level = 2
 [patch.crates-io]
 # A global patch crates-io block is used to avoid duplicate dependencies
 # when pulling a member crate through git
-dsa             = { path = "./dsa" }
-ecdsa           = { path = "./ecdsa" }
+dsa = { path = "./dsa" }
+ecdsa = { path = "./ecdsa" }
 ed448-signature = { path = "./ed448" }
-ed25519         = { path = "./ed25519" }
-lms-signature   = { path = "./lms" }
-ml-dsa          = { path = "./ml-dsa" }
-rfc6979         = { path = "./rfc6979" }
-slh-dsa         = { path = "./slh-dsa" }
+ed25519 = { path = "./ed25519" }
+lms-signature = { path = "./lms" }
+#ml-dsa          = { path = "./ml-dsa" }
+rfc6979 = { path = "./rfc6979" }
+slh-dsa = { path = "./slh-dsa" }

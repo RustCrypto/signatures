@@ -15,6 +15,7 @@ defaults:
 env:
   CARGO_INCREMENTAL: 0
   RUSTFLAGS: "-Dwarnings"
+  RUST_MIN_STACK: 6291456
 
 jobs:
   test:
@@ -29,5 +30,5 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
-      - run: cargo test
-      - run: cargo test --all-features
+      - run: cargo test --release
+      - run: cargo test --all-features --release

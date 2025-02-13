@@ -150,9 +150,9 @@ pub(crate) mod test {
         assert_eq!(actual_decoded, *decoded);
 
         // Test random decode/encode and encode/decode round trips
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let decoded = Polynomial::new(Array::from_fn(|_| {
-            let x: u32 = rng.gen();
+            let x: u32 = rng.random();
             Elem::new(x % (b + 1))
         }));
 
@@ -223,9 +223,9 @@ pub(crate) mod test {
         assert_eq!(actual_decoded, *decoded);
 
         // Test random decode/encode and encode/decode round trips
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let decoded = Polynomial::new(Array::from_fn(|_| {
-            let mut x: u32 = rng.gen();
+            let mut x: u32 = rng.random();
             x %= a.0 + b.0;
             b - Elem::new(x)
         }));

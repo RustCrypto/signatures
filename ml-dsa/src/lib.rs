@@ -50,7 +50,7 @@ use hybrid_array::{
 };
 
 #[cfg(feature = "rand_core")]
-use rand_core::CryptoRngCore;
+use rand_core::{CryptoRng, TryCryptoRng};
 
 #[cfg(feature = "zeroize")]
 use zeroize::{Zeroize, ZeroizeOnDrop};
@@ -412,11 +412,11 @@ impl<P: MlDsaParams> SigningKey<P> {
     /// or if it fails to get enough randomness.
     // Algorithm 2 ML-DSA.Sign
     #[cfg(feature = "rand_core")]
-    pub fn sign_randomized(
+    pub fn sign_randomized<R: TryCryptoRng>(
         &self,
         M: &[u8],
         ctx: &[u8],
-        rng: &mut impl CryptoRngCore,
+        rng: &mut R,
     ) -> Result<Signature<P>, Error> {
         if ctx.len() > 255 {
             return Err(Error::new());
@@ -497,9 +497,9 @@ impl<P: MlDsaParams> signature::Signer<Signature<P>> for SigningKey<P> {
 /// method.
 #[cfg(feature = "rand_core")]
 impl<P: MlDsaParams> signature::RandomizedSigner<Signature<P>> for SigningKey<P> {
-    fn try_sign_with_rng(
+    fn try_sign_with_rng<R: TryCryptoRng>(
         &self,
-        rng: &mut impl CryptoRngCore,
+        rng: &mut R,
         msg: &[u8],
     ) -> Result<Signature<P>, Error> {
         self.sign_randomized(msg, &[], rng)
@@ -780,7 +780,7 @@ pub trait KeyGen: MlDsaParams {
 
     /// Generate a signing key pair from the specified RNG
     #[cfg(feature = "rand_core")]
-    fn key_gen(rng: &mut impl CryptoRngCore) -> Self::KeyPair;
+    fn key_gen<R: CryptoRng>(rng: &mut R) -> Self::KeyPair;
 
     /// Deterministically generate a signing key pair from the specified seed
     // TODO(RLB): Only expose this based on a feature.
@@ -796,7 +796,7 @@ where
     /// Generate a signing key pair from the specified RNG
     // Algorithm 1 ML-DSA.KeyGen()
     #[cfg(feature = "rand_core")]
-    fn key_gen(rng: &mut impl CryptoRngCore) -> KeyPair<P> {
+    fn key_gen<R: CryptoRng>(rng: &mut R) -> KeyPair<P> {
         let mut xi = B32::default();
         rng.fill_bytes(&mut xi);
         Self::key_gen_internal(&xi)
@@ -927,7 +927,7 @@ mod test {
 
         const ITERATIONS: usize = 1000;
 
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let mut seed = B32::default();
 
         for _i in 0..ITERATIONS {
