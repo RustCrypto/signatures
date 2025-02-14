@@ -18,13 +18,13 @@ rust-version = "1.81"
 
 [dependencies]
 elliptic-curve = { version = "0.14.0-rc.1", default-features = false, features = ["digest", "sec1"] }
-signature = { version = "=2.3.0-pre.4", default-features = false, features = ["rand_core"] }
+signature = { version = "=2.3.0-pre.6", default-features = false, features = ["rand_core"] }
 
 # optional dependencies
 der = { version = "0.8.0-rc.1", optional = true }
-digest = { version = "=0.11.0-pre.9", optional = true, default-features = false, features = ["oid"] }
+digest = { version = "=0.11.0-pre.10", optional = true, default-features = false, features = ["oid"] }
 rfc6979 = { version = "=0.5.0-pre.4", optional = true }
-serdect = { version = "0.3.0-rc.0", optional = true, default-features = false, features = ["alloc"] }
+serdect = { version = "0.3", optional = true, default-features = false, features = ["alloc"] }
 sha2 = { version = "=0.11.0-pre.4", optional = true, default-features = false, features = ["oid"] }
 spki = { version = "0.8.0-rc.0", optional = true, default-features = false }
 
@@ -51,3 +51,23 @@ verifying = ["arithmetic", "digest", "hazmat"]
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
+
+[patch.crates-io]
+# https://github.com/RustCrypto/traits/pull/1751
+elliptic-curve = { git = "https://github.com/RustCrypto/traits.git" }
+signature = { git = "https://github.com/RustCrypto/traits.git" }
+
+# https://github.com/RustCrypto/MACs/pull/178
+hmac = { git = "https://github.com/baloo/MACs.git", branch = "baloo/edition-2024" }
+
+# https://github.com/RustCrypto/crypto-bigint/pull/762
+# https://github.com/RustCrypto/crypto-bigint/pull/765
+crypto-bigint = { git = "https://github.com/RustCrypto/crypto-bigint.git" }
+
+# https://github.com/zkcrypto/ff/pull/122
+ff = { git = "https://github.com/pinkforest/ff.git", branch = "bump-rand-core" }
+# https://github.com/zkcrypto/group/pull/56
+group = { git = "https://github.com/pinkforest/group.git", branch = "bump-rand-0.9" }
+
+# https://github.com/RustCrypto/hashes/pull/652
+sha2 = { git = "https://github.com/RustCrypto/hashes.git", branch = "edition_upgrade" }

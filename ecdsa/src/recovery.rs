@@ -9,7 +9,7 @@ use {
     signature::{
         digest::FixedOutput,
         hazmat::{PrehashSigner, RandomizedPrehashSigner},
-        rand_core::CryptoRngCore,
+        rand_core::TryCryptoRng,
         DigestSigner, RandomizedDigestSigner, Signer,
     },
 };
@@ -185,14 +185,14 @@ where
 {
     /// Sign the given message prehash, using the given rng for the RFC6979 Section 3.6 "additional
     /// data", returning a signature and recovery ID.
-    pub fn sign_prehash_recoverable_with_rng(
+    pub fn sign_prehash_recoverable_with_rng<R: TryCryptoRng>(
         &self,
-        rng: &mut impl CryptoRngCore,
+        rng: &mut R,
         prehash: &[u8],
     ) -> Result<(Signature<C>, RecoveryId)> {
         let z = bits2field::<C>(prehash)?;
         let mut ad = FieldBytes::<C>::default();
-        rng.fill_bytes(&mut ad);
+        rng.try_fill_bytes(&mut ad).map_err(|_| Error::new())?;
         sign_prehashed_rfc6979::<C, C::Digest>(self.as_nonzero_scalar(), &z, &ad)
     }
 
@@ -237,9 +237,9 @@ where
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
-    fn sign_prehash_with_rng(
+    fn sign_prehash_with_rng<R: TryCryptoRng>(
         &self,
-        rng: &mut impl CryptoRngCore,
+        rng: &mut R,
         prehash: &[u8],
     ) -> Result<(Signature<C>, RecoveryId)> {
         self.sign_prehash_recoverable_with_rng(rng, prehash)
@@ -254,9 +254,9 @@ where
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
-    fn try_sign_digest_with_rng(
+    fn try_sign_digest_with_rng<R: TryCryptoRng>(
         &self,
-        rng: &mut impl CryptoRngCore,
+        rng: &mut R,
         msg_digest: D,
     ) -> Result<(Signature<C>, RecoveryId)> {
         self.sign_prehash_with_rng(rng, &msg_digest.finalize_fixed())

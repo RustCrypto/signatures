@@ -2,7 +2,7 @@
 resolver = "2"
 members = [
     "dsa",
-    "ecdsa",
+    #"ecdsa",
     "ed448",
     "ed25519",
     "lms",
@@ -10,7 +10,10 @@ members = [
     "rfc6979",
     "slh-dsa"
 ]
-exclude = ["ml-dsa"] # using rand_core v0.9
+exclude = [
+    "ecdsa",
+    "ml-dsa",
+] # using rand_core v0.9
 
 [profile.dev]
 opt-level = 2
@@ -19,10 +22,22 @@ opt-level = 2
 # A global patch crates-io block is used to avoid duplicate dependencies
 # when pulling a member crate through git
 dsa = { path = "./dsa" }
-ecdsa = { path = "./ecdsa" }
+# ecdsa = { path = "./ecdsa" }
 ed448-signature = { path = "./ed448" }
 ed25519 = { path = "./ed25519" }
 lms-signature = { path = "./lms" }
 #ml-dsa          = { path = "./ml-dsa" }
 rfc6979 = { path = "./rfc6979" }
 slh-dsa = { path = "./slh-dsa" }
+
+# https://github.com/RustCrypto/traits/pull/1751
+elliptic-curve = { git = "https://github.com/baloo/traits.git", branch = "baloo/elliptic-curve/bump-rand-core" }
+
+# https://github.com/RustCrypto/crypto-bigint/pull/762
+# https://github.com/RustCrypto/crypto-bigint/pull/765
+crypto-bigint = { git = "https://github.com/RustCrypto/crypto-bigint.git" }
+
+# https://github.com/zkcrypto/ff/pull/122
+ff = { git = "https://github.com/pinkforest/ff.git", branch = "bump-rand-core" }
+# https://github.com/zkcrypto/group/pull/56
+group = { git = "https://github.com/pinkforest/group.git", branch = "bump-rand-0.9" }
