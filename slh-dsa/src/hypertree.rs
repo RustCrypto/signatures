@@ -132,10 +132,10 @@ mod tests {
     use super::*;
     use crate::{hashes::Shake128f, util::macros::test_parameter_sets, PkSeed};
     use hybrid_array::Array;
-    use rand::{thread_rng, Rng};
+    use rand::{rng, Rng};
 
     fn test_ht_sign_verify<HTMode: HypertreeParams>() {
-        let mut rng = thread_rng();
+        let mut rng = rng();
 
         let sk_seed = SkSeed::new(&mut rng);
 
@@ -144,12 +144,12 @@ mod tests {
         let mut m = Array::<u8, HTMode::N>::default();
         rng.fill(m.as_mut_slice());
 
-        let idx_tree = rng.gen_range(
+        let idx_tree = rng.random_range(
             0..=(1u64
                 .wrapping_shl(HTMode::H::U32 - HTMode::HPrime::U32)
                 .wrapping_sub(1)),
         );
-        let idx_leaf = rng.gen_range(0..(1 << (HTMode::HPrime::USIZE)));
+        let idx_leaf = rng.random_range(0..(1 << (HTMode::HPrime::USIZE)));
 
         let mut adrs = WotsHash::default();
         adrs.tree_adrs_low.set(0);
@@ -167,7 +167,7 @@ mod tests {
     test_parameter_sets!(test_ht_sign_verify);
 
     fn test_ht_sign_verify_fail<HTMode: HypertreeParams>() {
-        let mut rng = thread_rng();
+        let mut rng = rng();
 
         let sk_seed = SkSeed::new(&mut rng);
 
@@ -176,12 +176,12 @@ mod tests {
         let mut m = Array::<u8, HTMode::N>::default();
         rng.fill(m.as_mut_slice());
 
-        let idx_tree = rng.gen_range(
+        let idx_tree = rng.random_range(
             0..=(1u64
                 .wrapping_shl(HTMode::H::U32 - HTMode::HPrime::U32)
                 .wrapping_sub(1)),
         );
-        let idx_leaf = rng.gen_range(0..(1 << (HTMode::HPrime::USIZE)));
+        let idx_leaf = rng.random_range(0..(1 << (HTMode::HPrime::USIZE)));
 
         let mut adrs = WotsHash::default();
         adrs.tree_adrs_low.set(0);

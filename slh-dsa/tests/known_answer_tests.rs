@@ -4,12 +4,13 @@
 //!
 //! These tests call the `slh_*_internal` functions directly, bypassing context processing.
 #![cfg(feature = "alloc")]
+use core::{error, fmt};
 use std::{array::from_fn, fmt::Write};
 
 use aes::Aes256;
 use cipher::{KeyIvInit, StreamCipher};
 use ctr::Ctr128BE;
-use rand_core::{CryptoRng, RngCore};
+use rand_core::{CryptoRng, RngCore, TryCryptoRng, TryRngCore};
 use sha2::Digest;
 use signature::Keypair;
 use signature::SignatureEncoding;
@@ -47,11 +48,6 @@ impl RngCore for KatRng {
         self.update(None);
     }
 
-    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), rand::Error> {
-        self.fill_bytes(dest);
-        Ok(())
-    }
-
     fn next_u32(&mut self) -> u32 {
         rand_core::impls::next_u32_via_fill(self)
     }
@@ -66,15 +62,12 @@ impl CryptoRng for KatRng {}
 // Mock RNG that just returns a pre-determined bytestring
 struct ConstRng(Vec<u8>);
 
-impl RngCore for ConstRng {
-    fn fill_bytes(&mut self, dest: &mut [u8]) {
-        self.try_fill_bytes(dest).unwrap();
-    }
-
-    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), rand::Error> {
+impl TryRngCore for ConstRng {
+    type Error = RandError;
+    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), RandError> {
         let len = dest.len();
         if len > self.0.len() {
-            return Err(rand::Error::new("not enough bytes"));
+            return Err(RandError);
         }
 
         dest.iter_mut()
@@ -83,16 +76,32 @@ impl RngCore for ConstRng {
         Ok(())
     }
 
-    fn next_u32(&mut self) -> u32 {
-        rand_core::impls::next_u32_via_fill(self)
+    fn try_next_u32(&mut self) -> Result<u32, RandError> {
+        let mut buf = [0; 4];
+        self.try_fill_bytes(&mut buf)?;
+        Ok(u32::from_le_bytes(buf))
     }
 
-    fn next_u64(&mut self) -> u64 {
-        rand_core::impls::next_u64_via_fill(self)
+    fn try_next_u64(&mut self) -> Result<u64, RandError> {
+        let mut buf = [0; 8];
+        self.try_fill_bytes(&mut buf)?;
+        Ok(u64::from_le_bytes(buf))
     }
 }
 
-impl CryptoRng for ConstRng {}
+/// Not enough bytes error
+#[derive(Debug)]
+struct RandError;
+
+impl fmt::Display for RandError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "not enough bytes")
+    }
+}
+
+impl error::Error for RandError {}
+
+impl TryCryptoRng for ConstRng {}
 
 const ITERS: usize = 10;
 fn test_kat<P: ParameterSet + VerifyingKeyLen>(expected: &str)
@@ -122,9 +131,9 @@ where
 
         let mut seed = vec![0; (P::VkLen::USIZE * 3) / 2];
         rng.fill_bytes(&mut seed);
-        let mut seed_rng = ConstRng(seed);
+        let seed_rng = ConstRng(seed);
 
-        let sk = SigningKey::<P>::new(&mut seed_rng);
+        let sk = SigningKey::<P>::new(&mut seed_rng.unwrap_err());
         let pk = sk.verifying_key();
 
         writeln!(resp, "pk = {}", hex::encode_upper(&pk.to_bytes())).unwrap();

@@ -24,7 +24,6 @@ use pkcs8::{
 /// small devices. The stack representation consumes `P::SigLen` bytes
 ///
 /// There are no invariants maintained by this struct - every field is a hash value
-
 pub struct Signature<P: ParameterSet> {
     pub(crate) randomizer: Array<u8, P::N>,
     pub(crate) fors_sig: ForsSignature<P>,
@@ -188,7 +187,7 @@ mod tests {
     use signature::{SignatureEncoding, Signer};
 
     fn test_serialize_deserialize<P: ParameterSet>() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let sk = SigningKey::<P>::new(&mut rng);
         let msg = b"Hello, world!";
         let sig = sk.try_sign(msg).unwrap();
@@ -206,7 +205,7 @@ mod tests {
 
     #[cfg(feature = "alloc")]
     fn test_serialize_deserialize_vec<P: ParameterSet>() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let sk = SigningKey::<P>::new(&mut rng);
         let msg = b"Hello, world!";
         let sig = sk.try_sign(msg).unwrap();
@@ -225,7 +224,7 @@ mod tests {
 
     #[test]
     fn test_deserialize_fail_on_incorrect_length() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let sk = SigningKey::<Shake128f>::new(&mut rng);
         let msg = b"Hello, world!";
         let sig = sk.try_sign(msg).unwrap();
