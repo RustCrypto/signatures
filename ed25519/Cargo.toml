@@ -19,10 +19,10 @@ rust-version = "1.81"
 
 [dependencies]
 # TODO(tarcieri): relax requirement back to `2` before next release
-signature = { version = "=2.3.0-pre.4", default-features = false }
+signature = { version = "=2.3.0-pre.6", default-features = false }
 
 # optional dependencies
-pkcs8 = { version = "0.11.0-rc.1", optional = true }
+pkcs8 = { version = "0.11.0-rc.2", optional = true }
 serde = { version = "1", optional = true, default-features = false }
 serde_bytes = { version = "0.11", optional = true }
 zeroize = { version = "1", optional = true, default-features = false }
@@ -32,7 +32,7 @@ bincode = "1"
 #ed25519-dalek = { version = "2", features = ["rand_core"] }
 hex-literal = "0.4"
 #ring-compat = { version = "0.8", default-features = false, features = ["signature"] }
-rand_core = { version = "0.6", features = ["std"] }
+rand_core = { version = "0.9", features = ["std"] }
 
 [features]
 default = ["std"]
