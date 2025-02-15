@@ -8,9 +8,13 @@ members = [
     "lms",
     #"ml-dsa",
     "rfc6979",
-    "slh-dsa"
+    #"slh-dsa"
 ]
-exclude = ["ml-dsa"] # using rand_core v0.9
+# using rand_core v0.9
+exclude = [
+    "ml-dsa",
+    "slh-dsa",
+]
 
 [profile.dev]
 opt-level = 2
@@ -25,4 +29,4 @@ ed25519 = { path = "./ed25519" }
 lms-signature = { path = "./lms" }
 #ml-dsa          = { path = "./ml-dsa" }
 rfc6979 = { path = "./rfc6979" }
-slh-dsa = { path = "./slh-dsa" }
+#slh-dsa = { path = "./slh-dsa" }

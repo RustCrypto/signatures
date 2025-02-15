@@ -142,7 +142,7 @@ mod tests {
     use crate::SkSeed;
     use hex_literal::hex;
     use hybrid_array::Array;
-    use rand::thread_rng;
+    use rand::rng;
     use rand::Rng;
     use rand::RngCore;
 
@@ -206,7 +206,7 @@ mod tests {
 
     fn test_sign_verify<Xmss: XmssParams>() {
         // Generate random sk_seed, pk_seed, message, index, address
-        let mut rng = thread_rng();
+        let mut rng = rng();
 
         let sk_seed = SkSeed::new(&mut rng);
 
@@ -215,7 +215,7 @@ mod tests {
         let mut msg = Array::<u8, _>::default();
         rng.fill_bytes(msg.as_mut_slice());
 
-        let idx = rng.gen_range(0..(1 << Xmss::HPrime::U32));
+        let idx = rng.random_range(0..(1 << Xmss::HPrime::U32));
 
         let adrs = WotsHash::default();
 
@@ -231,7 +231,7 @@ mod tests {
 
     fn test_sign_verify_fail<Xmss: XmssParams>() {
         // Generate random sk_seed, pk_seed, message, index, address
-        let mut rng = thread_rng();
+        let mut rng = rng();
 
         let sk_seed = SkSeed::new(&mut rng);
 
@@ -240,7 +240,7 @@ mod tests {
         let mut msg = Array::<u8, _>::default();
         rng.fill_bytes(msg.as_mut_slice());
 
-        let idx = rng.gen_range(0..(1 << Xmss::HPrime::U32));
+        let idx = rng.random_range(0..(1 << Xmss::HPrime::U32));
 
         let adrs = WotsHash::default();
 

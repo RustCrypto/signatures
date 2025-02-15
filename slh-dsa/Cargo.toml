@@ -19,8 +19,8 @@ hybrid-array = { version = "0.2.0-rc.10", features = ["extra-sizes"] }
 typenum = { version = "1.17.0", features = ["const-generics"] }
 sha3 = { version = "=0.11.0-pre.4", default-features = false }
 zerocopy = { version = "0.7.34", features = ["derive"] }
-rand_core = { version = "0.6.4" }
-signature = { version = "2.3.0-pre.4", features = ["rand_core"] }
+rand_core = { version = "0.9.0" }
+signature = { version = "=2.3.0-pre.6", features = ["rand_core"] }
 hmac = "=0.13.0-pre.4"
 sha2 = { version = "=0.11.0-pre.4", default-features = false }
 digest = "=0.11.0-pre.9"
@@ -38,9 +38,9 @@ criterion = "0.5"
 aes = "=0.9.0-pre.2"
 cipher = "=0.5.0-pre.7"
 ctr = "=0.10.0-pre.2"
-rand_core = "0.6.4"
+rand_core = "0.9.0"
 paste = "1.0.15"
-rand = "0.8.5"
+rand = "0.9"
 serde_json = "1.0.124"
 serde = { version = "1.0.207", features = ["derive"] }
 pkcs8 = { version = "=0.11.0-rc.1", features = ["pem"] }
