@@ -23,7 +23,7 @@ mod tests {
     use crate::{lms::SigningKey, ots::LmsOtsSha256N32W4};
 
     fn test_sign_and_verify<Mode: LmsMode>() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
 
         // Generate a fresh keypair
         let mut sk = SigningKey::<Mode>::new(&mut rng);

@@ -7,7 +7,8 @@ use crate::types::{Identifier, Typecode};
 
 use digest::{Digest, Output, OutputSizeUser};
 use hybrid_array::{Array, ArraySize};
-use rand::{CryptoRng, Rng};
+use rand::Rng;
+use rand_core::{CryptoRng, TryCryptoRng};
 use signature::{Error, RandomizedSignerMut};
 
 use core::array::TryFromSliceError;
@@ -105,9 +106,9 @@ impl<Mode: LmsMode> SigningKey<Mode> {
 
 // this implements the algorithm from Appendix D in <https://datatracker.ietf.org/doc/html/rfc8554#appendix-D>
 impl<Mode: LmsMode> RandomizedSignerMut<Signature<Mode>> for SigningKey<Mode> {
-    fn try_sign_with_rng(
+    fn try_sign_with_rng<R: TryCryptoRng>(
         &mut self,
-        rng: &mut impl rand_core::CryptoRngCore,
+        rng: &mut R,
         msg: &[u8],
     ) -> Result<Signature<Mode>, Error> {
         if self.q >= Mode::LEAVES {
