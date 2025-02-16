@@ -141,7 +141,7 @@ mod tests {
     use crate::ots::modes::*;
     use hex_literal::hex;
     use hybrid_array::ArraySize;
-    use rand::thread_rng;
+    use rand::rng;
     use signature::{RandomizedSignerMut, Verifier};
     use typenum::{Prod, Sum, U1, U4};
 
@@ -266,7 +266,7 @@ mod tests {
             U4,
         >: ArraySize,
     {
-        let mut rng = thread_rng();
+        let mut rng = rng();
         let mut sk = SigningKey::<Mode>::new(&mut rng);
         let pk = sk.public();
         let msg = b"Hello, world!";
