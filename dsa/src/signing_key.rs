@@ -99,6 +99,15 @@ impl SigningKey {
         let (p, q, g) = (components.p(), components.q(), components.g());
         let x = self.x();
 
+        let q = q.widen(p.bits_precision());
+        let q = &q;
+
+        let x = x.widen(p.bits_precision());
+        let x = &x;
+
+        let k = k.widen(p.bits_precision());
+        let inv_k = inv_k.widen(p.bits_precision());
+
         // Verify all the precisions check out. Otherwise the math operations will fail
         debug_assert_eq!(p.bits_precision(), q.bits_precision());
         debug_assert_eq!(q.bits_precision(), g.bits_precision());

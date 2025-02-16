@@ -4,7 +4,8 @@
 
 use crate::{signing_key::SigningKey, Components};
 use alloc::vec;
-use crypto_bigint::{BoxedUint, Integer, NonZero, RandomBits};
+use core::cmp::min;
+use crypto_bigint::{BoxedUint, NonZero, RandomBits};
 use digest::{core_api::BlockSizeUser, Digest, FixedOutputReset};
 use signature::rand_core::CryptoRngCore;
 use zeroize::Zeroizing;
@@ -27,7 +28,8 @@ where
     let size = (q.bits() / 8) as usize;
 
     // Reduce hash mod q
-    let hash = BoxedUint::from_be_slice(hash, q.bits_precision()).unwrap();
+    let hash =
+        BoxedUint::from_be_slice(&hash[..min(size, hash.len())], q.bits_precision()).unwrap();
     let hash = (hash % q).to_be_bytes();
     let hash = strip_leading_zeros(&hash, size);
 
