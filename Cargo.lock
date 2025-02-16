@@ -368,19 +368,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ed448-signature"
-version = "0.0.0"
-dependencies = [
- "bincode",
- "hex-literal",
- "pkcs8",
- "serde",
- "serde_bytes",
- "signature",
- "zeroize",
-]
-
-[[package]]
 name = "either"
 version = "1.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
