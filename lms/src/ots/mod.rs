@@ -26,7 +26,7 @@ pub mod tests {
     use digest::OutputSizeUser;
     use hex_literal::hex;
     use hybrid_array::{Array, ArraySize};
-    use rand::thread_rng;
+    use rand::rng;
     use rand_core::{CryptoRng, RngCore};
     use signature::RandomizedSignerMut;
     use signature::Verifier;
@@ -41,7 +41,7 @@ pub mod tests {
         <Mode::Hasher as OutputSizeUser>::OutputSize: Add<U2>,
         Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U2>: ArraySize,
     {
-        let mut rng = thread_rng();
+        let mut rng = rng();
         let mut sk = SigningKey::<Mode>::new(0, [0xcc; ID_LEN], &mut rng);
         let pk = sk.public();
         let msg = "this is a test message".as_bytes();
@@ -65,7 +65,7 @@ pub mod tests {
         <Mode::Hasher as OutputSizeUser>::OutputSize: Add<U2>,
         Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U2>: ArraySize,
     {
-        let mut rng = thread_rng();
+        let mut rng = rng();
         let mut sk = SigningKey::<Mode>::new(0, [0xcc; ID_LEN], &mut rng);
         let mut pk = sk.public();
         let msg = "this is a test message".as_bytes();
@@ -144,16 +144,6 @@ pub mod tests {
             let (hd, tl) = self.0.split_at(dest.len());
             dest.copy_from_slice(hd);
             self.0 = tl;
-        }
-
-        fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), rand_core::Error> {
-            if dest.len() > self.0.len() {
-                return Err(rand_core::Error::new("not enough bytes"));
-            }
-            let (hd, tl) = self.0.split_at(dest.len());
-            dest.copy_from_slice(hd);
-            self.0 = tl;
-            Ok(())
         }
     }
 
