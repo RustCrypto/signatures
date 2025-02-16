@@ -19,10 +19,10 @@ rust-version = "1.81"
 
 [dependencies]
 # TODO(tarcieri): relax requirement back to `2` before next release
-signature = { version = "=2.3.0-pre.4", default-features = false }
+signature = { version = "=2.3.0-pre.6", default-features = false }
 
 # optional dependencies
-pkcs8 = { version = "=0.11.0-rc.1", optional = true }
+pkcs8 = { version = "0.11.0-rc.1", optional = true }
 serde = { version = "1", optional = true, default-features = false }
 serde_bytes = { version = "0.11", optional = true }
 zeroize = { version = "1", optional = true, default-features = false }
