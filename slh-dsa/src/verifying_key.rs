@@ -216,7 +216,7 @@ mod tests {
     use signature::*;
     #[test]
     fn test_vk_serialize_deserialize() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let sk = SigningKey::<Shake128f>::new(&mut rng);
         let vk = sk.verifying_key();
         let vk_bytes: Array<u8, _> = (&vk).into();
