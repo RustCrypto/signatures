@@ -7,7 +7,7 @@ use crate::ots::signature::Signature;
 use crate::types::Identifier;
 use digest::{Digest, Output};
 use hybrid_array::Array;
-use rand_core::CryptoRngCore;
+use rand_core::{CryptoRng, TryCryptoRng};
 use signature::{Error, RandomizedSignerMut};
 use zeroize::Zeroize;
 //use std::mem::MaybeUninit;
@@ -29,7 +29,7 @@ impl<Mode: LmsOtsMode> SigningKey<Mode> {
     // generic_array::ArrayBuilder's internal implementation
     /// If LM-OTS is being used directly, q MUST be set to the all-zero value
     /// <https://datatracker.ietf.org/doc/html/rfc8554#section-4>
-    pub fn new(q: u32, id: Identifier, rng: &mut impl CryptoRngCore) -> Self {
+    pub fn new<R: CryptoRng>(q: u32, id: Identifier, rng: &mut R) -> Self {
         let mut seed: Array<u8, Mode::NLen> = Array::default();
         rng.fill_bytes(&mut seed);
         Self::new_from_seed(q, id, seed)
@@ -96,9 +96,9 @@ impl<Mode: LmsOtsMode> SigningKey<Mode> {
 }
 
 impl<Mode: LmsOtsMode> RandomizedSignerMut<Signature<Mode>> for SigningKey<Mode> {
-    fn try_sign_with_rng(
+    fn try_sign_with_rng<R: TryCryptoRng>(
         &mut self,
-        rng: &mut impl CryptoRngCore,
+        rng: &mut R,
         msg: &[u8],
     ) -> Result<Signature<Mode>, Error> {
         if !self.valid {
@@ -107,7 +107,7 @@ impl<Mode: LmsOtsMode> RandomizedSignerMut<Signature<Mode>> for SigningKey<Mode>
 
         // Generate the message randomizer C
         let mut c = <Output<Mode::Hasher>>::default();
-        rng.fill_bytes(&mut c);
+        rng.try_fill_bytes(&mut c).map_err(|_| Error::new())?;
 
         // Q is the randomized message hash
         let q = Mode::Hasher::new()
