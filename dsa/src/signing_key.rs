@@ -105,9 +105,9 @@ impl SigningKey {
         debug_assert_eq!(g.bits_precision(), x.bits_precision());
         debug_assert_eq!(x.bits_precision(), k.bits_precision());
 
-        let params = BoxedMontyParams::new(Odd::new(k).unwrap());
+        let params = BoxedMontyParams::new(Odd::new(p.as_ref().clone()).unwrap());
         let form = BoxedMontyForm::new((**g).clone(), params);
-        let r = NonZero::new(form.pow(p).retrieve() % q).unwrap();
+        let r = NonZero::new(form.pow(&k).retrieve() % q).unwrap();
 
         let n = q.bits() / 8;
         let block_size = hash.len(); // Hash function output size
