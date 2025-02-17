@@ -36,6 +36,8 @@ signature      = { git = "https://github.com/RustCrypto/traits.git" }
 # https://github.com/RustCrypto/crypto-bigint/pull/765
 crypto-bigint = { git = "https://github.com/RustCrypto/crypto-bigint.git" }
 
+crypto-primes = { git = "https://github.com/entropyxyz/crypto-primes.git" }
+
 # https://github.com/zkcrypto/ff/pull/122
 # https://github.com/zkcrypto/ff/pull/126
 # https://github.com/zkcrypto/ff/pull/127
