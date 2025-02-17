@@ -64,12 +64,15 @@ pub fn secret_number<R: TryCryptoRng + ?Sized>(
 ) -> Option<(BoxedUint, BoxedUint)> {
     let q = components.q();
     let n = q.bits();
+    let q = q.widen(n + 64);
+    let q = &q;
 
     // Attempt to try a fitting secret number
     // Give up after 4096 tries
     for _ in 0..4096 {
         let c = BoxedUint::try_random_bits(rng, n + 64).unwrap();
-        let k = (c % NonZero::new(&**q - &BoxedUint::one()).unwrap()) + BoxedUint::one();
+        let rem = NonZero::new((&**q - &BoxedUint::one()).widen(c.bits_precision())).unwrap();
+        let k = (c % rem) + BoxedUint::one();
 
         if let Some(inv_k) = k.inv_mod(q).into() {
             // `k` and `k^-1` both have to be in the range `[1, q-1]`

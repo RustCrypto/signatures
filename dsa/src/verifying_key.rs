@@ -83,13 +83,19 @@ impl VerifyingKey {
         let u1 = (&z * &w) % q;
         let u2 = r.mul_mod(&w, q);
 
-        let u1_params = BoxedMontyParams::new(Odd::new(u1).unwrap());
-        let u2_params = BoxedMontyParams::new(Odd::new(u2).unwrap());
+        let p1_params = BoxedMontyParams::new(Odd::new(p.as_ref().clone()).unwrap());
+        let p2_params = BoxedMontyParams::new(Odd::new(p.as_ref().clone()).unwrap());
 
-        let g_form = BoxedMontyForm::new((**g).clone(), u1_params);
-        let y_form = BoxedMontyForm::new((**y).clone(), u2_params);
+        let g_form = BoxedMontyForm::new((**g).clone(), p1_params);
+        let y_form = BoxedMontyForm::new((**y).clone(), p2_params);
 
-        let v = (g_form.pow(p).retrieve() * y_form.pow(p).retrieve() % p) % q;
+        let v1 = g_form.pow(&u1).retrieve();
+        let v2 = y_form.pow(&u2).retrieve();
+        let v3 = v1 * v2;
+        let p = p.widen(v3.bits_precision());
+        let q = q.widen(v3.bits_precision());
+        let v4 = v3 % p;
+        let v = v4 % q;
 
         Some(v == **r)
     }

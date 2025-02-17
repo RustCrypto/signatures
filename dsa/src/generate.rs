@@ -1,4 +1,3 @@
-use crate::two;
 use crypto_bigint::BoxedUint;
 use crypto_primes::{Flavor, random_prime};
 use signature::rand_core::CryptoRng;
@@ -16,8 +15,6 @@ pub use self::keypair::keypair;
 /// Calculate the upper and lower bounds for generating values like p or q
 #[inline]
 fn calculate_bounds(size: u32) -> (BoxedUint, BoxedUint) {
-    let lower = two().shl(size - 1);
-    let upper = two().shl(size);
     let lower = BoxedUint::one().widen(size + 1).shl(size - 1);
     let upper = BoxedUint::one().widen(size + 1).shl(size);
 
