@@ -3,23 +3,25 @@
 //!
 
 use crate::{
+    Components,
     generate::{calculate_bounds, generate_prime},
     size::KeySize,
-    two, Components,
+    two,
 };
 use crypto_bigint::{
-    modular::{BoxedMontyForm, BoxedMontyParams},
     BoxedUint, NonZero, Odd, RandomBits,
+    modular::{BoxedMontyForm, BoxedMontyParams},
 };
-use signature::rand_core::CryptoRngCore;
+use crypto_primes::{Flavor, is_prime};
+use signature::rand_core::CryptoRng;
 
 /// Generate the common components p, q, and g
 ///
 /// # Returns
 ///
 /// Tuple of three `BoxedUint`s. Ordered like this `(p, q, g)`
-pub fn common(
-    rng: &mut impl CryptoRngCore,
+pub fn common<R: CryptoRng + ?Sized>(
+    rng: &mut R,
     KeySize { l, n }: KeySize,
 ) -> (NonZero<BoxedUint>, NonZero<BoxedUint>, NonZero<BoxedUint>) {
     // Calculate the lower and upper bounds of p and q
@@ -45,7 +47,7 @@ pub fn common(
             let p = m - mr + BoxedUint::one();
             let p = NonZero::new(p).unwrap();
 
-            if crypto_primes::is_prime_with_rng(rng, &*p) {
+            if is_prime(Flavor::Any, &*p) {
                 break 'gen_pq (p, q);
             }
         }

@@ -2,12 +2,12 @@
 //! Generate a per-message secret number
 //!
 
-use crate::{signing_key::SigningKey, Components};
+use crate::{Components, signing_key::SigningKey};
 use alloc::vec;
 use core::cmp::min;
 use crypto_bigint::{BoxedUint, NonZero, RandomBits};
-use digest::{core_api::BlockSizeUser, Digest, FixedOutputReset};
-use signature::rand_core::CryptoRngCore;
+use digest::{Digest, FixedOutputReset, core_api::BlockSizeUser};
+use signature::rand_core::TryCryptoRng;
 use zeroize::Zeroizing;
 
 fn strip_leading_zeros(buffer: &[u8], desired_size: usize) -> &[u8] {
@@ -58,8 +58,8 @@ where
 ///
 /// Secret number k and its modular multiplicative inverse with q
 #[inline]
-pub fn secret_number(
-    rng: &mut impl CryptoRngCore,
+pub fn secret_number<R: TryCryptoRng + ?Sized>(
+    rng: &mut R,
     components: &Components,
 ) -> Option<(BoxedUint, BoxedUint)> {
     let q = components.q();
@@ -68,7 +68,7 @@ pub fn secret_number(
     // Attempt to try a fitting secret number
     // Give up after 4096 tries
     for _ in 0..4096 {
-        let c = BoxedUint::random_bits(rng, n + 64);
+        let c = BoxedUint::try_random_bits(rng, n + 64).unwrap();
         let k = (c % NonZero::new(&**q - &BoxedUint::one()).unwrap()) + BoxedUint::one();
 
         if let Some(inv_k) = k.inv_mod(q).into() {

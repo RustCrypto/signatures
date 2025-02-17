@@ -8,7 +8,7 @@ use pkcs8::der::{
     self, asn1::UintRef, DecodeValue, Encode, EncodeValue, Header, Length, Reader, Sequence, Tag,
     Writer,
 };
-use signature::rand_core::CryptoRngCore;
+use signature::rand_core::CryptoRng;
 
 /// The common components of an DSA keypair
 ///
@@ -41,7 +41,7 @@ impl Components {
     }
 
     /// Generate a new pair of common components
-    pub fn generate(rng: &mut impl CryptoRngCore, key_size: KeySize) -> Self {
+    pub fn generate<R: CryptoRng + ?Sized>(rng: &mut R, key_size: KeySize) -> Self {
         let (p, q, g) = crate::generate::common_components(rng, key_size);
         Self::from_components(p, q, g).expect("[Bug] Newly generated components considered invalid")
     }

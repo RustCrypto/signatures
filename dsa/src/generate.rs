@@ -1,6 +1,7 @@
 use crate::two;
 use crypto_bigint::BoxedUint;
-use signature::rand_core::CryptoRngCore;
+use crypto_primes::{Flavor, random_prime};
+use signature::rand_core::CryptoRng;
 
 mod components;
 mod keypair;
@@ -25,6 +26,6 @@ fn calculate_bounds(size: u32) -> (BoxedUint, BoxedUint) {
 ///
 /// This wrapper function mainly exists to enforce the [`CryptoRng`](rand::CryptoRng) requirement (I might otherwise forget it)
 #[inline]
-fn generate_prime(bit_length: u32, rng: &mut impl CryptoRngCore) -> BoxedUint {
-    crypto_primes::generate_prime_with_rng(rng, bit_length)
+fn generate_prime<R: CryptoRng + ?Sized>(bit_length: u32, rng: &mut R) -> BoxedUint {
+    random_prime(rng, Flavor::Any, bit_length)
 }
