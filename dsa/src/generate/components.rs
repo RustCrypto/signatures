@@ -37,14 +37,15 @@ pub fn common<R: CryptoRng + ?Sized>(
         for _ in 0..4096 {
             let m = 'gen_m: loop {
                 let m = BoxedUint::random_bits(rng, l);
+
                 if m > p_min && m < p_max {
                     break 'gen_m m;
                 }
             };
             let rem = NonZero::new((two() * &*q).widen(m.bits_precision())).unwrap();
+
             let mr = &m % &rem;
             let p = m - mr + BoxedUint::one();
-            let p = p.shorten(q.bits_precision());
             let p = NonZero::new(p).unwrap();
 
             if crypto_primes::is_prime_with_rng(rng, &*p) {
@@ -53,9 +54,10 @@ pub fn common<R: CryptoRng + ?Sized>(
         }
     };
 
+    let q = q.widen(l);
+
     // Generate g using the unverifiable method as defined by Appendix A.2.1
     let e = (&*p - &BoxedUint::one()) / &q;
-    let mut h = BoxedUint::one();
     let mut h = BoxedUint::one().widen(q.bits_precision());
     let g = loop {
         let params = BoxedMontyParams::new_vartime(Odd::new((*p).clone()).unwrap());
@@ -68,6 +70,8 @@ pub fn common<R: CryptoRng + ?Sized>(
 
         h = h + BoxedUint::one();
     };
+
+    let q = NonZero::new(q.shorten(n)).unwrap();
 
     (p, q, g)
 }
