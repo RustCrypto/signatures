@@ -21,7 +21,7 @@ use pkcs8::{
 };
 use signature::{
     hazmat::{PrehashSigner, RandomizedPrehashSigner},
-    rand_core::CryptoRngCore,
+    rand_core::TryCryptoRng,
     DigestSigner, RandomizedDigestSigner, Signer,
 };
 use zeroize::{Zeroize, Zeroizing};
@@ -59,7 +59,7 @@ impl SigningKey {
     #[cfg(feature = "hazmat")]
     /// Generate a new DSA keypair
     #[inline]
-    pub fn generate(rng: &mut impl CryptoRngCore, components: Components) -> SigningKey {
+    pub fn generate<R: CryptoRng + ?Sized>(rng: &mut R, components: Components) -> SigningKey {
         crate::generate::keypair(rng, components)
     }
 
@@ -153,14 +153,14 @@ impl PrehashSigner<Signature> for SigningKey {
 }
 
 impl RandomizedPrehashSigner<Signature> for SigningKey {
-    fn sign_prehash_with_rng(
+    fn sign_prehash_with_rng<R: TryCryptoRng + ?Sized>(
         &self,
-        mut rng: &mut impl CryptoRngCore,
+        rng: &mut R,
         prehash: &[u8],
     ) -> Result<Signature, signature::Error> {
         let components = self.verifying_key.components();
 
-        if let Some(k_kinv) = crate::generate::secret_number(&mut rng, components) {
+        if let Some(k_kinv) = crate::generate::secret_number(rng, components) {
             self.sign_prehashed(k_kinv, prehash)
         } else {
             Err(signature::Error::new())
@@ -184,12 +184,12 @@ impl<D> RandomizedDigestSigner<D, Signature> for SigningKey
 where
     D: Digest,
 {
-    fn try_sign_digest_with_rng(
+    fn try_sign_digest_with_rng<R: TryCryptoRng + ?Sized>(
         &self,
-        mut rng: &mut impl CryptoRngCore,
+        rng: &mut R,
         digest: D,
     ) -> Result<Signature, signature::Error> {
-        let ks = crate::generate::secret_number(&mut rng, self.verifying_key().components())
+        let ks = crate::generate::secret_number(rng, self.verifying_key().components())
             .ok_or_else(signature::Error::new)?;
         let hash = digest.finalize();
 
