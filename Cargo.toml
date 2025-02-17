@@ -40,6 +40,8 @@ signature      = { git = "https://github.com/RustCrypto/traits.git" }
 # https://github.com/RustCrypto/crypto-bigint/pull/765
 crypto-bigint = { git = "https://github.com/RustCrypto/crypto-bigint.git" }
 
+crypto-primes = { git = "https://github.com/entropyxyz/crypto-primes.git" }
+
 # https://github.com/zkcrypto/ff/pull/122
 ff = { git = "https://github.com/pinkforest/ff.git", branch = "bump-rand-core" }
 # https://github.com/zkcrypto/group/pull/56

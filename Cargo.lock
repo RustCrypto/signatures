@@ -88,7 +88,7 @@ version = "0.11.0-rc.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a229bfd78e4827c91b9b95784f69492c1b77c1ab75a45a8a037b139215086f94"
 dependencies = [
- "hybrid-array 0.3.0",
+ "hybrid-array",
 ]
 
 [[package]]
@@ -261,25 +261,13 @@ checksum = "7a81dae078cea95a014a339291cec439d2f232ebe854a9d672b796c6afafa9b7"
 
 [[package]]
 name = "crypto-bigint"
-version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "96272c2ff28b807e09250b180ad1fb7889a3258f7455759b5c3c58b719467130"
+version = "0.7.0-pre.0"
+source = "git+https://github.com/RustCrypto/crypto-bigint.git#0feb3c584f5436e5d13135f4ecc39776946816b4"
 dependencies = [
- "num-traits",
- "rand_core 0.6.4",
- "serdect",
- "subtle",
- "zeroize",
-]
-
-[[package]]
-name = "crypto-bigint"
-version = "0.7.0-pre"
-source = "git+https://github.com/RustCrypto/crypto-bigint.git#534c2940b1f0aa9ec8ada964ce654cc0e6e1e7bb"
-dependencies = [
- "hybrid-array 0.2.3",
+ "hybrid-array",
  "num-traits",
  "rand_core 0.9.2",
+ "serdect",
  "subtle",
  "zeroize",
 ]
@@ -290,17 +278,16 @@ version = "0.2.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "170d71b5b14dec99db7739f6fc7d6ec2db80b78c3acb77db48392ccc3d8a9ea0"
 dependencies = [
- "hybrid-array 0.3.0",
+ "hybrid-array",
 ]
 
 [[package]]
 name = "crypto-primes"
-version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "76db6c35962f23f58ab08c156831c55caf69fe85a63ae3780d4fdb24c38b32b6"
+version = "0.7.0-dev"
+source = "git+https://github.com/entropyxyz/crypto-primes.git#a280813a8cd4b348793cf0f36ad742d26884d691"
 dependencies = [
- "crypto-bigint 0.6.1",
- "rand_core 0.6.4",
+ "crypto-bigint",
+ "rand_core 0.9.2",
 ]
 
 [[package]]
@@ -339,7 +326,7 @@ dependencies = [
 name = "dsa"
 version = "0.7.0-pre.1"
 dependencies = [
- "crypto-bigint 0.6.1",
+ "crypto-bigint",
  "crypto-primes",
  "digest",
  "hex",
@@ -404,15 +391,15 @@ checksum = "60b1af1c220855b6ceac025d3f6ecdd2b7c4894bfe9cd9bda4fbb4bc7c0d4cf0"
 [[package]]
 name = "elliptic-curve"
 version = "0.14.0-rc.1"
-source = "git+https://github.com/RustCrypto/traits.git#28b6e0d3231fa0fb31dc7f6bfdb62d6558bcfdf6"
+source = "git+https://github.com/RustCrypto/traits.git#d39ad3012ea1c68f6e515b5aef1ee16adae77a48"
 dependencies = [
  "base16ct",
- "crypto-bigint 0.7.0-pre",
+ "crypto-bigint",
  "digest",
  "ff",
  "group",
  "hex-literal 1.0.0",
- "hybrid-array 0.3.0",
+ "hybrid-array",
  "pem-rfc7468",
  "pkcs8",
  "rand_core 0.9.2",
@@ -543,15 +530,6 @@ dependencies = [
 
 [[package]]
 name = "hybrid-array"
-version = "0.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2d35805454dc9f8662a98d6d61886ffe26bd465f5960e0e55345c70d5c0d2a9"
-dependencies = [
- "typenum",
-]
-
-[[package]]
-name = "hybrid-array"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4dab50e193aebe510fe0e40230145820e02f48dae0cf339ea4204e6e708ff7bd"
@@ -566,7 +544,7 @@ version = "0.2.0-rc.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ac5e145e8ade9f74c0a5efc60ccb4e714b0144f7e2220b7ca64254feee71c57f"
 dependencies = [
- "hybrid-array 0.3.0",
+ "hybrid-array",
 ]
 
 [[package]]
@@ -644,7 +622,7 @@ dependencies = [
  "digest",
  "hex",
  "hex-literal 0.4.1",
- "hybrid-array 0.3.0",
+ "hybrid-array",
  "rand 0.9.0",
  "rand_core 0.9.2",
  "sha2",
@@ -674,7 +652,7 @@ dependencies = [
  "criterion",
  "hex",
  "hex-literal 1.0.0",
- "hybrid-array 0.3.0",
+ "hybrid-array",
  "num-traits",
  "pkcs8",
  "proptest",
@@ -1030,7 +1008,7 @@ checksum = "a017a4aa8f0bd51e9d0184d98042dfe9285218fec098493f47d9a8aa0f1a3f27"
 dependencies = [
  "base16ct",
  "der",
- "hybrid-array 0.3.0",
+ "hybrid-array",
  "pkcs8",
  "serdect",
  "subtle",
@@ -1120,7 +1098,7 @@ dependencies = [
 [[package]]
 name = "signature"
 version = "2.3.0-pre.6"
-source = "git+https://github.com/RustCrypto/traits.git#28b6e0d3231fa0fb31dc7f6bfdb62d6558bcfdf6"
+source = "git+https://github.com/RustCrypto/traits.git#d39ad3012ea1c68f6e515b5aef1ee16adae77a48"
 dependencies = [
  "digest",
  "rand_core 0.9.2",
@@ -1139,7 +1117,7 @@ dependencies = [
  "hex",
  "hex-literal 1.0.0",
  "hmac",
- "hybrid-array 0.3.0",
+ "hybrid-array",
  "num-bigint",
  "paste",
  "pkcs8",
