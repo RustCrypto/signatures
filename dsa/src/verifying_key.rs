@@ -67,14 +67,18 @@ impl VerifyingKey {
         if signature.r() >= q || signature.s() >= q {
             return Some(false);
         }
+        let q = q.widen(s.bits_precision());
+        let q = &q;
 
-        let w = Option::from(s.inv_mod(q))?;
+        let w: BoxedUint = Option::from(s.inv_mod(q))?;
 
         let n = q.bits() / 8;
         let block_size = hash.len(); // Hash function output size
 
         let z_len = min(n as usize, block_size);
         let z = BoxedUint::from_be_slice(&hash[..z_len], z_len as u32 * 8).unwrap();
+
+        let z = z.widen(q.bits_precision());
 
         let u1 = (&z * &w) % q;
         let u2 = r.mul_mod(&w, q);
