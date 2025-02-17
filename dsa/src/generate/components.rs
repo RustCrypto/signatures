@@ -43,8 +43,10 @@ pub fn common<R: CryptoRng + ?Sized>(
                     break 'gen_m m;
                 }
             };
-            let mr = &m % NonZero::new(two() * &*q).unwrap();
+            let rem = NonZero::new((two() * &*q).widen(m.bits_precision())).unwrap();
+            let mr = &m % &rem;
             let p = m - mr + BoxedUint::one();
+            let p = p.shorten(q.bits_precision());
             let p = NonZero::new(p).unwrap();
 
             if is_prime(Flavor::Any, &*p) {
@@ -56,6 +58,7 @@ pub fn common<R: CryptoRng + ?Sized>(
     // Generate g using the unverifiable method as defined by Appendix A.2.1
     let e = (&*p - &BoxedUint::one()) / &q;
     let mut h = BoxedUint::one();
+    let mut h = BoxedUint::one().widen(q.bits_precision());
     let g = loop {
         let params = BoxedMontyParams::new_vartime(Odd::new((*p).clone()).unwrap());
         let form = BoxedMontyForm::new(h.clone(), params);
