@@ -26,11 +26,15 @@
 #![cfg_attr(feature = "hazmat", doc = "```")]
 #![cfg_attr(not(feature = "hazmat"), doc = "```ignore")]
 //! # use dsa::{Components, SigningKey, VerifyingKey};
-//! # use crypto_bigint::BoxedUint;
-//! # use num_traits::One;
-//! # let read_common_parameters = || (BoxedUint::one(), BoxedUint::one(), BoxedUint::one());
-//! # let read_public_component = || BoxedUint::one();
-//! # let read_private_component = || BoxedUint::one();
+//! # use crypto_bigint::{BoxedUint, NonZero};
+//! # let read_common_parameters = ||
+//! #     (
+//! #          NonZero::new(BoxedUint::one()).unwrap(),
+//! #          NonZero::new(BoxedUint::one()).unwrap(),
+//! #          NonZero::new(BoxedUint::one()).unwrap(),
+//! #     );
+//! # let read_public_component = || NonZero::new(BoxedUint::one()).unwrap();
+//! # let read_private_component = || NonZero::new(BoxedUint::one()).unwrap();
 //! # || -> signature::Result<()> {
 //! let (p, q, g) = read_common_parameters();
 //! let components = Components::from_components(p, q, g)?;
