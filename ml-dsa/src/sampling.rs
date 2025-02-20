@@ -214,7 +214,7 @@ mod test {
     }
 
     // Verify that RejNTTPoly produces samples that are in the proper range, and roughly uniform.
-    // For the "roughly unform" criterion,
+    // For the "roughly uniform" criterion,
     #[test]
     fn test_rej_ntt_poly() {
         let sample: Array<Array<Elem, U256>, U16> = Array::from_fn(|i| {
