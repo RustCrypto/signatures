@@ -333,7 +333,7 @@ impl<F: Field> Neg for &NttPolynomial<F> {
 
 /// An `NttVector` is a vector of polynomials from `T_q` of length `K`.  NTT vectors can be
 /// added and subtracted.  If multiplication is defined for NTT polynomials, then NTT vectors
-/// can be multiplied by NTT polynomials, and "multipled" with each other to produce a dot
+/// can be multiplied by NTT polynomials, and "multiplied" with each other to produce a dot
 /// product.
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct NttVector<F: Field, K: ArraySize>(pub Array<NttPolynomial<F>, K>);
