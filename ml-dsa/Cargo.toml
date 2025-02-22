@@ -30,13 +30,13 @@ signature = "=2.3.0-pre.6"
 zeroize = { version = "1.8.1", optional = true, default-features = false }
 
 const-oid = { version = "0.10.0-rc.1", features = ["db"], optional = true }
-pkcs8 = { version = "=0.11.0-rc.1", default-features = false, optional = true }
+pkcs8 = { version = "=0.11.0-rc.2", default-features = false, optional = true }
 
 [dev-dependencies]
 criterion = "0.5.1"
 hex = { version = "0.4.3", features = ["serde"] }
 hex-literal = "0.4.1"
-pkcs8 = { version = "=0.11.0-rc.1", features = ["pem"] }
+pkcs8 = { version = "=0.11.0-rc.2", features = ["pem"] }
 proptest = "1"
 rand = "0.9"
 serde = { version = "1.0.215", features = ["derive"] }
