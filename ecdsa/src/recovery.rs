@@ -4,35 +4,35 @@ use crate::{Error, Result};
 
 #[cfg(feature = "signing")]
 use {
-    crate::{hazmat::sign_prehashed_rfc6979, SigningKey},
-    elliptic_curve::{subtle::CtOption, FieldBytes},
+    crate::{SigningKey, hazmat::sign_prehashed_rfc6979},
+    elliptic_curve::{FieldBytes, subtle::CtOption},
     signature::{
+        DigestSigner, RandomizedDigestSigner, Signer,
         digest::FixedOutput,
         hazmat::{PrehashSigner, RandomizedPrehashSigner},
         rand_core::TryCryptoRng,
-        DigestSigner, RandomizedDigestSigner, Signer,
     },
 };
 
 #[cfg(feature = "verifying")]
 use {
-    crate::{hazmat::verify_prehashed, VerifyingKey},
+    crate::{VerifyingKey, hazmat::verify_prehashed},
     elliptic_curve::{
+        AffinePoint, FieldBytesEncoding, FieldBytesSize, Group, PrimeField, ProjectivePoint,
         bigint::CheckedAdd,
         ops::{LinearCombination, Reduce},
         point::DecompressPoint,
         sec1::{self, FromEncodedPoint, ToEncodedPoint},
-        AffinePoint, FieldBytesEncoding, FieldBytesSize, Group, PrimeField, ProjectivePoint,
     },
 };
 
 #[cfg(any(feature = "signing", feature = "verifying"))]
 use {
     crate::{
-        hazmat::{bits2field, DigestPrimitive},
         EcdsaCurve, Signature, SignatureSize,
+        hazmat::{DigestPrimitive, bits2field},
     },
-    elliptic_curve::{array::ArraySize, ops::Invert, CurveArithmetic, Scalar},
+    elliptic_curve::{CurveArithmetic, Scalar, array::ArraySize, ops::Invert},
     signature::digest::Digest,
 };
 

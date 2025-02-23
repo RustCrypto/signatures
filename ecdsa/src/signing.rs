@@ -1,24 +1,23 @@
 //! ECDSA signing: producing signatures using a [`SigningKey`].
 
 use crate::{
-    ecdsa_oid_for_digest,
-    hazmat::{bits2field, sign_prehashed_rfc6979, DigestPrimitive},
-    EcdsaCurve, Error, Result, Signature, SignatureSize, SignatureWithOid,
+    EcdsaCurve, Error, Result, Signature, SignatureSize, SignatureWithOid, ecdsa_oid_for_digest,
+    hazmat::{DigestPrimitive, bits2field, sign_prehashed_rfc6979},
 };
 use core::fmt::{self, Debug};
-use digest::{const_oid::AssociatedOid, Digest, FixedOutput};
+use digest::{Digest, FixedOutput, const_oid::AssociatedOid};
 use elliptic_curve::{
+    CurveArithmetic, FieldBytes, NonZeroScalar, Scalar, SecretKey,
     array::ArraySize,
     group::ff::PrimeField,
     ops::Invert,
     subtle::{Choice, ConstantTimeEq, CtOption},
     zeroize::{Zeroize, ZeroizeOnDrop},
-    CurveArithmetic, FieldBytes, NonZeroScalar, Scalar, SecretKey,
 };
 use signature::{
+    DigestSigner, RandomizedDigestSigner, RandomizedSigner, Signer,
     hazmat::{PrehashSigner, RandomizedPrehashSigner},
     rand_core::{CryptoRng, TryCryptoRng},
-    DigestSigner, RandomizedDigestSigner, RandomizedSigner, Signer,
 };
 
 #[cfg(feature = "der")]
@@ -29,14 +28,13 @@ use {core::str::FromStr, elliptic_curve::pkcs8::DecodePrivateKey};
 
 #[cfg(feature = "pkcs8")]
 use crate::elliptic_curve::{
+    AffinePoint,
     pkcs8::{
-        self,
+        self, ObjectIdentifier,
         der::AnyRef,
         spki::{AlgorithmIdentifier, AssociatedAlgorithmIdentifier, SignatureAlgorithmIdentifier},
-        ObjectIdentifier,
     },
     sec1::{self, FromEncodedPoint, ToEncodedPoint},
-    AffinePoint,
 };
 
 #[cfg(feature = "verifying")]
