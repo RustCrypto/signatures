@@ -12,8 +12,8 @@ repository = "https://github.com/RustCrypto/signatures"
 readme = "README.md"
 categories = ["cryptography", "no-std"]
 keywords = ["dsa", "ecdsa", "signature"]
-edition = "2021"
-rust-version = "1.81"
+edition = "2024"
+rust-version = "1.85"
 
 [dependencies]
 hmac = { version = "=0.13.0-pre.4", default-features = false, features = ["reset"] }
