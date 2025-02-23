@@ -1,7 +1,7 @@
 //! `serde` support.
 
 use crate::{Signature, SignatureBytes};
-use ::serde::{de, ser, Deserialize, Serialize};
+use ::serde::{Deserialize, Serialize, de, ser};
 use core::fmt;
 
 impl Serialize for Signature {

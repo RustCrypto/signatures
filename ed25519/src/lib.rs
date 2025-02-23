@@ -274,11 +274,11 @@ pub use signature::{self, Error, SignatureEncoding};
 
 #[cfg(feature = "pkcs8")]
 pub use crate::pkcs8::{
-    spki::{
-        der::{oid::ObjectIdentifier, AnyRef},
-        AlgorithmIdentifierRef, AssociatedAlgorithmIdentifier,
-    },
     KeypairBytes, PublicKeyBytes,
+    spki::{
+        AlgorithmIdentifierRef, AssociatedAlgorithmIdentifier,
+        der::{AnyRef, oid::ObjectIdentifier},
+    },
 };
 
 use core::fmt;
@@ -288,8 +288,8 @@ use alloc::vec::Vec;
 
 #[cfg(all(feature = "alloc", feature = "pkcs8"))]
 use pkcs8::spki::{
-    der::{self, asn1::BitString},
     SignatureBitStringEncoding,
+    der::{self, asn1::BitString},
 };
 
 /// Size of a single component of an Ed25519 signature.
