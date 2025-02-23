@@ -202,7 +202,7 @@ impl<'a, Mode: LmsMode> TryFrom<&'a [u8]> for SigningKey<Mode> {
 #[cfg(test)]
 mod tests {
     use super::{SigningKey, VerifyingKey};
-    use crate::lms::modes::{LmsSha256M32H10, LmsSha256M32H5};
+    use crate::lms::modes::{LmsSha256M32H5, LmsSha256M32H10};
     use crate::ots::modes::{LmsOtsSha256N32W4, LmsOtsSha256N32W8};
     use hex_literal::hex;
     use hybrid_array::Array;

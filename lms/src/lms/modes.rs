@@ -8,7 +8,7 @@ use std::{
     marker::PhantomData,
     ops::{Shl, Sub},
 };
-use typenum::{bit::B1, Add1, Shleft, Sub1, U1, U10, U15, U20, U25, U5};
+use typenum::{Add1, Shleft, Sub1, U1, U5, U10, U15, U20, U25, bit::B1};
 
 /// The basic trait that must be implemented for any valid LMS mode
 pub trait LmsMode: Typecode + Clone {
@@ -45,13 +45,13 @@ pub struct LmsModeInternal<
 }
 
 impl<
-        OtsMode: LmsOtsMode,
-        Hasher: Digest,
-        TreeLen: ArraySize,
-        const M: usize,
-        const H: usize,
-        const TC: u32,
-    > Clone for LmsModeInternal<OtsMode, Hasher, TreeLen, M, H, TC>
+    OtsMode: LmsOtsMode,
+    Hasher: Digest,
+    TreeLen: ArraySize,
+    const M: usize,
+    const H: usize,
+    const TC: u32,
+> Clone for LmsModeInternal<OtsMode, Hasher, TreeLen, M, H, TC>
 {
     fn clone(&self) -> Self {
         *self
@@ -59,24 +59,24 @@ impl<
 }
 
 impl<
-        OtsMode: LmsOtsMode,
-        Hasher: Digest,
-        TreeLen: ArraySize,
-        const M: usize,
-        const H: usize,
-        const TC: u32,
-    > Copy for LmsModeInternal<OtsMode, Hasher, TreeLen, M, H, TC>
+    OtsMode: LmsOtsMode,
+    Hasher: Digest,
+    TreeLen: ArraySize,
+    const M: usize,
+    const H: usize,
+    const TC: u32,
+> Copy for LmsModeInternal<OtsMode, Hasher, TreeLen, M, H, TC>
 {
 }
 
 impl<
-        OtsMode: LmsOtsMode,
-        Hasher: Digest,
-        HLen: ArraySize,
-        const M: usize,
-        const H: usize,
-        const TC: u32,
-    > LmsMode for LmsModeInternal<OtsMode, Hasher, HLen, M, H, TC>
+    OtsMode: LmsOtsMode,
+    Hasher: Digest,
+    HLen: ArraySize,
+    const M: usize,
+    const H: usize,
+    const TC: u32,
+> LmsMode for LmsModeInternal<OtsMode, Hasher, HLen, M, H, TC>
 where
     HLen: Add<typenum::B1>,
     U1: Shl<<HLen as Add<B1>>::Output>,
@@ -94,13 +94,13 @@ where
 }
 
 impl<
-        Hasher: Digest,
-        OtsMode: LmsOtsMode,
-        TreeLen: ArraySize,
-        const M: usize,
-        const H: usize,
-        const TC: u32,
-    > Typecode for LmsModeInternal<OtsMode, Hasher, TreeLen, M, H, TC>
+    Hasher: Digest,
+    OtsMode: LmsOtsMode,
+    TreeLen: ArraySize,
+    const M: usize,
+    const H: usize,
+    const TC: u32,
+> Typecode for LmsModeInternal<OtsMode, Hasher, TreeLen, M, H, TC>
 {
     const TYPECODE: u32 = TC;
 }

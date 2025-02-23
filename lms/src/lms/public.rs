@@ -159,9 +159,9 @@ mod tests {
     use std::ops::Add;
 
     use crate::{
-        lms::modes::*,
         lms::SigningKey,
         lms::VerifyingKey,
+        lms::modes::*,
         ots::{LmsOtsSha256N32W4, LmsOtsSha256N32W8},
     };
     use digest::OutputSizeUser;

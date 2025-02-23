@@ -2,8 +2,8 @@
 
 use crate::error::LmsDeserializeError;
 use crate::lms::LmsMode;
-use crate::ots::modes::LmsOtsMode;
 use crate::ots::Signature as OtsSignature;
+use crate::ots::modes::LmsOtsMode;
 use hybrid_array::{Array, ArraySize};
 use signature::SignatureEncoding;
 
@@ -147,7 +147,9 @@ mod tests {
 
     #[test]
     fn test_deserialize_kat1() {
-        let pk_bytes = hex!("0000000500000004d2f14ff6346af964569f7d6cb880a1b66c5004917da6eafe4d9ef6c6407b3db0e5485b122d9ebe15cda93cfec582d7ab");
+        let pk_bytes = hex!(
+            "0000000500000004d2f14ff6346af964569f7d6cb880a1b66c5004917da6eafe4d9ef6c6407b3db0e5485b122d9ebe15cda93cfec582d7ab"
+        );
         let sig_bytes = hex!(
             "
             0000000a

@@ -5,8 +5,8 @@ use hybrid_array::{Array, ArraySize};
 use sha2::Sha256;
 use static_assertions::const_assert_eq;
 use std::marker::PhantomData;
-use typenum::consts::{U133, U265, U34, U67};
 use typenum::Unsigned;
+use typenum::consts::{U34, U67, U133, U265};
 
 /// The basic trait that must be implemented by any OTS mode.
 pub trait LmsOtsMode: Typecode {
