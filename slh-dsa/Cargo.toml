@@ -20,7 +20,7 @@ typenum = { version = "1.17.0", features = ["const-generics"] }
 sha3 = { version = "=0.11.0-pre.4", default-features = false }
 zerocopy = { version = "0.7.34", features = ["derive"] }
 rand_core = { version = "0.6.4" }
-signature = { version = "2.3.0-pre.4", features = ["rand_core"] }
+signature = { version = "=2.3.0-pre.4", features = ["rand_core"] }
 hmac = "=0.13.0-pre.4"
 sha2 = { version = "=0.11.0-pre.4", default-features = false }
 digest = "=0.11.0-pre.9"

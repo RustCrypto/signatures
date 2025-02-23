@@ -45,6 +45,3 @@ serde_json = "1.0.132"
 [[bench]]
 name = "ml_dsa"
 harness = false
-
-[profile.dev]
-opt-level = 2
