@@ -96,7 +96,7 @@ impl<Mode: LmsOtsMode> SigningKey<Mode> {
 }
 
 impl<Mode: LmsOtsMode> RandomizedSignerMut<Signature<Mode>> for SigningKey<Mode> {
-    fn try_sign_with_rng<R: TryCryptoRng>(
+    fn try_sign_with_rng<R: TryCryptoRng + ?Sized>(
         &mut self,
         rng: &mut R,
         msg: &[u8],

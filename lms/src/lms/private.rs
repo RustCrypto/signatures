@@ -106,7 +106,7 @@ impl<Mode: LmsMode> SigningKey<Mode> {
 
 // this implements the algorithm from Appendix D in <https://datatracker.ietf.org/doc/html/rfc8554#appendix-D>
 impl<Mode: LmsMode> RandomizedSignerMut<Signature<Mode>> for SigningKey<Mode> {
-    fn try_sign_with_rng<R: TryCryptoRng>(
+    fn try_sign_with_rng<R: TryCryptoRng + ?Sized>(
         &mut self,
         rng: &mut R,
         msg: &[u8],
