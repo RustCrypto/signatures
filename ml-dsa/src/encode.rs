@@ -1,8 +1,8 @@
 use crate::module_lattice::encode::{ArraySize, Encode, EncodingSize, VectorEncodingSize};
 use core::ops::Add;
 use hybrid_array::{
-    typenum::{Len, Length, Sum, Unsigned},
     Array,
+    typenum::{Len, Length, Sum, Unsigned},
 };
 
 use crate::algebra::{Elem, Polynomial, Vector};
@@ -111,9 +111,9 @@ pub(crate) mod test {
     use crate::module_lattice::encode::*;
     use core::ops::Rem;
     use hybrid_array::typenum::{
+        U1, U2, U3, U4, U6, U7, U8, U9, U10, U13, U17, U19,
         marker_traits::Zero,
         operator_aliases::{Diff, Mod, Shleft},
-        U1, U10, U13, U17, U19, U2, U3, U4, U6, U7, U8, U9,
     };
     use rand::Rng;
 

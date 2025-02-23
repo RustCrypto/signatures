@@ -3,9 +3,9 @@
 use core::ops::Deref;
 use ml_dsa::{KeyPair, MlDsa44, MlDsa65, MlDsa87, MlDsaParams, SigningKey, VerifyingKey};
 use pkcs8::{
-    der::{pem::LineEnding, AnyRef},
-    spki::AssociatedAlgorithmIdentifier,
     DecodePrivateKey, DecodePublicKey, EncodePrivateKey, EncodePublicKey,
+    der::{AnyRef, pem::LineEnding},
+    spki::AssociatedAlgorithmIdentifier,
 };
 
 #[test]
