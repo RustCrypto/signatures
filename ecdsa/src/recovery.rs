@@ -61,7 +61,7 @@ impl RecoveryId {
     /// - `is_y_odd`: is the affine y-coordinate of 𝑘×𝑮 odd?
     /// - `is_x_reduced`: did the affine x-coordinate of 𝑘×𝑮 overflow the curve order?
     pub const fn new(is_y_odd: bool, is_x_reduced: bool) -> Self {
-        Self((is_x_reduced as u8) << 1 | (is_y_odd as u8))
+        Self(((is_x_reduced as u8) << 1) | (is_y_odd as u8))
     }
 
     /// Did the affine x-coordinate of 𝑘×𝑮 overflow the curve order?
@@ -403,17 +403,17 @@ mod tests {
 
     #[test]
     fn is_x_reduced() {
-        assert_eq!(RecoveryId::try_from(0).unwrap().is_x_reduced(), false);
-        assert_eq!(RecoveryId::try_from(1).unwrap().is_x_reduced(), false);
-        assert_eq!(RecoveryId::try_from(2).unwrap().is_x_reduced(), true);
-        assert_eq!(RecoveryId::try_from(3).unwrap().is_x_reduced(), true);
+        assert!(!RecoveryId::try_from(0).unwrap().is_x_reduced());
+        assert!(!RecoveryId::try_from(1).unwrap().is_x_reduced());
+        assert!(RecoveryId::try_from(2).unwrap().is_x_reduced());
+        assert!(RecoveryId::try_from(3).unwrap().is_x_reduced());
     }
 
     #[test]
     fn is_y_odd() {
-        assert_eq!(RecoveryId::try_from(0).unwrap().is_y_odd(), false);
-        assert_eq!(RecoveryId::try_from(1).unwrap().is_y_odd(), true);
-        assert_eq!(RecoveryId::try_from(2).unwrap().is_y_odd(), false);
-        assert_eq!(RecoveryId::try_from(3).unwrap().is_y_odd(), true);
+        assert!(!RecoveryId::try_from(0).unwrap().is_y_odd());
+        assert!(RecoveryId::try_from(1).unwrap().is_y_odd());
+        assert!(!RecoveryId::try_from(2).unwrap().is_y_odd());
+        assert!(RecoveryId::try_from(3).unwrap().is_y_odd());
     }
 }

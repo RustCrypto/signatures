@@ -431,7 +431,7 @@ where
     type Err = Error;
 
     fn from_str(hex: &str) -> Result<Self> {
-        if hex.as_bytes().len() != C::FieldBytesSize::USIZE * 4 {
+        if hex.len() != C::FieldBytesSize::USIZE * 4 {
             return Err(Error::new());
         }
 
