@@ -412,7 +412,7 @@ impl<P: MlDsaParams> SigningKey<P> {
     /// or if it fails to get enough randomness.
     // Algorithm 2 ML-DSA.Sign
     #[cfg(feature = "rand_core")]
-    pub fn sign_randomized<R: TryCryptoRng>(
+    pub fn sign_randomized<R: TryCryptoRng + ?Sized>(
         &self,
         M: &[u8],
         ctx: &[u8],
@@ -497,7 +497,7 @@ impl<P: MlDsaParams> signature::Signer<Signature<P>> for SigningKey<P> {
 /// method.
 #[cfg(feature = "rand_core")]
 impl<P: MlDsaParams> signature::RandomizedSigner<Signature<P>> for SigningKey<P> {
-    fn try_sign_with_rng<R: TryCryptoRng>(
+    fn try_sign_with_rng<R: TryCryptoRng + ?Sized>(
         &self,
         rng: &mut R,
         msg: &[u8],
