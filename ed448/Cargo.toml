@@ -28,7 +28,7 @@ serde_bytes = { version = "0.11", optional = true }
 zeroize = { version = "1", optional = true, default-features = false }
 
 [dev-dependencies]
-hex-literal = "0.4"
+hex-literal = "1"
 bincode = "1"
 
 [features]

@@ -289,7 +289,7 @@ dependencies = [
  "der",
  "digest",
  "elliptic-curve",
- "hex-literal 0.4.1",
+ "hex-literal 1.0.0",
  "rfc6979",
  "serdect",
  "sha2",
@@ -302,7 +302,7 @@ name = "ed25519"
 version = "2.3.0-pre.0"
 dependencies = [
  "bincode",
- "hex-literal 0.4.1",
+ "hex-literal 1.0.0",
  "pkcs8",
  "rand_core 0.9.2",
  "serde",
@@ -316,7 +316,7 @@ name = "ed448-signature"
 version = "0.0.0"
 dependencies = [
  "bincode",
- "hex-literal 0.4.1",
+ "hex-literal 1.0.0",
  "pkcs8",
  "serde",
  "serde_bytes",
@@ -583,7 +583,7 @@ dependencies = [
  "const-oid",
  "criterion",
  "hex",
- "hex-literal 0.4.1",
+ "hex-literal 1.0.0",
  "hybrid-array 0.3.0",
  "num-traits",
  "pkcs8",
@@ -848,7 +848,7 @@ checksum = "adad44e29e4c806119491a7f06f03de4d1af22c3a680dd47f1e6e179439d1f56"
 name = "rfc6979"
 version = "0.5.0-pre.4"
 dependencies = [
- "hex-literal 0.4.1",
+ "hex-literal 1.0.0",
  "hmac",
  "sha2",
  "subtle",

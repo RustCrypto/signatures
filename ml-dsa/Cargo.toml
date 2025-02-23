@@ -35,7 +35,7 @@ pkcs8 = { version = "0.11.0-rc.2", default-features = false, optional = true }
 [dev-dependencies]
 criterion = "0.5.1"
 hex = { version = "0.4.3", features = ["serde"] }
-hex-literal = "0.4.1"
+hex-literal = "1"
 pkcs8 = { version = "0.11.0-rc.2", features = ["pem"] }
 proptest = "1"
 rand = "0.9"
