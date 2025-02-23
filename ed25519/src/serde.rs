@@ -72,7 +72,7 @@ impl<'de> serde_bytes::Deserialize<'de> for Signature {
     {
         struct ByteArrayVisitor;
 
-        impl<'de> de::Visitor<'de> for ByteArrayVisitor {
+        impl de::Visitor<'_> for ByteArrayVisitor {
             type Value = SignatureBytes;
 
             fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
