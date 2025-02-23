@@ -33,7 +33,8 @@ rfc6979         = { path = "./rfc6979" }
 sha3 = { git = "https://github.com/RustCrypto/hashes.git" }
 
 # https://github.com/RustCrypto/traits/pull/1751
-elliptic-curve = { git = "https://github.com/baloo/traits.git", branch = "baloo/elliptic-curve/bump-rand-core" }
+elliptic-curve = { git = "https://github.com/RustCrypto/traits.git" }
+signature      = { git = "https://github.com/RustCrypto/traits.git" }
 
 # https://github.com/RustCrypto/crypto-bigint/pull/762
 # https://github.com/RustCrypto/crypto-bigint/pull/765
@@ -43,3 +44,9 @@ crypto-bigint = { git = "https://github.com/RustCrypto/crypto-bigint.git" }
 ff = { git = "https://github.com/pinkforest/ff.git", branch = "bump-rand-core" }
 # https://github.com/zkcrypto/group/pull/56
 group = { git = "https://github.com/pinkforest/group.git", branch = "bump-rand-0.9" }
+
+# https://github.com/RustCrypto/hashes/pull/652
+sha2     = { git = "https://github.com/RustCrypto/hashes.git", branch = "edition_upgrade" }
+
+# https://github.com/RustCrypto/MACs/pull/178
+hmac = { git = "https://github.com/RustCrypto/MACs.git" }
