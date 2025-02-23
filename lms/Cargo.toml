@@ -2,12 +2,12 @@
 name = "lms-signature"
 description = "Pure Rust implementation of Leighton-Micali Hash-Based Signatures (RFC 8554)"
 version = "0.1.0-pre"
-edition = "2021"
+edition = "2024"
 license = "Apache-2.0 OR MIT"
 homepage = "https://github.com/RustCrypto/signatures/tree/master/lms"
 repository = "https://github.com/RustCrypto/signatures"
 readme = "README.md"
-rust-version = "1.81"
+rust-version = "1.85"
 categories = ["cryptography"]
 keywords = ["crypto", "signature"]
 
