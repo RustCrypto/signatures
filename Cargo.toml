@@ -29,6 +29,9 @@ ml-dsa          = { path = "./ml-dsa" }
 rfc6979         = { path = "./rfc6979" }
 #slh-dsa         = { path = "./slh-dsa" }
 
+# https://github.com/RustCrypto/hashes/pull/652
+sha3 = { git = "https://github.com/RustCrypto/hashes.git" }
+
 # https://github.com/RustCrypto/traits/pull/1751
 elliptic-curve = { git = "https://github.com/baloo/traits.git", branch = "baloo/elliptic-curve/bump-rand-core" }
 
