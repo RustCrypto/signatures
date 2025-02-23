@@ -81,7 +81,7 @@ where
     SignatureSize<C>: ArraySize,
 {
     /// Generate a cryptographically random [`SigningKey`].
-    pub fn random<R: CryptoRng>(rng: &mut R) -> Self {
+    pub fn random<R: CryptoRng + ?Sized>(rng: &mut R) -> Self {
         NonZeroScalar::<C>::random(rng).into()
     }
 
@@ -180,7 +180,7 @@ where
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
-    fn try_sign_digest_with_rng<R: TryCryptoRng>(
+    fn try_sign_digest_with_rng<R: TryCryptoRng + ?Sized>(
         &self,
         rng: &mut R,
         msg_digest: D,
@@ -195,7 +195,7 @@ where
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
-    fn sign_prehash_with_rng<R: TryCryptoRng>(
+    fn sign_prehash_with_rng<R: TryCryptoRng + ?Sized>(
         &self,
         rng: &mut R,
         prehash: &[u8],
@@ -214,7 +214,11 @@ where
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
-    fn try_sign_with_rng<R: TryCryptoRng>(&self, rng: &mut R, msg: &[u8]) -> Result<Signature<C>> {
+    fn try_sign_with_rng<R: TryCryptoRng + ?Sized>(
+        &self,
+        rng: &mut R,
+        msg: &[u8],
+    ) -> Result<Signature<C>> {
         self.try_sign_digest_with_rng(rng, C::Digest::new_with_prefix(msg))
     }
 }
@@ -283,7 +287,7 @@ where
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
 {
-    fn try_sign_digest_with_rng<R: TryCryptoRng>(
+    fn try_sign_digest_with_rng<R: TryCryptoRng + ?Sized>(
         &self,
         rng: &mut R,
         msg_digest: D,
@@ -302,7 +306,7 @@ where
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
 {
-    fn sign_prehash_with_rng<R: TryCryptoRng>(
+    fn sign_prehash_with_rng<R: TryCryptoRng + ?Sized>(
         &self,
         rng: &mut R,
         prehash: &[u8],
@@ -321,7 +325,7 @@ where
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
 {
-    fn try_sign_with_rng<R: TryCryptoRng>(
+    fn try_sign_with_rng<R: TryCryptoRng + ?Sized>(
         &self,
         rng: &mut R,
         msg: &[u8],

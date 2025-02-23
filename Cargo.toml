@@ -33,6 +33,7 @@ rfc6979         = { path = "./rfc6979" }
 sha3 = { git = "https://github.com/RustCrypto/hashes.git" }
 
 # https://github.com/RustCrypto/traits/pull/1751
+# https://github.com/RustCrypto/traits/pull/1767
 elliptic-curve = { git = "https://github.com/RustCrypto/traits.git" }
 signature      = { git = "https://github.com/RustCrypto/traits.git" }
 

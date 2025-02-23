@@ -185,7 +185,7 @@ where
 {
     /// Sign the given message prehash, using the given rng for the RFC6979 Section 3.6 "additional
     /// data", returning a signature and recovery ID.
-    pub fn sign_prehash_recoverable_with_rng<R: TryCryptoRng>(
+    pub fn sign_prehash_recoverable_with_rng<R: TryCryptoRng + ?Sized>(
         &self,
         rng: &mut R,
         prehash: &[u8],
@@ -237,7 +237,7 @@ where
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
-    fn sign_prehash_with_rng<R: TryCryptoRng>(
+    fn sign_prehash_with_rng<R: TryCryptoRng + ?Sized>(
         &self,
         rng: &mut R,
         prehash: &[u8],
@@ -254,7 +254,7 @@ where
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
-    fn try_sign_digest_with_rng<R: TryCryptoRng>(
+    fn try_sign_digest_with_rng<R: TryCryptoRng + ?Sized>(
         &self,
         rng: &mut R,
         msg_digest: D,
