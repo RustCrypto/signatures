@@ -372,7 +372,7 @@ mod tests {
             SigningKey::<LmsSha256M32H10<LmsOtsSha256N32W4>>::new_from_seed(id, seed).unwrap();
 
         let lms_priv_bytes: Array<_, _> = lms_priv.into();
-        let lms_priv_bytes: &[u8] = &*lms_priv_bytes;
+        let lms_priv_bytes: &[u8] = &lms_priv_bytes;
         let lms_priv: SigningKey<LmsSha256M32H10<LmsOtsSha256N32W4>> =
             lms_priv_bytes.try_into().unwrap();
 
@@ -393,7 +393,7 @@ mod tests {
         let lms_pub = lms_priv.public();
 
         let lms_pub_bytes: Array<_, _> = lms_pub.into();
-        let lms_pub_bytes: &[u8] = &*lms_pub_bytes;
+        let lms_pub_bytes: &[u8] = &lms_pub_bytes;
         let lms_pub: VerifyingKey<LmsSha256M32H10<LmsOtsSha256N32W4>> =
             lms_pub_bytes.try_into().unwrap();
 

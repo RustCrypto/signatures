@@ -93,7 +93,7 @@ impl<Hasher: Digest, const W: usize, PP: ArraySize, const TC: u32> LmsOtsMode
     type PLen = PP;
     const N: usize = Hasher::OutputSize::USIZE;
     const W: usize = W;
-    const U: usize = (8 * Self::N + W - 1) / W;
+    const U: usize = (8 * Self::N).div_ceil(W);
     const V: usize = ((((1 << W) - 1) * Self::U).ilog2() as usize / W) + 1;
     const P: usize = Self::U + Self::V;
     const LS: usize = 16 - Self::V * W;

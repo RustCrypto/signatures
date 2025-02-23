@@ -127,7 +127,7 @@ pub mod tests {
     /// Constant RNG for testing purposes only.
     pub struct ConstantRng<'a>(pub &'a [u8]);
 
-    impl<'a> RngCore for ConstantRng<'a> {
+    impl RngCore for ConstantRng<'_> {
         fn next_u32(&mut self) -> u32 {
             let (head, tail) = self.0.split_at(4);
             self.0 = tail;
