@@ -1,24 +1,23 @@
 //! ECDSA signing: producing signatures using a [`SigningKey`].
 
 use crate::{
-    ecdsa_oid_for_digest,
-    hazmat::{bits2field, sign_prehashed_rfc6979, DigestPrimitive},
-    EcdsaCurve, Error, Result, Signature, SignatureSize, SignatureWithOid,
+    EcdsaCurve, Error, Result, Signature, SignatureSize, SignatureWithOid, ecdsa_oid_for_digest,
+    hazmat::{DigestPrimitive, bits2field, sign_prehashed_rfc6979},
 };
 use core::fmt::{self, Debug};
-use digest::{const_oid::AssociatedOid, Digest, FixedOutput};
+use digest::{Digest, FixedOutput, const_oid::AssociatedOid};
 use elliptic_curve::{
+    CurveArithmetic, FieldBytes, NonZeroScalar, Scalar, SecretKey,
     array::ArraySize,
     group::ff::PrimeField,
     ops::Invert,
     subtle::{Choice, ConstantTimeEq, CtOption},
     zeroize::{Zeroize, ZeroizeOnDrop},
-    CurveArithmetic, FieldBytes, NonZeroScalar, Scalar, SecretKey,
 };
 use signature::{
-    hazmat::{PrehashSigner, RandomizedPrehashSigner},
-    rand_core::CryptoRngCore,
     DigestSigner, RandomizedDigestSigner, RandomizedSigner, Signer,
+    hazmat::{PrehashSigner, RandomizedPrehashSigner},
+    rand_core::{CryptoRng, TryCryptoRng},
 };
 
 #[cfg(feature = "der")]
@@ -29,14 +28,13 @@ use {core::str::FromStr, elliptic_curve::pkcs8::DecodePrivateKey};
 
 #[cfg(feature = "pkcs8")]
 use crate::elliptic_curve::{
+    AffinePoint,
     pkcs8::{
-        self,
+        self, ObjectIdentifier,
         der::AnyRef,
         spki::{AlgorithmIdentifier, AssociatedAlgorithmIdentifier, SignatureAlgorithmIdentifier},
-        ObjectIdentifier,
     },
     sec1::{self, FromEncodedPoint, ToEncodedPoint},
-    AffinePoint,
 };
 
 #[cfg(feature = "verifying")]
@@ -83,7 +81,7 @@ where
     SignatureSize<C>: ArraySize,
 {
     /// Generate a cryptographically random [`SigningKey`].
-    pub fn random(rng: &mut impl CryptoRngCore) -> Self {
+    pub fn random<R: CryptoRng + ?Sized>(rng: &mut R) -> Self {
         NonZeroScalar::<C>::random(rng).into()
     }
 
@@ -182,9 +180,9 @@ where
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
-    fn try_sign_digest_with_rng(
+    fn try_sign_digest_with_rng<R: TryCryptoRng + ?Sized>(
         &self,
-        rng: &mut impl CryptoRngCore,
+        rng: &mut R,
         msg_digest: D,
     ) -> Result<Signature<C>> {
         self.sign_prehash_with_rng(rng, &msg_digest.finalize_fixed())
@@ -197,14 +195,14 @@ where
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
-    fn sign_prehash_with_rng(
+    fn sign_prehash_with_rng<R: TryCryptoRng + ?Sized>(
         &self,
-        rng: &mut impl CryptoRngCore,
+        rng: &mut R,
         prehash: &[u8],
     ) -> Result<Signature<C>> {
         let z = bits2field::<C>(prehash)?;
         let mut ad = FieldBytes::<C>::default();
-        rng.fill_bytes(&mut ad);
+        rng.try_fill_bytes(&mut ad).map_err(|_| Error::new())?;
         Ok(sign_prehashed_rfc6979::<C, C::Digest>(&self.secret_scalar, &z, &ad)?.0)
     }
 }
@@ -216,7 +214,11 @@ where
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
-    fn try_sign_with_rng(&self, rng: &mut impl CryptoRngCore, msg: &[u8]) -> Result<Signature<C>> {
+    fn try_sign_with_rng<R: TryCryptoRng + ?Sized>(
+        &self,
+        rng: &mut R,
+        msg: &[u8],
+    ) -> Result<Signature<C>> {
         self.try_sign_digest_with_rng(rng, C::Digest::new_with_prefix(msg))
     }
 }
@@ -285,9 +287,9 @@ where
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
 {
-    fn try_sign_digest_with_rng(
+    fn try_sign_digest_with_rng<R: TryCryptoRng + ?Sized>(
         &self,
-        rng: &mut impl CryptoRngCore,
+        rng: &mut R,
         msg_digest: D,
     ) -> Result<der::Signature<C>> {
         RandomizedDigestSigner::<D, Signature<C>>::try_sign_digest_with_rng(self, rng, msg_digest)
@@ -304,9 +306,9 @@ where
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
 {
-    fn sign_prehash_with_rng(
+    fn sign_prehash_with_rng<R: TryCryptoRng + ?Sized>(
         &self,
-        rng: &mut impl CryptoRngCore,
+        rng: &mut R,
         prehash: &[u8],
     ) -> Result<der::Signature<C>> {
         RandomizedPrehashSigner::<Signature<C>>::sign_prehash_with_rng(self, rng, prehash)
@@ -323,9 +325,9 @@ where
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
 {
-    fn try_sign_with_rng(
+    fn try_sign_with_rng<R: TryCryptoRng + ?Sized>(
         &self,
-        rng: &mut impl CryptoRngCore,
+        rng: &mut R,
         msg: &[u8],
     ) -> Result<der::Signature<C>> {
         RandomizedSigner::<Signature<C>>::try_sign_with_rng(self, rng, msg).map(Into::into)

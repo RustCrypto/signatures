@@ -42,11 +42,11 @@ mod module_lattice;
 
 use core::convert::{AsRef, TryFrom, TryInto};
 use hybrid_array::{
-    typenum::{
-        Diff, Length, Prod, Quot, Shleft, Unsigned, U1, U17, U19, U2, U32, U4, U48, U5, U55, U6,
-        U64, U7, U75, U8, U80, U88,
-    },
     Array,
+    typenum::{
+        Diff, Length, Prod, Quot, Shleft, U1, U2, U4, U5, U6, U7, U8, U17, U19, U32, U48, U55, U64,
+        U75, U80, U88, Unsigned,
+    },
 };
 
 #[cfg(feature = "rand_core")]
@@ -59,20 +59,20 @@ use zeroize::{Zeroize, ZeroizeOnDrop};
 use {
     const_oid::db::fips204,
     pkcs8::{
+        AlgorithmIdentifierRef, PrivateKeyInfoRef,
         der::{self, AnyRef},
         spki::{
             self, AlgorithmIdentifier, AssociatedAlgorithmIdentifier, SignatureAlgorithmIdentifier,
             SubjectPublicKeyInfoRef,
         },
-        AlgorithmIdentifierRef, PrivateKeyInfoRef,
     },
 };
 
 #[cfg(all(feature = "alloc", feature = "pkcs8"))]
 use pkcs8::{
+    EncodePrivateKey, EncodePublicKey,
     der::asn1::{BitString, BitStringRef, OctetStringRef},
     spki::{SignatureBitStringEncoding, SubjectPublicKeyInfo},
-    EncodePrivateKey, EncodePublicKey,
 };
 
 use crate::algebra::{AlgebraExt, Elem, NttMatrix, NttVector, Truncate, Vector};
@@ -412,7 +412,7 @@ impl<P: MlDsaParams> SigningKey<P> {
     /// or if it fails to get enough randomness.
     // Algorithm 2 ML-DSA.Sign
     #[cfg(feature = "rand_core")]
-    pub fn sign_randomized<R: TryCryptoRng>(
+    pub fn sign_randomized<R: TryCryptoRng + ?Sized>(
         &self,
         M: &[u8],
         ctx: &[u8],
@@ -497,7 +497,7 @@ impl<P: MlDsaParams> signature::Signer<Signature<P>> for SigningKey<P> {
 /// method.
 #[cfg(feature = "rand_core")]
 impl<P: MlDsaParams> signature::RandomizedSigner<Signature<P>> for SigningKey<P> {
-    fn try_sign_with_rng<R: TryCryptoRng>(
+    fn try_sign_with_rng<R: TryCryptoRng + ?Sized>(
         &self,
         rng: &mut R,
         msg: &[u8],

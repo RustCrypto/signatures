@@ -24,7 +24,7 @@ jobs:
           - thumbv7em-none-eabi
           - wasm32-unknown-unknown
         rust:
-          - 1.81.0 # MSRV
+          - 1.85.0 # MSRV
           - stable
     steps:
       - uses: actions/checkout@v4
@@ -39,7 +39,7 @@ jobs:
     strategy:
       matrix:
         rust:
-          - 1.81.0 # MSRV
+          - 1.85.0 # MSRV
           - stable
     steps:
       - uses: actions/checkout@v4

@@ -2,8 +2,8 @@ use core::mem::ManuallyDrop;
 use core::ops::{Div, Mul, Rem};
 use core::ptr;
 use hybrid_array::{
-    typenum::{Prod, Quot, Unsigned, U0},
     Array, ArraySize,
+    typenum::{Prod, Quot, U0, Unsigned},
 };
 
 /// Safely truncate an unsigned integer value to shorter representation
@@ -109,8 +109,8 @@ where
 mod test {
     use super::*;
     use hybrid_array::{
-        typenum::{U2, U5},
         Array,
+        typenum::{U2, U5},
     };
 
     #[test]

@@ -1,7 +1,7 @@
 use hybrid_array::Array;
 use sha3::{
-    digest::{ExtendableOutput, XofReader},
     Shake128, Shake256,
+    digest::{ExtendableOutput, XofReader},
 };
 
 use crate::module_lattice::encode::ArraySize;

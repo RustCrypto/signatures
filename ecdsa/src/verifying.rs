@@ -1,21 +1,21 @@
 //! ECDSA verifying: checking signatures are authentic using a [`VerifyingKey`].
 
 use crate::{
-    hazmat::{self, bits2field, DigestPrimitive},
     EcdsaCurve, Error, Result, Signature, SignatureSize,
+    hazmat::{self, DigestPrimitive, bits2field},
 };
 use core::{cmp::Ordering, fmt::Debug};
 use elliptic_curve::{
+    AffinePoint, CurveArithmetic, FieldBytesSize, ProjectivePoint, PublicKey,
     array::ArraySize,
     point::PointCompression,
     scalar::IsHigh,
     sec1::{self, CompressedPoint, EncodedPoint, FromEncodedPoint, ToEncodedPoint},
-    AffinePoint, CurveArithmetic, FieldBytesSize, ProjectivePoint, PublicKey,
 };
 use signature::{
+    DigestVerifier, Verifier,
     digest::{Digest, FixedOutput},
     hazmat::PrehashVerifier,
-    DigestVerifier, Verifier,
 };
 
 #[cfg(feature = "alloc")]
@@ -29,21 +29,20 @@ use {core::str::FromStr, elliptic_curve::pkcs8::DecodePublicKey};
 
 #[cfg(feature = "pkcs8")]
 use elliptic_curve::pkcs8::{
-    self,
+    self, AssociatedOid, ObjectIdentifier,
     der::AnyRef,
     spki::{
         self, AlgorithmIdentifier, AssociatedAlgorithmIdentifier, SignatureAlgorithmIdentifier,
     },
-    AssociatedOid, ObjectIdentifier,
 };
 
 #[cfg(feature = "serde")]
-use serdect::serde::{de, ser, Deserialize, Serialize};
+use serdect::serde::{Deserialize, Serialize, de, ser};
 
 #[cfg(feature = "sha2")]
 use {
     crate::{
-        SignatureWithOid, ECDSA_SHA224_OID, ECDSA_SHA256_OID, ECDSA_SHA384_OID, ECDSA_SHA512_OID,
+        ECDSA_SHA224_OID, ECDSA_SHA256_OID, ECDSA_SHA384_OID, ECDSA_SHA512_OID, SignatureWithOid,
     },
     sha2::{Sha224, Sha256, Sha384, Sha512},
 };

@@ -12,7 +12,7 @@ use hybrid_array::{Array, ArraySize};
 pub use sha2::*;
 pub use shake::*;
 
-use crate::{address::Address, PkSeed, SkPrf, SkSeed};
+use crate::{PkSeed, SkPrf, SkSeed, address::Address};
 
 /// A trait specifying the hash functions described in FIPS-205 section 10
 pub(crate) trait HashSuite: Sized + Clone + Debug + PartialEq + Eq {
@@ -113,6 +113,8 @@ mod tests {
     // Exercises the mgf1_sha512 function
     #[test]
     fn h_msg_sha2_256_f() {
-        h_msg::<Sha2_256f>(&hex!("8c86dfb66392d1b647df0deab90be68fb6f988513e84d3ef75fa68591122bb5d74f6413672db5164e56492b7ca2c2e0335"));
+        h_msg::<Sha2_256f>(&hex!(
+            "8c86dfb66392d1b647df0deab90be68fb6f988513e84d3ef75fa68591122bb5d74f6413672db5164e56492b7ca2c2e0335"
+        ));
     }
 }

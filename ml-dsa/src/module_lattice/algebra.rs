@@ -2,7 +2,7 @@ use super::util::Truncate;
 
 use core::fmt::Debug;
 use core::ops::{Add, Mul, Neg, Sub};
-use hybrid_array::{typenum::U256, Array, ArraySize};
+use hybrid_array::{Array, ArraySize, typenum::U256};
 use num_traits::PrimInt;
 
 #[cfg(feature = "zeroize")]
@@ -55,11 +55,7 @@ macro_rules! define_field {
             const BARRETT_MULTIPLIER: Self::LongLong = (1 << Self::BARRETT_SHIFT) / Self::QLL;
 
             fn small_reduce(x: Self::Int) -> Self::Int {
-                if x < Self::Q {
-                    x
-                } else {
-                    x - Self::Q
-                }
+                if x < Self::Q { x } else { x - Self::Q }
             }
 
             fn barrett_reduce(x: Self::Long) -> Self::Int {

@@ -1,6 +1,6 @@
 use ml_dsa::{
-    signature::{Signer, Verifier},
     KeyGen, KeyPair, MlDsa44, MlDsa65, MlDsa87, Signature,
+    signature::{Signer, Verifier},
 };
 use proptest::prelude::*;
 

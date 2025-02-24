@@ -1,7 +1,7 @@
 //! `serde` support.
 
 use crate::{Signature, SignatureBytes};
-use ::serde::{de, ser, Deserialize, Serialize};
+use ::serde::{Deserialize, Serialize, de, ser};
 use core::fmt;
 
 impl Serialize for Signature {
@@ -72,7 +72,7 @@ impl<'de> serde_bytes::Deserialize<'de> for Signature {
     {
         struct ByteArrayVisitor;
 
-        impl<'de> de::Visitor<'de> for ByteArrayVisitor {
+        impl de::Visitor<'_> for ByteArrayVisitor {
             type Value = SignatureBytes;
 
             fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {

@@ -42,12 +42,12 @@ mod ct;
 pub use hmac::digest::array::typenum::consts;
 
 use hmac::{
+    SimpleHmac,
     digest::{
+        Digest, FixedOutput, FixedOutputReset, KeyInit, Mac,
         array::{Array, ArraySize},
         core_api::BlockSizeUser,
-        Digest, FixedOutput, FixedOutputReset, KeyInit, Mac,
     },
-    SimpleHmac,
 };
 
 /// Deterministically generate ephemeral scalar `k`.
@@ -188,8 +188,9 @@ where
 #[cfg(test)]
 mod tests {
     use crate::{
+        Array,
         consts::{U21, U66},
-        generate_k, Array,
+        generate_k,
     };
     use hex_literal::hex;
     use sha2::{Digest, Sha256, Sha512};
@@ -228,7 +229,7 @@ mod tests {
         h[2..].copy_from_slice(&Sha512::digest(message));
 
         let aad = b"";
-        let k = generate_k::<Sha512, U66>(&x.into(), &q.into(), &h.into(), aad);
+        let k = generate_k::<Sha512, U66>(&x.into(), &q.into(), &h, aad);
 
         let expected_k = hex!(
             "01DAE2EA071F8110DC26882D4D5EAE0621A3256FC8847FB9022E2B7D28E6F10198B1574FDD03A9053C08A1854A168AA5A57470EC97DD5CE090124EF52A2F7ECBFFD3"
