@@ -15,6 +15,8 @@ defaults:
 env:
   CARGO_INCREMENTAL: 0
   RUSTFLAGS: "-Dwarnings"
+  CARGO_TERM_COLOR: always
+  NEXTEST_NO_TESTS: warn
 
 jobs:
   no_std:
@@ -35,19 +37,76 @@ jobs:
           targets: ${{ matrix.target }}
       - run: cargo build --target ${{ matrix.target }} --no-default-features
 
-  test:
+  # because we're sharding tests, we'll compile them once first
+  # upload that as artifact, and then re-download those artifacts
+  # and run the tests.
+  # This is heavily insired by https://github.com/nextest-rs/reuse-build-partition-example/blob/main/.github/workflows/ci.yml
+  build-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         rust:
           - 1.81.0 # MSRV
           - stable
+        test_config:
+          - --no-default-features
+          - --all-features
+          - default
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
+      - uses: taiki-e/install-action@nextest
       - run: cargo check --all-features
-      - run: cargo test --no-default-features
-      - run: cargo test
-      - run: cargo test --all-features
+      - name: Build and archive tests
+        run: |
+          PROFILE="${{ matrix.test_config }}"
+          if [ "$PROFILE" = "default" ]; then
+            PROFILE="--features default"
+          fi
+          cargo nextest archive --archive-file nextest-archive-${{ matrix.rust }}-${{ matrix.test_config }}.tar.zst $PROFILE
+      - name: Upload archive to workflow
+        uses: actions/upload-artifact@v4
+        with:
+          name: nextest-archive-${{ matrix.rust }}-${{ matrix.test_config }}
+          # NOTE: upload-artifact does not respect the working directory, we need to prefix it.
+          # https://github.com/actions/upload-artifact/issues/294
+          path: slh-dsa/nextest-archive-${{ matrix.rust }}-${{ matrix.test_config }}.tar.zst
+
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
+
+  run-test:
+    name: slh-dsa/run tests
+    needs: build-test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        test-partition: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+        rust:
+          - 1.81.0 # MSRV
+          - stable
+        test_config:
+          - --no-default-features
+          - --all-features
+          - "default"
+    steps:
+      - uses: actions/checkout@v4
+      - run: mkdir -p ~/.cargo/bin
+      - uses: taiki-e/install-action@nextest
+      - name: Download test archive
+        uses: actions/download-artifact@v4
+        with:
+          name: nextest-archive-${{ matrix.rust }}-${{ matrix.test_config }}
+          path: slh-dsa
+      - name: Run tests (${{ matrix.rust }}) (${{ matrix.test_config }})
+        run: |
+          PROFILE="${{ matrix.test_config }}"
+          if [ "$PROFILE" = "default" ]; then
+            PROFILE="--features default"
+          fi
+
+          ~/.cargo/bin/cargo-nextest nextest run --archive-file nextest-archive-${{ matrix.rust }}-${{ matrix.test_config }}.tar.zst \
+            --partition count:${{ matrix.test-partition }}/16
