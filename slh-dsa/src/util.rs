@@ -1,5 +1,5 @@
 use crate::fors::ForsParams;
-use hybrid_array::{typenum::Unsigned, Array, ArraySize};
+use hybrid_array::{Array, ArraySize, typenum::Unsigned};
 
 // Algorithm 3
 pub fn base_2b<OutLen: ArraySize, B: Unsigned>(x: &[u8]) -> Array<u16, OutLen> {
