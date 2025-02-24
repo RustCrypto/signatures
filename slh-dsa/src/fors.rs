@@ -199,7 +199,7 @@ pub(crate) trait ForsParams: HypertreeParams {
             for j in 0..Self::A::U32 {
                 adrs.tree_height.set(j + 1);
                 adrs.tree_index.set(adrs.tree_index.get() >> 1);
-                if indices[i as usize] >> j & 1 == 0 {
+                if (indices[i as usize] >> j) & 1 == 0 {
                     node = Self::h(pk_seed, &adrs, &node, &sig.0[i as usize].auth[j as usize]);
                 } else {
                     node = Self::h(pk_seed, &adrs, &sig.0[i as usize].auth[j as usize], &node);

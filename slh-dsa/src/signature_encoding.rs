@@ -24,7 +24,6 @@ use pkcs8::{
 /// small devices. The stack representation consumes `P::SigLen` bytes
 ///
 /// There are no invariants maintained by this struct - every field is a hash value
-
 pub struct Signature<P: ParameterSet> {
     pub(crate) randomizer: Array<u8, P::N>,
     pub(crate) fors_sig: ForsSignature<P>,

@@ -136,8 +136,8 @@ where
         let sk = SigningKey::<P>::new(&mut seed_rng.unwrap_mut());
         let pk = sk.verifying_key();
 
-        writeln!(resp, "pk = {}", hex::encode_upper(&pk.to_bytes())).unwrap();
-        writeln!(resp, "sk = {}", hex::encode_upper(&sk.to_bytes())).unwrap();
+        writeln!(resp, "pk = {}", hex::encode_upper(pk.to_bytes())).unwrap();
+        writeln!(resp, "sk = {}", hex::encode_upper(sk.to_bytes())).unwrap();
 
         let mut opt_rand = vec![0; P::VkLen::USIZE / 2];
         rng.fill_bytes(opt_rand.as_mut());
