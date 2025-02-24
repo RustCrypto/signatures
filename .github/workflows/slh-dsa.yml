@@ -84,7 +84,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        test-partition: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+        test-partition: [1, 2, 3, 4]
         rust:
           - 1.85.0 # MSRV
           - stable
@@ -109,4 +109,4 @@ jobs:
           fi
 
           ~/.cargo/bin/cargo-nextest nextest run --archive-file nextest-archive-${{ matrix.rust }}-${{ matrix.test_config }}.tar.zst \
-            --partition count:${{ matrix.test-partition }}/16
+            --partition count:${{ matrix.test-partition }}/4
