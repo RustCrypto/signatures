@@ -85,6 +85,13 @@ where
         NonZeroScalar::<C>::random(rng).into()
     }
 
+    /// Generate a cryptographically random [`SigningKey`].
+    pub fn try_from_rng<R: TryCryptoRng + ?Sized>(
+        rng: &mut R,
+    ) -> core::result::Result<Self, R::Error> {
+        Ok(NonZeroScalar::<C>::try_from_rng(rng)?.into())
+    }
+
     /// Initialize signing key from a raw scalar serialized as a byte array.
     pub fn from_bytes(bytes: &FieldBytes<C>) -> Result<Self> {
         SecretKey::<C>::from_bytes(bytes)

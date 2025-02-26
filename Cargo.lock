@@ -369,7 +369,7 @@ checksum = "11157ac094ffbdde99aa67b23417ebdd801842852b500e395a45a9c0aac03e4a"
 [[package]]
 name = "elliptic-curve"
 version = "0.14.0-rc.1"
-source = "git+https://github.com/RustCrypto/traits.git#28b6e0d3231fa0fb31dc7f6bfdb62d6558bcfdf6"
+source = "git+https://github.com/RustCrypto/traits.git#27835aa66710bded06caef143284892dda83dda5"
 dependencies = [
  "base16ct",
  "crypto-bigint",
@@ -416,7 +416,7 @@ checksum = "658bd65b1cf4c852a3cc96f18a8ce7b5640f6b703f905c7d74532294c2a63984"
 [[package]]
 name = "ff"
 version = "0.13.0"
-source = "git+https://github.com/pinkforest/ff.git?branch=bump-rand-core#c734f7f21d6639bc6494dde538209d0770207c49"
+source = "git+https://github.com/zkcrypto/ff.git?branch=release-0.14.0#1bb634588722b1b7ce986d239c263e332bedda7f"
 dependencies = [
  "rand_core 0.9.2",
  "subtle",
@@ -1084,7 +1084,7 @@ dependencies = [
 [[package]]
 name = "signature"
 version = "2.3.0-pre.6"
-source = "git+https://github.com/RustCrypto/traits.git#28b6e0d3231fa0fb31dc7f6bfdb62d6558bcfdf6"
+source = "git+https://github.com/RustCrypto/traits.git#27835aa66710bded06caef143284892dda83dda5"
 dependencies = [
  "digest",
  "rand_core 0.9.2",
