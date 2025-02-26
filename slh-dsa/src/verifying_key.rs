@@ -1,14 +1,15 @@
-use crate::address::ForsTree;
-use crate::signature_encoding::Signature;
-use crate::util::split_digest;
 use crate::ParameterSet;
 use crate::Sha2L1;
 use crate::Sha2L35;
 use crate::Shake;
+use crate::address::ForsTree;
+use crate::signature_encoding::Signature;
+use crate::util::split_digest;
 use ::signature::{Error, Verifier};
 use hybrid_array::{Array, ArraySize};
 use pkcs8::{der, spki};
-use typenum::{Unsigned, U, U16, U24, U32};
+use rand_core::CryptoRng;
+use typenum::{U, U16, U24, U32, Unsigned};
 
 #[cfg(feature = "alloc")]
 use pkcs8::EncodePublicKey;
@@ -33,7 +34,7 @@ impl<N: ArraySize> From<&[u8]> for PkSeed<N> {
     }
 }
 impl<N: ArraySize> PkSeed<N> {
-    pub(crate) fn new(rng: &mut impl rand_core::RngCore) -> Self {
+    pub(crate) fn new<R: CryptoRng + ?Sized>(rng: &mut R) -> Self {
         let mut bytes = Array::<u8, N>::default();
         rng.fill_bytes(bytes.as_mut_slice());
         Self(bytes)
@@ -216,7 +217,7 @@ mod tests {
     use signature::*;
     #[test]
     fn test_vk_serialize_deserialize() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let sk = SigningKey::<Shake128f>::new(&mut rng);
         let vk = sk.verifying_key();
         let vk_bytes: Array<u8, _> = (&vk).into();

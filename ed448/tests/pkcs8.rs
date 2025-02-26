@@ -21,7 +21,9 @@ fn decode_pkcs8_v1() {
     // $ openssl asn1parse -inform der -in tests/examples/pkcs8-v1.der
     assert_eq!(
         keypair.secret_key,
-        &hex!("8A57471AA375074DC7D75EA2252E9933BB15C107E4F9A2F9CFEA6C418BEBB0774D1ABB671B58B96EFF95F35D63F2418422A59C7EAE3E00D70F")[..]
+        &hex!(
+            "8A57471AA375074DC7D75EA2252E9933BB15C107E4F9A2F9CFEA6C418BEBB0774D1ABB671B58B96EFF95F35D63F2418422A59C7EAE3E00D70F"
+        )[..]
     );
 
     assert_eq!(keypair.public_key, None);
@@ -35,7 +37,9 @@ fn decode_public_key() {
     // $ openssl pkey -inform der -in tests/examples/pkcs8-v1.der -pubout -text
     assert_eq!(
         public_key.as_ref(),
-        &hex!("f27f9809412035541b681c69fbe69b9d25a6af506d914ecef7d973fca04ccd33a8b96a0868211382ca08fe06b72e8c0cb3297f3a9d6bc02380")
+        &hex!(
+            "f27f9809412035541b681c69fbe69b9d25a6af506d914ecef7d973fca04ccd33a8b96a0868211382ca08fe06b72e8c0cb3297f3a9d6bc02380"
+        )
     );
 }
 

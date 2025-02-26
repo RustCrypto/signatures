@@ -145,8 +145,8 @@ impl Mul<&NttPolynomial> for &NttPolynomial {
 mod test {
     use super::*;
     use hybrid_array::{
-        typenum::{U2, U3},
         Array,
+        typenum::{U2, U3},
     };
 
     use crate::algebra::*;

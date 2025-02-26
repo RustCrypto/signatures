@@ -17,11 +17,11 @@ use crate::module_lattice::encode::{
     ArraySize, Encode, EncodedPolynomialSize, EncodedVectorSize, EncodingSize,
 };
 use hybrid_array::{
-    typenum::{
-        Diff, Len, Length, Prod, Shleft, Sum, Unsigned, U0, U1, U128, U13, U2, U23, U32, U320, U4,
-        U416, U64,
-    },
     Array,
+    typenum::{
+        Diff, Len, Length, Prod, Shleft, Sum, U0, U1, U2, U4, U13, U23, U32, U64, U128, U320, U416,
+        Unsigned,
+    },
 };
 
 use crate::algebra::{Polynomial, Vector};

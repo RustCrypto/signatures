@@ -32,7 +32,7 @@ impl str::FromStr for Signature {
     type Err = Error;
 
     fn from_str(hex: &str) -> signature::Result<Self> {
-        if hex.as_bytes().len() != Signature::BYTE_SIZE * 2 {
+        if hex.len() != Signature::BYTE_SIZE * 2 {
             return Err(Error::new());
         }
 

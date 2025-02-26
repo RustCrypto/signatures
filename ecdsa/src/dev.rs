@@ -40,10 +40,10 @@ macro_rules! new_signing_test {
     ($curve:path, $vectors:expr) => {
         use $crate::{
             elliptic_curve::{
-                array::{typenum::Unsigned, Array},
+                Curve, CurveArithmetic, FieldBytes, NonZeroScalar, Scalar,
+                array::{Array, typenum::Unsigned},
                 bigint::Encoding,
                 group::ff::PrimeField,
-                Curve, CurveArithmetic, FieldBytes, NonZeroScalar, Scalar,
             },
             hazmat::sign_prehashed,
         };
@@ -84,14 +84,14 @@ macro_rules! new_signing_test {
 macro_rules! new_verification_test {
     ($curve:path, $vectors:expr) => {
         use $crate::{
+            Signature, VerifyingKey,
             elliptic_curve::{
+                AffinePoint, CurveArithmetic, Scalar,
                 array::Array,
                 group::ff::PrimeField,
                 sec1::{EncodedPoint, FromEncodedPoint},
-                AffinePoint, CurveArithmetic, Scalar,
             },
             signature::hazmat::PrehashVerifier,
-            Signature, VerifyingKey,
         };
 
         #[test]
@@ -147,9 +147,9 @@ macro_rules! new_verification_test {
 macro_rules! new_wycheproof_test {
     ($name:ident, $test_name: expr, $curve:path) => {
         use $crate::{
+            Signature,
             elliptic_curve::{bigint::Integer, sec1::EncodedPoint},
             signature::Verifier,
-            Signature,
         };
 
         #[test]

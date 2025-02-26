@@ -1,8 +1,8 @@
 pub use crate::module_lattice::algebra::Field;
 pub use crate::module_lattice::util::Truncate;
 use hybrid_array::{
-    typenum::{Shleft, Unsigned, U1, U13},
     ArraySize,
+    typenum::{Shleft, U1, U13, Unsigned},
 };
 
 use crate::define_field;

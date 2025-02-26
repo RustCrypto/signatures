@@ -1,6 +1,6 @@
 use hybrid_array::{
-    typenum::{U32, U64},
     Array,
+    typenum::{U32, U64},
 };
 
 /// A 32-byte array, defined here for brevity because it is used several times

@@ -1,7 +1,7 @@
 use crate::module_lattice::util::Truncate;
 use hybrid_array::{
-    typenum::{Unsigned, U256},
     Array,
+    typenum::{U256, Unsigned},
 };
 
 use crate::algebra::{AlgebraExt, BaseField, Decompose, Elem, Field, Polynomial, Vector};

@@ -12,18 +12,18 @@
 
 use crate::{EcdsaCurve, Error, Result};
 use core::cmp;
-use elliptic_curve::{array::typenum::Unsigned, FieldBytes};
+use elliptic_curve::{FieldBytes, array::typenum::Unsigned};
 
 #[cfg(feature = "arithmetic")]
 use {
     crate::{RecoveryId, SignatureSize},
     elliptic_curve::{
+        CurveArithmetic, NonZeroScalar, ProjectivePoint, Scalar,
         ff::PrimeField,
         group::{Curve as _, Group},
         ops::{Invert, LinearCombination, MulByGenerator, Reduce},
         point::AffineCoordinates,
         scalar::IsHigh,
-        CurveArithmetic, NonZeroScalar, ProjectivePoint, Scalar,
     },
 };
 
@@ -31,8 +31,8 @@ use {
 use {
     elliptic_curve::FieldBytesSize,
     signature::{
-        digest::{core_api::BlockSizeUser, Digest, FixedOutput, FixedOutputReset},
         PrehashSignature,
+        digest::{Digest, FixedOutput, FixedOutputReset, core_api::BlockSizeUser},
     },
 };
 
@@ -40,7 +40,7 @@ use {
 use elliptic_curve::FieldBytesEncoding;
 
 #[cfg(any(feature = "arithmetic", feature = "digest"))]
-use crate::{elliptic_curve::array::ArraySize, Signature};
+use crate::{Signature, elliptic_curve::array::ArraySize};
 
 /// Bind a preferred [`Digest`] algorithm to an elliptic curve type.
 ///
@@ -265,7 +265,9 @@ mod tests {
 
     #[test]
     fn bits2field_size_greater() {
-        let prehash = hex!("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
+        let prehash = hex!(
+            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+        );
         let field_bytes = bits2field::<MockCurve>(&prehash).unwrap();
         assert_eq!(
             field_bytes.as_slice(),
