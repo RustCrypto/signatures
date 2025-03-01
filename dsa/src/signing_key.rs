@@ -2,27 +2,27 @@
 //! Module containing the definition of the private key container
 //!
 
-use crate::{Components, Signature, VerifyingKey, OID};
+use crate::{Components, OID, Signature, VerifyingKey};
 use core::{
     cmp::min,
     fmt::{self, Debug},
 };
 use crypto_bigint::{
-    modular::{BoxedMontyForm, BoxedMontyParams},
     BoxedUint, NonZero, Odd,
+    modular::{BoxedMontyForm, BoxedMontyParams},
 };
-use digest::{core_api::BlockSizeUser, Digest, FixedOutputReset};
+use digest::{Digest, FixedOutputReset, core_api::BlockSizeUser};
 use pkcs8::{
-    der::{
-        asn1::{OctetStringRef, UintRef},
-        AnyRef, Decode, Encode,
-    },
     AlgorithmIdentifierRef, EncodePrivateKey, PrivateKeyInfoRef, SecretDocument,
+    der::{
+        AnyRef, Decode, Encode,
+        asn1::{OctetStringRef, UintRef},
+    },
 };
 use signature::{
-    hazmat::{PrehashSigner, RandomizedPrehashSigner},
-    rand_core::TryCryptoRng,
     DigestSigner, RandomizedDigestSigner, Signer,
+    hazmat::{PrehashSigner, RandomizedPrehashSigner},
+    rand_core::{CryptoRng, TryCryptoRng},
 };
 use zeroize::{Zeroize, Zeroizing};
 
@@ -95,12 +95,16 @@ impl SigningKey {
         (k, inv_k): (BoxedUint, BoxedUint),
         hash: &[u8],
     ) -> signature::Result<Signature> {
+        extern crate std;
+
         let components = self.verifying_key().components();
+        let ref key_size = components.key_size;
         let (p, q, g) = (components.p(), components.q(), components.g());
         let x = self.x();
 
-        let q = q.widen(p.bits_precision());
-        let q = &q;
+        debug_assert_eq!(key_size.n_aligned(), q.bits_precision());
+        //let q = q.widen(p.bits_precision());
+        //let q = &q;
 
         let x = x.widen(p.bits_precision());
         let x = &x;
@@ -109,14 +113,18 @@ impl SigningKey {
         let inv_k = inv_k.widen(p.bits_precision());
 
         // Verify all the precisions check out. Otherwise the math operations will fail
-        debug_assert_eq!(p.bits_precision(), q.bits_precision());
-        debug_assert_eq!(q.bits_precision(), g.bits_precision());
-        debug_assert_eq!(g.bits_precision(), x.bits_precision());
-        debug_assert_eq!(x.bits_precision(), k.bits_precision());
+        //debug_assert_eq!(p.bits_precision(), q.bits_precision());
+        //debug_assert_eq!(q.bits_precision(), g.bits_precision());
+        //debug_assert_eq!(g.bits_precision(), x.bits_precision());
+        //debug_assert_eq!(x.bits_precision(), k.bits_precision());
 
         let params = BoxedMontyParams::new(Odd::new(p.as_ref().clone()).unwrap());
         let form = BoxedMontyForm::new((**g).clone(), params);
-        let r = NonZero::new(form.pow(&k).retrieve() % q).unwrap();
+        let r = form.pow(&k).retrieve() % q.widen(p.bits_precision());
+        debug_assert_eq!(key_size.l_aligned(), r.bits_precision());
+        let r_ = r.shorten(q.bits_precision());
+        let r = NonZero::new(r).unwrap();
+        let r_ = NonZero::new(r_).unwrap();
 
         let n = q.bits() / 8;
         let block_size = hash.len(); // Hash function output size
@@ -124,10 +132,13 @@ impl SigningKey {
         let z_len = min(n as usize, block_size);
         let z = BoxedUint::from_be_slice(&hash[..z_len], z_len as u32 * 8).unwrap();
 
-        let s = inv_k.mul_mod(&(z + &**x * &*r), q);
+        let s = inv_k.mul_mod(&(z + &**x * &*r), &q.widen(key_size.l_aligned()));
+        let s = s.shorten(key_size.n_aligned());
         let s = NonZero::new(s).unwrap();
 
-        let signature = Signature::from_components(r, s);
+        debug_assert_eq!(key_size.n_aligned(), r_.bits_precision());
+        debug_assert_eq!(key_size.n_aligned(), s.bits_precision());
+        let signature = Signature::from_components(r_, s);
 
         if signature.r() < q && signature.s() < q {
             Ok(signature)

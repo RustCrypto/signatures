@@ -3,13 +3,13 @@
 //! Generate a DSA keypair
 //!
 
-use crate::{generate::components, signing_key::SigningKey, Components, VerifyingKey};
+use crate::{Components, VerifyingKey, generate::components, signing_key::SigningKey};
 use crypto_bigint::{BoxedUint, NonZero, RandomMod};
-use signature::rand_core::CryptoRngCore;
+use signature::rand_core::CryptoRng;
 
 /// Generate a new keypair
 #[inline]
-pub fn keypair(rng: &mut impl CryptoRngCore, components: Components) -> SigningKey {
+pub fn keypair<R: CryptoRng + ?Sized>(rng: &mut R, components: Components) -> SigningKey {
     let x = loop {
         let x = BoxedUint::random_mod(rng, components.q());
         if let Some(x) = NonZero::new(x).into() {

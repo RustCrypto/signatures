@@ -1,7 +1,7 @@
 use dsa::Components;
 use pkcs8::{
-    der::{Decode, Encode},
     Document,
+    der::{Decode, Encode},
 };
 
 const OPENSSL_PEM_COMPONENTS: &str = include_str!("pems/params.pem");

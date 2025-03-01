@@ -2,21 +2,22 @@
 //! Module containing the definition of the public key container
 //!
 
-use crate::{two, Components, Signature, OID};
+use crate::{Components, OID, Signature, two};
 use core::cmp::min;
 use crypto_bigint::{
-    modular::{BoxedMontyForm, BoxedMontyParams},
     BoxedUint, NonZero, Odd,
+    modular::{BoxedMontyForm, BoxedMontyParams},
 };
 use digest::Digest;
 use pkcs8::{
+    AlgorithmIdentifierRef, EncodePublicKey, SubjectPublicKeyInfoRef,
     der::{
-        asn1::{BitStringRef, UintRef},
         AnyRef, Decode, Encode,
+        asn1::{BitStringRef, UintRef},
     },
-    spki, AlgorithmIdentifierRef, EncodePublicKey, SubjectPublicKeyInfoRef,
+    spki,
 };
-use signature::{hazmat::PrehashVerifier, DigestVerifier, Verifier};
+use signature::{DigestVerifier, Verifier, hazmat::PrehashVerifier};
 
 /// DSA public key.
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
@@ -60,8 +61,10 @@ impl VerifyingKey {
     #[must_use]
     fn verify_prehashed(&self, hash: &[u8], signature: &Signature) -> Option<bool> {
         let components = self.components();
+        let ref key_size = components.key_size;
         let (p, q, g) = (components.p(), components.q(), components.g());
         let (r, s) = (signature.r(), signature.s());
+        debug_assert_eq!(key_size.n_aligned(), s.bits_precision());
         let y = self.y();
 
         if signature.r() >= q || signature.s() >= q {
@@ -78,9 +81,10 @@ impl VerifyingKey {
         let z_len = min(n as usize, block_size);
         let z = BoxedUint::from_be_slice(&hash[..z_len], z_len as u32 * 8).unwrap();
 
-        let z = z.widen(q.bits_precision());
+        let z = z.widen(p.bits_precision());
+        let w = w.widen(q.bits_precision());
 
-        let u1 = (&z * &w) % q;
+        let u1 = (&z * &w) % q.widen(p.bits_precision());
         let u2 = r.mul_mod(&w, q);
 
         let p1_params = BoxedMontyParams::new(Odd::new(p.as_ref().clone()).unwrap());
