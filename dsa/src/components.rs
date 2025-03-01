@@ -5,8 +5,8 @@
 use crate::{size::KeySize, two};
 use crypto_bigint::{BoxedUint, NonZero};
 use pkcs8::der::{
-    self, asn1::UintRef, DecodeValue, Encode, EncodeValue, Header, Length, Reader, Sequence, Tag,
-    Writer,
+    self, DecodeValue, Encode, EncodeValue, Header, Length, Reader, Sequence, Tag, Writer,
+    asn1::UintRef,
 };
 use signature::rand_core::CryptoRng;
 
@@ -24,6 +24,8 @@ pub struct Components {
 
     /// Generator g
     g: NonZero<BoxedUint>,
+
+    pub(crate) key_size: KeySize,
 }
 
 impl Components {
@@ -37,7 +39,16 @@ impl Components {
             return Err(signature::Error::new());
         }
 
-        Ok(Self { p, q, g })
+        let key_size = match (p.bits_precision(), q.bits_precision()) {
+            #[allow(deprecated)]
+            (p, q) if KeySize::DSA_1024_160.matches(p, q) => KeySize::DSA_1024_160,
+            (p, q) if KeySize::DSA_2048_224.matches(p, q) => KeySize::DSA_2048_224,
+            (p, q) if KeySize::DSA_2048_256.matches(p, q) => KeySize::DSA_2048_256,
+            (p, q) if KeySize::DSA_3072_256.matches(p, q) => KeySize::DSA_3072_256,
+            (p, q) => todo!("unsupported key size p={p}, q={q}"),
+        };
+
+        Ok(Self { p, q, g, key_size })
     }
 
     /// Generate a new pair of common components
@@ -73,12 +84,9 @@ impl<'a> DecodeValue<'a> for Components {
         let q = reader.decode::<UintRef<'_>>()?;
         let g = reader.decode::<UintRef<'_>>()?;
 
-        // Just use the precision of `p` since `p` will be the largest value and all values need to have the same precision
-        let precision = (p.as_bytes().len() * 8) as u32;
-
-        let p = BoxedUint::from_be_slice(p.as_bytes(), precision).unwrap();
-        let q = BoxedUint::from_be_slice(q.as_bytes(), precision).unwrap();
-        let g = BoxedUint::from_be_slice(g.as_bytes(), precision).unwrap();
+        let p = BoxedUint::from_be_slice(p.as_bytes(), (p.as_bytes().len() * 8) as u32).unwrap();
+        let q = BoxedUint::from_be_slice(q.as_bytes(), (q.as_bytes().len() * 8) as u32).unwrap();
+        let g = BoxedUint::from_be_slice(g.as_bytes(), (g.as_bytes().len() * 8) as u32).unwrap();
 
         let p = NonZero::new(p).unwrap();
         let q = NonZero::new(q).unwrap();

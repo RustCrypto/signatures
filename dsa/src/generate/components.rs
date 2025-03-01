@@ -3,13 +3,14 @@
 //!
 
 use crate::{
+    Components,
     generate::{calculate_bounds, generate_prime},
     size::KeySize,
-    two, Components,
+    two,
 };
 use crypto_bigint::{
-    modular::{BoxedMontyForm, BoxedMontyParams},
     BoxedUint, NonZero, Odd, RandomBits,
+    modular::{BoxedMontyForm, BoxedMontyParams},
 };
 use signature::rand_core::CryptoRng;
 
