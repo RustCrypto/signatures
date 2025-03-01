@@ -76,8 +76,8 @@ pub const OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.2.840.10040.4.
 
 use alloc::{boxed::Box, vec::Vec};
 use pkcs8::der::{
-    self, asn1::UintRef, Decode, DecodeValue, Encode, EncodeValue, Header, Length, Reader,
-    Sequence, Writer,
+    self, Decode, DecodeValue, Encode, EncodeValue, Header, Length, Reader, Sequence, Writer,
+    asn1::UintRef,
 };
 use signature::SignatureEncoding;
 

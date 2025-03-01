@@ -330,9 +330,10 @@ dependencies = [
  "crypto-primes",
  "digest",
  "hex",
+ "hex-literal 1.0.0",
  "pkcs8",
- "rand 0.8.5",
- "rand_chacha 0.3.1",
+ "rand 0.9.0",
+ "rand_chacha 0.9.0",
  "rfc6979",
  "sha1",
  "sha2",
@@ -387,6 +388,27 @@ name = "either"
 version = "1.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "60b1af1c220855b6ceac025d3f6ecdd2b7c4894bfe9cd9bda4fbb4bc7c0d4cf0"
+
+[[package]]
+name = "elliptic-curve"
+version = "0.14.0-rc.1"
+source = "git+https://github.com/RustCrypto/traits.git#ea9b99a8444d1fdd98d72ff671f55e2fb2a1116b"
+dependencies = [
+ "base16ct",
+ "crypto-bigint",
+ "digest",
+ "ff",
+ "group",
+ "hex-literal 1.0.0",
+ "hybrid-array",
+ "pem-rfc7468",
+ "pkcs8",
+ "rand_core 0.9.2",
+ "sec1",
+ "serdect",
+ "subtle",
+ "zeroize",
+]
 
 [[package]]
 name = "env_logger"
@@ -1076,6 +1098,15 @@ checksum = "f1bc997d7a5fa67cc1e352b2001124d28edb948b4e7a16567f9b3c1e51952524"
 dependencies = [
  "digest",
  "keccak",
+]
+
+[[package]]
+name = "signature"
+version = "2.3.0-pre.6"
+source = "git+https://github.com/RustCrypto/traits.git#ea9b99a8444d1fdd98d72ff671f55e2fb2a1116b"
+dependencies = [
+ "digest",
+ "rand_core 0.9.2",
 ]
 
 [[package]]
