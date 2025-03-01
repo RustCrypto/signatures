@@ -73,7 +73,7 @@ mod verifying;
 pub use crate::recovery::RecoveryId;
 
 // Re-export the `elliptic-curve` crate (and select types)
-pub use elliptic_curve::{self, sec1::EncodedPoint, PrimeCurve};
+pub use elliptic_curve::{self, PrimeCurve, sec1::EncodedPoint};
 
 // Re-export the `signature` crate (and select types)
 pub use signature::{self, Error, Result, SignatureEncoding};
@@ -85,8 +85,8 @@ pub use crate::verifying::VerifyingKey;
 
 use core::{fmt, ops::Add};
 use elliptic_curve::{
-    array::{typenum::Unsigned, Array, ArraySize},
     FieldBytes, FieldBytesSize, ScalarPrimitive,
+    array::{Array, ArraySize, typenum::Unsigned},
 };
 
 #[cfg(feature = "alloc")]
@@ -96,23 +96,23 @@ use alloc::vec::Vec;
 use {
     core::str,
     elliptic_curve::{
-        scalar::IsHigh, subtle::ConditionallySelectable, CurveArithmetic, NonZeroScalar,
+        CurveArithmetic, NonZeroScalar, scalar::IsHigh, subtle::ConditionallySelectable,
     },
 };
 
 #[cfg(feature = "digest")]
 use digest::{
-    const_oid::{AssociatedOid, ObjectIdentifier},
     Digest,
+    const_oid::{AssociatedOid, ObjectIdentifier},
 };
 
 #[cfg(feature = "pkcs8")]
 use elliptic_curve::pkcs8::spki::{
-    der::AnyRef, AlgorithmIdentifierRef, AssociatedAlgorithmIdentifier,
+    AlgorithmIdentifierRef, AssociatedAlgorithmIdentifier, der::AnyRef,
 };
 
 #[cfg(feature = "serde")]
-use serdect::serde::{de, ser, Deserialize, Serialize};
+use serdect::serde::{Deserialize, Serialize, de, ser};
 
 #[cfg(all(feature = "alloc", feature = "pkcs8"))]
 use elliptic_curve::pkcs8::spki::{
@@ -431,7 +431,7 @@ where
     type Err = Error;
 
     fn from_str(hex: &str) -> Result<Self> {
-        if hex.as_bytes().len() != C::FieldBytesSize::USIZE * 4 {
+        if hex.len() != C::FieldBytesSize::USIZE * 4 {
             return Err(Error::new());
         }
 

@@ -1,8 +1,8 @@
 use core::fmt::Debug;
 use core::ops::{Div, Mul, Rem};
 use hybrid_array::{
-    typenum::{Gcd, Gcf, Prod, Quot, Unsigned, U0, U256, U32, U8},
     Array,
+    typenum::{Gcd, Gcf, Prod, Quot, U0, U8, U32, U256, Unsigned},
 };
 use num_traits::One;
 

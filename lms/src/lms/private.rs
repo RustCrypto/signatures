@@ -7,7 +7,8 @@ use crate::types::{Identifier, Typecode};
 
 use digest::{Digest, Output, OutputSizeUser};
 use hybrid_array::{Array, ArraySize};
-use rand::{CryptoRng, Rng};
+use rand::Rng;
+use rand_core::{CryptoRng, TryCryptoRng};
 use signature::{Error, RandomizedSignerMut};
 
 use core::array::TryFromSliceError;
@@ -105,9 +106,9 @@ impl<Mode: LmsMode> SigningKey<Mode> {
 
 // this implements the algorithm from Appendix D in <https://datatracker.ietf.org/doc/html/rfc8554#appendix-D>
 impl<Mode: LmsMode> RandomizedSignerMut<Signature<Mode>> for SigningKey<Mode> {
-    fn try_sign_with_rng(
+    fn try_sign_with_rng<R: TryCryptoRng + ?Sized>(
         &mut self,
-        rng: &mut impl rand_core::CryptoRngCore,
+        rng: &mut R,
         msg: &[u8],
     ) -> Result<Signature<Mode>, Error> {
         if self.q >= Mode::LEAVES {
@@ -201,7 +202,7 @@ impl<'a, Mode: LmsMode> TryFrom<&'a [u8]> for SigningKey<Mode> {
 #[cfg(test)]
 mod tests {
     use super::{SigningKey, VerifyingKey};
-    use crate::lms::modes::{LmsSha256M32H10, LmsSha256M32H5};
+    use crate::lms::modes::{LmsSha256M32H5, LmsSha256M32H10};
     use crate::ots::modes::{LmsOtsSha256N32W4, LmsOtsSha256N32W8};
     use hex_literal::hex;
     use hybrid_array::Array;
@@ -371,7 +372,7 @@ mod tests {
             SigningKey::<LmsSha256M32H10<LmsOtsSha256N32W4>>::new_from_seed(id, seed).unwrap();
 
         let lms_priv_bytes: Array<_, _> = lms_priv.into();
-        let lms_priv_bytes: &[u8] = &*lms_priv_bytes;
+        let lms_priv_bytes: &[u8] = &lms_priv_bytes;
         let lms_priv: SigningKey<LmsSha256M32H10<LmsOtsSha256N32W4>> =
             lms_priv_bytes.try_into().unwrap();
 
@@ -392,7 +393,7 @@ mod tests {
         let lms_pub = lms_priv.public();
 
         let lms_pub_bytes: Array<_, _> = lms_pub.into();
-        let lms_pub_bytes: &[u8] = &*lms_pub_bytes;
+        let lms_pub_bytes: &[u8] = &lms_pub_bytes;
         let lms_pub: VerifyingKey<LmsSha256M32H10<LmsOtsSha256N32W4>> =
             lms_pub_bytes.try_into().unwrap();
 

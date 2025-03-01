@@ -4,35 +4,35 @@ use crate::{Error, Result};
 
 #[cfg(feature = "signing")]
 use {
-    crate::{hazmat::sign_prehashed_rfc6979, SigningKey},
-    elliptic_curve::{subtle::CtOption, FieldBytes},
+    crate::{SigningKey, hazmat::sign_prehashed_rfc6979},
+    elliptic_curve::{FieldBytes, subtle::CtOption},
     signature::{
+        DigestSigner, RandomizedDigestSigner, Signer,
         digest::FixedOutput,
         hazmat::{PrehashSigner, RandomizedPrehashSigner},
-        rand_core::CryptoRngCore,
-        DigestSigner, RandomizedDigestSigner, Signer,
+        rand_core::TryCryptoRng,
     },
 };
 
 #[cfg(feature = "verifying")]
 use {
-    crate::{hazmat::verify_prehashed, VerifyingKey},
+    crate::{VerifyingKey, hazmat::verify_prehashed},
     elliptic_curve::{
+        AffinePoint, FieldBytesEncoding, FieldBytesSize, Group, PrimeField, ProjectivePoint,
         bigint::CheckedAdd,
         ops::{LinearCombination, Reduce},
         point::DecompressPoint,
         sec1::{self, FromEncodedPoint, ToEncodedPoint},
-        AffinePoint, FieldBytesEncoding, FieldBytesSize, Group, PrimeField, ProjectivePoint,
     },
 };
 
 #[cfg(any(feature = "signing", feature = "verifying"))]
 use {
     crate::{
-        hazmat::{bits2field, DigestPrimitive},
         EcdsaCurve, Signature, SignatureSize,
+        hazmat::{DigestPrimitive, bits2field},
     },
-    elliptic_curve::{array::ArraySize, ops::Invert, CurveArithmetic, Scalar},
+    elliptic_curve::{CurveArithmetic, Scalar, array::ArraySize, ops::Invert},
     signature::digest::Digest,
 };
 
@@ -61,7 +61,7 @@ impl RecoveryId {
     /// - `is_y_odd`: is the affine y-coordinate of 𝑘×𝑮 odd?
     /// - `is_x_reduced`: did the affine x-coordinate of 𝑘×𝑮 overflow the curve order?
     pub const fn new(is_y_odd: bool, is_x_reduced: bool) -> Self {
-        Self((is_x_reduced as u8) << 1 | (is_y_odd as u8))
+        Self(((is_x_reduced as u8) << 1) | (is_y_odd as u8))
     }
 
     /// Did the affine x-coordinate of 𝑘×𝑮 overflow the curve order?
@@ -185,14 +185,14 @@ where
 {
     /// Sign the given message prehash, using the given rng for the RFC6979 Section 3.6 "additional
     /// data", returning a signature and recovery ID.
-    pub fn sign_prehash_recoverable_with_rng(
+    pub fn sign_prehash_recoverable_with_rng<R: TryCryptoRng + ?Sized>(
         &self,
-        rng: &mut impl CryptoRngCore,
+        rng: &mut R,
         prehash: &[u8],
     ) -> Result<(Signature<C>, RecoveryId)> {
         let z = bits2field::<C>(prehash)?;
         let mut ad = FieldBytes::<C>::default();
-        rng.fill_bytes(&mut ad);
+        rng.try_fill_bytes(&mut ad).map_err(|_| Error::new())?;
         sign_prehashed_rfc6979::<C, C::Digest>(self.as_nonzero_scalar(), &z, &ad)
     }
 
@@ -237,9 +237,9 @@ where
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
-    fn sign_prehash_with_rng(
+    fn sign_prehash_with_rng<R: TryCryptoRng + ?Sized>(
         &self,
-        rng: &mut impl CryptoRngCore,
+        rng: &mut R,
         prehash: &[u8],
     ) -> Result<(Signature<C>, RecoveryId)> {
         self.sign_prehash_recoverable_with_rng(rng, prehash)
@@ -254,9 +254,9 @@ where
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
-    fn try_sign_digest_with_rng(
+    fn try_sign_digest_with_rng<R: TryCryptoRng + ?Sized>(
         &self,
-        rng: &mut impl CryptoRngCore,
+        rng: &mut R,
         msg_digest: D,
     ) -> Result<(Signature<C>, RecoveryId)> {
         self.sign_prehash_with_rng(rng, &msg_digest.finalize_fixed())
@@ -403,17 +403,17 @@ mod tests {
 
     #[test]
     fn is_x_reduced() {
-        assert_eq!(RecoveryId::try_from(0).unwrap().is_x_reduced(), false);
-        assert_eq!(RecoveryId::try_from(1).unwrap().is_x_reduced(), false);
-        assert_eq!(RecoveryId::try_from(2).unwrap().is_x_reduced(), true);
-        assert_eq!(RecoveryId::try_from(3).unwrap().is_x_reduced(), true);
+        assert!(!RecoveryId::try_from(0).unwrap().is_x_reduced());
+        assert!(!RecoveryId::try_from(1).unwrap().is_x_reduced());
+        assert!(RecoveryId::try_from(2).unwrap().is_x_reduced());
+        assert!(RecoveryId::try_from(3).unwrap().is_x_reduced());
     }
 
     #[test]
     fn is_y_odd() {
-        assert_eq!(RecoveryId::try_from(0).unwrap().is_y_odd(), false);
-        assert_eq!(RecoveryId::try_from(1).unwrap().is_y_odd(), true);
-        assert_eq!(RecoveryId::try_from(2).unwrap().is_y_odd(), false);
-        assert_eq!(RecoveryId::try_from(3).unwrap().is_y_odd(), true);
+        assert!(!RecoveryId::try_from(0).unwrap().is_y_odd());
+        assert!(RecoveryId::try_from(1).unwrap().is_y_odd());
+        assert!(!RecoveryId::try_from(2).unwrap().is_y_odd());
+        assert!(RecoveryId::try_from(3).unwrap().is_y_odd());
     }
 }

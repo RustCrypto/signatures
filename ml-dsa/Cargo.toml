@@ -5,8 +5,8 @@ Pure Rust implementation of ML-DSA (formerly known as CRYSTALS-Dilithium) as
 described in FIPS-204 (final)
 """
 version = "0.1.0-pre.2"
-edition = "2021"
-rust-version = "1.81"
+edition = "2024"
+rust-version = "1.85"
 license = "Apache-2.0 OR MIT"
 homepage = "https://github.com/RustCrypto/signatures/tree/master/ml-dsa"
 repository = "https://github.com/RustCrypto/signatures"
@@ -22,10 +22,10 @@ alloc = ["pkcs8?/alloc"]
 pkcs8 = ["dep:const-oid", "dep:pkcs8"]
 
 [dependencies]
-hybrid-array = { version = "0.2.3", features = ["extra-sizes"] }
+hybrid-array = { version = "0.3", features = ["extra-sizes"] }
 num-traits = "0.2.19"
 rand_core = { version = "0.9", optional = true }
-sha3 = "0.10.8"
+sha3 = "=0.11.0-pre.4"
 signature = "=2.3.0-pre.6"
 zeroize = { version = "1.8.1", optional = true, default-features = false }
 
@@ -35,7 +35,7 @@ pkcs8 = { version = "0.11.0-rc.2", default-features = false, optional = true }
 [dev-dependencies]
 criterion = "0.5.1"
 hex = { version = "0.4.3", features = ["serde"] }
-hex-literal = "0.4.1"
+hex-literal = "1"
 pkcs8 = { version = "0.11.0-rc.2", features = ["pem"] }
 proptest = "1"
 rand = "0.9"
@@ -45,6 +45,3 @@ serde_json = "1.0.132"
 [[bench]]
 name = "ml_dsa"
 harness = false
-
-[profile.dev]
-opt-level = 2

@@ -5,8 +5,8 @@ use core::fmt::Debug;
 
 use crate::hashes::HashSuite;
 use crate::{
-    address::Address, fors::ForsParams, hypertree::HypertreeParams, wots::WotsParams,
-    xmss::XmssParams, ParameterSet,
+    ParameterSet, address::Address, fors::ForsParams, hypertree::HypertreeParams, wots::WotsParams,
+    xmss::XmssParams,
 };
 use crate::{PkSeed, SkPrf, SkSeed};
 use const_oid::db::fips205;
@@ -14,7 +14,7 @@ use digest::{Digest, KeyInit, Mac};
 use hmac::Hmac;
 use hybrid_array::{Array, ArraySize};
 use sha2::{Sha256, Sha512};
-use typenum::{Diff, Sum, U, U128, U16, U24, U30, U32, U34, U39, U42, U47, U49, U64};
+use typenum::{Diff, Sum, U, U16, U24, U30, U32, U34, U39, U42, U47, U49, U64, U128};
 
 /// Implementation of the MGF1 XOF
 fn mgf1<H: Digest, L: ArraySize>(seed: &[u8]) -> Array<u8, L> {

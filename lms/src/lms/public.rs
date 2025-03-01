@@ -159,9 +159,9 @@ mod tests {
     use std::ops::Add;
 
     use crate::{
-        lms::modes::*,
         lms::SigningKey,
         lms::VerifyingKey,
+        lms::modes::*,
         ots::{LmsOtsSha256N32W4, LmsOtsSha256N32W8},
     };
     use digest::OutputSizeUser;
@@ -258,7 +258,7 @@ mod tests {
         <Mode::Hasher as OutputSizeUser>::OutputSize: Add<U24>,
         Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U24>: ArraySize,
     {
-        let rng = rand::thread_rng();
+        let rng = rand::rng();
         let lms_priv = SigningKey::<Mode>::new(rng);
         let lms_pub = lms_priv.public();
         let lms_pub_serialized: Array<u8, Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U24>> =

@@ -8,7 +8,7 @@ mod public;
 pub mod signature;
 
 pub use modes::{
-    LmsMode, LmsSha256M32H10, LmsSha256M32H15, LmsSha256M32H20, LmsSha256M32H25, LmsSha256M32H5,
+    LmsMode, LmsSha256M32H5, LmsSha256M32H10, LmsSha256M32H15, LmsSha256M32H20, LmsSha256M32H25,
 };
 pub use private::SigningKey;
 pub use public::VerifyingKey;
@@ -23,7 +23,7 @@ mod tests {
     use crate::{lms::SigningKey, ots::LmsOtsSha256N32W4};
 
     fn test_sign_and_verify<Mode: LmsMode>() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
 
         // Generate a fresh keypair
         let mut sk = SigningKey::<Mode>::new(&mut rng);

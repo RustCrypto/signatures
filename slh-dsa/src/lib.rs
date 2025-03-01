@@ -24,7 +24,7 @@
 //! use slh_dsa::*;
 //! use signature::*;
 //!
-//! let mut rng = rand::thread_rng();
+//! let mut rng = rand::rng();
 //!
 //! // Generate a signing key using the SHAKE128f parameter set
 //! let sk = SigningKey::<Shake128f>::new(&mut rng);
@@ -86,7 +86,7 @@ mod tests {
     use util::macros::test_parameter_sets;
 
     fn test_sign_verify<P: ParameterSet>() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let sk = SigningKey::<P>::new(&mut rng);
         let vk = sk.verifying_key();
         let msg = b"Hello, world!";
@@ -98,7 +98,7 @@ mod tests {
     // Check signature fails on modified message
     #[test]
     fn test_sign_verify_shake_128f_fail_on_modified_message() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let sk = SigningKey::<Shake128f>::new(&mut rng);
         let msg = b"Hello, world!";
         let modified_msg = b"Goodbye, world!";
@@ -111,7 +111,7 @@ mod tests {
 
     #[test]
     fn test_sign_verify_fail_with_wrong_verifying_key() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let sk = SigningKey::<Shake128f>::new(&mut rng);
         let wrong_sk = SigningKey::<Shake128f>::new(&mut rng); // Generate a different signing key
         let msg = b"Hello, world!";
@@ -125,14 +125,14 @@ mod tests {
 
     #[test]
     fn test_sign_verify_fail_on_modified_signature() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let sk = SigningKey::<Shake128f>::new(&mut rng);
         let msg = b"Hello, world!";
 
         let mut sig_bytes = sk.try_sign(msg).unwrap().to_bytes();
         // Randomly modify one byte in the signature
         let sig_len = sig_bytes.len();
-        let random_byte_index = rng.gen_range(0..sig_len);
+        let random_byte_index = rng.random_range(0..sig_len);
         sig_bytes[random_byte_index] ^= 0xff; // Invert one byte to ensure it's different
         let sig = (&sig_bytes).into();
 
@@ -145,7 +145,7 @@ mod tests {
 
     #[test]
     fn test_successive_signatures_not_equal() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let sk = SigningKey::<Shake128f>::new(&mut rng);
         let msg = b"Hello, world!";
 
@@ -160,7 +160,7 @@ mod tests {
 
     #[test]
     fn test_sign_verify_nonempty_context() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let sk = SigningKey::<Shake128f>::new(&mut rng);
         let vk = sk.verifying_key();
         let msg = b"Hello, world!";
@@ -171,7 +171,7 @@ mod tests {
 
     #[test]
     fn test_sign_verify_wrong_context() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let sk = SigningKey::<Shake128f>::new(&mut rng);
         let vk = sk.verifying_key();
         let msg = b"Hello, world!";

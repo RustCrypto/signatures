@@ -15,16 +15,16 @@
 //! breaking changes when using this module.
 
 pub use pkcs8::{
-    spki, DecodePrivateKey, DecodePublicKey, Error, ObjectIdentifier, PrivateKeyInfoRef, Result,
+    DecodePrivateKey, DecodePublicKey, Error, ObjectIdentifier, PrivateKeyInfoRef, Result, spki,
 };
 
 #[cfg(feature = "alloc")]
-pub use pkcs8::{spki::EncodePublicKey, EncodePrivateKey};
+pub use pkcs8::{EncodePrivateKey, spki::EncodePublicKey};
 
 #[cfg(feature = "alloc")]
 pub use pkcs8::der::{
-    asn1::{BitStringRef, OctetStringRef},
     Document, SecretDocument,
+    asn1::{BitStringRef, OctetStringRef},
 };
 
 use core::fmt;
@@ -351,7 +351,9 @@ mod tests {
 
         assert_eq!(
             valid_keypair.to_bytes().unwrap(),
-            hex!("D4EE72DBF913584AD5B6D8F1F769F8AD3AFE7C28CBF1D4FBE097A88F4475584219BF44096984CDFE8541BAC167DC3B96C85086AA30B6B6CB0C5C38AD703166E1")
+            hex!(
+                "D4EE72DBF913584AD5B6D8F1F769F8AD3AFE7C28CBF1D4FBE097A88F4475584219BF44096984CDFE8541BAC167DC3B96C85086AA30B6B6CB0C5C38AD703166E1"
+            )
         );
 
         let invalid_keypair = KeypairBytes {

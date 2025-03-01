@@ -24,15 +24,6 @@ to be written abstractly in such a way that different signer/verifier
 providers can be plugged in, enabling support for using different
 Ed448 implementations, including HSMs or Cloud KMS services.
 
-## Minimum Supported Rust Version
-
-This crate requires **Rust 1.72** at a minimum.
-
-Our policy is to allow MSRV to be raised in future released without that
-qualifing as a SemVer-breaking change, but it will be accompanied by a minor
-version bump, ensuring if you lock to a minor version MSRV will be preserved
-for the default feature set.
-
 ## SemVer Policy
 
 - All on-by-default features of this library are covered by SemVer
@@ -64,7 +55,7 @@ dual licensed as above, without any additional terms or conditions.
 [build-image]: https://github.com/RustCrypto/signatures/actions/workflows/ed448.yml/badge.svg
 [build-link]: https://github.com/RustCrypto/signatures/actions/workflows/ed448.yml
 [license-image]: https://img.shields.io/badge/license-Apache2.0/MIT-blue.svg
-[rustc-image]: https://img.shields.io/badge/rustc-1.712-blue.svg
+[rustc-image]: https://img.shields.io/badge/rustc-1.85+-blue.svg
 [chat-image]: https://img.shields.io/badge/zulip-join_chat-blue.svg
 [chat-link]: https://rustcrypto.zulipchat.com/#narrow/stream/260048-signatures
 
