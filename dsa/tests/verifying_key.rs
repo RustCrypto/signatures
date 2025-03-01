@@ -8,8 +8,8 @@ use pkcs8::{DecodePublicKey, EncodePublicKey, LineEnding};
 #[cfg(feature = "hazmat")]
 use {
     crypto_bigint::{
-        modular::{BoxedMontyForm, BoxedMontyParams},
         BoxedUint, Odd,
+        modular::{BoxedMontyForm, BoxedMontyParams},
     },
     dsa::{Components, KeySize, SigningKey},
 };
@@ -54,9 +54,9 @@ fn validate_verifying_key() {
     let p = verifying_key.components().p();
     let q = verifying_key.components().q();
 
-    let params = BoxedMontyParams::new(Odd::new((**q).clone()).unwrap());
+    let params = BoxedMontyParams::new(Odd::new((**p).clone()).unwrap());
     let form = BoxedMontyForm::new((**verifying_key.y()).clone(), params);
 
     // Taken from the parameter validation from bouncy castle
-    assert_eq!(form.pow(p).retrieve(), BoxedUint::one());
+    assert_eq!(form.pow(q).retrieve(), BoxedUint::one());
 }
