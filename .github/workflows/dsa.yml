@@ -17,6 +17,7 @@ env:
 
 jobs:
   build:
+    if: false # both thumbv7 and wasm require a getrandom backend to be injected
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -24,7 +25,7 @@ jobs:
           - thumbv7em-none-eabi
           - wasm32-unknown-unknown
         toolchain:
-          - 1.83.0 # MSRV
+          - 1.85.0 # MSRV
           - stable
     steps:
       - uses: actions/checkout@v4
@@ -42,7 +43,7 @@ jobs:
           - macos-latest
           - windows-latest
         toolchain:
-          - 1.83.0 # MSRV
+          - 1.85.0 # MSRV
           - stable
     runs-on: ${{ matrix.platform }}
     steps:
