@@ -161,7 +161,7 @@ impl PartialOrd for Signature {
     }
 }
 
-impl<'a> Sequence<'a> for Signature {}
+impl Sequence<'_> for Signature {}
 
 impl SignatureEncoding for Signature {
     type Repr = Box<[u8]>;
