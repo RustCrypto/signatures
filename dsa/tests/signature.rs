@@ -10,6 +10,7 @@ use rand_chacha::ChaCha8Rng;
 use sha2::Sha256;
 use signature::{
     DigestVerifier, RandomizedDigestSigner, Signer, Verifier,
+    hazmat::{PrehashSigner, PrehashVerifier},
 };
 
 /// Seed used for the ChaCha8 RNG
@@ -31,11 +32,9 @@ const MESSAGE_SIGNATURE_CRATE_ASN1: &[u8] = &[
 ///
 /// This signature was generated using the SHA-256 digest
 const MESSAGE_SIGNATURE_OPENSSL_ASN1: &[u8] = &hex!(
-    "
-302e 0215 0092 4523 9462 f59b 5936 d355
-8b16 8dbb 0915 7ba1 5302 1500 9d8d 7aa7
-02a6 2dde 1975 e9f2 a20c 73b4 7dd3 0912
-"
+    "302e 0215 0092 4523 9462 f59b 5936 d355
+     8b16 8dbb 0915 7ba1 5302 1500 9d8d 7aa7
+     02a6 2dde 1975 e9f2 a20c 73b4 7dd3 0912"
 );
 
 /// Get the seeded CSPRNG
@@ -89,9 +88,11 @@ fn verify_signature() {
     let signature = Signature::from_der(MESSAGE_SIGNATURE_OPENSSL_ASN1)
         .expect("Failed to parse ASN.1 representation of the test signature");
 
-    assert!(verifying_key
-        .verify_digest(Sha256::new().chain_update(MESSAGE), &signature)
-        .is_ok());
+    assert!(
+        verifying_key
+            .verify_digest(Sha256::new().chain_update(MESSAGE), &signature)
+            .is_ok()
+    );
 }
 
 #[test]

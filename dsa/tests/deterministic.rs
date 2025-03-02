@@ -1,5 +1,5 @@
 #![cfg(feature = "hazmat")]
-use crypto_bigint::{BoxedUint, NonZero};
+use crypto_bigint::{BoxedUint, NonZero, Odd};
 use digest::{Digest, FixedOutputReset, core_api::BlockSizeUser};
 use dsa::{Components, Signature, SigningKey, VerifyingKey};
 use sha1::Sha1;
@@ -40,7 +40,7 @@ fn dsa_1024_signing_key() -> SigningKey {
     let y = decode_hex_number(y_str, 1024);
 
     let (p, q, g, y, x) = (
-        NonZero::new(p).unwrap(),
+        Odd::new(p).unwrap(),
         NonZero::new(q).unwrap(),
         NonZero::new(g).unwrap(),
         NonZero::new(y).unwrap(),
@@ -99,7 +99,7 @@ fn dsa_2048_signing_key() -> SigningKey {
     );
 
     let (p, q, g, y, x) = (
-        NonZero::new(p).unwrap(),
+        Odd::new(p).unwrap(),
         NonZero::new(q).unwrap(),
         NonZero::new(g).unwrap(),
         NonZero::new(y).unwrap(),

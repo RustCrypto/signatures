@@ -3,10 +3,10 @@
 //!
 
 use crate::{size::KeySize, two};
-use crypto_bigint::{BoxedUint, NonZero};
+use crypto_bigint::{BoxedUint, NonZero, Odd};
 use pkcs8::der::{
-    self, DecodeValue, Encode, EncodeValue, Header, Length, Reader, Sequence, Tag, Writer,
-    asn1::UintRef,
+    self, asn1::UintRef, DecodeValue, Encode, EncodeValue, Header, Length, Reader, Sequence, Tag,
+    Writer,
 };
 use signature::rand_core::CryptoRng;
 
@@ -17,7 +17,7 @@ use signature::rand_core::CryptoRng;
 #[must_use]
 pub struct Components {
     /// Prime p
-    p: NonZero<BoxedUint>,
+    p: Odd<BoxedUint>,
 
     /// Quotient q
     q: NonZero<BoxedUint>,
@@ -31,11 +31,11 @@ pub struct Components {
 impl Components {
     /// Construct the common components container from its inner values (p, q and g)
     pub fn from_components(
-        p: NonZero<BoxedUint>,
+        p: Odd<BoxedUint>,
         q: NonZero<BoxedUint>,
         g: NonZero<BoxedUint>,
     ) -> signature::Result<Self> {
-        if *p < two() || *q < two() || g > p {
+        if *p < two() || *q < two() || *g > *p {
             return Err(signature::Error::new());
         }
 
@@ -45,7 +45,7 @@ impl Components {
             (p, q) if KeySize::DSA_2048_224.matches(p, q) => KeySize::DSA_2048_224,
             (p, q) if KeySize::DSA_2048_256.matches(p, q) => KeySize::DSA_2048_256,
             (p, q) if KeySize::DSA_3072_256.matches(p, q) => KeySize::DSA_3072_256,
-            (p, q) => todo!("unsupported key size p={p}, q={q}"),
+            _ => return Err(signature::Error::new()),
         };
 
         Ok(Self { p, q, g, key_size })
@@ -59,7 +59,7 @@ impl Components {
 
     /// DSA prime p
     #[must_use]
-    pub const fn p(&self) -> &NonZero<BoxedUint> {
+    pub const fn p(&self) -> &Odd<BoxedUint> {
         &self.p
     }
 
@@ -84,13 +84,22 @@ impl<'a> DecodeValue<'a> for Components {
         let q = reader.decode::<UintRef<'_>>()?;
         let g = reader.decode::<UintRef<'_>>()?;
 
-        let p = BoxedUint::from_be_slice(p.as_bytes(), (p.as_bytes().len() * 8) as u32).unwrap();
-        let q = BoxedUint::from_be_slice(q.as_bytes(), (q.as_bytes().len() * 8) as u32).unwrap();
-        let g = BoxedUint::from_be_slice(g.as_bytes(), (g.as_bytes().len() * 8) as u32).unwrap();
+        let p = BoxedUint::from_be_slice(p.as_bytes(), (p.as_bytes().len() * 8) as u32)
+            .expect("invariant violation");
+        let q = BoxedUint::from_be_slice(q.as_bytes(), (q.as_bytes().len() * 8) as u32)
+            .expect("invariant violation");
+        let g = BoxedUint::from_be_slice(g.as_bytes(), (g.as_bytes().len() * 8) as u32)
+            .expect("invariant violation");
 
-        let p = NonZero::new(p).unwrap();
-        let q = NonZero::new(q).unwrap();
-        let g = NonZero::new(g).unwrap();
+        let p = Odd::new(p)
+            .into_option()
+            .ok_or(Tag::Integer.value_error())?;
+        let q = NonZero::new(q)
+            .into_option()
+            .ok_or(Tag::Integer.value_error())?;
+        let g = NonZero::new(g)
+            .into_option()
+            .ok_or(Tag::Integer.value_error())?;
 
         Self::from_components(p, q, g).map_err(|_| Tag::Integer.value_error())
     }
