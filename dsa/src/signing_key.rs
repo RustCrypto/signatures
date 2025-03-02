@@ -100,7 +100,7 @@ impl SigningKey {
         extern crate std;
 
         let components = self.verifying_key().components();
-        let ref key_size = components.key_size;
+        let key_size = &components.key_size;
         let (p, q, g) = (components.p(), components.q(), components.g());
         let x = self.x();
 

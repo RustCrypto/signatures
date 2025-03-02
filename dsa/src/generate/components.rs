@@ -69,7 +69,11 @@ pub fn common<R: CryptoRng + ?Sized>(
             break NonZero::new(g).unwrap();
         }
 
-        h = h + BoxedUint::one();
+        // https://github.com/RustCrypto/crypto-bigint/issues/784
+        #[allow(clippy::assign_op_pattern)]
+        {
+            h = h + BoxedUint::one();
+        }
     };
 
     let q = NonZero::new(q.shorten(n)).unwrap();

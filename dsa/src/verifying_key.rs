@@ -61,7 +61,7 @@ impl VerifyingKey {
     #[must_use]
     fn verify_prehashed(&self, hash: &[u8], signature: &Signature) -> Option<bool> {
         let components = self.components();
-        let ref key_size = components.key_size;
+        let key_size = &components.key_size;
         let (p, q, g) = (components.p(), components.q(), components.g());
         let (r, s) = (signature.r(), signature.s());
         debug_assert_eq!(key_size.n_aligned(), s.bits_precision());
