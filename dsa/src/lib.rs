@@ -26,10 +26,10 @@
 #![cfg_attr(feature = "hazmat", doc = "```")]
 #![cfg_attr(not(feature = "hazmat"), doc = "```ignore")]
 //! # use dsa::{Components, SigningKey, VerifyingKey};
-//! # use crypto_bigint::{BoxedUint, NonZero};
+//! # use crypto_bigint::{BoxedUint, NonZero, Odd};
 //! # let read_common_parameters = ||
 //! #     (
-//! #          NonZero::new(BoxedUint::one()).unwrap(),
+//! #          Odd::new(BoxedUint::one()).unwrap(),
 //! #          NonZero::new(BoxedUint::one()).unwrap(),
 //! #          NonZero::new(BoxedUint::one()).unwrap(),
 //! #     );
@@ -76,8 +76,8 @@ pub const OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.2.840.10040.4.
 
 use alloc::{boxed::Box, vec::Vec};
 use pkcs8::der::{
-    self, Decode, DecodeValue, Encode, EncodeValue, Header, Length, Reader, Sequence, Writer,
-    asn1::UintRef,
+    self, Decode, DecodeValue, Encode, EncodeValue, FixedTag, Header, Length, Reader, Sequence,
+    Writer, asn1::UintRef,
 };
 use signature::SignatureEncoding;
 
@@ -119,11 +119,17 @@ impl<'a> DecodeValue<'a> for Signature {
             let r = UintRef::decode(reader)?;
             let s = UintRef::decode(reader)?;
 
-            let r = BoxedUint::from_be_slice(r.as_bytes(), r.as_bytes().len() as u32 * 8).unwrap();
-            let s = BoxedUint::from_be_slice(s.as_bytes(), s.as_bytes().len() as u32 * 8).unwrap();
+            let r = BoxedUint::from_be_slice(r.as_bytes(), r.as_bytes().len() as u32 * 8)
+                .map_err(|_| UintRef::TAG.value_error())?;
+            let s = BoxedUint::from_be_slice(s.as_bytes(), s.as_bytes().len() as u32 * 8)
+                .map_err(|_| UintRef::TAG.value_error())?;
 
-            let r = NonZero::new(r).unwrap();
-            let s = NonZero::new(s).unwrap();
+            let r = NonZero::new(r)
+                .into_option()
+                .ok_or(UintRef::TAG.value_error())?;
+            let s = NonZero::new(s)
+                .into_option()
+                .ok_or(UintRef::TAG.value_error())?;
 
             Ok(Self::from_components(r, s))
         })
