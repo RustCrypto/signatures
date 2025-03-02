@@ -11,6 +11,7 @@ use crate::{
 use crypto_bigint::{
     BoxedUint, NonZero, Odd, RandomBits,
     modular::{BoxedMontyForm, BoxedMontyParams},
+    subtle::CtOption,
 };
 use crypto_primes::{Flavor, is_prime};
 use signature::rand_core::CryptoRng;
@@ -23,73 +24,74 @@ use signature::rand_core::CryptoRng;
 pub fn common<R: CryptoRng + ?Sized>(
     rng: &mut R,
     KeySize { l, n }: KeySize,
-) -> (NonZero<BoxedUint>, NonZero<BoxedUint>, NonZero<BoxedUint>) {
+) -> (Odd<BoxedUint>, NonZero<BoxedUint>, NonZero<BoxedUint>) {
     // Calculate the lower and upper bounds of p and q
     let (p_min, p_max) = calculate_bounds(l);
-    let (q_min, q_max) = calculate_bounds(n);
+    let (q_min, q_max): (NonZero<_>, _) = calculate_bounds(n);
 
-    let (p, q) = 'gen_pq: loop {
+    let (p, q): (Odd<_>, _) = 'gen_pq: loop {
         let q = generate_prime(n, rng);
-        if q < q_min || q > q_max {
+        if q < *q_min || q > *q_max {
             continue;
         }
-        let q = NonZero::new(q).unwrap();
+        let q = NonZero::new(q)
+            .expect("[bug] invariant violation, q is above q_min which itself is NonZero");
 
         // Attempt to find a prime p which has a subgroup of the order q
         for _ in 0..4096 {
             let m = 'gen_m: loop {
                 let m = BoxedUint::random_bits(rng, l);
 
-                if m > p_min && m < p_max {
+                if m > *p_min && m < *p_max {
                     break 'gen_m m;
                 }
             };
-            let rem = NonZero::new((two() * &*q).widen(m.bits_precision())).unwrap();
+            let rem = NonZero::new((two() * &*q).widen(m.bits_precision()))
+                .expect("[bug] 2 * NonZero can't be zero");
 
             let mr = &m % &rem;
             let p = m - mr + BoxedUint::one();
-            let p = NonZero::new(p).unwrap();
 
-            if is_prime(Flavor::Any, &*p) {
+            if is_prime(Flavor::Any, &p) {
+                let p = Odd::new(p).expect("[bug] Any even number would be prime. P is at least 2^L and L is at least 1024.");
                 break 'gen_pq (p, q);
             }
         }
     };
 
+    // Q needs to be the same precision as P for the operations below.
     let q = q.widen(l);
 
     // Generate g using the unverifiable method as defined by Appendix A.2.1
     let e = (&*p - &BoxedUint::one()) / &q;
-    let mut h = BoxedUint::one().widen(q.bits_precision());
+    let mut h = BoxedUint::one().widen(l);
     let g = loop {
-        let params = BoxedMontyParams::new_vartime(Odd::new((*p).clone()).unwrap());
+        let params = BoxedMontyParams::new_vartime(p.clone());
         let form = BoxedMontyForm::new(h.clone(), params);
         let g = form.pow(&e).retrieve();
 
         if !bool::from(g.is_one()) {
+            // TODO(baloo): shouldn't we check e can't be 1 here?
+            //              and g could still be zero right? In which case just loop around?
             break NonZero::new(g).unwrap();
         }
 
-        // https://github.com/RustCrypto/crypto-bigint/issues/784
-        #[allow(clippy::assign_op_pattern)]
-        {
-            h = h + BoxedUint::one();
-        }
+        h += BoxedUint::one();
     };
 
-    let q = NonZero::new(q.shorten(n)).unwrap();
+    let q = NonZero::new(q.shorten(n)).expect("[bug] q_min(2^N-1) < q < q_max(2^N), Q is non zero");
 
     (p, q, g)
 }
 
 /// Calculate the public component from the common components and the private component
 #[inline]
-pub fn public(components: &Components, x: &NonZero<BoxedUint>) -> NonZero<BoxedUint> {
+pub fn public(components: &Components, x: &NonZero<BoxedUint>) -> CtOption<NonZero<BoxedUint>> {
     let p = components.p();
     let g = components.g();
 
-    let params = BoxedMontyParams::new_vartime(Odd::new((**p).clone()).unwrap());
+    let params = BoxedMontyParams::new_vartime(p.clone());
     let form = BoxedMontyForm::new((**g).clone(), params);
 
-    NonZero::new(form.pow(x).retrieve()).unwrap()
+    NonZero::new(form.pow(x).retrieve())
 }

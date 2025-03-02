@@ -5,7 +5,7 @@
 use crate::{Components, OID, Signature, two};
 use core::cmp::min;
 use crypto_bigint::{
-    BoxedUint, NonZero, Odd,
+    BoxedUint, NonZero,
     modular::{BoxedMontyForm, BoxedMontyParams},
 };
 use digest::Digest;
@@ -36,7 +36,7 @@ impl VerifyingKey {
         components: Components,
         y: NonZero<BoxedUint>,
     ) -> signature::Result<Self> {
-        let params = BoxedMontyParams::new_vartime(Odd::new((**components.p()).clone()).unwrap());
+        let params = BoxedMontyParams::new_vartime(components.p().clone());
         let form = BoxedMontyForm::new((*y).clone(), params);
 
         if *y < two() || form.pow(components.q()).retrieve() != BoxedUint::one() {
@@ -61,10 +61,8 @@ impl VerifyingKey {
     #[must_use]
     fn verify_prehashed(&self, hash: &[u8], signature: &Signature) -> Option<bool> {
         let components = self.components();
-        let key_size = &components.key_size;
         let (p, q, g) = (components.p(), components.q(), components.g());
         let (r, s) = (signature.r(), signature.s());
-        debug_assert_eq!(key_size.n_aligned(), s.bits_precision());
         let y = self.y();
 
         if signature.r() >= q || signature.s() >= q {
@@ -79,7 +77,8 @@ impl VerifyingKey {
         let block_size = hash.len(); // Hash function output size
 
         let z_len = min(n as usize, block_size);
-        let z = BoxedUint::from_be_slice(&hash[..z_len], z_len as u32 * 8).unwrap();
+        let z = BoxedUint::from_be_slice(&hash[..z_len], z_len as u32 * 8)
+            .expect("invariant violation");
 
         let z = z.widen(p.bits_precision());
         let w = w.widen(q.bits_precision());
@@ -87,8 +86,8 @@ impl VerifyingKey {
         let u1 = (&z * &w) % q.widen(p.bits_precision());
         let u2 = r.mul_mod(&w, q);
 
-        let p1_params = BoxedMontyParams::new(Odd::new(p.as_ref().clone()).unwrap());
-        let p2_params = BoxedMontyParams::new(Odd::new(p.as_ref().clone()).unwrap());
+        let p1_params = BoxedMontyParams::new(p.clone());
+        let p2_params = BoxedMontyParams::new(p.clone());
 
         let g_form = BoxedMontyForm::new((**g).clone(), p1_params);
         let y_form = BoxedMontyForm::new((**y).clone(), p2_params);
@@ -98,7 +97,7 @@ impl VerifyingKey {
         let v3 = v1 * v2;
         let p = p.widen(v3.bits_precision());
         let q = q.widen(v3.bits_precision());
-        let v4 = v3 % p;
+        let v4 = v3 % NonZero::new(p).expect("[bug] p is an odd number and can't be zero");
         let v = v4 % q;
 
         Some(v == **r)
@@ -180,13 +179,13 @@ impl<'a> TryFrom<SubjectPublicKeyInfoRef<'a>> for VerifyingKey {
                 .ok_or(spki::Error::KeyMalformed)?,
         )?;
 
-        Self::from_components(
-            components,
-            NonZero::new(
-                BoxedUint::from_be_slice(y.as_bytes(), y.as_bytes().len() as u32 * 8).unwrap(),
-            )
-            .unwrap(),
+        let y = NonZero::new(
+            BoxedUint::from_be_slice(y.as_bytes(), y.as_bytes().len() as u32 * 8)
+                .expect("invariant violation"),
         )
-        .map_err(|_| spki::Error::KeyMalformed)
+        .into_option()
+        .ok_or(spki::Error::KeyMalformed)?;
+
+        Self::from_components(components, y).map_err(|_| spki::Error::KeyMalformed)
     }
 }

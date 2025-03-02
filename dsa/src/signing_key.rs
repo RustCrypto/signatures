@@ -8,7 +8,7 @@ use core::{
     fmt::{self, Debug},
 };
 use crypto_bigint::{
-    BoxedUint, NonZero, Odd,
+    BoxedUint, NonZero,
     modular::{BoxedMontyForm, BoxedMontyParams},
 };
 use digest::{Digest, FixedOutputReset, core_api::BlockSizeUser};
@@ -87,7 +87,7 @@ impl SigningKey {
     where
         D: Digest + BlockSizeUser + FixedOutputReset,
     {
-        let k_kinv = crate::generate::secret_number_rfc6979::<D>(self, prehash);
+        let k_kinv = crate::generate::secret_number_rfc6979::<D>(self, prehash)?;
         self.sign_prehashed(k_kinv, prehash)
     }
 
@@ -105,8 +105,6 @@ impl SigningKey {
         let x = self.x();
 
         debug_assert_eq!(key_size.n_aligned(), q.bits_precision());
-        //let q = q.widen(p.bits_precision());
-        //let q = &q;
 
         let x = x.widen(p.bits_precision());
         let x = &x;
@@ -114,33 +112,32 @@ impl SigningKey {
         let k = k.widen(p.bits_precision());
         let inv_k = inv_k.widen(p.bits_precision());
 
-        // Verify all the precisions check out. Otherwise the math operations will fail
-        //debug_assert_eq!(p.bits_precision(), q.bits_precision());
-        //debug_assert_eq!(q.bits_precision(), g.bits_precision());
-        //debug_assert_eq!(g.bits_precision(), x.bits_precision());
-        //debug_assert_eq!(x.bits_precision(), k.bits_precision());
-
-        let params = BoxedMontyParams::new(Odd::new(p.as_ref().clone()).unwrap());
+        let params = BoxedMontyParams::new(p.clone());
         let form = BoxedMontyForm::new((**g).clone(), params);
         let r = form.pow(&k).retrieve() % q.widen(p.bits_precision());
         debug_assert_eq!(key_size.l_aligned(), r.bits_precision());
-        let r_ = r.shorten(q.bits_precision());
+
+        let r_short = r.shorten(key_size.n_aligned());
+        // TODO(baloo): is there any way R could be zero here? Could it be any reason for K to be
+        //              one?
+        let r_short = NonZero::new(r_short).unwrap();
         let r = NonZero::new(r).unwrap();
-        let r_ = NonZero::new(r_).unwrap();
 
         let n = q.bits() / 8;
         let block_size = hash.len(); // Hash function output size
 
         let z_len = min(n as usize, block_size);
-        let z = BoxedUint::from_be_slice(&hash[..z_len], z_len as u32 * 8).unwrap();
+        let z = BoxedUint::from_be_slice(&hash[..z_len], z_len as u32 * 8)
+            .expect("invariant violation");
 
         let s = inv_k.mul_mod(&(z + &**x * &*r), &q.widen(key_size.l_aligned()));
         let s = s.shorten(key_size.n_aligned());
+        // TODO(baloo): is there any way S could be zero here?
         let s = NonZero::new(s).unwrap();
 
-        debug_assert_eq!(key_size.n_aligned(), r_.bits_precision());
+        debug_assert_eq!(key_size.n_aligned(), r_short.bits_precision());
         debug_assert_eq!(key_size.n_aligned(), s.bits_precision());
-        let signature = Signature::from_components(r_, s);
+        let signature = Signature::from_components(r_short, s);
 
         if signature.r() < q && signature.s() < q {
             Ok(signature)
@@ -160,7 +157,7 @@ impl Signer<Signature> for SigningKey {
 impl PrehashSigner<Signature> for SigningKey {
     /// Warning: This uses `sha2::Sha256` as the hash function for the digest. If you need to use a different one, use [`SigningKey::sign_prehashed_rfc6979`].
     fn sign_prehash(&self, prehash: &[u8]) -> Result<Signature, signature::Error> {
-        let k_kinv = crate::generate::secret_number_rfc6979::<sha2::Sha256>(self, prehash);
+        let k_kinv = crate::generate::secret_number_rfc6979::<sha2::Sha256>(self, prehash)?;
         self.sign_prehashed(k_kinv, prehash)
     }
 }
@@ -173,7 +170,7 @@ impl RandomizedPrehashSigner<Signature> for SigningKey {
     ) -> Result<Signature, signature::Error> {
         let components = self.verifying_key.components();
 
-        if let Some(k_kinv) = crate::generate::secret_number(rng, components) {
+        if let Some(k_kinv) = crate::generate::secret_number(rng, components)? {
             self.sign_prehashed(k_kinv, prehash)
         } else {
             Err(signature::Error::new())
@@ -187,7 +184,7 @@ where
 {
     fn try_sign_digest(&self, digest: D) -> Result<Signature, signature::Error> {
         let hash = digest.finalize_fixed();
-        let ks = crate::generate::secret_number_rfc6979::<D>(self, &hash);
+        let ks = crate::generate::secret_number_rfc6979::<D>(self, &hash)?;
 
         self.sign_prehashed(ks, &hash)
     }
@@ -202,7 +199,7 @@ where
         rng: &mut R,
         digest: D,
     ) -> Result<Signature, signature::Error> {
-        let ks = crate::generate::secret_number(rng, self.verifying_key().components())
+        let ks = crate::generate::secret_number(rng, self.verifying_key().components())?
             .ok_or_else(signature::Error::new)?;
         let hash = digest.finalize();
 
@@ -248,14 +245,23 @@ impl<'a> TryFrom<PrivateKeyInfoRef<'a>> for SigningKey {
         let precision = components.p().bits_precision();
 
         let x = UintRef::from_der(value.private_key.into())?;
-        let x = BoxedUint::from_be_slice(x.as_bytes(), precision).unwrap();
-        let x = NonZero::new(x).unwrap();
+        let x = BoxedUint::from_be_slice(x.as_bytes(), precision)
+            .map_err(|_| pkcs8::Error::KeyMalformed)?;
+        let x = NonZero::new(x)
+            .into_option()
+            .ok_or(pkcs8::Error::KeyMalformed)?;
 
         let y = if let Some(y_bytes) = value.public_key.as_ref().and_then(|bs| bs.as_bytes()) {
             let y = UintRef::from_der(y_bytes)?;
-            NonZero::new(BoxedUint::from_be_slice(y.as_bytes(), precision).unwrap()).unwrap()
+            let y = BoxedUint::from_be_slice(y.as_bytes(), precision)
+                .map_err(|_| pkcs8::Error::KeyMalformed)?;
+            NonZero::new(y)
+                .into_option()
+                .ok_or(pkcs8::Error::KeyMalformed)?
         } else {
             crate::generate::public_component(&components, &x)
+                .into_option()
+                .ok_or(pkcs8::Error::KeyMalformed)?
         };
 
         let verifying_key =
