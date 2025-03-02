@@ -19,10 +19,12 @@ use pkcs8::{
         asn1::{OctetStringRef, UintRef},
     },
 };
+#[cfg(feature = "hazmat")]
+use signature::rand_core::CryptoRng;
 use signature::{
     DigestSigner, RandomizedDigestSigner, Signer,
     hazmat::{PrehashSigner, RandomizedPrehashSigner},
-    rand_core::{CryptoRng, TryCryptoRng},
+    rand_core::TryCryptoRng,
 };
 use zeroize::{Zeroize, Zeroizing};
 
