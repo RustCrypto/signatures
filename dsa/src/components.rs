@@ -111,4 +111,4 @@ impl EncodeValue for Components {
     }
 }
 
-impl<'a> Sequence<'a> for Components {}
+impl Sequence<'_> for Components {}
