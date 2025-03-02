@@ -20,16 +20,19 @@ fn strip_leading_zeros(buffer: &[u8], desired_size: usize) -> &[u8] {
 ///
 /// Secret number k and its modular multiplicative inverse with q
 #[inline]
-pub fn secret_number_rfc6979<D>(signing_key: &SigningKey, hash: &[u8]) -> (BoxedUint, BoxedUint)
+pub fn secret_number_rfc6979<D>(
+    signing_key: &SigningKey,
+    hash: &[u8],
+) -> Result<(BoxedUint, BoxedUint), signature::Error>
 where
     D: Digest + BlockSizeUser + FixedOutputReset,
 {
     let q = signing_key.verifying_key().components().q();
     let size = (q.bits() / 8) as usize;
+    let hash = BoxedUint::from_be_slice(&hash[..min(size, hash.len())], q.bits_precision())
+        .map_err(|_| signature::Error::new())?;
 
     // Reduce hash mod q
-    let hash =
-        BoxedUint::from_be_slice(&hash[..min(size, hash.len())], q.bits_precision()).unwrap();
     let hash = (hash % q).to_be_bytes();
     let hash = strip_leading_zeros(&hash, size);
 
@@ -43,10 +46,11 @@ where
     loop {
         rfc6979::generate_k_mut::<D>(x_bytes, q_bytes, hash, &[], &mut buffer);
 
-        let k = BoxedUint::from_be_slice(&buffer, q.bits_precision()).unwrap();
+        let k = BoxedUint::from_be_slice(&buffer, q.bits_precision())
+            .map_err(|_| signature::Error::new())?;
         if let Some(inv_k) = k.inv_mod(q).into() {
             if (bool::from(k.is_nonzero())) && (k < **q) {
-                return (k, inv_k);
+                return Ok((k, inv_k));
             }
         }
     }
@@ -61,7 +65,7 @@ where
 pub fn secret_number<R: TryCryptoRng + ?Sized>(
     rng: &mut R,
     components: &Components,
-) -> Option<(BoxedUint, BoxedUint)> {
+) -> Result<Option<(BoxedUint, BoxedUint)>, signature::Error> {
     let q = components.q();
     let n = q.bits();
     let q = q.widen(n + 64);
@@ -70,17 +74,18 @@ pub fn secret_number<R: TryCryptoRng + ?Sized>(
     // Attempt to try a fitting secret number
     // Give up after 4096 tries
     for _ in 0..4096 {
-        let c = BoxedUint::try_random_bits(rng, n + 64).unwrap();
-        let rem = NonZero::new((&**q - &BoxedUint::one()).widen(c.bits_precision())).unwrap();
+        let c = BoxedUint::try_random_bits(rng, n + 64).map_err(|_| signature::Error::new())?;
+        let rem = NonZero::new((&**q - &BoxedUint::one()).widen(c.bits_precision()))
+            .expect("[bug] minimum size for q is to 2^(160 - 1)");
         let k = (c % rem) + BoxedUint::one();
 
         if let Some(inv_k) = k.inv_mod(q).into() {
             // `k` and `k^-1` both have to be in the range `[1, q-1]`
             if (inv_k > BoxedUint::zero() && inv_k < **q) && (k > BoxedUint::zero() && k < **q) {
-                return Some((k, inv_k));
+                return Ok(Some((k, inv_k)));
             }
         }
     }
 
-    None
+    Ok(None)
 }
