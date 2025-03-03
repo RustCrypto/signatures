@@ -97,8 +97,6 @@ impl SigningKey {
         (k, inv_k): (BoxedUint, BoxedUint),
         hash: &[u8],
     ) -> signature::Result<Signature> {
-        extern crate std;
-
         let components = self.verifying_key().components();
         let key_size = &components.key_size;
         let (p, q, g) = (components.p(), components.q(), components.g());
