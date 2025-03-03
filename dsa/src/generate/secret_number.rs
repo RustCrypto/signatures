@@ -10,8 +10,8 @@ use digest::{Digest, FixedOutputReset, core_api::BlockSizeUser};
 use signature::rand_core::TryCryptoRng;
 use zeroize::Zeroizing;
 
-fn strip_leading_zeros(buffer: &[u8], desired_size: usize) -> &[u8] {
-    &buffer[(buffer.len() - desired_size)..]
+fn reduce_hash(hash: &[u8], desired_size: usize) -> &[u8] {
+    &hash[(hash.len() - desired_size)..]
 }
 
 /// Generate a per-message secret number k deterministically using the method described in RFC 6979
@@ -34,13 +34,13 @@ where
 
     // Reduce hash mod q
     let hash = (hash % q).to_be_bytes();
-    let hash = strip_leading_zeros(&hash, size);
+    let hash = reduce_hash(&hash, size);
 
     let q_bytes = q.to_be_bytes();
-    let q_bytes = strip_leading_zeros(&q_bytes, size);
+    let q_bytes = reduce_hash(&q_bytes, size);
 
     let x_bytes = Zeroizing::new(signing_key.x().to_be_bytes());
-    let x_bytes = strip_leading_zeros(&x_bytes, size);
+    let x_bytes = reduce_hash(&x_bytes, size);
 
     let mut buffer = vec![0; size];
     loop {
