@@ -116,10 +116,10 @@ impl SigningKey {
         debug_assert_eq!(key_size.l_aligned(), r.bits_precision());
 
         let r_short = r.shorten(key_size.n_aligned());
-        // TODO(baloo): is there any way R could be zero here? Could it be any reason for K to be
-        //              one?
-        let r_short = NonZero::new(r_short).unwrap();
-        let r = NonZero::new(r).unwrap();
+        let r_short = NonZero::new(r_short)
+            .expect("[bug] invalid value of k used here, the secret number computed was invalid");
+        let r = NonZero::new(r)
+            .expect("[bug] invalid value of k used here, the secret number computed was invalid");
 
         let n = q.bits() / 8;
         let block_size = hash.len(); // Hash function output size
@@ -130,8 +130,8 @@ impl SigningKey {
 
         let s = inv_k.mul_mod(&(z + &**x * &*r), &q.widen(key_size.l_aligned()));
         let s = s.shorten(key_size.n_aligned());
-        // TODO(baloo): is there any way S could be zero here?
-        let s = NonZero::new(s).unwrap();
+        let s = NonZero::new(s)
+            .expect("[bug] invalid value of k used here, the secret number computed was invalid");
 
         debug_assert_eq!(key_size.n_aligned(), r_short.bits_precision());
         debug_assert_eq!(key_size.n_aligned(), s.bits_precision());
