@@ -5,8 +5,8 @@
 use crate::{size::KeySize, two};
 use crypto_bigint::{BoxedUint, NonZero, Odd};
 use pkcs8::der::{
-    self, asn1::UintRef, DecodeValue, Encode, EncodeValue, Header, Length, Reader, Sequence, Tag,
-    Writer,
+    self, DecodeValue, Encode, EncodeValue, Header, Length, Reader, Sequence, Tag, Writer,
+    asn1::UintRef,
 };
 use signature::rand_core::CryptoRng;
 
