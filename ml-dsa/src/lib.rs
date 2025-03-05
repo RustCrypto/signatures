@@ -780,7 +780,7 @@ pub trait KeyGen: MlDsaParams {
 
     /// Generate a signing key pair from the specified RNG
     #[cfg(feature = "rand_core")]
-    fn key_gen<R: CryptoRng>(rng: &mut R) -> Self::KeyPair;
+    fn key_gen<R: CryptoRng + ?Sized>(rng: &mut R) -> Self::KeyPair;
 
     /// Deterministically generate a signing key pair from the specified seed
     // TODO(RLB): Only expose this based on a feature.
@@ -796,7 +796,7 @@ where
     /// Generate a signing key pair from the specified RNG
     // Algorithm 1 ML-DSA.KeyGen()
     #[cfg(feature = "rand_core")]
-    fn key_gen<R: CryptoRng>(rng: &mut R) -> KeyPair<P> {
+    fn key_gen<R: CryptoRng + ?Sized>(rng: &mut R) -> KeyPair<P> {
         let mut xi = B32::default();
         rng.fill_bytes(&mut xi);
         Self::key_gen_internal(&xi)
