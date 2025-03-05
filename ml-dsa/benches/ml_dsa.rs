@@ -3,7 +3,7 @@ use hybrid_array::{Array, ArraySize};
 use ml_dsa::{B32, KeyGen, MlDsa65, Signature, SigningKey, VerifyingKey};
 use rand::{CryptoRng, RngCore};
 
-pub fn rand<L: ArraySize>(rng: &mut (impl RngCore + CryptoRng)) -> Array<u8, L> {
+pub fn rand<L: ArraySize, R: CryptoRng + ?Sized>(rng: &mut R) -> Array<u8, L> {
     let mut val = Array::<u8, L>::default();
     rng.fill_bytes(&mut val);
     val
