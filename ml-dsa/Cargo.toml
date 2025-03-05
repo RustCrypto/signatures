@@ -13,6 +13,16 @@ repository = "https://github.com/RustCrypto/signatures"
 readme = "README.md"
 categories = ["cryptography"]
 keywords = ["crypto", "signature"]
+# Exclude these large files in published crate:
+exclude = [
+    "tests/key-gen.json",
+    "tests/key-gen.rs",
+    "tests/proptests.proptest-regressions",
+    "tests/sig-gen.json",
+    "tests/sig-gen.rs",
+    "tests/sig-ver.json",
+    "tests/sig-ver.rs",
+]
 
 [features]
 default = ["rand_core", "alloc", "pkcs8"]
