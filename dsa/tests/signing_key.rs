@@ -3,10 +3,12 @@
 // But we want to use those small key sizes for fast tests
 #![allow(deprecated)]
 
+use crypto_bigint::{
+    BoxedUint, Odd,
+    modular::{BoxedMontyForm, BoxedMontyParams},
+};
 use digest::Digest;
 use dsa::{Components, KeySize, SigningKey};
-use num_bigint::BigUint;
-use num_traits::Zero;
 use pkcs8::{DecodePrivateKey, EncodePrivateKey, LineEnding};
 use sha1::Sha1;
 use signature::{DigestVerifier, RandomizedDigestSigner};
@@ -50,9 +52,11 @@ fn sign_and_verify() {
     let signature =
         signing_key.sign_digest_with_rng(&mut rand::thread_rng(), Sha1::new().chain_update(DATA));
 
-    assert!(verifying_key
-        .verify_digest(Sha1::new().chain_update(DATA), &signature)
-        .is_ok());
+    assert!(
+        verifying_key
+            .verify_digest(Sha1::new().chain_update(DATA), &signature)
+            .is_ok()
+    );
 }
 
 #[test]
@@ -60,13 +64,16 @@ fn verify_validity() {
     let signing_key = generate_keypair();
     let components = signing_key.verifying_key().components();
 
+    let params = BoxedMontyParams::new(Odd::new((**components.p()).clone()).unwrap());
+    let form = BoxedMontyForm::new((**components.g()).clone(), params);
+
     assert!(
-        BigUint::zero() < *signing_key.x() && signing_key.x() < components.q(),
+        BoxedUint::zero() < **signing_key.x() && signing_key.x() < components.q(),
         "Requirement 0<x<q not met"
     );
     assert_eq!(
-        *signing_key.verifying_key().y(),
-        components.g().modpow(signing_key.x(), components.p()),
+        **signing_key.verifying_key().y(),
+        form.pow(signing_key.x()).retrieve(),
         "Requirement y=(g^x)%p not met"
     );
 }
