@@ -13,6 +13,7 @@ repository = "https://github.com/RustCrypto/signatures"
 readme = "README.md"
 categories = ["cryptography"]
 keywords = ["crypto", "signature"]
+exclude = ["tests"]
 
 [features]
 default = ["rand_core", "alloc", "pkcs8"]
