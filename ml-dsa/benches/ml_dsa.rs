@@ -10,14 +10,14 @@ pub fn rand<L: ArraySize>(rng: &mut (impl RngCore + CryptoRng)) -> Array<u8, L> 
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let xi: B32 = rand(&mut rng);
     let m: B32 = rand(&mut rng);
     let ctx: B32 = rand(&mut rng);
 
     let kp = MlDsa65::key_gen_internal(&xi);
-    let sk = kp.signing_key;
-    let vk = kp.verifying_key;
+    let sk = kp.signing_key();
+    let vk = kp.verifying_key();
     let sig = sk.sign_deterministic(&m, &ctx).unwrap();
 
     let sk_bytes = sk.encode();
@@ -28,8 +28,8 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("keygen", |b| {
         b.iter(|| {
             let kp = MlDsa65::key_gen_internal(&xi);
-            let _sk_bytes = kp.signing_key.encode();
-            let _vk_bytes = kp.verifying_key.encode();
+            let _sk_bytes = kp.signing_key().encode();
+            let _vk_bytes = kp.verifying_key().encode();
         })
     });
 
@@ -46,7 +46,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         b.iter(|| {
             let vk = VerifyingKey::<MlDsa65>::decode(&vk_bytes);
             let sig = Signature::<MlDsa65>::decode(&sig_bytes).unwrap();
-            let _ver = vk.verify(&m, &ctx, &sig);
+            let _ver = vk.verify_with_context(&m, &ctx, &sig);
         })
     });
 
@@ -54,8 +54,8 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("round_trip", |b| {
         b.iter(|| {
             let kp = MlDsa65::key_gen_internal(&xi);
-            let sig = kp.signing_key.sign_deterministic(&m, &ctx).unwrap();
-            let _ver = kp.verifying_key.verify(&m, &ctx, &sig);
+            let sig = kp.signing_key().sign_deterministic(&m, &ctx).unwrap();
+            let _ver = kp.verifying_key().verify_with_context(&m, &ctx, &sig);
         })
     });
 }
