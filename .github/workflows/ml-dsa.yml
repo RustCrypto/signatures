@@ -30,5 +30,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
+      - run: cargo build --benches
+      - run: cargo build --benches --all-features
       - run: cargo test --release
       - run: cargo test --all-features --release
