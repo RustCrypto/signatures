@@ -31,6 +31,7 @@ slh-dsa         = { path = "./slh-dsa" }
 
 # https://github.com/RustCrypto/traits/pull/1751
 # https://github.com/RustCrypto/traits/pull/1767
+# https://github.com/RustCrypto/traits/pull/1774
 elliptic-curve = { git = "https://github.com/RustCrypto/traits.git" }
 signature      = { git = "https://github.com/RustCrypto/traits.git" }
 
@@ -39,6 +40,10 @@ signature      = { git = "https://github.com/RustCrypto/traits.git" }
 crypto-bigint = { git = "https://github.com/RustCrypto/crypto-bigint.git" }
 
 # https://github.com/zkcrypto/ff/pull/122
-ff = { git = "https://github.com/pinkforest/ff.git", branch = "bump-rand-core" }
+# https://github.com/zkcrypto/ff/pull/126
+# https://github.com/zkcrypto/ff/pull/127
+# https://github.com/zkcrypto/ff/pull/130
+ff = { git = "https://github.com/zkcrypto/ff.git", branch = "release-0.14.0" }
+
 # https://github.com/zkcrypto/group/pull/56
 group = { git = "https://github.com/pinkforest/group.git", branch = "bump-rand-0.9" }
