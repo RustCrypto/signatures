@@ -28,10 +28,6 @@ lms-signature   = { path = "./lms" }
 ml-dsa          = { path = "./ml-dsa" }
 rfc6979         = { path = "./rfc6979" }
 slh-dsa         = { path = "./slh-dsa" }
- 
-# https://github.com/RustCrypto/hashes/pull/652
-sha2 = { git = "https://github.com/RustCrypto/hashes.git" }
-sha3 = { git = "https://github.com/RustCrypto/hashes.git" }
 
 # https://github.com/RustCrypto/traits/pull/1751
 # https://github.com/RustCrypto/traits/pull/1767
@@ -46,6 +42,3 @@ crypto-bigint = { git = "https://github.com/RustCrypto/crypto-bigint.git" }
 ff = { git = "https://github.com/pinkforest/ff.git", branch = "bump-rand-core" }
 # https://github.com/zkcrypto/group/pull/56
 group = { git = "https://github.com/pinkforest/group.git", branch = "bump-rand-0.9" }
-
-# https://github.com/RustCrypto/MACs/pull/178
-hmac = { git = "https://github.com/RustCrypto/MACs.git" }

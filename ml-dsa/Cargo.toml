@@ -35,7 +35,7 @@ pkcs8 = ["dep:const-oid", "dep:pkcs8"]
 hybrid-array = { version = "0.3", features = ["extra-sizes"] }
 num-traits = "0.2.19"
 rand_core = { version = "0.9", optional = true }
-sha3 = "=0.11.0-pre.4"
+sha3 = "=0.11.0-pre.5"
 signature = "=2.3.0-pre.6"
 zeroize = { version = "1.8.1", optional = true, default-features = false }
 
