@@ -258,8 +258,8 @@ mod tests {
         <Mode::Hasher as OutputSizeUser>::OutputSize: Add<U24>,
         Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U24>: ArraySize,
     {
-        let rng = rand::rng();
-        let lms_priv = SigningKey::<Mode>::new(rng);
+        let mut rng = rand::rng();
+        let lms_priv = SigningKey::<Mode>::new(&mut rng);
         let lms_pub = lms_priv.public();
         let lms_pub_serialized: Array<u8, Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U24>> =
             lms_pub.clone().into();
