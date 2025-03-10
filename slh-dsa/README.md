@@ -46,4 +46,4 @@ dual licensed as above, without any additional terms or conditions.
 [//]: # (links)
 
 [RustCrypto]: https://github.com/RustCrypto
-[FIPS-205 Standard]: https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.205.pdf
+[FIPS-205 Standard]: https://csrc.nist.gov/pubs/fips/205/final
