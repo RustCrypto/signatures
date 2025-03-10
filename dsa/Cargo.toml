@@ -29,6 +29,7 @@ zeroize = { version = "1", default-features = false }
 hex = "0.4.3"
 hex-literal = "1"
 pkcs8 = { version = "0.11.0-rc.1", default-features = false, features = ["pem"] }
+proptest = "1"
 rand = "0.9"
 rand_chacha = "0.9"
 sha1 = "=0.11.0-pre.5"
