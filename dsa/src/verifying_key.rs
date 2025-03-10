@@ -65,11 +65,16 @@ impl VerifyingKey {
         let (r, s) = (signature.r(), signature.s());
         let y = self.y();
 
-        if signature.r() >= q || signature.s() >= q {
+        if r >= q || s >= q {
             return Some(false);
         }
-        let q = q.widen(s.bits_precision());
+
+        let q = q.widen(p.bits_precision());
         let q = &q;
+        let r = r.widen(p.bits_precision());
+        let r = &r;
+        let s = s.widen(p.bits_precision());
+        let s = &s;
 
         let w: BoxedUint = Option::from(s.inv_mod(q))?;
 
