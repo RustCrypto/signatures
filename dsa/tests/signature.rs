@@ -119,3 +119,46 @@ fn signer_verifier_signature() {
     verifying_key.verify(message, &manual_signature).unwrap();
     verifying_key.verify(message, &signer_signature).unwrap();
 }
+
+/// This test forces the r and s of the signature to a bit precision different to what would
+/// otherwise be expected
+#[test]
+fn verify_signature_precision() {
+    use der::{Sequence, asn1::Uint};
+
+    let signing_key = generate_deterministic_keypair();
+    let verifying_key = signing_key.verifying_key();
+
+    #[derive(Sequence)]
+    struct MockSignature {
+        r: Uint,
+        s: Uint,
+    }
+
+    for value in &[
+        {
+            let mut value = vec![];
+            value.resize(512, 0);
+            value.push(1);
+            value
+        },
+        {
+            let mut value = vec![];
+            value.push(1);
+            value.resize(512, 0);
+            value
+        },
+    ] {
+        let asn1 = MockSignature {
+            r: Uint::new(&value).unwrap(),
+            s: Uint::new(&value).unwrap(),
+        }
+        .to_der()
+        .expect("Failed to serialize signature");
+
+        let signature = Signature::from_der(&asn1)
+            .expect("Failed to parse ASN.1 representation of the test signature");
+
+        let _ = verifying_key.verify_digest(Sha256::new().chain_update(MESSAGE), &signature);
+    }
+}
