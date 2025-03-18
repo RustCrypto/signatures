@@ -17,7 +17,7 @@ edition = "2024"
 rust-version = "1.85"
 
 [dependencies]
-elliptic-curve = { version = "0.14.0-rc.1", default-features = false, features = ["digest", "sec1"] }
+elliptic-curve = { version = "0.14.0-rc.1", default-features = false, features = ["sec1"] }
 signature = { version = "=2.3.0-pre.6", default-features = false, features = ["rand_core"] }
 
 # optional dependencies
@@ -40,7 +40,7 @@ std = ["alloc", "elliptic-curve/std", "signature/std"]
 
 arithmetic = ["elliptic-curve/arithmetic"]
 dev = ["arithmetic", "digest", "elliptic-curve/dev", "hazmat"]
-digest = ["dep:digest", "signature/digest"]
+digest = ["dep:digest", "elliptic-curve/digest", "signature/digest"]
 hazmat = []
 pkcs8 = ["digest", "elliptic-curve/pkcs8", "der"]
 pem = ["elliptic-curve/pem", "pkcs8"]
