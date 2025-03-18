@@ -7,7 +7,6 @@ use crate::types::{Identifier, Typecode};
 
 use digest::{Digest, Output, OutputSizeUser};
 use hybrid_array::{Array, ArraySize};
-use rand::Rng;
 use rand_core::{CryptoRng, TryCryptoRng};
 use signature::{Error, RandomizedSignerMut};
 
@@ -32,7 +31,7 @@ pub struct SigningKey<Mode: LmsMode> {
 impl<Mode: LmsMode> SigningKey<Mode> {
     /// Creates a new private key with a random identifier using
     /// algorithm 5 from <https://datatracker.ietf.org/doc/html/rfc8554#section-5.2>
-    pub fn new(mut rng: impl Rng + CryptoRng) -> Self {
+    pub fn new<R: CryptoRng + ?Sized>(rng: &mut R) -> Self {
         let mut id = Identifier::default();
         rng.fill_bytes(id.as_mut());
 
