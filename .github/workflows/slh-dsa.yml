@@ -59,6 +59,7 @@ jobs:
           toolchain: ${{ matrix.rust }}
       - uses: taiki-e/install-action@nextest
       - run: cargo check --all-features
+      - run: cargo build --benches --all-features
       - name: Build and archive tests
         run: |
           PROFILE="${{ matrix.test_config }}"
