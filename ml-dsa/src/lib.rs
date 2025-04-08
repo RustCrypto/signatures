@@ -49,29 +49,28 @@ use hybrid_array::{
     },
 };
 
+use pkcs8::ObjectIdentifier;
+use rand_core::CryptoRngCore;
 #[cfg(feature = "rand_core")]
-use rand_core::{CryptoRng, TryCryptoRng};
+use rand_core::{CryptoRng, RngCore};
 
 #[cfg(feature = "zeroize")]
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
 #[cfg(feature = "pkcs8")]
-use {
-    const_oid::db::fips204,
-    pkcs8::{
-        AlgorithmIdentifierRef, PrivateKeyInfoRef,
-        der::{self, AnyRef},
-        spki::{
-            self, AlgorithmIdentifier, AssociatedAlgorithmIdentifier, SignatureAlgorithmIdentifier,
-            SubjectPublicKeyInfoRef,
-        },
+use pkcs8::{
+    AlgorithmIdentifierRef, PrivateKeyInfo,
+    der::{self, AnyRef},
+    spki::{
+        self, AlgorithmIdentifier, AssociatedAlgorithmIdentifier, SignatureAlgorithmIdentifier,
+        SubjectPublicKeyInfoRef,
     },
 };
 
 #[cfg(all(feature = "alloc", feature = "pkcs8"))]
 use pkcs8::{
     EncodePrivateKey, EncodePublicKey,
-    der::asn1::{BitString, BitStringRef, OctetStringRef},
+    der::asn1::{BitString, BitStringRef},
     spki::{SignatureBitStringEncoding, SubjectPublicKeyInfo},
 };
 
@@ -218,20 +217,20 @@ impl<P: MlDsaParams> signature::KeypairRef for KeyPair<P> {
 }
 
 #[cfg(feature = "pkcs8")]
-impl<P> TryFrom<PrivateKeyInfoRef<'_>> for KeyPair<P>
+impl<P> TryFrom<PrivateKeyInfo<'_>> for KeyPair<P>
 where
     P: MlDsaParams,
     P: AssociatedAlgorithmIdentifier<Params = AnyRef<'static>>,
 {
     type Error = pkcs8::Error;
 
-    fn try_from(private_key_info: pkcs8::PrivateKeyInfoRef<'_>) -> pkcs8::Result<Self> {
+    fn try_from(private_key_info: pkcs8::PrivateKeyInfo<'_>) -> pkcs8::Result<Self> {
         match private_key_info.algorithm {
             alg if alg == P::ALGORITHM_IDENTIFIER => {}
             other => return Err(spki::Error::OidUnknown { oid: other.oid }.into()),
         };
 
-        let seed = Array::try_from(private_key_info.private_key.as_bytes())
+        let seed = Array::try_from(private_key_info.private_key)
             .map_err(|_| pkcs8::Error::KeyMalformed)?;
         Ok(P::key_gen_internal(&seed))
     }
@@ -264,10 +263,7 @@ where
     P: AssociatedAlgorithmIdentifier<Params = AnyRef<'static>>,
 {
     fn to_pkcs8_der(&self) -> pkcs8::Result<der::SecretDocument> {
-        let pkcs8_key = pkcs8::PrivateKeyInfoRef::new(
-            P::ALGORITHM_IDENTIFIER,
-            OctetStringRef::new(&self.seed)?,
-        );
+        let pkcs8_key = pkcs8::PrivateKeyInfo::new(P::ALGORITHM_IDENTIFIER, &self.seed);
         Ok(der::SecretDocument::encode_msg(&pkcs8_key)?)
     }
 }
@@ -412,7 +408,7 @@ impl<P: MlDsaParams> SigningKey<P> {
     /// or if it fails to get enough randomness.
     // Algorithm 2 ML-DSA.Sign
     #[cfg(feature = "rand_core")]
-    pub fn sign_randomized<R: TryCryptoRng + ?Sized>(
+    pub fn sign_randomized<R: RngCore + CryptoRng + ?Sized>(
         &self,
         M: &[u8],
         ctx: &[u8],
@@ -497,9 +493,9 @@ impl<P: MlDsaParams> signature::Signer<Signature<P>> for SigningKey<P> {
 /// method.
 #[cfg(feature = "rand_core")]
 impl<P: MlDsaParams> signature::RandomizedSigner<Signature<P>> for SigningKey<P> {
-    fn try_sign_with_rng<R: TryCryptoRng + ?Sized>(
+    fn try_sign_with_rng(
         &self,
-        rng: &mut R,
+        rng: &mut impl CryptoRngCore,
         msg: &[u8],
     ) -> Result<Signature<P>, Error> {
         self.sign_randomized(msg, &[], rng)
@@ -519,14 +515,14 @@ where
 }
 
 #[cfg(feature = "pkcs8")]
-impl<P> TryFrom<PrivateKeyInfoRef<'_>> for SigningKey<P>
+impl<P> TryFrom<PrivateKeyInfo<'_>> for SigningKey<P>
 where
     P: MlDsaParams,
     P: AssociatedAlgorithmIdentifier<Params = AnyRef<'static>>,
 {
     type Error = pkcs8::Error;
 
-    fn try_from(private_key_info: pkcs8::PrivateKeyInfoRef<'_>) -> pkcs8::Result<Self> {
+    fn try_from(private_key_info: pkcs8::PrivateKeyInfo<'_>) -> pkcs8::Result<Self> {
         let keypair = KeyPair::try_from(private_key_info)?;
 
         Ok(keypair.signing_key)
@@ -714,7 +710,7 @@ impl AssociatedAlgorithmIdentifier for MlDsa44 {
     type Params = AnyRef<'static>;
 
     const ALGORITHM_IDENTIFIER: AlgorithmIdentifierRef<'static> = AlgorithmIdentifierRef {
-        oid: fips204::ID_ML_DSA_44,
+        oid: ObjectIdentifier::new_unwrap("2.16.840.1.101.3.4.3.17"),
         parameters: None,
     };
 }
@@ -741,7 +737,7 @@ impl AssociatedAlgorithmIdentifier for MlDsa65 {
     type Params = AnyRef<'static>;
 
     const ALGORITHM_IDENTIFIER: AlgorithmIdentifierRef<'static> = AlgorithmIdentifierRef {
-        oid: fips204::ID_ML_DSA_65,
+        oid: ObjectIdentifier::new_unwrap("2.16.840.1.101.3.4.3.18"),
         parameters: None,
     };
 }
@@ -768,7 +764,7 @@ impl AssociatedAlgorithmIdentifier for MlDsa87 {
     type Params = AnyRef<'static>;
 
     const ALGORITHM_IDENTIFIER: AlgorithmIdentifierRef<'static> = AlgorithmIdentifierRef {
-        oid: fips204::ID_ML_DSA_87,
+        oid: ObjectIdentifier::new_unwrap("2.16.840.1.101.3.4.3.19"),
         parameters: None,
     };
 }
@@ -780,7 +776,7 @@ pub trait KeyGen: MlDsaParams {
 
     /// Generate a signing key pair from the specified RNG
     #[cfg(feature = "rand_core")]
-    fn key_gen<R: CryptoRng + ?Sized>(rng: &mut R) -> Self::KeyPair;
+    fn key_gen<R: RngCore + CryptoRng + ?Sized>(rng: &mut R) -> Self::KeyPair;
 
     /// Deterministically generate a signing key pair from the specified seed
     // TODO(RLB): Only expose this based on a feature.
@@ -796,7 +792,7 @@ where
     /// Generate a signing key pair from the specified RNG
     // Algorithm 1 ML-DSA.KeyGen()
     #[cfg(feature = "rand_core")]
-    fn key_gen<R: CryptoRng + ?Sized>(rng: &mut R) -> KeyPair<P> {
+    fn key_gen<R: RngCore + CryptoRng + ?Sized>(rng: &mut R) -> KeyPair<P> {
         let mut xi = B32::default();
         rng.fill_bytes(&mut xi);
         Self::key_gen_internal(&xi)
@@ -927,7 +923,7 @@ mod test {
 
         const ITERATIONS: usize = 1000;
 
-        let mut rng = rand::rng();
+        let mut rng = rand::rngs::OsRng;
         let mut seed = B32::default();
 
         for _i in 0..ITERATIONS {

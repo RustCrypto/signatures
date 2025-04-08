@@ -7,7 +7,6 @@ use crate::hypertree::HypertreeParams;
 use crate::wots::WotsParams;
 use crate::xmss::XmssParams;
 use crate::{ParameterSet, PkSeed, SkPrf, SkSeed};
-use const_oid::db::fips205;
 use digest::{ExtendableOutput, Update};
 use hybrid_array::typenum::consts::{U16, U30, U32};
 use hybrid_array::typenum::{U24, U34, U39, U42, U47, U49};
@@ -147,7 +146,8 @@ impl ForsParams for Shake128s {
 }
 impl ParameterSet for Shake128s {
     const NAME: &'static str = "SLH-DSA-SHAKE-128s";
-    const ALGORITHM_OID: pkcs8::ObjectIdentifier = fips205::ID_SLH_DSA_SHAKE_128_S;
+    const ALGORITHM_OID: pkcs8::ObjectIdentifier =
+        pkcs8::ObjectIdentifier::new_unwrap("2.16.840.1.101.3.4.3.26");
 }
 
 /// SHAKE256 at L1 security with fast signatures
@@ -170,7 +170,8 @@ impl ForsParams for Shake128f {
 }
 impl ParameterSet for Shake128f {
     const NAME: &'static str = "SLH-DSA-SHAKE-128f";
-    const ALGORITHM_OID: pkcs8::ObjectIdentifier = fips205::ID_SLH_DSA_SHAKE_128_F;
+    const ALGORITHM_OID: pkcs8::ObjectIdentifier =
+        pkcs8::ObjectIdentifier::new_unwrap("2.16.840.1.101.3.4.3.27");
 }
 
 /// SHAKE256 at L3 security with small signatures
@@ -193,7 +194,8 @@ impl ForsParams for Shake192s {
 }
 impl ParameterSet for Shake192s {
     const NAME: &'static str = "SLH-DSA-SHAKE-192s";
-    const ALGORITHM_OID: pkcs8::ObjectIdentifier = fips205::ID_SLH_DSA_SHAKE_192_S;
+    const ALGORITHM_OID: pkcs8::ObjectIdentifier =
+        pkcs8::ObjectIdentifier::new_unwrap("2.16.840.1.101.3.4.3.28");
 }
 
 /// SHAKE256 at L3 security with fast signatures
@@ -216,7 +218,8 @@ impl ForsParams for Shake192f {
 }
 impl ParameterSet for Shake192f {
     const NAME: &'static str = "SLH-DSA-SHAKE-192f";
-    const ALGORITHM_OID: pkcs8::ObjectIdentifier = fips205::ID_SLH_DSA_SHAKE_192_F;
+    const ALGORITHM_OID: pkcs8::ObjectIdentifier =
+        pkcs8::ObjectIdentifier::new_unwrap("2.16.840.1.101.3.4.3.29");
 }
 
 /// SHAKE256 at L5 security with small signatures
@@ -239,7 +242,8 @@ impl ForsParams for Shake256s {
 }
 impl ParameterSet for Shake256s {
     const NAME: &'static str = "SLH-DSA-SHAKE-256s";
-    const ALGORITHM_OID: pkcs8::ObjectIdentifier = fips205::ID_SLH_DSA_SHAKE_256_S;
+    const ALGORITHM_OID: pkcs8::ObjectIdentifier =
+        pkcs8::ObjectIdentifier::new_unwrap("2.16.840.1.101.3.4.3.30");
 }
 
 /// SHAKE256 at L5 security with fast signatures
@@ -262,7 +266,8 @@ impl ForsParams for Shake256f {
 }
 impl ParameterSet for Shake256f {
     const NAME: &'static str = "SLH-DSA-SHAKE-256f";
-    const ALGORITHM_OID: pkcs8::ObjectIdentifier = fips205::ID_SLH_DSA_SHAKE_256_F;
+    const ALGORITHM_OID: pkcs8::ObjectIdentifier =
+        pkcs8::ObjectIdentifier::new_unwrap("2.16.840.1.101.3.4.3.31");
 }
 
 #[cfg(test)]
