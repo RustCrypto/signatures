@@ -228,7 +228,7 @@ where
         match private_key_info.algorithm {
             alg if alg == P::ALGORITHM_IDENTIFIER => {}
             other => return Err(spki::Error::OidUnknown { oid: other.oid }.into()),
-        };
+        }
 
         let seed = Array::try_from(private_key_info.private_key)
             .map_err(|_| pkcs8::Error::KeyMalformed)?;
@@ -675,7 +675,7 @@ where
         match spki.algorithm {
             alg if alg == P::ALGORITHM_IDENTIFIER => {}
             other => return Err(spki::Error::OidUnknown { oid: other.oid }),
-        };
+        }
 
         Ok(Self::decode(
             &EncodedVerifyingKey::<P>::try_from(
