@@ -184,6 +184,7 @@ pub struct KeyPair<P: MlDsaParams> {
     verifying_key: VerifyingKey<P>,
 
     /// The seed this signing key was derived from
+    #[allow(dead_code)]
     seed: B32,
 }
 
