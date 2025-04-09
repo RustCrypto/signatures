@@ -4,7 +4,7 @@ description = """
 Pure Rust implementation of SLH-DSA (aka SPHINCS+) as described in the
 FIPS-205 standard
 """
-version = "0.2.0-pre"
+version = "0.0.3"
 edition = "2024"
 rust-version = "1.85"
 license = "Apache-2.0 OR MIT"
@@ -13,6 +13,7 @@ repository = "https://github.com/RustCrypto/signatures"
 readme = "README.md"
 categories = ["cryptography"]
 keywords = ["crypto", "signature"]
+exclude = ["tests"]
 
 [dependencies]
 hybrid-array = { version = "0.3", features = ["extra-sizes"] }
