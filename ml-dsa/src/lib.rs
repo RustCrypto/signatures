@@ -49,17 +49,15 @@ use hybrid_array::{
     },
 };
 
-use pkcs8::ObjectIdentifier;
-use rand_core::CryptoRngCore;
 #[cfg(feature = "rand_core")]
-use rand_core::{CryptoRng, RngCore};
+use rand_core::{CryptoRng, CryptoRngCore, RngCore};
 
 #[cfg(feature = "zeroize")]
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
 #[cfg(feature = "pkcs8")]
 use pkcs8::{
-    AlgorithmIdentifierRef, PrivateKeyInfo,
+    AlgorithmIdentifierRef, ObjectIdentifier, PrivateKeyInfo,
     der::{self, AnyRef},
     spki::{
         self, AlgorithmIdentifier, AssociatedAlgorithmIdentifier, SignatureAlgorithmIdentifier,

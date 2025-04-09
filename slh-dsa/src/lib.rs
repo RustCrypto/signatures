@@ -24,7 +24,7 @@
 //! use slh_dsa::*;
 //! use signature::*;
 //!
-//! let mut rng = rand::rng();
+//! let mut rng = rand::rngs::OsRng;
 //!
 //! // Generate a signing key using the SHAKE128f parameter set
 //! let sk = SigningKey::<Shake128f>::new(&mut rng);
