@@ -8,7 +8,7 @@ use crate::util::split_digest;
 use ::signature::{Error, Verifier};
 use hybrid_array::{Array, ArraySize};
 use pkcs8::{der, spki};
-use rand_core::CryptoRng;
+use rand_core::{CryptoRng, RngCore};
 use typenum::{U, U16, U24, U32, Unsigned};
 
 #[cfg(feature = "alloc")]
@@ -34,7 +34,7 @@ impl<N: ArraySize> From<&[u8]> for PkSeed<N> {
     }
 }
 impl<N: ArraySize> PkSeed<N> {
-    pub(crate) fn new<R: CryptoRng + ?Sized>(rng: &mut R) -> Self {
+    pub(crate) fn new<R: RngCore + CryptoRng + ?Sized>(rng: &mut R) -> Self {
         let mut bytes = Array::<u8, N>::default();
         rng.fill_bytes(bytes.as_mut_slice());
         Self(bytes)
@@ -217,7 +217,7 @@ mod tests {
     use signature::*;
     #[test]
     fn test_vk_serialize_deserialize() {
-        let mut rng = rand::rng();
+        let mut rng = rand::rngs::OsRng;
         let sk = SigningKey::<Shake128f>::new(&mut rng);
         let vk = sk.verifying_key();
         let vk_bytes: Array<u8, _> = (&vk).into();

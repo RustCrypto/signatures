@@ -1,17 +1,22 @@
 [workspace]
 resolver = "2"
 members = [
-    #"dsa",
-    "ecdsa",
-    "ed448",
-    "ed25519",
-    "lms",
+    # "dsa",
+    # "ecdsa",
+    # "ed448",
+    # "ed25519",
+    # "lms",
     "ml-dsa",
-    "rfc6979",
+    # "rfc6979",
     "slh-dsa",
 ]
 exclude = [
-    "dsa", # still on rand_core 0.8
+  "dsa", # still on rand_core 0.8
+  "ecdsa",
+  "ed448",
+  "ed25519",
+  "lms",
+  "rfc6979",
 ]
 
 [profile.dev]
@@ -33,7 +38,7 @@ slh-dsa         = { path = "./slh-dsa" }
 # https://github.com/RustCrypto/traits/pull/1767
 # https://github.com/RustCrypto/traits/pull/1774
 elliptic-curve = { git = "https://github.com/RustCrypto/traits.git" }
-signature      = { git = "https://github.com/RustCrypto/traits.git" }
+# signature      = { git = "https://github.com/RustCrypto/traits.git" }
 
 # https://github.com/RustCrypto/crypto-bigint/pull/762
 # https://github.com/RustCrypto/crypto-bigint/pull/765

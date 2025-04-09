@@ -3,7 +3,7 @@ use signature::{Keypair, Signer, Verifier};
 use slh_dsa::*;
 
 pub fn sign_benchmark<P: ParameterSet>(c: &mut Criterion) {
-    let mut rng = rand::rng();
+    let mut rng = rand::rngs::OsRng;
     let sk = SigningKey::<P>::new(&mut rng);
     c.bench_function(&format!("sign: {}", P::NAME), |b| {
         b.iter(|| {
@@ -15,7 +15,7 @@ pub fn sign_benchmark<P: ParameterSet>(c: &mut Criterion) {
 }
 
 pub fn verify_benchmark<P: ParameterSet>(c: &mut Criterion) {
-    let mut rng = rand::rng();
+    let mut rng = rand::rngs::OsRng;
     let sk = SigningKey::<P>::new(&mut rng);
     let msg = b"Hello, world!";
     let sig = sk.try_sign(msg).unwrap();
