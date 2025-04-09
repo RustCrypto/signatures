@@ -19,7 +19,7 @@
 //! ```
 //! use ml_dsa::{MlDsa65, KeyGen, signature::{Keypair, Signer, Verifier}};
 //!
-//! let mut rng = rand::thread_rng();
+//! let mut rng = rand::rng();
 //! let kp = MlDsa65::key_gen(&mut rng);
 //!
 //! let msg = b"Hello world";
