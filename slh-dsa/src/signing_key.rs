@@ -3,17 +3,22 @@ use crate::signature_encoding::Signature;
 use crate::util::split_digest;
 use crate::verifying_key::VerifyingKey;
 use crate::{ParameterSet, PkSeed, Sha2L1, Sha2L35, Shake, VerifyingKeyLen};
-use ::signature::{Error, KeypairRef, RandomizedSigner, Signer, rand_core::CryptoRng};
+use ::signature::{
+    Error, KeypairRef, RandomizedSigner, Signer,
+    rand_core::{CryptoRng, TryCryptoRng},
+};
 use hybrid_array::{Array, ArraySize};
 use pkcs8::{
     der::AnyRef,
     spki::{AlgorithmIdentifier, AssociatedAlgorithmIdentifier, SignatureAlgorithmIdentifier},
 };
-use rand_core::{CryptoRngCore, RngCore};
 use typenum::{U, U16, U24, U32, Unsigned};
 
 #[cfg(feature = "alloc")]
-use pkcs8::{EncodePrivateKey, der};
+use pkcs8::{
+    EncodePrivateKey,
+    der::{self, asn1::OctetStringRef},
+};
 
 // NewTypes for ensuring hash argument order correctness
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -30,7 +35,7 @@ impl<N: ArraySize> From<&[u8]> for SkSeed<N> {
     }
 }
 impl<N: ArraySize> SkSeed<N> {
-    pub(crate) fn new<R: RngCore + CryptoRng + ?Sized>(rng: &mut R) -> Self {
+    pub(crate) fn new<R: CryptoRng + ?Sized>(rng: &mut R) -> Self {
         let mut bytes = Array::<u8, N>::default();
         rng.fill_bytes(bytes.as_mut_slice());
         Self(bytes)
@@ -51,7 +56,7 @@ impl<N: ArraySize> From<&[u8]> for SkPrf<N> {
     }
 }
 impl<N: ArraySize> SkPrf<N> {
-    pub(crate) fn new<R: RngCore + CryptoRng + ?Sized>(rng: &mut R) -> Self {
+    pub(crate) fn new<R: CryptoRng + ?Sized>(rng: &mut R) -> Self {
         let mut bytes = Array::<u8, N>::default();
         rng.fill_bytes(bytes.as_mut_slice());
         Self(bytes)
@@ -74,7 +79,7 @@ pub trait SigningKeyLen: VerifyingKeyLen {
 
 impl<P: ParameterSet> SigningKey<P> {
     /// Create a new `SigningKey` from a cryptographic random number generator
-    pub fn new<R: RngCore + CryptoRng + ?Sized>(rng: &mut R) -> Self {
+    pub fn new<R: CryptoRng + ?Sized>(rng: &mut R) -> Self {
         let sk_seed = SkSeed::new(rng);
         let sk_prf = SkPrf::new(rng);
         let pk_seed = PkSeed::new(rng);
@@ -202,11 +207,11 @@ impl<P: ParameterSet> Signer<Signature<P>> for SigningKey<P> {
 }
 
 impl<P: ParameterSet> RandomizedSigner<Signature<P>> for SigningKey<P> {
-    fn try_sign_with_rng(
+    fn try_sign_with_rng<R: TryCryptoRng + ?Sized>(
         &self,
-        rng: &mut impl CryptoRngCore,
+        rng: &mut R,
         msg: &[u8],
-    ) -> Result<Signature<P>, Error> {
+    ) -> Result<Signature<P>, signature::Error> {
         let mut randomizer = Array::<u8, P::N>::default();
         rng.try_fill_bytes(randomizer.as_mut_slice())
             .map_err(|_| signature::Error::new())?;
@@ -224,18 +229,19 @@ impl<P: ParameterSet> KeypairRef for SigningKey<P> {
     type VerifyingKey = VerifyingKey<P>;
 }
 
-impl<P> TryFrom<pkcs8::PrivateKeyInfo<'_>> for SigningKey<P>
+impl<P> TryFrom<pkcs8::PrivateKeyInfoRef<'_>> for SigningKey<P>
 where
     P: ParameterSet,
 {
     type Error = pkcs8::Error;
 
-    fn try_from(private_key_info: pkcs8::PrivateKeyInfo<'_>) -> pkcs8::Result<Self> {
+    fn try_from(private_key_info: pkcs8::PrivateKeyInfoRef<'_>) -> pkcs8::Result<Self> {
         private_key_info
             .algorithm
             .assert_algorithm_oid(P::ALGORITHM_OID)?;
 
-        Self::try_from(private_key_info.private_key).map_err(|_| pkcs8::Error::KeyMalformed)
+        Self::try_from(private_key_info.private_key.as_bytes())
+            .map_err(|_| pkcs8::Error::KeyMalformed)
     }
 }
 
@@ -251,7 +257,8 @@ where
         };
 
         let private_key = self.to_bytes();
-        let pkcs8_key = pkcs8::PrivateKeyInfo::new(algorithm_identifier, &private_key);
+        let pkcs8_key =
+            pkcs8::PrivateKeyInfoRef::new(algorithm_identifier, OctetStringRef::new(&private_key)?);
         Ok(der::SecretDocument::encode_msg(&pkcs8_key)?)
     }
 }
@@ -289,7 +296,7 @@ mod tests {
     use crate::{ParameterSet, SigningKey, util::macros::test_parameter_sets};
 
     fn test_serialize_deserialize<P: ParameterSet>() {
-        let mut rng = rand::rngs::OsRng;
+        let mut rng: rand::prelude::ThreadRng = rand::rng();
         let sk = SigningKey::<P>::new(&mut rng);
         let bytes = sk.to_bytes();
         let sk2 = SigningKey::<P>::try_from(bytes.as_slice()).unwrap();
@@ -299,7 +306,7 @@ mod tests {
 
     #[cfg(feature = "alloc")]
     fn test_serialize_deserialize_vec<P: ParameterSet>() {
-        let mut rng = rand::rngs::OsRng;
+        let mut rng: rand::prelude::ThreadRng = rand::rng();
         let sk = SigningKey::<P>::new(&mut rng);
         let vec = sk.to_vec();
         let sk2 = SigningKey::<P>::try_from(vec.as_slice()).unwrap();
@@ -310,7 +317,7 @@ mod tests {
 
     #[test]
     fn test_deserialize_fail_on_incorrect_length() {
-        let mut rng = rand::rngs::OsRng;
+        let mut rng: rand::prelude::ThreadRng = rand::rng();
         let sk = SigningKey::<Shake128f>::new(&mut rng);
         let bytes = sk.to_bytes();
         let incorrect_bytes = &bytes[..bytes.len() - 1];

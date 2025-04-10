@@ -217,7 +217,7 @@ mod tests {
     use crate::Shake128f;
     use crate::util::macros::test_parameter_sets;
 
-    use rand::{Rng, RngCore};
+    use rand::{Rng, RngCore, rng};
 
     use super::*;
 
@@ -472,7 +472,7 @@ mod tests {
 
     fn test_sign_verify<Fors: ForsParams>() {
         // Generate random sk_seed, pk_seed, message, index, address
-        let mut rng = rand::rngs::OsRng;
+        let mut rng = rng();
 
         let sk_seed = SkSeed::new(&mut rng);
 
@@ -481,12 +481,12 @@ mod tests {
         let mut msg = Array::<u8, Fors::MD>::default();
         rng.fill_bytes(msg.as_mut_slice());
 
-        let idx_tree = rng.gen_range(
+        let idx_tree = rng.random_range(
             0..=(1u64
                 .wrapping_shl(Fors::H::U32 - Fors::HPrime::U32)
                 .wrapping_sub(1)),
         );
-        let idx_leaf = rng.gen_range(0..(1 << (Fors::HPrime::USIZE)));
+        let idx_leaf = rng.random_range(0..(1 << (Fors::HPrime::USIZE)));
 
         let mut adrs = ForsTree::new(idx_tree, idx_leaf);
         let mut pks = Array::<Array<u8, Fors::N>, Fors::K>::default();
@@ -505,7 +505,7 @@ mod tests {
 
     fn test_sign_verify_failure<Fors: ForsParams>() {
         // Generate random sk_seed, pk_seed, message, index, address
-        let mut rng = rand::rngs::OsRng;
+        let mut rng = rng();
 
         let sk_seed = SkSeed::new(&mut rng);
 
@@ -514,12 +514,12 @@ mod tests {
         let mut msg = Array::<u8, Fors::MD>::default();
         rng.fill_bytes(msg.as_mut_slice());
 
-        let idx_tree = rng.gen_range(
+        let idx_tree = rng.random_range(
             0..=(1u64
                 .wrapping_shl(Fors::H::U32 - Fors::HPrime::U32)
                 .wrapping_sub(1)),
         );
-        let idx_leaf = rng.gen_range(0..(1 << (Fors::HPrime::USIZE)));
+        let idx_leaf = rng.random_range(0..(1 << (Fors::HPrime::USIZE)));
 
         let mut adrs = ForsTree::new(idx_tree, idx_leaf);
         let mut pks = Array::<Array<u8, Fors::N>, Fors::K>::default();
