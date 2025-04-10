@@ -19,7 +19,7 @@
 //! ```
 //! use ml_dsa::{MlDsa65, KeyGen, signature::{Keypair, Signer, Verifier}};
 //!
-//! let mut rng = rand::thread_rng();
+//! let mut rng = rand::rng();
 //! let kp = MlDsa65::key_gen(&mut rng);
 //!
 //! let msg = b"Hello world";
@@ -184,6 +184,7 @@ pub struct KeyPair<P: MlDsaParams> {
     verifying_key: VerifyingKey<P>,
 
     /// The seed this signing key was derived from
+    #[allow(dead_code)]
     seed: B32,
 }
 
