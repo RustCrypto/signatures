@@ -151,7 +151,7 @@ mod tests {
     use crate::{PkSeed, SkSeed, util::macros::test_parameter_sets};
     use hex_literal::hex;
     use hybrid_array::Array;
-    use rand::RngCore;
+    use rand::{RngCore, rng};
 
     use crate::{address::WotsHash, hashes::Shake128f};
 
@@ -159,7 +159,7 @@ mod tests {
 
     fn test_sign_verify<Wots: WotsParams>() {
         // Generate random sk_seed, pk_seed, message, address
-        let mut rng = rand::rngs::OsRng;
+        let mut rng = rng();
 
         let sk_seed = SkSeed::new(&mut rng);
 
@@ -182,7 +182,7 @@ mod tests {
 
     fn test_sign_verify_fail<Wots: WotsParams>() {
         // Generate random sk_seed, pk_seed, message
-        let mut rng = rand::rngs::OsRng;
+        let mut rng = rng();
 
         let sk_seed = SkSeed::new(&mut rng);
 
