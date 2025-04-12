@@ -4,20 +4,23 @@ use crate::util::split_digest;
 use crate::verifying_key::VerifyingKey;
 use crate::{ParameterSet, PkSeed, Sha2L1, Sha2L35, Shake, VerifyingKeyLen};
 use ::signature::{
-    Error, KeypairRef, RandomizedSigner, Signer,
     rand_core::{CryptoRng, TryCryptoRng},
+    Error, KeypairRef, RandomizedSigner, Signer,
 };
 use hybrid_array::{Array, ArraySize};
 use pkcs8::{
     der::AnyRef,
     spki::{AlgorithmIdentifier, AssociatedAlgorithmIdentifier, SignatureAlgorithmIdentifier},
 };
-use typenum::{U, U16, U24, U32, Unsigned};
+use typenum::{Unsigned, U, U16, U24, U32};
+
+#[cfg(feature = "zeroize")]
+use zeroize::{Zeroize, ZeroizeOnDrop};
 
 #[cfg(feature = "alloc")]
 use pkcs8::{
-    EncodePrivateKey,
     der::{self, asn1::OctetStringRef},
+    EncodePrivateKey,
 };
 
 // NewTypes for ensuring hash argument order correctness
@@ -28,6 +31,7 @@ impl<N: ArraySize> AsRef<[u8]> for SkSeed<N> {
         self.0.as_ref()
     }
 }
+
 impl<N: ArraySize> From<&[u8]> for SkSeed<N> {
     fn from(slice: &[u8]) -> Self {
         #[allow(deprecated)]
@@ -49,6 +53,7 @@ impl<N: ArraySize> AsRef<[u8]> for SkPrf<N> {
         self.0.as_ref()
     }
 }
+
 impl<N: ArraySize> From<&[u8]> for SkPrf<N> {
     fn from(slice: &[u8]) -> Self {
         #[allow(deprecated)]
@@ -70,6 +75,17 @@ pub struct SigningKey<P: ParameterSet> {
     pub(crate) sk_prf: SkPrf<P::N>,
     pub(crate) verifying_key: VerifyingKey<P>,
 }
+
+#[cfg(feature = "zeroize")]
+impl<P: ParameterSet> Drop for SigningKey<P> {
+    fn drop(&mut self) {
+        self.sk_seed.0.zeroize();
+        self.sk_prf.0.zeroize();
+    }
+}
+
+#[cfg(feature = "zeroize")]
+impl<P: ParameterSet> ZeroizeOnDrop for SigningKey<P> {}
 
 /// A trait specifying the length of a serialized signing key for a given parameter set
 pub trait SigningKeyLen: VerifyingKeyLen {
@@ -293,7 +309,7 @@ impl<M> SigningKeyLen for Shake<U32, M> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{ParameterSet, SigningKey, util::macros::test_parameter_sets};
+    use crate::{util::macros::test_parameter_sets, ParameterSet, SigningKey};
 
     fn test_serialize_deserialize<P: ParameterSet>() {
         let mut rng: rand::prelude::ThreadRng = rand::rng();
