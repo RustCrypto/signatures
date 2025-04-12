@@ -35,3 +35,4 @@ jobs:
       - run: cargo test --release
       - run: cargo test --all-features --release
       - run: cargo test --no-default-features --lib --tests --release
+      - run: cargo test --no-default-features --features alloc --lib --tests --release
