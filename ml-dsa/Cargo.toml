@@ -28,7 +28,7 @@ exclude = [
 default = ["rand_core", "alloc", "pkcs8"]
 zeroize = ["dep:zeroize", "hybrid-array/zeroize"]
 rand_core = ["dep:rand_core", "signature/rand_core"]
-alloc = ["pkcs8/alloc"]
+alloc = ["pkcs8", "pkcs8/alloc"]
 pkcs8 = ["dep:const-oid", "dep:pkcs8"]
 
 [dependencies]
