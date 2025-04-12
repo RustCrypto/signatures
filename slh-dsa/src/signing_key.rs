@@ -4,23 +4,23 @@ use crate::util::split_digest;
 use crate::verifying_key::VerifyingKey;
 use crate::{ParameterSet, PkSeed, Sha2L1, Sha2L35, Shake, VerifyingKeyLen};
 use ::signature::{
-    rand_core::{CryptoRng, TryCryptoRng},
     Error, KeypairRef, RandomizedSigner, Signer,
+    rand_core::{CryptoRng, TryCryptoRng},
 };
 use hybrid_array::{Array, ArraySize};
 use pkcs8::{
     der::AnyRef,
     spki::{AlgorithmIdentifier, AssociatedAlgorithmIdentifier, SignatureAlgorithmIdentifier},
 };
-use typenum::{Unsigned, U, U16, U24, U32};
+use typenum::{U, U16, U24, U32, Unsigned};
 
 #[cfg(feature = "zeroize")]
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
 #[cfg(feature = "alloc")]
 use pkcs8::{
-    der::{self, asn1::OctetStringRef},
     EncodePrivateKey,
+    der::{self, asn1::OctetStringRef},
 };
 
 // NewTypes for ensuring hash argument order correctness
@@ -309,7 +309,7 @@ impl<M> SigningKeyLen for Shake<U32, M> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{util::macros::test_parameter_sets, ParameterSet, SigningKey};
+    use crate::{ParameterSet, SigningKey, util::macros::test_parameter_sets};
 
     fn test_serialize_deserialize<P: ParameterSet>() {
         let mut rng: rand::prelude::ThreadRng = rand::rng();
