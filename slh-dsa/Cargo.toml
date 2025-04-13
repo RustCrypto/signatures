@@ -27,6 +27,7 @@ sha2 = { version = "=0.11.0-pre.5", default-features = false }
 digest = "=0.11.0-pre.10"
 pkcs8 = { version = "0.11.0-rc.1", default-features = false }
 const-oid = { version = "0.10.0-rc.1", features = ["db"] }
+zeroize = { version = "1.8.1", optional = true, default-features = false }
 
 [dev-dependencies]
 hex-literal = "1"
@@ -56,3 +57,4 @@ harness = false
 [features]
 alloc = []
 default = ["alloc", "pkcs8/alloc"]
+zeroize = ["dep:zeroize", "hybrid-array/zeroize"]

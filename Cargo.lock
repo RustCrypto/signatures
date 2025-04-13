@@ -1122,6 +1122,7 @@ dependencies = [
  "signature",
  "typenum",
  "zerocopy 0.7.35",
+ "zeroize",
 ]
 
 [[package]]

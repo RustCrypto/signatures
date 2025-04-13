@@ -14,6 +14,9 @@ use pkcs8::{
 };
 use typenum::{U, U16, U24, U32, Unsigned};
 
+#[cfg(feature = "zeroize")]
+use zeroize::{Zeroize, ZeroizeOnDrop};
+
 #[cfg(feature = "alloc")]
 use pkcs8::{
     EncodePrivateKey,
@@ -28,6 +31,7 @@ impl<N: ArraySize> AsRef<[u8]> for SkSeed<N> {
         self.0.as_ref()
     }
 }
+
 impl<N: ArraySize> From<&[u8]> for SkSeed<N> {
     fn from(slice: &[u8]) -> Self {
         #[allow(deprecated)]
@@ -49,6 +53,7 @@ impl<N: ArraySize> AsRef<[u8]> for SkPrf<N> {
         self.0.as_ref()
     }
 }
+
 impl<N: ArraySize> From<&[u8]> for SkPrf<N> {
     fn from(slice: &[u8]) -> Self {
         #[allow(deprecated)]
@@ -70,6 +75,17 @@ pub struct SigningKey<P: ParameterSet> {
     pub(crate) sk_prf: SkPrf<P::N>,
     pub(crate) verifying_key: VerifyingKey<P>,
 }
+
+#[cfg(feature = "zeroize")]
+impl<P: ParameterSet> Drop for SigningKey<P> {
+    fn drop(&mut self) {
+        self.sk_seed.0.zeroize();
+        self.sk_prf.0.zeroize();
+    }
+}
+
+#[cfg(feature = "zeroize")]
+impl<P: ParameterSet> ZeroizeOnDrop for SigningKey<P> {}
 
 /// A trait specifying the length of a serialized signing key for a given parameter set
 pub trait SigningKeyLen: VerifyingKeyLen {
