@@ -147,7 +147,7 @@ impl<P: MlDsaParams> signature::SignatureEncoding for Signature<P> {
     type Repr = EncodedSignature<P>;
 }
 
-#[cfg(feature = "alloc")]
+#[cfg(all(feature = "alloc", feature = "pkcs8"))]
 impl<P: MlDsaParams> SignatureBitStringEncoding for Signature<P> {
     fn to_bitstring(&self) -> der::Result<BitString> {
         BitString::new(0, self.encode().to_vec())
@@ -653,7 +653,7 @@ where
         Signature::<P>::ALGORITHM_IDENTIFIER;
 }
 
-#[cfg(feature = "alloc")]
+#[cfg(all(feature = "alloc", feature = "pkcs8"))]
 impl<P> EncodePublicKey for VerifyingKey<P>
 where
     P: MlDsaParams,
