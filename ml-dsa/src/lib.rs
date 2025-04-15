@@ -17,6 +17,8 @@
 //! # Quickstart
 //!
 //! ```
+//! # #[cfg(feature = "rand_core")]
+//! # {
 //! use ml_dsa::{MlDsa65, KeyGen, signature::{Keypair, Signer, Verifier}};
 //!
 //! let mut rng = rand::rng();
@@ -26,6 +28,7 @@
 //! let sig = kp.signing_key().sign(msg);
 //!
 //! assert!(kp.verifying_key().verify(msg, &sig).is_ok());
+//! # }
 //! ```
 
 mod algebra;
@@ -42,11 +45,11 @@ mod module_lattice;
 
 use core::convert::{AsRef, TryFrom, TryInto};
 use hybrid_array::{
-    Array,
     typenum::{
-        Diff, Length, Prod, Quot, Shleft, U1, U2, U4, U5, U6, U7, U8, U17, U19, U32, U48, U55, U64,
-        U75, U80, U88, Unsigned,
+        Diff, Length, Prod, Quot, Shleft, Unsigned, U1, U17, U19, U2, U32, U4, U48, U5, U55, U6,
+        U64, U7, U75, U8, U80, U88,
     },
+    Array,
 };
 
 #[cfg(feature = "rand_core")]
@@ -59,20 +62,20 @@ use zeroize::{Zeroize, ZeroizeOnDrop};
 use {
     const_oid::db::fips204,
     pkcs8::{
-        AlgorithmIdentifierRef, PrivateKeyInfoRef,
         der::{self, AnyRef},
         spki::{
             self, AlgorithmIdentifier, AssociatedAlgorithmIdentifier, SignatureAlgorithmIdentifier,
             SubjectPublicKeyInfoRef,
         },
+        AlgorithmIdentifierRef, PrivateKeyInfoRef,
     },
 };
 
 #[cfg(all(feature = "alloc", feature = "pkcs8"))]
 use pkcs8::{
-    EncodePrivateKey, EncodePublicKey,
     der::asn1::{BitString, BitStringRef, OctetStringRef},
     spki::{SignatureBitStringEncoding, SubjectPublicKeyInfo},
+    EncodePrivateKey, EncodePublicKey,
 };
 
 use crate::algebra::{AlgebraExt, Elem, NttMatrix, NttVector, Truncate, Vector};
@@ -144,7 +147,7 @@ impl<P: MlDsaParams> signature::SignatureEncoding for Signature<P> {
     type Repr = EncodedSignature<P>;
 }
 
-#[cfg(feature = "alloc")]
+#[cfg(all(feature = "alloc", feature = "pkcs8"))]
 impl<P: MlDsaParams> SignatureBitStringEncoding for Signature<P> {
     fn to_bitstring(&self) -> der::Result<BitString> {
         BitString::new(0, self.encode().to_vec())
@@ -650,7 +653,7 @@ where
         Signature::<P>::ALGORITHM_IDENTIFIER;
 }
 
-#[cfg(feature = "alloc")]
+#[cfg(all(feature = "alloc", feature = "pkcs8"))]
 impl<P> EncodePublicKey for VerifyingKey<P>
 where
     P: MlDsaParams,
