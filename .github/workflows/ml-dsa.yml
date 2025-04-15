@@ -34,3 +34,5 @@ jobs:
       - run: cargo build --benches --all-features
       - run: cargo test --release
       - run: cargo test --all-features --release
+      - run: cargo test --no-default-features --release
+      - run: cargo test --no-default-features --features alloc --lib --release

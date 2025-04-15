@@ -17,15 +17,18 @@
 //! # Quickstart
 //!
 //! ```
+//! # #[cfg(feature = "rand_core")]
+//! # {
 //! use ml_dsa::{MlDsa65, KeyGen, signature::{Keypair, Signer, Verifier}};
 //!
-//! let mut rng = rand::thread_rng();
+//! let mut rng = rand::rng();
 //! let kp = MlDsa65::key_gen(&mut rng);
 //!
 //! let msg = b"Hello world";
 //! let sig = kp.signing_key().sign(msg);
 //!
 //! assert!(kp.verifying_key().verify(msg, &sig).is_ok());
+//! # }
 //! ```
 
 mod algebra;
@@ -144,7 +147,7 @@ impl<P: MlDsaParams> signature::SignatureEncoding for Signature<P> {
     type Repr = EncodedSignature<P>;
 }
 
-#[cfg(feature = "alloc")]
+#[cfg(all(feature = "alloc", feature = "pkcs8"))]
 impl<P: MlDsaParams> SignatureBitStringEncoding for Signature<P> {
     fn to_bitstring(&self) -> der::Result<BitString> {
         BitString::new(0, self.encode().to_vec())
@@ -184,6 +187,7 @@ pub struct KeyPair<P: MlDsaParams> {
     verifying_key: VerifyingKey<P>,
 
     /// The seed this signing key was derived from
+    #[cfg(feature = "pkcs8")]
     seed: B32,
 }
 
@@ -649,7 +653,7 @@ where
         Signature::<P>::ALGORITHM_IDENTIFIER;
 }
 
-#[cfg(feature = "alloc")]
+#[cfg(all(feature = "alloc", feature = "pkcs8"))]
 impl<P> EncodePublicKey for VerifyingKey<P>
 where
     P: MlDsaParams,
@@ -837,6 +841,7 @@ where
         KeyPair {
             signing_key,
             verifying_key,
+            #[cfg(feature = "pkcs8")]
             seed: xi.clone(),
         }
     }
