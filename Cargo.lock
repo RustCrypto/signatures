@@ -179,9 +179,9 @@ checksum = "4b82cf0babdbd58558212896d1a4272303a57bdb245c2bf1147185fb45640e70"
 
 [[package]]
 name = "const-oid"
-version = "0.10.0-rc.3"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68ff6be19477a1bd5441f382916a89bc2a0b2c35db6d41e0f6e8538bf6d6463f"
+checksum = "0dabb6555f92fb9ee4140454eb5dcd14c7960e1225c6d1a6cc361f032947713e"
 
 [[package]]
 name = "cpufeatures"
@@ -302,8 +302,7 @@ dependencies = [
 [[package]]
 name = "der"
 version = "0.8.0-rc.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "82db698b33305f0134faf590b9d1259dc171b5481ac41d5c8146c3b3ee7d4319"
+source = "git+https://github.com/RustCrypto/formats.git#3658bd9d64b1d03b457a93fc98a75cdc737af95d"
 dependencies = [
  "const-oid",
  "der_derive",
@@ -740,8 +739,7 @@ dependencies = [
 [[package]]
 name = "pkcs8"
 version = "0.11.0-rc.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f22636de7c995e997ed3d8d2949b7414d4faba3efa7312a6c0e75d875a14bdd4"
+source = "git+https://github.com/RustCrypto/formats.git#3658bd9d64b1d03b457a93fc98a75cdc737af95d"
 dependencies = [
  "der",
  "spki",

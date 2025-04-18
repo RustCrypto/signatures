@@ -185,8 +185,13 @@ impl TryFrom<&[u8]> for Signature {
     type Error = signature::Error;
 
     fn try_from(bytes: &[u8]) -> signature::Result<Self> {
-        // TODO(tarcieri): capture error source when `std` feature enabled
-        Self::from_der(bytes).map_err(|_| signature::Error::new())
+        let out = Self::from_der(bytes);
+
+        if cfg!(feature = "std") {
+            out.map_err(signature::Error::from_source)
+        } else {
+            out.map_err(|_| signature::Error::new())
+        }
     }
 }
 

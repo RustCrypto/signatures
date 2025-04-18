@@ -46,3 +46,6 @@ ff = { git = "https://github.com/zkcrypto/ff.git", branch = "release-0.14.0" }
 
 # https://github.com/zkcrypto/group/pull/56
 group = { git = "https://github.com/pinkforest/group.git", branch = "bump-rand-0.9" }
+
+der = { git = "https://github.com/RustCrypto/formats.git" }
+pkcs8 = { git = "https://github.com/RustCrypto/formats.git" }
