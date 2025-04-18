@@ -307,9 +307,9 @@ dependencies = [
 
 [[package]]
 name = "der"
-version = "0.8.0-rc.1"
+version = "0.8.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "82db698b33305f0134faf590b9d1259dc171b5481ac41d5c8146c3b3ee7d4319"
+checksum = "a348a791b3df164315b6733835b128f52f99bd76bc3b19adbd574bde4a1be2e7"
 dependencies = [
  "const-oid",
  "der_derive",
@@ -319,9 +319,9 @@ dependencies = [
 
 [[package]]
 name = "der_derive"
-version = "0.8.0-rc.1"
+version = "0.8.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "211bea8bb45f5f61bc857104606913ef8ac8b5ec698143aa2aa96a7ffdc94991"
+checksum = "9ea0c03fbeccba0997b8f476094bab403aa02013f8eb901eb23a6a7a11b80fe7"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -747,9 +747,9 @@ dependencies = [
 
 [[package]]
 name = "pkcs8"
-version = "0.11.0-rc.2"
+version = "0.11.0-rc.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f22636de7c995e997ed3d8d2949b7414d4faba3efa7312a6c0e75d875a14bdd4"
+checksum = "eb59d311663eb310da092cb3b4525dac863f3fff825898db1a5a2f46420c5e84"
 dependencies = [
  "der",
  "spki",

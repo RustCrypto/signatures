@@ -420,18 +420,9 @@ mod tests {
     #[test]
     fn test_asn1_too_short_signature() {
         assert!(Signature::from_der(&[]).is_err());
-        assert!(Signature::from_der(&[der::Tag::Sequence.into()]).is_err());
-        assert!(Signature::from_der(&[der::Tag::Sequence.into(), 0x00]).is_err());
-        assert!(
-            Signature::from_der(&[
-                der::Tag::Sequence.into(),
-                0x03,
-                der::Tag::Integer.into(),
-                0x01,
-                0x01
-            ])
-            .is_err()
-        );
+        assert!(Signature::from_der(&[0x30]).is_err());
+        assert!(Signature::from_der(&[0x30, 0x00]).is_err());
+        assert!(Signature::from_der(&[0x30, 0x03, 0x02, 0x01, 0x01]).is_err());
     }
 
     #[test]
@@ -439,12 +430,12 @@ mod tests {
         // A minimal 8-byte ASN.1 signature parses OK.
         assert!(
             Signature::from_der(&[
-                der::Tag::Sequence.into(),
+                0x30, // Tag::Sequence,
                 0x06, // length of below
-                der::Tag::Integer.into(),
+                0x02, // Tag::Integer,
                 0x01, // length of value
                 0x01, // value=1
-                der::Tag::Integer.into(),
+                0x02, // Tag::Integer,
                 0x01, // length of value
                 0x01, // value=1
             ])
@@ -456,13 +447,13 @@ mod tests {
         // https://github.com/google/wycheproof/blob/2196000605e4/testvectors/ecdsa_secp256k1_sha256_test.json#L57-L66
         assert!(
             Signature::from_der(&[
-                der::Tag::Sequence.into(),
+                0x30, // Tag::Sequence
                 0x81, // extended length: 1 length byte to come
                 0x06, // length of below
-                der::Tag::Integer.into(),
+                0x02, // Tag::Integer
                 0x01, // length of value
                 0x01, // value=1
-                der::Tag::Integer.into(),
+                0x02, // Tag::Integer
                 0x01, // length of value
                 0x01, // value=1
             ])
