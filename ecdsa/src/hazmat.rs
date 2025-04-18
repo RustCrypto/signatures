@@ -21,7 +21,7 @@ use {
         CurveArithmetic, NonZeroScalar, ProjectivePoint, Scalar,
         ff::PrimeField,
         group::{Curve as _, Group},
-        ops::{Invert, LinearCombination, MulByGenerator, Reduce},
+        ops::{Invert, LinearCombination, Reduce},
         point::AffineCoordinates,
         scalar::IsHigh,
     },
