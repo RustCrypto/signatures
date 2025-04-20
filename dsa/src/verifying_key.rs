@@ -69,12 +69,9 @@ impl VerifyingKey {
             return Some(false);
         }
 
-        let q = q.widen(p.bits_precision());
-        let q = &q;
-        let r = r.widen(p.bits_precision());
-        let r = &r;
-        let s = s.widen(p.bits_precision());
-        let s = &s;
+        let q = &q.widen(p.bits_precision());
+        let r = &r.widen(p.bits_precision());
+        let s = &s.widen(p.bits_precision());
 
         let w: BoxedUint = Option::from(s.inv_mod(q))?;
 
