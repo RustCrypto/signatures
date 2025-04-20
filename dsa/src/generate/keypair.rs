@@ -10,18 +10,34 @@ use signature::rand_core::CryptoRng;
 /// Generate a new keypair
 #[inline]
 pub fn keypair<R: CryptoRng + ?Sized>(rng: &mut R, components: Components) -> SigningKey {
-    let (x, y) = loop {
-        let x = 'gen_x: loop {
+    #[inline]
+    fn find_non_zero_x<R: CryptoRng + ?Sized>(
+        rng: &mut R,
+        components: &Components,
+    ) -> NonZero<BoxedUint> {
+        loop {
             let x = BoxedUint::random_mod(rng, components.q());
             if let Some(x) = NonZero::new(x).into() {
-                break 'gen_x x;
+                return x;
             }
-        };
-
-        if let Some(y) = components::public(&components, &x).into_option() {
-            break (x, y);
         }
-    };
+    }
+
+    #[inline]
+    fn find_components<R: CryptoRng + ?Sized>(
+        rng: &mut R,
+        components: &Components,
+    ) -> (NonZero<BoxedUint>, NonZero<BoxedUint>) {
+        loop {
+            let x = find_non_zero_x(rng, components);
+
+            if let Some(y) = components::public(components, &x).into_option() {
+                return (x, y);
+            }
+        }
+    }
+
+    let (x, y) = find_components(rng, &components);
 
     VerifyingKey::from_components(components, y)
         .and_then(|verifying_key| SigningKey::from_components(verifying_key, x))
