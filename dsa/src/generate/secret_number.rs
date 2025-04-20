@@ -10,7 +10,7 @@ use digest::{Digest, FixedOutputReset, core_api::BlockSizeUser};
 use signature::rand_core::TryCryptoRng;
 use zeroize::Zeroizing;
 
-fn reduce_hash(hash: &[u8], desired_size: usize) -> &[u8] {
+fn truncate_hash(hash: &[u8], desired_size: usize) -> &[u8] {
     &hash[(hash.len() - desired_size)..]
 }
 
@@ -34,13 +34,13 @@ where
 
     // Reduce hash mod q
     let hash = (hash % q).to_be_bytes();
-    let hash = reduce_hash(&hash, size);
+    let hash = truncate_hash(&hash, size);
 
     let q_bytes = q.to_be_bytes();
-    let q_bytes = reduce_hash(&q_bytes, size);
+    let q_bytes = truncate_hash(&q_bytes, size);
 
     let x_bytes = Zeroizing::new(signing_key.x().to_be_bytes());
-    let x_bytes = reduce_hash(&x_bytes, size);
+    let x_bytes = truncate_hash(&x_bytes, size);
 
     let mut buffer = vec![0; size];
     loop {
