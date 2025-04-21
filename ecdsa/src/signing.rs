@@ -1,8 +1,9 @@
 //! ECDSA signing: producing signatures using a [`SigningKey`].
 
 use crate::{
-    EcdsaCurve, Error, Result, Signature, SignatureSize, SignatureWithOid, ecdsa_oid_for_digest,
-    hazmat::{DigestPrimitive, bits2field, sign_prehashed_rfc6979},
+    DigestPrimitive, EcdsaCurve, Error, Result, Signature, SignatureSize, SignatureWithOid,
+    ecdsa_oid_for_digest,
+    hazmat::{bits2field, sign_prehashed_rfc6979},
 };
 use core::fmt::{self, Debug};
 use digest::{Digest, FixedOutput, const_oid::AssociatedOid};

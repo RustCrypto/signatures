@@ -2,7 +2,7 @@
 
 use crate::{
     EcdsaCurve, Error, Result, Signature, SignatureSize,
-    hazmat::{self, DigestPrimitive, bits2field},
+    hazmat::{self, bits2field},
 };
 use core::{cmp::Ordering, fmt::Debug};
 use elliptic_curve::{
@@ -13,7 +13,7 @@ use elliptic_curve::{
     sec1::{self, CompressedPoint, EncodedPoint, FromEncodedPoint, ToEncodedPoint},
 };
 use signature::{
-    DigestVerifier, Verifier,
+    DigestVerifier,
     digest::{Digest, FixedOutput},
     hazmat::PrehashVerifier,
 };
@@ -42,9 +42,11 @@ use serdect::serde::{Deserialize, Serialize, de, ser};
 #[cfg(feature = "sha2")]
 use {
     crate::{
-        ECDSA_SHA224_OID, ECDSA_SHA256_OID, ECDSA_SHA384_OID, ECDSA_SHA512_OID, SignatureWithOid,
+        DigestPrimitive, ECDSA_SHA224_OID, ECDSA_SHA256_OID, ECDSA_SHA384_OID, ECDSA_SHA512_OID,
+        SignatureWithOid,
     },
     sha2::{Sha224, Sha256, Sha384, Sha512},
+    signature::Verifier,
 };
 
 #[cfg(all(feature = "alloc", feature = "pkcs8"))]

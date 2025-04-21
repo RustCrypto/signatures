@@ -28,10 +28,7 @@ use {
 
 #[cfg(any(feature = "signing", feature = "verifying"))]
 use {
-    crate::{
-        EcdsaCurve, Signature, SignatureSize,
-        hazmat::{DigestPrimitive, bits2field},
-    },
+    crate::{DigestPrimitive, EcdsaCurve, Signature, SignatureSize, hazmat::bits2field},
     elliptic_curve::{CurveArithmetic, Scalar, array::ArraySize, ops::Invert},
     signature::digest::Digest,
 };
