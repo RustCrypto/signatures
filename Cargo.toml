@@ -34,7 +34,3 @@ slh-dsa         = { path = "./slh-dsa" }
 # https://github.com/RustCrypto/traits/pull/1774
 # https://github.com/RustCrypto/traits/pull/1822
 elliptic-curve = { git = "https://github.com/RustCrypto/traits.git" }
-
-# https://github.com/RustCrypto/crypto-bigint/pull/762
-# https://github.com/RustCrypto/crypto-bigint/pull/765
-crypto-bigint = { git = "https://github.com/RustCrypto/crypto-bigint.git" }
