@@ -172,16 +172,6 @@ where
     }
 }
 
-impl<C> Verifier<Signature<C>> for VerifyingKey<C>
-where
-    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
-    SignatureSize<C>: ArraySize,
-{
-    fn verify(&self, msg: &[u8], signature: &Signature<C>) -> Result<()> {
-        self.verify_digest(C::Digest::new_with_prefix(msg), signature)
-    }
-}
-
 #[cfg(feature = "sha2")]
 impl<C> Verifier<SignatureWithOid<C>> for VerifyingKey<C>
 where
@@ -225,20 +215,6 @@ where
     fn verify_prehash(&self, prehash: &[u8], signature: &der::Signature<C>) -> Result<()> {
         let signature = Signature::<C>::try_from(signature.clone())?;
         PrehashVerifier::<Signature<C>>::verify_prehash(self, prehash, &signature)
-    }
-}
-
-#[cfg(feature = "der")]
-impl<C> Verifier<der::Signature<C>> for VerifyingKey<C>
-where
-    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
-    SignatureSize<C>: ArraySize,
-    der::MaxSize<C>: ArraySize,
-    <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
-{
-    fn verify(&self, msg: &[u8], signature: &der::Signature<C>) -> Result<()> {
-        let signature = Signature::<C>::try_from(signature.clone())?;
-        Verifier::<Signature<C>>::verify(self, msg, &signature)
     }
 }
 

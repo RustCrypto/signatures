@@ -7,7 +7,7 @@ use {
     crate::{SigningKey, hazmat::sign_prehashed_rfc6979},
     elliptic_curve::{FieldBytes, subtle::CtOption},
     signature::{
-        DigestSigner, RandomizedDigestSigner, Signer,
+        DigestSigner, RandomizedDigestSigner,
         digest::FixedOutput,
         hazmat::{PrehashSigner, RandomizedPrehashSigner},
         rand_core::TryCryptoRng,
@@ -272,18 +272,6 @@ where
 {
     fn sign_prehash(&self, prehash: &[u8]) -> Result<(Signature<C>, RecoveryId)> {
         self.sign_prehash_recoverable(prehash)
-    }
-}
-
-#[cfg(feature = "signing")]
-impl<C> Signer<(Signature<C>, RecoveryId)> for SigningKey<C>
-where
-    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
-    SignatureSize<C>: ArraySize,
-{
-    fn try_sign(&self, msg: &[u8]) -> Result<(Signature<C>, RecoveryId)> {
-        self.sign_recoverable(msg)
     }
 }
 

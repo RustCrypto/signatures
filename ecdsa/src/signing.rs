@@ -15,7 +15,7 @@ use elliptic_curve::{
     zeroize::{Zeroize, ZeroizeOnDrop},
 };
 use signature::{
-    DigestSigner, RandomizedDigestSigner, RandomizedSigner, Signer,
+    DigestSigner, RandomizedDigestSigner, Signer,
     hazmat::{PrehashSigner, RandomizedPrehashSigner},
     rand_core::{CryptoRng, TryCryptoRng},
 };
@@ -165,21 +165,6 @@ where
     }
 }
 
-/// Sign message using a deterministic ephemeral scalar (`k`)
-/// computed using the algorithm described in [RFC6979 § 3.2].
-///
-/// [RFC6979 § 3.2]: https://tools.ietf.org/html/rfc6979#section-3
-impl<C> Signer<Signature<C>> for SigningKey<C>
-where
-    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
-    SignatureSize<C>: ArraySize,
-{
-    fn try_sign(&self, msg: &[u8]) -> Result<Signature<C>> {
-        self.try_sign_digest(C::Digest::new_with_prefix(msg))
-    }
-}
-
 impl<C, D> RandomizedDigestSigner<D, Signature<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
@@ -211,22 +196,6 @@ where
         let mut ad = FieldBytes::<C>::default();
         rng.try_fill_bytes(&mut ad).map_err(|_| Error::new())?;
         Ok(sign_prehashed_rfc6979::<C, C::Digest>(&self.secret_scalar, &z, &ad)?.0)
-    }
-}
-
-impl<C> RandomizedSigner<Signature<C>> for SigningKey<C>
-where
-    Self: RandomizedDigestSigner<C::Digest, Signature<C>>,
-    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
-    SignatureSize<C>: ArraySize,
-{
-    fn try_sign_with_rng<R: TryCryptoRng + ?Sized>(
-        &self,
-        rng: &mut R,
-        msg: &[u8],
-    ) -> Result<Signature<C>> {
-        self.try_sign_digest_with_rng(rng, C::Digest::new_with_prefix(msg))
     }
 }
 
@@ -271,40 +240,6 @@ where
 }
 
 #[cfg(feature = "der")]
-impl<C> Signer<der::Signature<C>> for SigningKey<C>
-where
-    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
-    SignatureSize<C>: ArraySize,
-    der::MaxSize<C>: ArraySize,
-    <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
-{
-    fn try_sign(&self, msg: &[u8]) -> Result<der::Signature<C>> {
-        Signer::<Signature<C>>::try_sign(self, msg).map(Into::into)
-    }
-}
-
-#[cfg(feature = "der")]
-impl<C, D> RandomizedDigestSigner<D, der::Signature<C>> for SigningKey<C>
-where
-    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
-    D: Digest + FixedOutput,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
-    SignatureSize<C>: ArraySize,
-    der::MaxSize<C>: ArraySize,
-    <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
-{
-    fn try_sign_digest_with_rng<R: TryCryptoRng + ?Sized>(
-        &self,
-        rng: &mut R,
-        msg_digest: D,
-    ) -> Result<der::Signature<C>> {
-        RandomizedDigestSigner::<D, Signature<C>>::try_sign_digest_with_rng(self, rng, msg_digest)
-            .map(Into::into)
-    }
-}
-
-#[cfg(feature = "der")]
 impl<C> RandomizedPrehashSigner<der::Signature<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
@@ -320,24 +255,6 @@ where
     ) -> Result<der::Signature<C>> {
         RandomizedPrehashSigner::<Signature<C>>::sign_prehash_with_rng(self, rng, prehash)
             .map(Into::into)
-    }
-}
-
-#[cfg(feature = "der")]
-impl<C> RandomizedSigner<der::Signature<C>> for SigningKey<C>
-where
-    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
-    SignatureSize<C>: ArraySize,
-    der::MaxSize<C>: ArraySize,
-    <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
-{
-    fn try_sign_with_rng<R: TryCryptoRng + ?Sized>(
-        &self,
-        rng: &mut R,
-        msg: &[u8],
-    ) -> Result<der::Signature<C>> {
-        RandomizedSigner::<Signature<C>>::try_sign_with_rng(self, rng, msg).map(Into::into)
     }
 }
 
