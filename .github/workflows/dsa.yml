@@ -17,7 +17,6 @@ env:
 
 jobs:
   build:
-    if: false # both thumbv7 and wasm require a getrandom backend to be injected
     runs-on: ubuntu-latest
     strategy:
       matrix:
