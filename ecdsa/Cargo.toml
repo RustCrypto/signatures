@@ -18,7 +18,7 @@ rust-version = "1.85"
 
 [dependencies]
 elliptic-curve = { version = "0.14.0-rc.1", default-features = false, features = ["sec1"] }
-signature = { version = "=2.3.0-pre.7", default-features = false, features = ["rand_core"] }
+signature = { version = "=3.0.0-pre", default-features = false, features = ["rand_core"] }
 
 # optional dependencies
 der = { version = "0.8.0-rc.1", optional = true }
@@ -44,6 +44,7 @@ digest = ["dep:digest", "elliptic-curve/digest", "signature/digest"]
 hazmat = []
 pkcs8 = ["digest", "elliptic-curve/pkcs8", "der"]
 pem = ["elliptic-curve/pem", "pkcs8"]
+rfc6979 = ["arithmetic", "digest", "dep:rfc6979"]
 serde = ["elliptic-curve/serde", "pkcs8", "serdect"]
 signing = ["arithmetic", "digest", "hazmat", "rfc6979"]
 verifying = ["arithmetic", "digest", "hazmat"]

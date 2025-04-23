@@ -7,7 +7,7 @@ use {
     crate::{SigningKey, hazmat::sign_prehashed_rfc6979},
     elliptic_curve::{FieldBytes, subtle::CtOption},
     signature::{
-        DigestSigner, RandomizedDigestSigner, Signer,
+        DigestSigner, RandomizedDigestSigner,
         digest::FixedOutput,
         hazmat::{PrehashSigner, RandomizedPrehashSigner},
         rand_core::TryCryptoRng,
@@ -28,10 +28,7 @@ use {
 
 #[cfg(any(feature = "signing", feature = "verifying"))]
 use {
-    crate::{
-        EcdsaCurve, Signature, SignatureSize,
-        hazmat::{DigestPrimitive, bits2field},
-    },
+    crate::{DigestAlgorithm, EcdsaCurve, Signature, SignatureSize, hazmat::bits2field},
     elliptic_curve::{CurveArithmetic, Scalar, array::ArraySize, ops::Invert},
     signature::digest::Digest,
 };
@@ -100,7 +97,7 @@ impl RecoveryId {
         signature: &Signature<C>,
     ) -> Result<Self>
     where
-        C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
+        C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
         AffinePoint<C>: DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C>,
         FieldBytesSize<C>: sec1::ModulusSize,
         SignatureSize<C>: ArraySize,
@@ -179,7 +176,7 @@ impl From<RecoveryId> for u8 {
 #[cfg(feature = "signing")]
 impl<C> SigningKey<C>
 where
-    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
@@ -220,7 +217,7 @@ where
 #[cfg(feature = "signing")]
 impl<C, D> DigestSigner<D, (Signature<C>, RecoveryId)> for SigningKey<C>
 where
-    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
     D: Digest,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
@@ -233,7 +230,7 @@ where
 #[cfg(feature = "signing")]
 impl<C> RandomizedPrehashSigner<(Signature<C>, RecoveryId)> for SigningKey<C>
 where
-    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
@@ -249,7 +246,7 @@ where
 #[cfg(feature = "signing")]
 impl<C, D> RandomizedDigestSigner<D, (Signature<C>, RecoveryId)> for SigningKey<C>
 where
-    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
     D: Digest + FixedOutput,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
@@ -266,24 +263,12 @@ where
 #[cfg(feature = "signing")]
 impl<C> PrehashSigner<(Signature<C>, RecoveryId)> for SigningKey<C>
 where
-    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     fn sign_prehash(&self, prehash: &[u8]) -> Result<(Signature<C>, RecoveryId)> {
         self.sign_prehash_recoverable(prehash)
-    }
-}
-
-#[cfg(feature = "signing")]
-impl<C> Signer<(Signature<C>, RecoveryId)> for SigningKey<C>
-where
-    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
-    SignatureSize<C>: ArraySize,
-{
-    fn try_sign(&self, msg: &[u8]) -> Result<(Signature<C>, RecoveryId)> {
-        self.sign_recoverable(msg)
     }
 }
 
@@ -298,14 +283,14 @@ where
     /// Recover a [`VerifyingKey`] from the given message, signature, and
     /// [`RecoveryId`].
     ///
-    /// The message is first hashed using this curve's [`DigestPrimitive`].
+    /// The message is first hashed using this curve's [`DigestAlgorithm`].
     pub fn recover_from_msg(
         msg: &[u8],
         signature: &Signature<C>,
         recovery_id: RecoveryId,
     ) -> Result<Self>
     where
-        C: DigestPrimitive,
+        C: DigestAlgorithm,
     {
         Self::recover_from_digest(C::Digest::new_with_prefix(msg), signature, recovery_id)
     }

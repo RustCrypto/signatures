@@ -330,7 +330,7 @@ dependencies = [
  "rfc6979",
  "serdect",
  "sha2",
- "signature",
+ "signature 3.0.0-pre",
  "spki",
 ]
 
@@ -344,7 +344,7 @@ dependencies = [
  "rand_core 0.9.2",
  "serde",
  "serde_bytes",
- "signature",
+ "signature 3.0.0-pre",
  "zeroize",
 ]
 
@@ -357,7 +357,7 @@ dependencies = [
  "pkcs8",
  "serde",
  "serde_bytes",
- "signature",
+ "signature 3.0.0-pre",
  "zeroize",
 ]
 
@@ -608,7 +608,7 @@ dependencies = [
  "rand 0.9.0",
  "rand_core 0.9.2",
  "sha2",
- "signature",
+ "signature 3.0.0-pre",
  "static_assertions",
  "typenum",
  "zeroize",
@@ -643,7 +643,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha3",
- "signature",
+ "signature 2.3.0-pre.7",
  "zeroize",
 ]
 
@@ -1084,6 +1084,14 @@ version = "2.3.0-pre.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a6e22be6d22b655ff65ed5635383d63ac17a99c5c0a05a83a414d399056d4e1d"
 dependencies = [
+ "rand_core 0.9.2",
+]
+
+[[package]]
+name = "signature"
+version = "3.0.0-pre"
+source = "git+https://github.com/RustCrypto/traits.git#bf4774878c7c2e36451119a0ad24f1db6dc93cd8"
+dependencies = [
  "digest",
  "rand_core 0.9.2",
 ]
@@ -1114,7 +1122,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "sha3",
- "signature",
+ "signature 3.0.0-pre",
  "typenum",
  "zerocopy 0.7.35",
  "zeroize",
