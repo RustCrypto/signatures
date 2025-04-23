@@ -27,46 +27,21 @@ use {
     },
 };
 
-#[cfg(feature = "digest")]
+#[cfg(feature = "rfc6979")]
 use {
-    elliptic_curve::FieldBytesSize,
-    signature::{
-        PrehashSignature,
-        digest::{Digest, FixedOutput, FixedOutputReset, core_api::BlockSizeUser},
-    },
+    elliptic_curve::FieldBytesEncoding,
+    signature::digest::{Digest, FixedOutput, FixedOutputReset, core_api::BlockSizeUser},
 };
 
-#[cfg(feature = "rfc6979")]
-use elliptic_curve::FieldBytesEncoding;
-
-#[cfg(any(feature = "arithmetic", feature = "digest"))]
+#[cfg(any(feature = "arithmetic", feature = "rfc6979"))]
 use crate::{Signature, elliptic_curve::array::ArraySize};
 
-/// Bind a preferred [`Digest`] algorithm to an elliptic curve type.
-///
-/// Generally there is a preferred variety of the SHA-2 family used with ECDSA
-/// for a particular elliptic curve.
-///
-/// This trait can be used to specify it, and with it receive a blanket impl of
-/// [`PrehashSignature`], used by [`signature_derive`][1]) for the [`Signature`]
-/// type for a particular elliptic curve.
-///
-/// [1]: https://github.com/RustCrypto/traits/tree/master/signature/derive
 #[cfg(feature = "digest")]
-pub trait DigestPrimitive: EcdsaCurve {
-    /// Preferred digest to use when computing ECDSA signatures for this
-    /// elliptic curve. This is typically a member of the SHA-2 family.
-    type Digest: BlockSizeUser + Digest + FixedOutput + FixedOutputReset;
-}
-
-#[cfg(feature = "digest")]
-impl<C> PrehashSignature for Signature<C>
-where
-    C: DigestPrimitive,
-    <FieldBytesSize<C> as core::ops::Add>::Output: ArraySize,
-{
-    type Digest = C::Digest;
-}
+#[deprecated(
+    since = "0.17.0",
+    note = "`DigestAlgorithm` is no longer in `hazmat`, please use `ecdsa::DigestAlgorithm` instead"
+)]
+pub use crate::DigestAlgorithm;
 
 /// Partial implementation of the `bits2int` function as defined in
 /// [RFC6979 § 2.3.2] as well as [SEC1] § 2.3.8.
