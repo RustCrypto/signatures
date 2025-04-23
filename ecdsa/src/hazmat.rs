@@ -39,9 +39,9 @@ use crate::{Signature, elliptic_curve::array::ArraySize};
 #[cfg(feature = "digest")]
 #[deprecated(
     since = "0.17.0",
-    note = "`DigestPrimitive` is no longer in `hazmat`, please use `ecdsa::DigestPrimitive` instead"
+    note = "`DigestAlgorithm` is no longer in `hazmat`, please use `ecdsa::DigestAlgorithm` instead"
 )]
-pub use crate::DigestPrimitive;
+pub use crate::DigestAlgorithm;
 
 /// Partial implementation of the `bits2int` function as defined in
 /// [RFC6979 § 2.3.2] as well as [SEC1] § 2.3.8.

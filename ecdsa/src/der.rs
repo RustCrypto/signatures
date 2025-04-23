@@ -385,7 +385,7 @@ fn find_scalar_range(outer: &[u8], inner: &[u8]) -> Result<Range<usize>> {
 #[cfg(feature = "digest")]
 impl<C> signature::PrehashSignature for Signature<C>
 where
-    C: EcdsaCurve + crate::DigestPrimitive,
+    C: EcdsaCurve + crate::DigestAlgorithm,
     MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArraySize,
 {

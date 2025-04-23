@@ -470,12 +470,12 @@ where
 #[cfg(feature = "digest")]
 impl<C> AssociatedOid for Signature<C>
 where
-    C: DigestPrimitive,
+    C: DigestAlgorithm,
     C::Digest: AssociatedOid,
 {
     const OID: ObjectIdentifier = match ecdsa_oid_for_digest(C::Digest::OID) {
         Some(oid) => oid,
-        None => panic!("no RFC5758 ECDSA OID defined for DigestPrimitive::Digest"),
+        None => panic!("no RFC5758 ECDSA OID defined for DigestAlgorithm::Digest"),
     };
 }
 
@@ -717,14 +717,14 @@ where
 }
 
 /// NOTE: this implementation assumes the default digest for the given elliptic
-/// curve as defined by [`DigestPrimitive`].
+/// curve as defined by [`DigestAlgorithm`].
 ///
 /// When working with alternative digests, you will need to use e.g.
 /// [`SignatureWithOid::new_with_digest`].
 #[cfg(feature = "digest")]
 impl<C> SignatureEncoding for SignatureWithOid<C>
 where
-    C: DigestPrimitive,
+    C: DigestAlgorithm,
     C::Digest: AssociatedOid,
     SignatureSize<C>: ArraySize,
 {
@@ -732,14 +732,14 @@ where
 }
 
 /// NOTE: this implementation assumes the default digest for the given elliptic
-/// curve as defined by [`DigestPrimitive`].
+/// curve as defined by [`DigestAlgorithm`].
 ///
 /// When working with alternative digests, you will need to use e.g.
 /// [`SignatureWithOid::new_with_digest`].
 #[cfg(feature = "digest")]
 impl<C> TryFrom<&[u8]> for SignatureWithOid<C>
 where
-    C: DigestPrimitive,
+    C: DigestAlgorithm,
     C::Digest: AssociatedOid,
     SignatureSize<C>: ArraySize,
 {
@@ -786,7 +786,7 @@ const fn ecdsa_oid_for_digest(digest_oid: ObjectIdentifier) -> Option<ObjectIden
 ///
 /// [1]: https://github.com/RustCrypto/traits/tree/master/signature/derive
 #[cfg(feature = "digest")]
-pub trait DigestPrimitive: EcdsaCurve {
+pub trait DigestAlgorithm: EcdsaCurve {
     /// Preferred digest to use when computing ECDSA signatures for this
     /// elliptic curve. This is typically a member of the SHA-2 family.
     type Digest: BlockSizeUser + Digest + FixedOutput + FixedOutputReset;
@@ -795,7 +795,7 @@ pub trait DigestPrimitive: EcdsaCurve {
 #[cfg(feature = "digest")]
 impl<C> PrehashSignature for Signature<C>
 where
-    C: DigestPrimitive,
+    C: DigestAlgorithm,
     <FieldBytesSize<C> as Add>::Output: ArraySize,
 {
     type Digest = C::Digest;

@@ -42,7 +42,7 @@ use serdect::serde::{Deserialize, Serialize, de, ser};
 #[cfg(feature = "sha2")]
 use {
     crate::{
-        DigestPrimitive, ECDSA_SHA224_OID, ECDSA_SHA256_OID, ECDSA_SHA384_OID, ECDSA_SHA512_OID,
+        DigestAlgorithm, ECDSA_SHA224_OID, ECDSA_SHA256_OID, ECDSA_SHA384_OID, ECDSA_SHA512_OID,
         SignatureWithOid,
     },
     sha2::{Sha224, Sha256, Sha384, Sha512},
@@ -177,7 +177,7 @@ where
 #[cfg(feature = "sha2")]
 impl<C> Verifier<SignatureWithOid<C>> for VerifyingKey<C>
 where
-    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
     SignatureSize<C>: ArraySize,
 {
     fn verify(&self, msg: &[u8], sig: &SignatureWithOid<C>) -> Result<()> {

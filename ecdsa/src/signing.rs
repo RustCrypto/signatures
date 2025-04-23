@@ -1,7 +1,7 @@
 //! ECDSA signing: producing signatures using a [`SigningKey`].
 
 use crate::{
-    DigestPrimitive, EcdsaCurve, Error, Result, Signature, SignatureSize, SignatureWithOid,
+    DigestAlgorithm, EcdsaCurve, Error, Result, Signature, SignatureSize, SignatureWithOid,
     ecdsa_oid_for_digest,
     hazmat::{bits2field, sign_prehashed_rfc6979},
 };
@@ -140,7 +140,7 @@ where
 /// [RFC6979 § 3.2]: https://tools.ietf.org/html/rfc6979#section-3
 impl<C, D> DigestSigner<D, Signature<C>> for SigningKey<C>
 where
-    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
     D: Digest + FixedOutput,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
@@ -156,7 +156,7 @@ where
 /// [RFC6979 § 3.2]: https://tools.ietf.org/html/rfc6979#section-3
 impl<C> PrehashSigner<Signature<C>> for SigningKey<C>
 where
-    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
@@ -168,7 +168,7 @@ where
 
 impl<C, D> RandomizedDigestSigner<D, Signature<C>> for SigningKey<C>
 where
-    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
     D: Digest + FixedOutput,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
@@ -184,7 +184,7 @@ where
 
 impl<C> RandomizedPrehashSigner<Signature<C>> for SigningKey<C>
 where
-    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
@@ -202,7 +202,7 @@ where
 
 impl<C, D> DigestSigner<D, SignatureWithOid<C>> for SigningKey<C>
 where
-    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
     D: AssociatedOid + Digest + FixedOutput,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
@@ -216,7 +216,7 @@ where
 
 impl<C> Signer<SignatureWithOid<C>> for SigningKey<C>
 where
-    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
     C::Digest: AssociatedOid,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
@@ -229,7 +229,7 @@ where
 #[cfg(feature = "der")]
 impl<C> PrehashSigner<der::Signature<C>> for SigningKey<C>
 where
-    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,
@@ -243,7 +243,7 @@ where
 #[cfg(feature = "der")]
 impl<C> RandomizedPrehashSigner<der::Signature<C>> for SigningKey<C>
 where
-    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,
