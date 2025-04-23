@@ -39,7 +39,7 @@ sha3 = "=0.11.0-pre.5"
 signature = "=2.3.0-pre.7"
 zeroize = { version = "1.8.1", optional = true, default-features = false }
 
-const-oid = { version = "0.10.0-rc.1", features = ["db"], optional = true }
+const-oid = { version = "0.10", features = ["db"], optional = true }
 pkcs8 = { version = "0.11.0-rc.2", default-features = false, optional = true }
 
 [dev-dependencies]
