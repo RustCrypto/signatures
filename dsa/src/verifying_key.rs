@@ -2,19 +2,22 @@
 //! Module containing the definition of the public key container
 //!
 
-use crate::{two, Components, Signature, OID};
+use crate::{Components, OID, Signature, two};
 use core::cmp::min;
-use digest::Digest;
-use num_bigint::{BigUint, ModInverse};
-use num_traits::One;
-use pkcs8::{
-    der::{
-        asn1::{BitStringRef, UintRef},
-        AnyRef, Decode, Encode,
-    },
-    spki, AlgorithmIdentifierRef, EncodePublicKey, SubjectPublicKeyInfoRef,
+use crypto_bigint::{
+    BoxedUint, NonZero,
+    modular::{BoxedMontyForm, BoxedMontyParams},
 };
-use signature::{hazmat::PrehashVerifier, DigestVerifier, Verifier};
+use digest::Digest;
+use pkcs8::{
+    AlgorithmIdentifierRef, EncodePublicKey, SubjectPublicKeyInfoRef,
+    der::{
+        AnyRef, Decode, Encode,
+        asn1::{BitStringRef, UintRef},
+    },
+    spki,
+};
+use signature::{DigestVerifier, Verifier, hazmat::PrehashVerifier};
 
 /// DSA public key.
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
@@ -24,13 +27,19 @@ pub struct VerifyingKey {
     components: Components,
 
     /// Public component y
-    y: BigUint,
+    y: NonZero<BoxedUint>,
 }
 
 impl VerifyingKey {
     /// Construct a new public key from the common components and the public component
-    pub fn from_components(components: Components, y: BigUint) -> signature::Result<Self> {
-        if y < two() || y.modpow(components.q(), components.p()) != BigUint::one() {
+    pub fn from_components(
+        components: Components,
+        y: NonZero<BoxedUint>,
+    ) -> signature::Result<Self> {
+        let params = BoxedMontyParams::new_vartime(components.p().clone());
+        let form = BoxedMontyForm::new((*y).clone(), params);
+
+        if *y < two() || form.pow(components.q()).retrieve() != BoxedUint::one() {
             return Err(signature::Error::new());
         }
 
@@ -44,7 +53,7 @@ impl VerifyingKey {
 
     /// DSA public component
     #[must_use]
-    pub const fn y(&self) -> &BigUint {
+    pub const fn y(&self) -> &NonZero<BoxedUint> {
         &self.y
     }
 
@@ -56,23 +65,44 @@ impl VerifyingKey {
         let (r, s) = (signature.r(), signature.s());
         let y = self.y();
 
-        if signature.r() >= q || signature.s() >= q {
+        if r >= q || s >= q {
             return Some(false);
         }
 
-        let w = s.mod_inverse(q)?.to_biguint().unwrap();
+        let q = &q.widen(p.bits_precision());
+        let r = &r.widen(p.bits_precision());
+        let s = &s.widen(p.bits_precision());
+
+        let w: BoxedUint = Option::from(s.inv_mod(q))?;
 
         let n = q.bits() / 8;
         let block_size = hash.len(); // Hash function output size
 
-        let z_len = min(n, block_size);
-        let z = BigUint::from_bytes_be(&hash[..z_len]);
+        let z_len = min(n as usize, block_size);
+        let z = BoxedUint::from_be_slice(&hash[..z_len], z_len as u32 * 8)
+            .expect("invariant violation");
 
-        let u1 = (&z * &w) % q;
-        let u2 = (r * &w) % q;
-        let v = (g.modpow(&u1, p) * y.modpow(&u2, p) % p) % q;
+        let z = z.widen(p.bits_precision());
+        let w = w.widen(q.bits_precision());
 
-        Some(v == *r)
+        let u1 = (&z * &w) % q.widen(p.bits_precision());
+        let u2 = r.mul_mod(&w, q);
+
+        let p1_params = BoxedMontyParams::new(p.clone());
+        let p2_params = BoxedMontyParams::new(p.clone());
+
+        let g_form = BoxedMontyForm::new((**g).clone(), p1_params);
+        let y_form = BoxedMontyForm::new((**y).clone(), p2_params);
+
+        let v1 = g_form.pow(&u1).retrieve();
+        let v2 = y_form.pow(&u2).retrieve();
+        let v3 = v1 * v2;
+        let p = p.widen(v3.bits_precision());
+        let q = q.widen(v3.bits_precision());
+        let v4 = v3 % NonZero::new(p).expect("[bug] p is an odd number and can't be zero");
+        let v = v4 % q;
+
+        Some(v == **r)
     }
 }
 
@@ -124,7 +154,7 @@ impl EncodePublicKey for VerifyingKey {
             parameters: Some(parameters),
         };
 
-        let y_bytes = self.y.to_bytes_be();
+        let y_bytes = self.y.to_be_bytes();
         let y = UintRef::new(&y_bytes)?;
         let public_key = y.to_der()?;
 
@@ -151,7 +181,13 @@ impl<'a> TryFrom<SubjectPublicKeyInfoRef<'a>> for VerifyingKey {
                 .ok_or(spki::Error::KeyMalformed)?,
         )?;
 
-        Self::from_components(components, BigUint::from_bytes_be(y.as_bytes()))
-            .map_err(|_| spki::Error::KeyMalformed)
+        let y = NonZero::new(
+            BoxedUint::from_be_slice(y.as_bytes(), y.as_bytes().len() as u32 * 8)
+                .expect("invariant violation"),
+        )
+        .into_option()
+        .ok_or(spki::Error::KeyMalformed)?;
+
+        Self::from_components(components, y).map_err(|_| spki::Error::KeyMalformed)
     }
 }

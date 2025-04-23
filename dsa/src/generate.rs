@@ -1,7 +1,6 @@
-use crate::two;
-use num_bigint::{BigUint, RandPrime};
-use num_traits::Pow;
-use signature::rand_core::CryptoRngCore;
+use crypto_bigint::{BoxedUint, NonZero};
+use crypto_primes::{Flavor, random_prime};
+use signature::rand_core::CryptoRng;
 
 mod components;
 mod keypair;
@@ -15,9 +14,12 @@ pub use self::keypair::keypair;
 
 /// Calculate the upper and lower bounds for generating values like p or q
 #[inline]
-fn calculate_bounds(size: u32) -> (BigUint, BigUint) {
-    let lower = two().pow(size - 1);
-    let upper = two().pow(size);
+fn calculate_bounds(size: u32) -> (NonZero<BoxedUint>, NonZero<BoxedUint>) {
+    let lower = BoxedUint::one().widen(size + 1).shl(size - 1);
+    let upper = BoxedUint::one().widen(size + 1).shl(size);
+
+    let lower = NonZero::new(lower).expect("[bug] shl can't go backward");
+    let upper = NonZero::new(upper).expect("[bug] shl can't go backward");
 
     (lower, upper)
 }
@@ -26,6 +28,6 @@ fn calculate_bounds(size: u32) -> (BigUint, BigUint) {
 ///
 /// This wrapper function mainly exists to enforce the [`CryptoRng`](rand::CryptoRng) requirement (I might otherwise forget it)
 #[inline]
-fn generate_prime(bit_length: usize, rng: &mut impl CryptoRngCore) -> BigUint {
-    rng.gen_prime(bit_length)
+fn generate_prime<R: CryptoRng + ?Sized>(bit_length: u32, rng: &mut R) -> BoxedUint {
+    random_prime(rng, Flavor::Any, bit_length)
 }

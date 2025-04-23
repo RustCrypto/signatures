@@ -5,7 +5,7 @@ use pkcs8::{EncodePrivateKey, EncodePublicKey, LineEnding};
 use std::{fs::File, io::Write};
 
 fn main() {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let components = Components::generate(&mut rng, KeySize::DSA_2048_256);
     let signing_key = SigningKey::generate(&mut rng, components);
     let verifying_key = signing_key.verifying_key();

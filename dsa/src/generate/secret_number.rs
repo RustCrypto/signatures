@@ -2,32 +2,16 @@
 //! Generate a per-message secret number
 //!
 
-use crate::{signing_key::SigningKey, Components};
-use alloc::{vec, vec::Vec};
+use crate::{Components, signing_key::SigningKey};
+use alloc::vec;
 use core::cmp::min;
-use digest::{core_api::BlockSizeUser, Digest, FixedOutputReset};
-use num_bigint::{BigUint, ModInverse, RandBigInt};
-use num_traits::{One, Zero};
-use rfc6979::HmacDrbg;
-use signature::rand_core::CryptoRngCore;
-use zeroize::Zeroize;
+use crypto_bigint::{BoxedUint, NonZero, RandomBits};
+use digest::{Digest, FixedOutputReset, core_api::BlockSizeUser};
+use signature::rand_core::TryCryptoRng;
+use zeroize::Zeroizing;
 
-/// Reduce the hash into an RFC-6979 appropriate form
-fn reduce_hash(q: &BigUint, hash: &[u8]) -> Vec<u8> {
-    // Reduce the hash modulo Q
-    let q_byte_len = q.bits() / 8;
-
-    let hash_len = min(hash.len(), q_byte_len);
-    let hash = &hash[..hash_len];
-
-    let hash = BigUint::from_bytes_be(hash);
-    let mut reduced = (hash % q).to_bytes_be();
-
-    while reduced.len() < q_byte_len {
-        reduced.insert(0, 0);
-    }
-
-    reduced
+fn truncate_hash(hash: &[u8], desired_size: usize) -> &[u8] {
+    &hash[(hash.len() - desired_size)..]
 }
 
 /// Generate a per-message secret number k deterministically using the method described in RFC 6979
@@ -36,28 +20,37 @@ fn reduce_hash(q: &BigUint, hash: &[u8]) -> Vec<u8> {
 ///
 /// Secret number k and its modular multiplicative inverse with q
 #[inline]
-pub fn secret_number_rfc6979<D>(signing_key: &SigningKey, hash: &[u8]) -> (BigUint, BigUint)
+pub fn secret_number_rfc6979<D>(
+    signing_key: &SigningKey,
+    hash: &[u8],
+) -> Result<(BoxedUint, BoxedUint), signature::Error>
 where
     D: Digest + BlockSizeUser + FixedOutputReset,
 {
     let q = signing_key.verifying_key().components().q();
-    let k_size = q.bits() / 8;
-    let hash = reduce_hash(q, hash);
+    let size = (q.bits() / 8) as usize;
+    let hash = BoxedUint::from_be_slice(&hash[..min(size, hash.len())], q.bits_precision())
+        .map_err(|_| signature::Error::new())?;
 
-    let mut x_bytes = signing_key.x().to_bytes_be();
-    let mut hmac = HmacDrbg::<D>::new(&x_bytes, &hash, &[]);
-    x_bytes.zeroize();
+    // Reduce hash mod q
+    let hash = (hash % q).to_be_bytes();
+    let hash = truncate_hash(&hash, size);
 
-    let mut buffer = vec![0; k_size];
+    let q_bytes = q.to_be_bytes();
+    let q_bytes = truncate_hash(&q_bytes, size);
+
+    let x_bytes = Zeroizing::new(signing_key.x().to_be_bytes());
+    let x_bytes = truncate_hash(&x_bytes, size);
+
+    let mut buffer = vec![0; size];
     loop {
-        hmac.fill_bytes(&mut buffer);
+        rfc6979::generate_k_mut::<D>(x_bytes, q_bytes, hash, &[], &mut buffer);
 
-        let k = BigUint::from_bytes_be(&buffer);
-        if let Some(inv_k) = (&k).mod_inverse(q) {
-            let inv_k = inv_k.to_biguint().unwrap();
-
-            if k > BigUint::zero() && &k < q {
-                return (k, inv_k);
+        let k = BoxedUint::from_be_slice(&buffer, q.bits_precision())
+            .map_err(|_| signature::Error::new())?;
+        if let Some(inv_k) = k.inv_mod(q).into() {
+            if (bool::from(k.is_nonzero())) && (k < **q) {
+                return Ok((k, inv_k));
             }
         }
     }
@@ -69,28 +62,30 @@ where
 ///
 /// Secret number k and its modular multiplicative inverse with q
 #[inline]
-pub fn secret_number(
-    rng: &mut impl CryptoRngCore,
+pub fn secret_number<R: TryCryptoRng + ?Sized>(
+    rng: &mut R,
     components: &Components,
-) -> Option<(BigUint, BigUint)> {
+) -> Result<Option<(BoxedUint, BoxedUint)>, signature::Error> {
     let q = components.q();
     let n = q.bits();
+    let q = q.widen(n + 64);
+    let q = &q;
 
     // Attempt to try a fitting secret number
     // Give up after 4096 tries
     for _ in 0..4096 {
-        let c = rng.gen_biguint(n + 64);
-        let k = (c % (q - BigUint::one())) + BigUint::one();
+        let c = BoxedUint::try_random_bits(rng, n + 64).map_err(|_| signature::Error::new())?;
+        let rem = NonZero::new((&**q - &BoxedUint::one()).widen(c.bits_precision()))
+            .expect("[bug] minimum size for q is to 2^(160 - 1)");
+        let k = (c % rem) + BoxedUint::one();
 
-        if let Some(inv_k) = (&k).mod_inverse(q) {
-            let inv_k = inv_k.to_biguint().unwrap();
-
+        if let Some(inv_k) = k.inv_mod(q).into() {
             // `k` and `k^-1` both have to be in the range `[1, q-1]`
-            if (inv_k > BigUint::zero() && &inv_k < q) && (k > BigUint::zero() && &k < q) {
-                return Some((k, inv_k));
+            if (inv_k > BoxedUint::zero() && inv_k < **q) && (k > BoxedUint::zero() && k < **q) {
+                return Ok(Some((k, inv_k)));
             }
         }
     }
 
-    None
+    Ok(None)
 }

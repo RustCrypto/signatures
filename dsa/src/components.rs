@@ -3,13 +3,12 @@
 //!
 
 use crate::{size::KeySize, two};
-use num_bigint::BigUint;
-use num_traits::Zero;
+use crypto_bigint::{BoxedUint, NonZero, Odd};
 use pkcs8::der::{
-    self, asn1::UintRef, DecodeValue, Encode, EncodeValue, Header, Length, Reader, Sequence, Tag,
-    Writer,
+    self, DecodeValue, Encode, EncodeValue, Header, Length, Reader, Sequence, Tag, Writer,
+    asn1::UintRef,
 };
-use signature::rand_core::CryptoRngCore;
+use signature::rand_core::CryptoRng;
 
 /// The common components of an DSA keypair
 ///
@@ -18,46 +17,61 @@ use signature::rand_core::CryptoRngCore;
 #[must_use]
 pub struct Components {
     /// Prime p
-    p: BigUint,
+    p: Odd<BoxedUint>,
 
     /// Quotient q
-    q: BigUint,
+    q: NonZero<BoxedUint>,
 
     /// Generator g
-    g: BigUint,
+    g: NonZero<BoxedUint>,
+
+    pub(crate) key_size: KeySize,
 }
 
 impl Components {
     /// Construct the common components container from its inner values (p, q and g)
-    pub fn from_components(p: BigUint, q: BigUint, g: BigUint) -> signature::Result<Self> {
-        if p < two() || q < two() || g.is_zero() || g > p {
+    pub fn from_components(
+        p: Odd<BoxedUint>,
+        q: NonZero<BoxedUint>,
+        g: NonZero<BoxedUint>,
+    ) -> signature::Result<Self> {
+        if *p < two() || *q < two() || *g > *p {
             return Err(signature::Error::new());
         }
 
-        Ok(Self { p, q, g })
+        let key_size = match (p.bits_precision(), q.bits_precision()) {
+            #[allow(deprecated)]
+            (p, q) if KeySize::DSA_1024_160.matches(p, q) => KeySize::DSA_1024_160,
+            (p, q) if KeySize::DSA_2048_224.matches(p, q) => KeySize::DSA_2048_224,
+            (p, q) if KeySize::DSA_2048_256.matches(p, q) => KeySize::DSA_2048_256,
+            (p, q) if KeySize::DSA_3072_256.matches(p, q) => KeySize::DSA_3072_256,
+            _ => return Err(signature::Error::new()),
+        };
+
+        Ok(Self { p, q, g, key_size })
     }
 
     /// Generate a new pair of common components
-    pub fn generate(rng: &mut impl CryptoRngCore, key_size: KeySize) -> Self {
+    pub fn generate<R: CryptoRng + ?Sized>(rng: &mut R, key_size: KeySize) -> Self {
         let (p, q, g) = crate::generate::common_components(rng, key_size);
         Self::from_components(p, q, g).expect("[Bug] Newly generated components considered invalid")
     }
 
     /// DSA prime p
     #[must_use]
-    pub const fn p(&self) -> &BigUint {
+    pub const fn p(&self) -> &Odd<BoxedUint> {
         &self.p
     }
 
     /// DSA quotient q
     #[must_use]
-    pub const fn q(&self) -> &BigUint {
+    pub const fn q(&self) -> &NonZero<BoxedUint> {
         &self.q
     }
 
     /// DSA generator g
     #[must_use]
-    pub const fn g(&self) -> &BigUint {
+    pub const fn g(&self) -> &NonZero<BoxedUint> {
         &self.g
     }
 }
@@ -70,9 +84,22 @@ impl<'a> DecodeValue<'a> for Components {
         let q = reader.decode::<UintRef<'_>>()?;
         let g = reader.decode::<UintRef<'_>>()?;
 
-        let p = BigUint::from_bytes_be(p.as_bytes());
-        let q = BigUint::from_bytes_be(q.as_bytes());
-        let g = BigUint::from_bytes_be(g.as_bytes());
+        let p = BoxedUint::from_be_slice(p.as_bytes(), (p.as_bytes().len() * 8) as u32)
+            .expect("invariant violation");
+        let q = BoxedUint::from_be_slice(q.as_bytes(), (q.as_bytes().len() * 8) as u32)
+            .expect("invariant violation");
+        let g = BoxedUint::from_be_slice(g.as_bytes(), (g.as_bytes().len() * 8) as u32)
+            .expect("invariant violation");
+
+        let p = Odd::new(p)
+            .into_option()
+            .ok_or(Tag::Integer.value_error())?;
+        let q = NonZero::new(q)
+            .into_option()
+            .ok_or(Tag::Integer.value_error())?;
+        let g = NonZero::new(g)
+            .into_option()
+            .ok_or(Tag::Integer.value_error())?;
 
         Self::from_components(p, q, g).map_err(|_| Tag::Integer.value_error())
     }
@@ -80,17 +107,17 @@ impl<'a> DecodeValue<'a> for Components {
 
 impl EncodeValue for Components {
     fn value_len(&self) -> der::Result<Length> {
-        UintRef::new(&self.p.to_bytes_be())?.encoded_len()?
-            + UintRef::new(&self.q.to_bytes_be())?.encoded_len()?
-            + UintRef::new(&self.g.to_bytes_be())?.encoded_len()?
+        UintRef::new(&self.p.to_be_bytes())?.encoded_len()?
+            + UintRef::new(&self.q.to_be_bytes())?.encoded_len()?
+            + UintRef::new(&self.g.to_be_bytes())?.encoded_len()?
     }
 
     fn encode_value(&self, writer: &mut impl Writer) -> der::Result<()> {
-        UintRef::new(&self.p.to_bytes_be())?.encode(writer)?;
-        UintRef::new(&self.q.to_bytes_be())?.encode(writer)?;
-        UintRef::new(&self.g.to_bytes_be())?.encode(writer)?;
+        UintRef::new(&self.p.to_be_bytes())?.encode(writer)?;
+        UintRef::new(&self.q.to_be_bytes())?.encode(writer)?;
+        UintRef::new(&self.g.to_be_bytes())?.encode(writer)?;
         Ok(())
     }
 }
 
-impl<'a> Sequence<'a> for Components {}
+impl Sequence<'_> for Components {}
