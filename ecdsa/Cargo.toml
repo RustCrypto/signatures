@@ -36,7 +36,7 @@ sha2 = { version = "=0.11.0-pre.5", default-features = false }
 [features]
 default = ["digest"]
 alloc = ["elliptic-curve/alloc", "signature/alloc", "spki/alloc"]
-std = ["alloc", "elliptic-curve/std", "signature/std"]
+std = ["alloc", "elliptic-curve/std"]
 
 arithmetic = ["elliptic-curve/arithmetic"]
 dev = ["arithmetic", "digest", "elliptic-curve/dev", "hazmat"]
