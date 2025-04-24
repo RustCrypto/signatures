@@ -374,6 +374,7 @@ dependencies = [
  "sha2",
  "signature 3.0.0-pre",
  "spki",
+ "zeroize",
 ]
 
 [[package]]
