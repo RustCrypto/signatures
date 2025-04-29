@@ -105,8 +105,8 @@ impl<P: ForsParams> ForsSignature<P> {
     }
 
     #[cfg(feature = "alloc")]
-    pub fn to_vec(&self) -> Vec<u8> {
-        let mut v = vec![0u8; Self::SIZE];
+    pub fn to_vec(&self) -> alloc::vec::Vec<u8> {
+        let mut v = alloc::vec![0u8; Self::SIZE];
         self.write_to(&mut v);
         v
     }

@@ -188,7 +188,7 @@ impl<P: ParameterSet> SigningKey<P> {
 
     /// Serialize the signing key to a new heap-allocated vector
     #[cfg(feature = "alloc")]
-    pub fn to_vec(&self) -> Vec<u8>
+    pub fn to_vec(&self) -> alloc::vec::Vec<u8>
     where
         P: VerifyingKeyLen,
     {
