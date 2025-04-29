@@ -93,6 +93,11 @@ pub fn bits2field<C: EcdsaCurve>(bits: &[u8]) -> Result<FieldBytes<C>> {
 ///
 /// ECDSA [`Signature`] and a [`RecoveryId`] which can be used to recover the verifying key for a
 /// given signature.
+///
+/// # Errors
+///
+/// This will return an error if a zero-scalar was generated. It can be tried again with a
+/// different `k`.
 #[cfg(feature = "arithmetic")]
 #[allow(non_snake_case)]
 pub fn sign_prehashed<C>(
@@ -140,6 +145,11 @@ where
 /// - `d`: signing key. MUST BE UNIFORMLY RANDOM!!!
 /// - `z`: message digest to be signed, i.e. `H(m)`. Does not have to be reduced in advance.
 /// - `ad`: optional additional data, e.g. added entropy from an RNG
+///
+/// # Errors
+///
+/// This will return an error if a zero-scalar was generated. It can be tried again with different
+/// entropy `ad`.
 ///
 /// [RFC6979]: https://datatracker.ietf.org/doc/html/rfc6979
 #[cfg(feature = "rfc6979")]

@@ -188,9 +188,17 @@ where
         prehash: &[u8],
     ) -> Result<(Signature<C>, RecoveryId)> {
         let z = bits2field::<C>(prehash)?;
-        let mut ad = FieldBytes::<C>::default();
-        rng.try_fill_bytes(&mut ad).map_err(|_| Error::new())?;
-        sign_prehashed_rfc6979::<C, C::Digest>(self.as_nonzero_scalar(), &z, &ad)
+
+        loop {
+            let mut ad = FieldBytes::<C>::default();
+            rng.try_fill_bytes(&mut ad).map_err(|_| Error::new())?;
+
+            if let Ok(result) =
+                sign_prehashed_rfc6979::<C, C::Digest>(self.as_nonzero_scalar(), &z, &ad)
+            {
+                break Ok(result);
+            }
+        }
     }
 
     /// Sign the given message prehash, returning a signature and recovery ID.
