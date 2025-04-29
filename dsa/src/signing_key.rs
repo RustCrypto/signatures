@@ -26,7 +26,7 @@ use signature::{
     hazmat::{PrehashSigner, RandomizedPrehashSigner},
     rand_core::TryCryptoRng,
 };
-use zeroize::{Zeroize, Zeroizing};
+use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 
 /// DSA private key.
 ///
@@ -144,6 +144,8 @@ impl SigningKey {
         }
     }
 }
+
+impl ZeroizeOnDrop for SigningKey {}
 
 impl Signer<Signature> for SigningKey {
     fn try_sign(&self, msg: &[u8]) -> Result<Signature, signature::Error> {
