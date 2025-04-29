@@ -292,6 +292,9 @@ use pkcs8::spki::{
     der::{self, asn1::BitString},
 };
 
+#[cfg(feature = "zeroize")]
+use zeroize::Zeroize;
+
 /// Size of a single component of an Ed25519 signature.
 const COMPONENT_SIZE: usize = 32;
 
@@ -444,5 +447,13 @@ impl fmt::Debug for Signature {
 impl fmt::Display for Signature {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:X}", self)
+    }
+}
+
+#[cfg(feature = "zeroize")]
+impl Zeroize for Signature {
+    fn zeroize(&mut self) {
+        self.R = [0; 32];
+        self.s = [0; 32];
     }
 }
