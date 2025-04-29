@@ -77,6 +77,7 @@ pub use elliptic_curve::{self, PrimeCurve, sec1::EncodedPoint};
 
 // Re-export the `signature` crate (and select types)
 pub use signature::{self, Error, Result, SignatureEncoding};
+use zeroize::Zeroize;
 
 #[cfg(feature = "signing")]
 pub use crate::signing::SigningKey;
@@ -522,6 +523,13 @@ where
         let mut bytes = SignatureBytes::<C>::default();
         serdect::array::deserialize_hex_or_bin(&mut bytes, deserializer)?;
         Self::try_from(bytes.as_slice()).map_err(de::Error::custom)
+    }
+}
+
+impl<C: EcdsaCurve> Zeroize for Signature<C> {
+    fn zeroize(&mut self) {
+        self.r = ScalarPrimitive::ONE;
+        self.s = ScalarPrimitive::ONE;
     }
 }
 
