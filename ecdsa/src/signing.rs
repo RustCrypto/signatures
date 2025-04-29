@@ -267,6 +267,41 @@ where
     }
 }
 
+#[cfg(feature = "der")]
+impl<D, C> DigestSigner<D, der::Signature<C>> for SigningKey<C>
+where
+    C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
+    D: Digest + FixedOutput,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
+    SignatureSize<C>: ArraySize,
+    der::MaxSize<C>: ArraySize,
+    <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
+{
+    fn try_sign_digest(&self, msg_digest: D) -> Result<der::Signature<C>> {
+        DigestSigner::<D, Signature<C>>::try_sign_digest(self, msg_digest).map(Into::into)
+    }
+}
+
+#[cfg(feature = "der")]
+impl<C, D> RandomizedDigestSigner<D, der::Signature<C>> for SigningKey<C>
+where
+    C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
+    D: Digest + FixedOutput,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
+    SignatureSize<C>: ArraySize,
+    der::MaxSize<C>: ArraySize,
+    <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
+{
+    fn try_sign_digest_with_rng<R: TryCryptoRng + ?Sized>(
+        &self,
+        rng: &mut R,
+        msg_digest: D,
+    ) -> Result<der::Signature<C>> {
+        RandomizedDigestSigner::<D, Signature<C>>::try_sign_digest_with_rng(self, rng, msg_digest)
+            .map(Into::into)
+    }
+}
+
 //
 // Other trait impls
 //
