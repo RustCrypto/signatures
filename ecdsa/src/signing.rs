@@ -194,9 +194,17 @@ where
         prehash: &[u8],
     ) -> Result<Signature<C>> {
         let z = bits2field::<C>(prehash)?;
-        let mut ad = FieldBytes::<C>::default();
-        rng.try_fill_bytes(&mut ad).map_err(|_| Error::new())?;
-        Ok(sign_prehashed_rfc6979::<C, C::Digest>(&self.secret_scalar, &z, &ad)?.0)
+
+        loop {
+            let mut ad = FieldBytes::<C>::default();
+            rng.try_fill_bytes(&mut ad).map_err(|_| Error::new())?;
+
+            if let Ok((signature, _)) =
+                sign_prehashed_rfc6979::<C, C::Digest>(&self.secret_scalar, &z, &ad)
+            {
+                break Ok(signature);
+            }
+        }
     }
 }
 
