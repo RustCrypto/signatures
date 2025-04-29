@@ -209,7 +209,7 @@ mod tests {
         let sk = SigningKey::<P>::new(&mut rng);
         let msg = b"Hello, world!";
         let sig = sk.try_sign(msg).unwrap();
-        let sig_vec: Vec<u8> = (&sig).into();
+        let sig_vec: alloc::vec::Vec<u8> = (&sig).into();
         assert_eq!(
             sig.encoded_len(),
             sig_vec.len(),
