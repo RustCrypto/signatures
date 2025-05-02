@@ -9,7 +9,7 @@ use crate::{
     two,
 };
 use crypto_bigint::{
-    BoxedUint, NonZero, Odd, RandomBits,
+    BoxedUint, NonZero, Odd, RandomBits, Resize,
     modular::{BoxedMontyForm, BoxedMontyParams},
     subtle::CtOption,
 };
@@ -46,7 +46,7 @@ pub fn common<R: CryptoRng + ?Sized>(
                     break 'gen_m m;
                 }
             };
-            let rem = NonZero::new((two() * &*q).widen(m.bits_precision()))
+            let rem = NonZero::new((two() * &*q).resize(m.bits_precision()))
                 .expect("[bug] 2 * NonZero can't be zero");
 
             let mr = &m % &rem;
@@ -60,11 +60,11 @@ pub fn common<R: CryptoRng + ?Sized>(
     };
 
     // Q needs to be the same precision as P for the operations below.
-    let q = q.widen(l);
+    let q = q.resize(l);
 
     // Generate g using the unverifiable method as defined by Appendix A.2.1
     let e = (&*p - &BoxedUint::one()) / &q;
-    let mut h = BoxedUint::one().widen(l);
+    let mut h = BoxedUint::one().resize(l);
     let g = loop {
         let params = BoxedMontyParams::new_vartime(p.clone());
         let form = BoxedMontyForm::new(h.clone(), params);
@@ -79,7 +79,7 @@ pub fn common<R: CryptoRng + ?Sized>(
         h += BoxedUint::one();
     };
 
-    let q = NonZero::new(q.shorten(n)).expect("[bug] q_min(2^N-1) < q < q_max(2^N), Q is non zero");
+    let q = q.resize(n);
 
     (p, q, g)
 }
