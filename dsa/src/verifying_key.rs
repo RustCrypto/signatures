@@ -5,7 +5,7 @@
 use crate::{Components, OID, Signature, two};
 use core::cmp::min;
 use crypto_bigint::{
-    BoxedUint, NonZero,
+    BoxedUint, NonZero, Resize,
     modular::{BoxedMontyForm, BoxedMontyParams},
 };
 use digest::Digest;
@@ -69,9 +69,9 @@ impl VerifyingKey {
             return Some(false);
         }
 
-        let q = &q.widen(p.bits_precision());
-        let r = &r.widen(p.bits_precision());
-        let s = &s.widen(p.bits_precision());
+        let q = &q.resize(p.bits_precision());
+        let r = &r.resize(p.bits_precision());
+        let s = &s.resize(p.bits_precision());
 
         let w: BoxedUint = Option::from(s.inv_mod(q))?;
 
@@ -82,10 +82,10 @@ impl VerifyingKey {
         let z = BoxedUint::from_be_slice(&hash[..z_len], z_len as u32 * 8)
             .expect("invariant violation");
 
-        let z = z.widen(p.bits_precision());
-        let w = w.widen(q.bits_precision());
+        let z = z.resize(p.bits_precision());
+        let w = w.resize(q.bits_precision());
 
-        let u1 = (&z * &w) % q.widen(p.bits_precision());
+        let u1 = (&z * &w) % q.resize(p.bits_precision());
         let u2 = r.mul_mod(&w, q);
 
         let p1_params = BoxedMontyParams::new(p.clone());
@@ -97,9 +97,9 @@ impl VerifyingKey {
         let v1 = g_form.pow(&u1).retrieve();
         let v2 = y_form.pow(&u2).retrieve();
         let v3 = v1 * v2;
-        let p = p.widen(v3.bits_precision());
-        let q = q.widen(v3.bits_precision());
-        let v4 = v3 % NonZero::new(p).expect("[bug] p is an odd number and can't be zero");
+        let p = p.resize(v3.bits_precision());
+        let q = q.resize(v3.bits_precision());
+        let v4 = v3 % p.as_nz_ref();
         let v = v4 % q;
 
         Some(v == **r)

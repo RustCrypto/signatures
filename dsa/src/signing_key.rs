@@ -8,7 +8,7 @@ use core::{
     fmt::{self, Debug},
 };
 use crypto_bigint::{
-    BoxedUint, NonZero,
+    BoxedUint, NonZero, Resize,
     modular::{BoxedMontyForm, BoxedMontyParams},
 };
 use digest::{Digest, FixedOutputReset, core_api::BlockSizeUser};
@@ -104,18 +104,18 @@ impl SigningKey {
 
         debug_assert_eq!(key_size.n_aligned(), q.bits_precision());
 
-        let x = x.widen(p.bits_precision());
+        let x = x.resize(p.bits_precision());
         let x = &x;
 
-        let k = k.widen(p.bits_precision());
-        let inv_k = inv_k.widen(p.bits_precision());
+        let k = k.resize(p.bits_precision());
+        let inv_k = inv_k.resize(p.bits_precision());
 
         let params = BoxedMontyParams::new(p.clone());
         let form = BoxedMontyForm::new((**g).clone(), params);
-        let r = form.pow(&k).retrieve() % q.widen(p.bits_precision());
+        let r = form.pow(&k).retrieve() % q.resize(p.bits_precision());
         debug_assert_eq!(key_size.l_aligned(), r.bits_precision());
 
-        let r_short = r.shorten(key_size.n_aligned());
+        let r_short = r.clone().resize(key_size.n_aligned());
         let r_short = NonZero::new(r_short)
             .expect("[bug] invalid value of k used here, the secret number computed was invalid");
         let r = NonZero::new(r)
@@ -128,8 +128,8 @@ impl SigningKey {
         let z = BoxedUint::from_be_slice(&hash[..z_len], z_len as u32 * 8)
             .expect("invariant violation");
 
-        let s = inv_k.mul_mod(&(z + &**x * &*r), &q.widen(key_size.l_aligned()));
-        let s = s.shorten(key_size.n_aligned());
+        let s = inv_k.mul_mod(&(z + &**x * &*r), &q.resize(key_size.l_aligned()));
+        let s = s.resize(key_size.n_aligned());
         let s = NonZero::new(s)
             .expect("[bug] invalid value of k used here, the secret number computed was invalid");
 

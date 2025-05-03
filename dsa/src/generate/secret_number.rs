@@ -5,7 +5,7 @@
 use crate::{Components, signing_key::SigningKey};
 use alloc::vec;
 use core::cmp::min;
-use crypto_bigint::{BoxedUint, NonZero, RandomBits};
+use crypto_bigint::{BoxedUint, NonZero, RandomBits, Resize};
 use digest::{Digest, FixedOutputReset, core_api::BlockSizeUser};
 use signature::rand_core::TryCryptoRng;
 use zeroize::Zeroizing;
@@ -68,14 +68,14 @@ pub fn secret_number<R: TryCryptoRng + ?Sized>(
 ) -> Result<Option<(BoxedUint, BoxedUint)>, signature::Error> {
     let q = components.q();
     let n = q.bits();
-    let q = q.widen(n + 64);
+    let q = q.resize(n + 64);
     let q = &q;
 
     // Attempt to try a fitting secret number
     // Give up after 4096 tries
     for _ in 0..4096 {
         let c = BoxedUint::try_random_bits(rng, n + 64).map_err(|_| signature::Error::new())?;
-        let rem = NonZero::new((&**q - &BoxedUint::one()).widen(c.bits_precision()))
+        let rem = NonZero::new((&**q - &BoxedUint::one()).resize(c.bits_precision()))
             .expect("[bug] minimum size for q is to 2^(160 - 1)");
         let k = (c % rem) + BoxedUint::one();
 
