@@ -2,7 +2,7 @@
 
 use crate::{
     EcdsaCurve, Error, Result, Signature, SignatureSize,
-    hazmat::{self, bits2field},
+    hazmat::{self, DigestPrimitive, bits2field},
 };
 use core::{cmp::Ordering, fmt::Debug};
 use elliptic_curve::{
@@ -13,7 +13,7 @@ use elliptic_curve::{
     sec1::{self, CompressedPoint, EncodedPoint, FromEncodedPoint, ToEncodedPoint},
 };
 use signature::{
-    DigestVerifier,
+    DigestVerifier, Verifier,
     digest::{Digest, FixedOutput},
     hazmat::PrehashVerifier,
 };
@@ -42,11 +42,9 @@ use serdect::serde::{Deserialize, Serialize, de, ser};
 #[cfg(feature = "sha2")]
 use {
     crate::{
-        DigestAlgorithm, ECDSA_SHA224_OID, ECDSA_SHA256_OID, ECDSA_SHA384_OID, ECDSA_SHA512_OID,
-        SignatureWithOid,
+        ECDSA_SHA224_OID, ECDSA_SHA256_OID, ECDSA_SHA384_OID, ECDSA_SHA512_OID, SignatureWithOid,
     },
     sha2::{Sha224, Sha256, Sha384, Sha512},
-    signature::Verifier,
 };
 
 #[cfg(all(feature = "alloc", feature = "pkcs8"))]
@@ -174,10 +172,20 @@ where
     }
 }
 
+impl<C> Verifier<Signature<C>> for VerifyingKey<C>
+where
+    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
+    SignatureSize<C>: ArraySize,
+{
+    fn verify(&self, msg: &[u8], signature: &Signature<C>) -> Result<()> {
+        self.verify_digest(C::Digest::new_with_prefix(msg), signature)
+    }
+}
+
 #[cfg(feature = "sha2")]
 impl<C> Verifier<SignatureWithOid<C>> for VerifyingKey<C>
 where
-    C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
+    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     SignatureSize<C>: ArraySize,
 {
     fn verify(&self, msg: &[u8], sig: &SignatureWithOid<C>) -> Result<()> {
@@ -217,6 +225,20 @@ where
     fn verify_prehash(&self, prehash: &[u8], signature: &der::Signature<C>) -> Result<()> {
         let signature = Signature::<C>::try_from(signature.clone())?;
         PrehashVerifier::<Signature<C>>::verify_prehash(self, prehash, &signature)
+    }
+}
+
+#[cfg(feature = "der")]
+impl<C> Verifier<der::Signature<C>> for VerifyingKey<C>
+where
+    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
+    SignatureSize<C>: ArraySize,
+    der::MaxSize<C>: ArraySize,
+    <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
+{
+    fn verify(&self, msg: &[u8], signature: &der::Signature<C>) -> Result<()> {
+        let signature = Signature::<C>::try_from(signature.clone())?;
+        Verifier::<Signature<C>>::verify(self, msg, &signature)
     }
 }
 

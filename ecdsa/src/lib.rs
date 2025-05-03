@@ -102,13 +102,9 @@ use {
 };
 
 #[cfg(feature = "digest")]
-use {
-    digest::{
-        Digest, FixedOutput, FixedOutputReset,
-        const_oid::{AssociatedOid, ObjectIdentifier},
-        core_api::BlockSizeUser,
-    },
-    signature::PrehashSignature,
+use digest::{
+    Digest,
+    const_oid::{AssociatedOid, ObjectIdentifier},
 };
 
 #[cfg(feature = "pkcs8")]
@@ -468,15 +464,15 @@ where
 ///
 /// To support non-default digest algorithms, use the [`SignatureWithOid`]
 /// type instead.
-#[cfg(feature = "digest")]
+#[cfg(all(feature = "digest", feature = "hazmat"))]
 impl<C> AssociatedOid for Signature<C>
 where
-    C: DigestAlgorithm,
+    C: hazmat::DigestPrimitive,
     C::Digest: AssociatedOid,
 {
     const OID: ObjectIdentifier = match ecdsa_oid_for_digest(C::Digest::OID) {
         Some(oid) => oid,
-        None => panic!("no RFC5758 ECDSA OID defined for DigestAlgorithm::Digest"),
+        None => panic!("no RFC5758 ECDSA OID defined for DigestPrimitive::Digest"),
     };
 }
 
@@ -725,14 +721,14 @@ where
 }
 
 /// NOTE: this implementation assumes the default digest for the given elliptic
-/// curve as defined by [`DigestAlgorithm`].
+/// curve as defined by [`hazmat::DigestPrimitive`].
 ///
 /// When working with alternative digests, you will need to use e.g.
 /// [`SignatureWithOid::new_with_digest`].
-#[cfg(feature = "digest")]
+#[cfg(all(feature = "digest", feature = "hazmat"))]
 impl<C> SignatureEncoding for SignatureWithOid<C>
 where
-    C: DigestAlgorithm,
+    C: hazmat::DigestPrimitive,
     C::Digest: AssociatedOid,
     SignatureSize<C>: ArraySize,
 {
@@ -740,14 +736,14 @@ where
 }
 
 /// NOTE: this implementation assumes the default digest for the given elliptic
-/// curve as defined by [`DigestAlgorithm`].
+/// curve as defined by [`hazmat::DigestPrimitive`].
 ///
 /// When working with alternative digests, you will need to use e.g.
 /// [`SignatureWithOid::new_with_digest`].
-#[cfg(feature = "digest")]
+#[cfg(all(feature = "digest", feature = "hazmat"))]
 impl<C> TryFrom<&[u8]> for SignatureWithOid<C>
 where
-    C: DigestAlgorithm,
+    C: hazmat::DigestPrimitive,
     C::Digest: AssociatedOid,
     SignatureSize<C>: ArraySize,
 {
@@ -781,30 +777,4 @@ const fn ecdsa_oid_for_digest(digest_oid: ObjectIdentifier) -> Option<ObjectIden
         SHA512_OID => Some(ECDSA_SHA512_OID),
         _ => None,
     }
-}
-
-/// Bind a preferred [`Digest`] algorithm to an elliptic curve type.
-///
-/// Generally there is a preferred variety of the SHA-2 family used with ECDSA
-/// for a particular elliptic curve.
-///
-/// This trait can be used to specify it, and with it receive a blanket impl of
-/// [`PrehashSignature`], used by [`signature_derive`][1]) for the [`Signature`]
-/// type for a particular elliptic curve.
-///
-/// [1]: https://github.com/RustCrypto/traits/tree/master/signature/derive
-#[cfg(feature = "digest")]
-pub trait DigestAlgorithm: EcdsaCurve {
-    /// Preferred digest to use when computing ECDSA signatures for this
-    /// elliptic curve. This is typically a member of the SHA-2 family.
-    type Digest: BlockSizeUser + Digest + FixedOutput + FixedOutputReset;
-}
-
-#[cfg(feature = "digest")]
-impl<C> PrehashSignature for Signature<C>
-where
-    C: DigestAlgorithm,
-    <FieldBytesSize<C> as Add>::Output: ArraySize,
-{
-    type Digest = C::Digest;
 }
