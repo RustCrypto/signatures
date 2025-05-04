@@ -1,4 +1,4 @@
-#![cfg_attr(not(feature = "alloc"), no_std)]
+#![no_std]
 #![doc = include_str!("../README.md")]
 #![warn(clippy::pedantic)] // Be pedantic by default
 //#![allow(non_snake_case)] // Allow notation matching the spec
@@ -45,6 +45,9 @@
 //!
 //! assert!(vk_deserialized.verify(message, &sig).is_ok())
 //! ```
+
+#[cfg(feature = "alloc")]
+extern crate alloc;
 
 pub use signature;
 

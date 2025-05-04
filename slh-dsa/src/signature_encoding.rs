@@ -33,8 +33,8 @@ pub struct Signature<P: ParameterSet> {
 impl<P: ParameterSet> Signature<P> {
     #[cfg(feature = "alloc")]
     /// Serialize the signature to a `Vec<u8>` of length `P::SigLen`.
-    pub fn to_vec(&self) -> Vec<u8> {
-        let mut bytes = Vec::with_capacity(P::SigLen::USIZE);
+    pub fn to_vec(&self) -> alloc::vec::Vec<u8> {
+        let mut bytes = alloc::vec::Vec::with_capacity(P::SigLen::USIZE);
         bytes.extend_from_slice(&self.randomizer);
         bytes.extend_from_slice(&self.fors_sig.to_vec());
         bytes.extend_from_slice(&self.ht_sig.to_vec());
@@ -81,8 +81,8 @@ impl<P: ParameterSet> TryFrom<&[u8]> for Signature<P> {
 }
 
 #[cfg(feature = "alloc")]
-impl<P: ParameterSet> From<&Signature<P>> for Vec<u8> {
-    fn from(sig: &Signature<P>) -> Vec<u8> {
+impl<P: ParameterSet> From<&Signature<P>> for alloc::vec::Vec<u8> {
+    fn from(sig: &Signature<P>) -> alloc::vec::Vec<u8> {
         sig.to_vec()
     }
 }
@@ -209,7 +209,7 @@ mod tests {
         let sk = SigningKey::<P>::new(&mut rng);
         let msg = b"Hello, world!";
         let sig = sk.try_sign(msg).unwrap();
-        let sig_vec: Vec<u8> = (&sig).into();
+        let sig_vec: alloc::vec::Vec<u8> = (&sig).into();
         assert_eq!(
             sig.encoded_len(),
             sig_vec.len(),

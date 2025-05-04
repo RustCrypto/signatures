@@ -105,7 +105,7 @@ impl<P: ParameterSet + VerifyingKeyLen> VerifyingKey<P> {
 
     /// Serialize the verifying key to a new heap-allocated vector
     #[cfg(feature = "alloc")]
-    pub fn to_vec(&self) -> Vec<u8> {
+    pub fn to_vec(&self) -> alloc::vec::Vec<u8> {
         self.to_bytes().to_vec()
     }
 }

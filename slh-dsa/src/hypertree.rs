@@ -28,8 +28,8 @@ impl<P: HypertreeParams> HypertreeSig<P> {
     }
 
     #[cfg(feature = "alloc")]
-    pub fn to_vec(&self) -> Vec<u8> {
-        let mut buf = vec![0u8; Self::SIZE];
+    pub fn to_vec(&self) -> alloc::vec::Vec<u8> {
+        let mut buf = alloc::vec![0u8; Self::SIZE];
         self.write_to(&mut buf);
         buf
     }
