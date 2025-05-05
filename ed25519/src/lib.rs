@@ -298,8 +298,7 @@ use zeroize::Zeroize;
 /// Size of a single component of an Ed25519 signature.
 const COMPONENT_SIZE: usize = 32;
 
-/// Size of an `R` or `s` component of an Ed25519 signature when serialized
-/// as bytes.
+/// Byte representation of an `R` or `s` component of an Ed25519 signature.
 pub type ComponentBytes = [u8; COMPONENT_SIZE];
 
 /// Ed25519 signature serialized as a byte array.
