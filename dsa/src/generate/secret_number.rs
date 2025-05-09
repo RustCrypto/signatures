@@ -48,7 +48,7 @@ where
 
         let k = BoxedUint::from_be_slice(&buffer, q.bits_precision())
             .map_err(|_| signature::Error::new())?;
-        if let Some(inv_k) = k.inv_mod(q).into() {
+        if let Some(inv_k) = k.invert_mod(q).into() {
             if (bool::from(k.is_nonzero())) && (k < **q) {
                 return Ok((k, inv_k));
             }
@@ -79,7 +79,7 @@ pub fn secret_number<R: TryCryptoRng + ?Sized>(
             .expect("[bug] minimum size for q is to 2^(160 - 1)");
         let k = (c % rem) + BoxedUint::one();
 
-        if let Some(inv_k) = k.inv_mod(q).into() {
+        if let Some(inv_k) = k.invert_mod(q).into() {
             // `k` and `k^-1` both have to be in the range `[1, q-1]`
             if (inv_k > BoxedUint::zero() && inv_k < **q) && (k > BoxedUint::zero() && k < **q) {
                 return Ok(Some((k, inv_k)));
