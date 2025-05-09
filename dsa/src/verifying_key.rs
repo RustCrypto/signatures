@@ -73,7 +73,7 @@ impl VerifyingKey {
         let r = &r.resize(p.bits_precision());
         let s = &s.resize(p.bits_precision());
 
-        let w: BoxedUint = Option::from(s.inv_mod(q))?;
+        let w: BoxedUint = Option::from(s.invert_mod(q))?;
 
         let n = q.bits() / 8;
         let block_size = hash.len(); // Hash function output size
