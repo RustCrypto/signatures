@@ -8,7 +8,10 @@ use core::{
     fmt::{self, Debug},
     ops::{Add, Range},
 };
-use der::{Decode, Encode, FixedTag, Header, Length, Reader, Tag, Writer, asn1::UintRef};
+use der::{
+    Decode, DecodeValue, Encode, EncodeValue, FixedTag, Header, Length, Reader, Sequence, Tag,
+    Writer, asn1::UintRef,
+};
 use elliptic_curve::{
     FieldBytesSize,
     array::{Array, ArraySize, typenum::Unsigned},
@@ -82,7 +85,7 @@ where
 {
     /// Parse signature from DER-encoded bytes.
     pub fn from_bytes(input: &[u8]) -> Result<Self> {
-        let (r, s) = decode_der(input).map_err(|_| Error::new())?;
+        let SignatureRef { r, s } = decode_der(input).map_err(|_| Error::new())?;
 
         if r.as_bytes().len() > C::FieldBytesSize::USIZE
             || s.as_bytes().len() > C::FieldBytesSize::USIZE
@@ -110,19 +113,13 @@ where
     /// Create an ASN.1 DER encoded signature from big endian `r` and `s` scalar
     /// components.
     pub(crate) fn from_components(r: &[u8], s: &[u8]) -> der::Result<Self> {
-        let r = UintRef::new(r)?;
-        let s = UintRef::new(s)?;
-
+        let sig = SignatureRef {
+            r: UintRef::new(r)?,
+            s: UintRef::new(s)?,
+        };
         let mut bytes = SignatureBytes::<C>::default();
-        let mut writer = der::SliceWriter::new(&mut bytes);
 
-        writer.sequence((r.encoded_len()? + s.encoded_len()?)?, |seq| {
-            seq.encode(&r)?;
-            seq.encode(&s)
-        })?;
-
-        writer
-            .finish()?
+        sig.encode_to_slice(&mut bytes)?
             .try_into()
             .map_err(|_| Tag::Sequence.value_error())
     }
@@ -356,19 +353,41 @@ where
     }
 }
 
+struct SignatureRef<'a> {
+    pub r: UintRef<'a>,
+    pub s: UintRef<'a>,
+}
+impl EncodeValue for SignatureRef<'_> {
+    fn value_len(&self) -> der::Result<Length> {
+        self.r.encoded_len()? + self.s.encoded_len()?
+    }
+
+    fn encode_value(&self, encoder: &mut impl Writer) -> der::Result<()> {
+        self.r.encode(encoder)?;
+        self.s.encode(encoder)?;
+        Ok(())
+    }
+}
+impl<'a> SignatureRef<'a> {
+    fn decode_value_inner<R: Reader<'a>>(reader: &mut R) -> der::Result<Self> {
+        Ok(Self {
+            r: UintRef::decode(reader)?,
+            s: UintRef::decode(reader)?,
+        })
+    }
+}
+impl<'a> DecodeValue<'a> for SignatureRef<'a> {
+    type Error = der::Error;
+
+    fn decode_value<R: Reader<'a>>(reader: &mut R, header: Header) -> der::Result<Self> {
+        reader.read_nested(header.length, Self::decode_value_inner)
+    }
+}
+impl<'a> Sequence<'a> for SignatureRef<'a> {}
+
 /// Decode the `r` and `s` components of a DER-encoded ECDSA signature.
-fn decode_der(der_bytes: &[u8]) -> der::Result<(UintRef<'_>, UintRef<'_>)> {
-    let mut reader = der::SliceReader::new(der_bytes)?;
-    let header = Header::decode(&mut reader)?;
-    header.tag.assert_eq(Tag::Sequence)?;
-
-    let ret = reader.read_nested::<_, _, der::Error>(header.length, |reader| {
-        let r = UintRef::decode(reader)?;
-        let s = UintRef::decode(reader)?;
-        Ok((r, s))
-    })?;
-
-    reader.finish(ret)
+fn decode_der(der_bytes: &[u8]) -> der::Result<SignatureRef<'_>> {
+    SignatureRef::from_der(der_bytes)
 }
 
 /// Locate the range within a slice at which a particular subslice is located
