@@ -369,7 +369,7 @@ impl<'a> EncodeValue for SignatureRef<'a> {
     }
 }
 impl<'a> SignatureRef<'a> {
-    fn decode_value_inner<R: Reader<'a>>(reader: &mut R) -> core::result::Result<Self, der::Error> {
+    fn decode_value_inner<R: Reader<'a>>(reader: &mut R) -> der::Result<Self> {
         Ok(Self {
             r: UintRef::decode(reader)?,
             s: UintRef::decode(reader)?,
@@ -379,10 +379,7 @@ impl<'a> SignatureRef<'a> {
 impl<'a> DecodeValue<'a> for SignatureRef<'a> {
     type Error = der::Error;
 
-    fn decode_value<R: Reader<'a>>(
-        reader: &mut R,
-        header: Header,
-    ) -> core::result::Result<Self, Self::Error> {
+    fn decode_value<R: Reader<'a>>(reader: &mut R, header: Header) -> der::Result<Self> {
         reader.read_nested(header.length, Self::decode_value_inner)
     }
 }
