@@ -8,7 +8,7 @@ use core::{
     fmt::{self, Debug},
     ops::{Add, Range},
 };
-use der::{Decode, Encode, FixedTag, Header, Length, Reader, Tag, Writer, asn1::UintRef};
+use der::{Decode, Encode, FixedTag, Header, Length, Reader, Sequence, Tag, Writer, asn1::UintRef};
 use elliptic_curve::{
     FieldBytesSize,
     array::{Array, ArraySize, typenum::Unsigned},
@@ -82,7 +82,7 @@ where
 {
     /// Parse signature from DER-encoded bytes.
     pub fn from_bytes(input: &[u8]) -> Result<Self> {
-        let (r, s) = decode_der(input).map_err(|_| Error::new())?;
+        let DerSignature { r, s } = decode_der(input).map_err(|_| Error::new())?;
 
         if r.as_bytes().len() > C::FieldBytesSize::USIZE
             || s.as_bytes().len() > C::FieldBytesSize::USIZE
@@ -356,19 +356,15 @@ where
     }
 }
 
+#[derive(Sequence)]
+struct DerSignature<'a> {
+    pub r: UintRef<'a>,
+    pub s: UintRef<'a>,
+}
+
 /// Decode the `r` and `s` components of a DER-encoded ECDSA signature.
-fn decode_der(der_bytes: &[u8]) -> der::Result<(UintRef<'_>, UintRef<'_>)> {
-    let mut reader = der::SliceReader::new(der_bytes)?;
-    let header = Header::decode(&mut reader)?;
-    header.tag.assert_eq(Tag::Sequence)?;
-
-    let ret = reader.read_nested::<_, _, der::Error>(header.length, |reader| {
-        let r = UintRef::decode(reader)?;
-        let s = UintRef::decode(reader)?;
-        Ok((r, s))
-    })?;
-
-    reader.finish(ret)
+fn decode_der(der_bytes: &[u8]) -> der::Result<DerSignature<'_>> {
+    DerSignature::from_der(der_bytes)
 }
 
 /// Locate the range within a slice at which a particular subslice is located
