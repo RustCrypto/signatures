@@ -357,7 +357,7 @@ struct SignatureRef<'a> {
     pub r: UintRef<'a>,
     pub s: UintRef<'a>,
 }
-impl<'a> EncodeValue for SignatureRef<'a> {
+impl EncodeValue for SignatureRef<'_> {
     fn value_len(&self) -> der::Result<Length> {
         self.r.encoded_len()? + self.s.encoded_len()?
     }
