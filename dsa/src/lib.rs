@@ -109,43 +109,99 @@ impl Signature {
     pub fn s(&self) -> &NonZero<BoxedUint> {
         &self.s
     }
+
+    fn to_boxed(&self) -> SignatureBoxed {
+        SignatureBoxed {
+            r: self.r.to_be_bytes(),
+            s: self.s.to_be_bytes(),
+        }
+    }
+    fn to_der_using_ref(&self) -> der::Result<Vec<u8>> {
+        self.to_boxed().to_ref()?.to_der()
+    }
 }
+
+struct SignatureBoxed {
+    r: Box<[u8]>,
+    s: Box<[u8]>,
+}
+impl SignatureBoxed {
+    fn to_ref(&self) -> der::Result<SignatureRef<'_>> {
+        Ok(SignatureRef {
+            r: UintRef::new(&self.r)?,
+            s: UintRef::new(&self.s)?,
+        })
+    }
+}
+
+struct SignatureRef<'a> {
+    r: UintRef<'a>,
+    s: UintRef<'a>,
+}
+impl<'a> SignatureRef<'a> {
+    fn to_owned(&self) -> der::Result<Signature> {
+        let r = BoxedUint::from_be_slice(self.r.as_bytes(), self.r.as_bytes().len() as u32 * 8)
+            .map_err(|_| UintRef::TAG.value_error())?;
+        let s = BoxedUint::from_be_slice(self.s.as_bytes(), self.s.as_bytes().len() as u32 * 8)
+            .map_err(|_| UintRef::TAG.value_error())?;
+
+        let r = NonZero::new(r)
+            .into_option()
+            .ok_or(UintRef::TAG.value_error())?;
+        let s = NonZero::new(s)
+            .into_option()
+            .ok_or(UintRef::TAG.value_error())?;
+
+        Ok(Signature::from_components(r, s))
+    }
+
+    fn decode_value_inner<R: Reader<'a>>(reader: &mut R) -> der::Result<Self> {
+        Ok(SignatureRef {
+            r: UintRef::decode(reader)?,
+            s: UintRef::decode(reader)?,
+        })
+    }
+}
+
+impl<'a> DecodeValue<'a> for SignatureRef<'a> {
+    type Error = der::Error;
+
+    fn decode_value<R: Reader<'a>>(reader: &mut R, header: Header) -> der::Result<Self> {
+        reader.read_nested(header.length, Self::decode_value_inner)
+    }
+}
+
+impl EncodeValue for SignatureRef<'_> {
+    fn value_len(&self) -> der::Result<Length> {
+        self.r.encoded_len()? + self.s.encoded_len()?
+    }
+
+    fn encode_value(&self, writer: &mut impl Writer) -> der::Result<()> {
+        self.r.encode(writer)?;
+        self.s.encode(writer)?;
+        Ok(())
+    }
+}
+impl<'a> Sequence<'a> for SignatureRef<'a> {}
 
 impl<'a> DecodeValue<'a> for Signature {
     type Error = der::Error;
 
     fn decode_value<R: Reader<'a>>(reader: &mut R, header: Header) -> der::Result<Self> {
-        reader.read_nested(header.length, |reader| {
-            let r = UintRef::decode(reader)?;
-            let s = UintRef::decode(reader)?;
+        let signature_ref = SignatureRef::decode_value(reader, header)?;
 
-            let r = BoxedUint::from_be_slice(r.as_bytes(), r.as_bytes().len() as u32 * 8)
-                .map_err(|_| UintRef::TAG.value_error())?;
-            let s = BoxedUint::from_be_slice(s.as_bytes(), s.as_bytes().len() as u32 * 8)
-                .map_err(|_| UintRef::TAG.value_error())?;
-
-            let r = NonZero::new(r)
-                .into_option()
-                .ok_or(UintRef::TAG.value_error())?;
-            let s = NonZero::new(s)
-                .into_option()
-                .ok_or(UintRef::TAG.value_error())?;
-
-            Ok(Self::from_components(r, s))
-        })
+        signature_ref.to_owned()
     }
 }
 
 impl EncodeValue for Signature {
     fn value_len(&self) -> der::Result<Length> {
-        UintRef::new(&self.r.to_be_bytes())?.encoded_len()?
-            + UintRef::new(&self.s.to_be_bytes())?.encoded_len()?
+        // TODO: avoid Box<[u8]> allocation here
+        self.to_boxed().to_ref()?.value_len()
     }
 
     fn encode_value(&self, writer: &mut impl Writer) -> der::Result<()> {
-        UintRef::new(&self.r.to_be_bytes())?.encode(writer)?;
-        UintRef::new(&self.s.to_be_bytes())?.encode(writer)?;
-        Ok(())
+        self.to_boxed().to_ref()?.encode_value(writer)
     }
 }
 
@@ -177,7 +233,7 @@ impl SignatureEncoding for Signature {
     }
 
     fn to_vec(&self) -> Vec<u8> {
-        self.to_der().expect("DER encoding error")
+        self.to_der_using_ref().expect("DER encoding error")
     }
 }
 
