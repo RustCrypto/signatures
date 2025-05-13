@@ -3,7 +3,7 @@ use hybrid_array::{Array, ArraySize, typenum::Unsigned};
 
 // Algorithm 3
 pub fn base_2b<OutLen: ArraySize, B: Unsigned>(x: &[u8]) -> Array<u16, OutLen> {
-    debug_assert!(x.len() >= (OutLen::USIZE * B::USIZE + 7) / 8);
+    debug_assert!(x.len() >= (OutLen::USIZE * B::USIZE).div_ceil(8));
     debug_assert!(B::USIZE <= 16);
 
     let mut bits = 0usize;
