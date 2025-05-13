@@ -139,9 +139,7 @@ where
         let mut k = SimpleHmac::new(&Default::default());
         let mut v = Array::default();
 
-        for b in &mut v {
-            *b = 0x01;
-        }
+        v.fill(0x01);
 
         for i in 0..=1 {
             k.update(&v);
