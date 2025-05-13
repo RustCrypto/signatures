@@ -65,6 +65,7 @@ use pkcs8::spki::ObjectIdentifier;
 
 mod components;
 mod generate;
+mod signature_ref;
 mod signing_key;
 mod size;
 mod verifying_key;
@@ -76,10 +77,10 @@ pub const OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.2.840.10040.4.
 
 use alloc::{boxed::Box, vec::Vec};
 use pkcs8::der::{
-    self, Decode, DecodeValue, Encode, EncodeValue, FixedTag, Header, Length, Reader, Sequence,
-    Writer, asn1::UintRef,
+    self, Decode, DecodeValue, Encode, EncodeValue, Header, Length, Reader, Sequence, Writer,
 };
 use signature::SignatureEncoding;
+use signature_ref::{SignatureBoxed, SignatureRef};
 
 /// Container of the DSA signature
 #[derive(Clone, Debug)]
@@ -111,78 +112,12 @@ impl Signature {
     }
 
     fn to_boxed(&self) -> SignatureBoxed {
-        SignatureBoxed {
-            r: self.r.to_be_bytes(),
-            s: self.s.to_be_bytes(),
-        }
+        SignatureBoxed::new(self)
     }
     fn to_der_using_ref(&self) -> der::Result<Vec<u8>> {
         self.to_boxed().to_ref()?.to_der()
     }
 }
-
-struct SignatureBoxed {
-    r: Box<[u8]>,
-    s: Box<[u8]>,
-}
-impl SignatureBoxed {
-    fn to_ref(&self) -> der::Result<SignatureRef<'_>> {
-        Ok(SignatureRef {
-            r: UintRef::new(&self.r)?,
-            s: UintRef::new(&self.s)?,
-        })
-    }
-}
-
-struct SignatureRef<'a> {
-    r: UintRef<'a>,
-    s: UintRef<'a>,
-}
-impl<'a> SignatureRef<'a> {
-    fn to_owned(&self) -> der::Result<Signature> {
-        let r = BoxedUint::from_be_slice(self.r.as_bytes(), self.r.as_bytes().len() as u32 * 8)
-            .map_err(|_| UintRef::TAG.value_error())?;
-        let s = BoxedUint::from_be_slice(self.s.as_bytes(), self.s.as_bytes().len() as u32 * 8)
-            .map_err(|_| UintRef::TAG.value_error())?;
-
-        let r = NonZero::new(r)
-            .into_option()
-            .ok_or(UintRef::TAG.value_error())?;
-        let s = NonZero::new(s)
-            .into_option()
-            .ok_or(UintRef::TAG.value_error())?;
-
-        Ok(Signature::from_components(r, s))
-    }
-
-    fn decode_value_inner<R: Reader<'a>>(reader: &mut R) -> der::Result<Self> {
-        Ok(SignatureRef {
-            r: UintRef::decode(reader)?,
-            s: UintRef::decode(reader)?,
-        })
-    }
-}
-
-impl<'a> DecodeValue<'a> for SignatureRef<'a> {
-    type Error = der::Error;
-
-    fn decode_value<R: Reader<'a>>(reader: &mut R, header: Header) -> der::Result<Self> {
-        reader.read_nested(header.length, Self::decode_value_inner)
-    }
-}
-
-impl EncodeValue for SignatureRef<'_> {
-    fn value_len(&self) -> der::Result<Length> {
-        self.r.encoded_len()? + self.s.encoded_len()?
-    }
-
-    fn encode_value(&self, writer: &mut impl Writer) -> der::Result<()> {
-        self.r.encode(writer)?;
-        self.s.encode(writer)?;
-        Ok(())
-    }
-}
-impl<'a> Sequence<'a> for SignatureRef<'a> {}
 
 impl<'a> DecodeValue<'a> for Signature {
     type Error = der::Error;
