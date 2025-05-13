@@ -350,7 +350,7 @@ mod tests {
         };
 
         assert_eq!(
-            valid_keypair.to_bytes().unwrap(),
+            valid_keypair.to_bytes().expect("to_bytes"),
             hex!(
                 "D4EE72DBF913584AD5B6D8F1F769F8AD3AFE7C28CBF1D4FBE097A88F4475584219BF44096984CDFE8541BAC167DC3B96C85086AA30B6B6CB0C5C38AD703166E1"
             )
