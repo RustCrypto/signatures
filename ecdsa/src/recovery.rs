@@ -47,7 +47,7 @@ use {
 /// - low bit (0/1): was the y-coordinate of the affine point resulting from
 ///   the fixed-base multiplication 𝑘×𝑮 odd? This part of the algorithm
 ///   functions similar to point decompression.
-/// - hi bit (3/4): did the affine x-coordinate of 𝑘×𝑮 overflow the order of
+/// - hi bit (2/3): did the affine x-coordinate of 𝑘×𝑮 overflow the order of
 ///   the scalar field, requiring a reduction when computing `r`?
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
 pub struct RecoveryId(pub(crate) u8);
