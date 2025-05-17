@@ -303,7 +303,7 @@ impl fmt::Debug for PublicKeyBytes {
         f.write_str("PublicKeyBytes(")?;
 
         for &byte in self.as_ref() {
-            write!(f, "{:02X}", byte)?;
+            write!(f, "{byte:02X}")?;
         }
 
         f.write_str(")")
