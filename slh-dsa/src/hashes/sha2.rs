@@ -166,7 +166,7 @@ impl HypertreeParams for Sha2_128s {
 impl ForsParams for Sha2_128s {
     type K = U<14>;
     type A = U<12>;
-    type MD = U<{ (12 * 14 + 7) / 8 }>;
+    type MD = U<{ (12 * 14usize).div_ceil(8) }>;
 }
 impl ParameterSet for Sha2_128s {
     const NAME: &'static str = "SLH-DSA-SHA2-128s";
@@ -329,7 +329,7 @@ impl HypertreeParams for Sha2_192s {
 impl ForsParams for Sha2_192s {
     type K = U<17>;
     type A = U<14>;
-    type MD = U<{ (14 * 17 + 7) / 8 }>;
+    type MD = U<{ (14 * 17usize).div_ceil(8) }>;
 }
 impl ParameterSet for Sha2_192s {
     const NAME: &'static str = "SLH-DSA-SHA2-192s";
@@ -352,7 +352,7 @@ impl HypertreeParams for Sha2_192f {
 impl ForsParams for Sha2_192f {
     type K = U<33>;
     type A = U<8>;
-    type MD = U<{ (33 * 8 + 7) / 8 }>;
+    type MD = U<{ (33 * 8usize).div_ceil(8) }>;
 }
 impl ParameterSet for Sha2_192f {
     const NAME: &'static str = "SLH-DSA-SHA2-192f";
@@ -375,7 +375,7 @@ impl HypertreeParams for Sha2_256s {
 impl ForsParams for Sha2_256s {
     type K = U<22>;
     type A = U<14>;
-    type MD = U<{ (14 * 22 + 7) / 8 }>;
+    type MD = U<{ (14 * 22usize).div_ceil(8) }>;
 }
 impl ParameterSet for Sha2_256s {
     const NAME: &'static str = "SLH-DSA-SHA2-256s";
@@ -398,7 +398,7 @@ impl HypertreeParams for Sha2_256f {
 impl ForsParams for Sha2_256f {
     type K = U<35>;
     type A = U<9>;
-    type MD = U<{ (35 * 9 + 7) / 8 }>;
+    type MD = U<{ (35 * 9usize).div_ceil(8) }>;
 }
 impl ParameterSet for Sha2_256f {
     const NAME: &'static str = "SLH-DSA-SHA2-256f";

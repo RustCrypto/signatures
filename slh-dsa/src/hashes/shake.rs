@@ -143,7 +143,7 @@ impl HypertreeParams for Shake128s {
 impl ForsParams for Shake128s {
     type K = U<14>;
     type A = U<12>;
-    type MD = U<{ (12 * 14 + 7) / 8 }>;
+    type MD = U<{ (12 * 14usize).div_ceil(8) }>;
 }
 impl ParameterSet for Shake128s {
     const NAME: &'static str = "SLH-DSA-SHAKE-128s";
@@ -189,7 +189,7 @@ impl HypertreeParams for Shake192s {
 impl ForsParams for Shake192s {
     type K = U<17>;
     type A = U<14>;
-    type MD = U<{ (14 * 17 + 7) / 8 }>;
+    type MD = U<{ (14 * 17usize).div_ceil(8) }>;
 }
 impl ParameterSet for Shake192s {
     const NAME: &'static str = "SLH-DSA-SHAKE-192s";
@@ -212,7 +212,7 @@ impl HypertreeParams for Shake192f {
 impl ForsParams for Shake192f {
     type K = U<33>;
     type A = U<8>;
-    type MD = U<{ (33 * 8 + 7) / 8 }>;
+    type MD = U<{ (33 * 8usize).div_ceil(8) }>;
 }
 impl ParameterSet for Shake192f {
     const NAME: &'static str = "SLH-DSA-SHAKE-192f";
@@ -235,7 +235,7 @@ impl HypertreeParams for Shake256s {
 impl ForsParams for Shake256s {
     type K = U<22>;
     type A = U<14>;
-    type MD = U<{ (14 * 22 + 7) / 8 }>;
+    type MD = U<{ (14 * 22usize).div_ceil(8) }>;
 }
 impl ParameterSet for Shake256s {
     const NAME: &'static str = "SLH-DSA-SHAKE-256s";
@@ -258,7 +258,7 @@ impl HypertreeParams for Shake256f {
 impl ForsParams for Shake256f {
     type K = U<35>;
     type A = U<9>;
-    type MD = U<{ (35 * 9 + 7) / 8 }>;
+    type MD = U<{ (35 * 9usize).div_ceil(8) }>;
 }
 impl ParameterSet for Shake256f {
     const NAME: &'static str = "SLH-DSA-SHAKE-256f";
