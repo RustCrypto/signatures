@@ -65,6 +65,7 @@ use pkcs8::spki::ObjectIdentifier;
 
 mod components;
 mod generate;
+mod signature_ref;
 mod signing_key;
 mod size;
 mod verifying_key;
@@ -76,10 +77,10 @@ pub const OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.2.840.10040.4.
 
 use alloc::{boxed::Box, vec::Vec};
 use pkcs8::der::{
-    self, Decode, DecodeValue, Encode, EncodeValue, FixedTag, Header, Length, Reader, Sequence,
-    Writer, asn1::UintRef,
+    self, Decode, DecodeValue, Encode, EncodeValue, Header, Length, Reader, Sequence, Writer,
 };
 use signature::SignatureEncoding;
+use signature_ref::{SignatureBoxed, SignatureRef};
 
 /// Container of the DSA signature
 #[derive(Clone, Debug)]
@@ -109,43 +110,33 @@ impl Signature {
     pub fn s(&self) -> &NonZero<BoxedUint> {
         &self.s
     }
+
+    fn to_boxed(&self) -> SignatureBoxed {
+        SignatureBoxed::new(self)
+    }
+    fn to_der_using_ref(&self) -> der::Result<Vec<u8>> {
+        self.to_boxed().to_ref()?.to_der()
+    }
 }
 
 impl<'a> DecodeValue<'a> for Signature {
     type Error = der::Error;
 
     fn decode_value<R: Reader<'a>>(reader: &mut R, header: Header) -> der::Result<Self> {
-        reader.read_nested(header.length, |reader| {
-            let r = UintRef::decode(reader)?;
-            let s = UintRef::decode(reader)?;
+        let signature_ref = SignatureRef::decode_value(reader, header)?;
 
-            let r = BoxedUint::from_be_slice(r.as_bytes(), r.as_bytes().len() as u32 * 8)
-                .map_err(|_| UintRef::TAG.value_error())?;
-            let s = BoxedUint::from_be_slice(s.as_bytes(), s.as_bytes().len() as u32 * 8)
-                .map_err(|_| UintRef::TAG.value_error())?;
-
-            let r = NonZero::new(r)
-                .into_option()
-                .ok_or(UintRef::TAG.value_error())?;
-            let s = NonZero::new(s)
-                .into_option()
-                .ok_or(UintRef::TAG.value_error())?;
-
-            Ok(Self::from_components(r, s))
-        })
+        signature_ref.to_owned()
     }
 }
 
 impl EncodeValue for Signature {
     fn value_len(&self) -> der::Result<Length> {
-        UintRef::new(&self.r.to_be_bytes())?.encoded_len()?
-            + UintRef::new(&self.s.to_be_bytes())?.encoded_len()?
+        // TODO: avoid Box<[u8]> allocation here
+        self.to_boxed().to_ref()?.value_len()
     }
 
     fn encode_value(&self, writer: &mut impl Writer) -> der::Result<()> {
-        UintRef::new(&self.r.to_be_bytes())?.encode(writer)?;
-        UintRef::new(&self.s.to_be_bytes())?.encode(writer)?;
-        Ok(())
+        self.to_boxed().to_ref()?.encode_value(writer)
     }
 }
 
@@ -177,7 +168,7 @@ impl SignatureEncoding for Signature {
     }
 
     fn to_vec(&self) -> Vec<u8> {
-        self.to_der().expect("DER encoding error")
+        self.to_der_using_ref().expect("DER encoding error")
     }
 }
 
