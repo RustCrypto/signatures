@@ -5,7 +5,7 @@ use digest::Digest;
 use dsa::{Components, KeySize, Signature, SigningKey};
 use hex_literal::hex;
 use pkcs8::der::{Decode, Encode};
-use rand::{CryptoRng, RngCore, SeedableRng};
+use rand::{CryptoRng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 use sha2::Sha256;
 use signature::{
@@ -38,7 +38,7 @@ const MESSAGE_SIGNATURE_OPENSSL_ASN1: &[u8] = &hex!(
 );
 
 /// Get the seeded CSPRNG
-fn seeded_csprng() -> impl CryptoRng + RngCore {
+fn seeded_csprng() -> impl CryptoRng {
     ChaCha8Rng::seed_from_u64(SEED)
 }
 
@@ -123,6 +123,7 @@ fn signer_verifier_signature() {
 /// This test forces the r and s of the signature to a bit precision different to what would
 /// otherwise be expected
 #[test]
+#[allow(clippy::slow_vector_initialization)]
 fn verify_signature_precision() {
     use der::{Sequence, asn1::Uint};
 
@@ -150,8 +151,8 @@ fn verify_signature_precision() {
         },
     ] {
         let asn1 = MockSignature {
-            r: Uint::new(&value).unwrap(),
-            s: Uint::new(&value).unwrap(),
+            r: Uint::new(value).unwrap(),
+            s: Uint::new(value).unwrap(),
         }
         .to_der()
         .expect("Failed to serialize signature");
