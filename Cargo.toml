@@ -31,7 +31,14 @@ slh-dsa         = { path = "./slh-dsa" }
 # https://github.com/RustCrypto/traits/pull/1774
 # https://github.com/RustCrypto/traits/pull/1822
 # https://github.com/RustCrypto/traits/pull/1845
+digest         = { git = "https://github.com/RustCrypto/traits.git" }
 elliptic-curve = { git = "https://github.com/RustCrypto/traits.git" }
 signature      = { git = "https://github.com/RustCrypto/traits.git" }
 
 crypto-primes = { git = "https://github.com/entropyxyz/crypto-primes.git" }
+
+hmac = { git = "https://github.com/RustCrypto/MACs.git" }
+
+sha1 = { git = "https://github.com/RustCrypto/hashes.git" }
+sha2 = { git = "https://github.com/RustCrypto/hashes.git" }
+sha3 = { git = "https://github.com/RustCrypto/hashes.git" }

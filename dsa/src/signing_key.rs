@@ -11,7 +11,7 @@ use crypto_bigint::{
     BoxedUint, NonZero, Resize,
     modular::{BoxedMontyForm, BoxedMontyParams},
 };
-use digest::{Digest, FixedOutputReset, core_api::BlockSizeUser};
+use digest::{Digest, FixedOutputReset, block_api::BlockSizeUser};
 use pkcs8::{
     AlgorithmIdentifierRef, EncodePrivateKey, PrivateKeyInfoRef, SecretDocument,
     der::{

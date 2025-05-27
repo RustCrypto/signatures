@@ -6,7 +6,7 @@ use crate::{Components, signing_key::SigningKey};
 use alloc::vec;
 use core::cmp::min;
 use crypto_bigint::{BoxedUint, NonZero, RandomBits, Resize};
-use digest::{Digest, FixedOutputReset, core_api::BlockSizeUser};
+use digest::{Digest, FixedOutputReset, block_api::BlockSizeUser};
 use signature::rand_core::TryCryptoRng;
 use zeroize::Zeroizing;
 
