@@ -42,11 +42,11 @@ mod ct;
 pub use hmac::digest::array::typenum::consts;
 
 use hmac::{
-    SimpleHmac,
+    SimpleHmacReset,
     digest::{
         Digest, FixedOutput, FixedOutputReset, KeyInit, Mac,
         array::{Array, ArraySize},
-        core_api::BlockSizeUser,
+        block_api::BlockSizeUser,
     },
 };
 
@@ -124,7 +124,7 @@ where
     D: Digest + BlockSizeUser + FixedOutputReset,
 {
     /// HMAC key `K` (see RFC 6979 Section 3.2.c)
-    k: SimpleHmac<D>,
+    k: SimpleHmacReset<D>,
 
     /// Chaining value `V` (see RFC 6979 Section 3.2.c)
     v: Array<u8, D::OutputSize>,
@@ -136,7 +136,7 @@ where
 {
     /// Initialize `HMAC_DRBG`
     pub fn new(entropy_input: &[u8], nonce: &[u8], personalization_string: &[u8]) -> Self {
-        let mut k = SimpleHmac::new(&Default::default());
+        let mut k = SimpleHmacReset::new(&Default::default());
         let mut v = Array::default();
 
         for b in &mut v {
@@ -149,7 +149,7 @@ where
             k.update(entropy_input);
             k.update(nonce);
             k.update(personalization_string);
-            k = SimpleHmac::new_from_slice(&k.finalize().into_bytes()).expect("HMAC error");
+            k = SimpleHmacReset::new_from_slice(&k.finalize().into_bytes()).expect("HMAC error");
 
             // Steps 3.2.e,g: v = HMAC_k(v)
             k.update(&v);
@@ -178,8 +178,8 @@ where
 
         self.k.update(&self.v);
         self.k.update(&[0x00]);
-        self.k =
-            SimpleHmac::new_from_slice(&self.k.finalize_reset().into_bytes()).expect("HMAC error");
+        self.k = SimpleHmacReset::new_from_slice(&self.k.finalize_reset().into_bytes())
+            .expect("HMAC error");
         self.k.update(&self.v);
         self.v = self.k.finalize_reset().into_bytes();
     }

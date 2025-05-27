@@ -32,7 +32,7 @@ use {
     elliptic_curve::FieldBytesSize,
     signature::{
         PrehashSignature,
-        digest::{Digest, FixedOutput, FixedOutputReset, core_api::BlockSizeUser},
+        digest::{Digest, FixedOutput, FixedOutputReset, block_api::BlockSizeUser},
     },
 };
 

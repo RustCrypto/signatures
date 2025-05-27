@@ -1,6 +1,6 @@
 #![cfg(feature = "hazmat")]
 use crypto_bigint::{BoxedUint, NonZero, Odd};
-use digest::{Digest, FixedOutputReset, core_api::BlockSizeUser};
+use digest::{Digest, FixedOutputReset, block_api::BlockSizeUser};
 use dsa::{Components, Signature, SigningKey, VerifyingKey};
 use sha1::Sha1;
 use sha2::{Sha224, Sha256, Sha384, Sha512};
