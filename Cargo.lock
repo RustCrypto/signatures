@@ -154,7 +154,7 @@ version = "0.5.0-pre.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5b1425e6ce000f05a73096556cabcfb6a10a3ffe3bb4d75416ca8f00819c0b6a"
 dependencies = [
- "crypto-common 0.2.0-rc.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "crypto-common",
  "inout",
 ]
 
@@ -281,17 +281,9 @@ dependencies = [
 
 [[package]]
 name = "crypto-common"
-version = "0.2.0-rc.2"
+version = "0.2.0-rc.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "170d71b5b14dec99db7739f6fc7d6ec2db80b78c3acb77db48392ccc3d8a9ea0"
-dependencies = [
- "hybrid-array",
-]
-
-[[package]]
-name = "crypto-common"
-version = "0.2.0-rc.2"
-source = "git+https://github.com/RustCrypto/traits.git#915474f1ed5be0a19fd102d5f75ef8e04c765416"
+checksum = "8a23fa214dea9efd4dacee5a5614646b30216ae0f05d4bb51bafb50e9da1c5be"
 dependencies = [
  "hybrid-array",
 ]
@@ -339,12 +331,13 @@ dependencies = [
 
 [[package]]
 name = "digest"
-version = "0.11.0-pre.10"
-source = "git+https://github.com/RustCrypto/traits.git#915474f1ed5be0a19fd102d5f75ef8e04c765416"
+version = "0.11.0-rc.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "460dd7f37e4950526b54a5a6b1f41b6c8e763c58eb9a8fc8fc05ba5c2f44ca7b"
 dependencies = [
  "block-buffer",
  "const-oid",
- "crypto-common 0.2.0-rc.2 (git+https://github.com/RustCrypto/traits.git)",
+ "crypto-common",
  "subtle",
 ]
 
@@ -387,7 +380,7 @@ dependencies = [
 
 [[package]]
 name = "ed25519"
-version = "2.3.0-pre.0"
+version = "3.0.0-pre"
 dependencies = [
  "bincode",
  "hex-literal 1.0.0",
@@ -420,8 +413,9 @@ checksum = "11157ac094ffbdde99aa67b23417ebdd801842852b500e395a45a9c0aac03e4a"
 
 [[package]]
 name = "elliptic-curve"
-version = "0.14.0-rc.1"
-source = "git+https://github.com/RustCrypto/traits.git#73ffc4055c0d0b4ccfb0fecee8c7a217d0d53cec"
+version = "0.14.0-rc.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1786d08ca7d401fcc540b2fab11ec37b224ced5a0455c451656f83d80e681ddb"
 dependencies = [
  "base16ct",
  "crypto-bigint",
@@ -554,8 +548,9 @@ checksum = "bcaaec4551594c969335c98c903c1397853d4198408ea609190f420500f6be71"
 
 [[package]]
 name = "hmac"
-version = "0.13.0-pre.5"
-source = "git+https://github.com/RustCrypto/MACs.git#64d671d5c375838173d18e30bc14dffc80c13e51"
+version = "0.13.0-rc.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8dc6a2fcc35ab09136c6df2cdf9ca49790701420a3a6b5db0987dddbabc79b21"
 dependencies = [
  "digest",
 ]
@@ -1109,8 +1104,9 @@ dependencies = [
 
 [[package]]
 name = "sha1"
-version = "0.11.0-pre.5"
-source = "git+https://github.com/RustCrypto/hashes.git#7d44caf065dbeb3f10a372a26a8b9f1c927f8433"
+version = "0.11.0-rc.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6f9318facddf9ac32a33527066936837e189b3f23ced6edc1603720ead5e2b3d"
 dependencies = [
  "cfg-if",
  "cpufeatures",
@@ -1119,8 +1115,9 @@ dependencies = [
 
 [[package]]
 name = "sha2"
-version = "0.11.0-pre.5"
-source = "git+https://github.com/RustCrypto/hashes.git#7d44caf065dbeb3f10a372a26a8b9f1c927f8433"
+version = "0.11.0-rc.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aa1d2e6b3cc4e43a8258a9a3b17aa5dfd2cc5186c7024bba8a64aa65b2c71a59"
 dependencies = [
  "cfg-if",
  "cpufeatures",
@@ -1129,8 +1126,9 @@ dependencies = [
 
 [[package]]
 name = "sha3"
-version = "0.11.0-pre.5"
-source = "git+https://github.com/RustCrypto/hashes.git#7d44caf065dbeb3f10a372a26a8b9f1c927f8433"
+version = "0.11.0-rc.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b9e6a92fd180fd205defdc0b78288ce847c7309d329fd6647a814567e67db50e"
 dependencies = [
  "digest",
  "keccak",
@@ -1138,8 +1136,9 @@ dependencies = [
 
 [[package]]
 name = "signature"
-version = "3.0.0-pre"
-source = "git+https://github.com/RustCrypto/traits.git#73ffc4055c0d0b4ccfb0fecee8c7a217d0d53cec"
+version = "3.0.0-rc.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d7ae074ff622614874804868b07d9cb786223082c9fe726a6653608f32f37b02"
 dependencies = [
  "digest",
  "rand_core 0.9.2",

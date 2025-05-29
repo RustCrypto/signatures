@@ -17,28 +17,13 @@ opt-level = 2
 [patch.crates-io]
 # A global patch crates-io block is used to avoid duplicate dependencies
 # when pulling a member crate through git
-dsa             = { path = "./dsa" }
-ecdsa           = { path = "./ecdsa" }
+dsa = { path = "./dsa" }
+ecdsa = { path = "./ecdsa" }
 ed448-signature = { path = "./ed448" }
-ed25519         = { path = "./ed25519" }
-lms-signature   = { path = "./lms" }
-ml-dsa          = { path = "./ml-dsa" }
-rfc6979         = { path = "./rfc6979" }
-slh-dsa         = { path = "./slh-dsa" }
-
-# https://github.com/RustCrypto/traits/pull/1751
-# https://github.com/RustCrypto/traits/pull/1767
-# https://github.com/RustCrypto/traits/pull/1774
-# https://github.com/RustCrypto/traits/pull/1822
-# https://github.com/RustCrypto/traits/pull/1845
-digest         = { git = "https://github.com/RustCrypto/traits.git" }
-elliptic-curve = { git = "https://github.com/RustCrypto/traits.git" }
-signature      = { git = "https://github.com/RustCrypto/traits.git" }
+ed25519 = { path = "./ed25519" }
+lms-signature = { path = "./lms" }
+ml-dsa = { path = "./ml-dsa" }
+rfc6979 = { path = "./rfc6979" }
+slh-dsa = { path = "./slh-dsa" }
 
 crypto-primes = { git = "https://github.com/entropyxyz/crypto-primes.git" }
-
-hmac = { git = "https://github.com/RustCrypto/MACs.git" }
-
-sha1 = { git = "https://github.com/RustCrypto/hashes.git" }
-sha2 = { git = "https://github.com/RustCrypto/hashes.git" }
-sha3 = { git = "https://github.com/RustCrypto/hashes.git" }
