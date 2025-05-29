@@ -50,7 +50,7 @@ macro_rules! new_signing_test {
 
         fn decode_scalar(bytes: &[u8]) -> Option<NonZeroScalar<$curve>> {
             if bytes.len() == <$curve as Curve>::FieldBytesSize::USIZE {
-                NonZeroScalar::<$curve>::from_repr(bytes.try_into().unwrap()).into()
+                NonZeroScalar::<$curve>::from_repr(&bytes.try_into().unwrap()).into()
             } else {
                 None
             }

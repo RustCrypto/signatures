@@ -196,7 +196,7 @@ where
     // h = bits2int(H(m)) mod q
     let z2 = <Scalar<C> as Reduce<C::Uint>>::reduce_bytes(z);
 
-    let k = NonZeroScalar::<C>::from_repr(rfc6979::generate_k::<D, _>(
+    let k = NonZeroScalar::<C>::from_repr(&rfc6979::generate_k::<D, _>(
         &d.to_repr(),
         &C::ORDER.encode_field_bytes(),
         &z2.to_repr(),
