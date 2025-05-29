@@ -875,7 +875,7 @@ mod test {
     where
         P: MlDsaParams + PartialEq,
     {
-        let kp = P::key_gen_internal(&Default::default());
+        let kp = P::key_gen_internal(&Array::default());
         let sk = kp.signing_key;
         let vk = kp.verifying_key;
 
@@ -906,7 +906,7 @@ mod test {
     where
         P: MlDsaParams,
     {
-        let kp = P::key_gen_internal(&Default::default());
+        let kp = P::key_gen_internal(&Array::default());
         let sk = kp.signing_key;
         let vk = kp.verifying_key;
 

@@ -114,8 +114,8 @@ mod tests {
     #[test]
     fn round_trip() {
         let signature = Signature::from_bytes(&SIGNATURE_BYTES);
-        let serialized = bincode::serialize(&signature).unwrap();
-        let deserialized = bincode::deserialize(&serialized).unwrap();
+        let serialized = bincode::serialize(&signature).expect("serialized");
+        let deserialized = bincode::deserialize(&serialized).expect("deserialized");
         assert_eq!(signature, deserialized);
     }
 }
