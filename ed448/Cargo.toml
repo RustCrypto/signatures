@@ -18,8 +18,7 @@ keywords = ["crypto", "curve448", "ecc", "signature", "signing"]
 rust-version = "1.85"
 
 [dependencies]
-# TODO(tarcieri): relax requirement back to `3` before next release
-signature = { version = "=3.0.0-pre", default-features = false }
+signature = { version = "3.0.0-rc.0", default-features = false }
 
 # optional dependencies
 pkcs8 = { version = "0.11.0-rc.1", optional = true }
