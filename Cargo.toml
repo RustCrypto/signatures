@@ -25,5 +25,3 @@ lms-signature = { path = "./lms" }
 ml-dsa = { path = "./ml-dsa" }
 rfc6979 = { path = "./rfc6979" }
 slh-dsa = { path = "./slh-dsa" }
-
-crypto-primes = { git = "https://github.com/entropyxyz/crypto-primes.git" }
