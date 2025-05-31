@@ -382,7 +382,7 @@ dependencies = [
 
 [[package]]
 name = "ed25519"
-version = "3.0.0-pre"
+version = "3.0.0-pre.0"
 dependencies = [
  "bincode",
  "hex-literal 1.0.0",
