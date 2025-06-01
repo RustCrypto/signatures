@@ -89,7 +89,7 @@ use core::fmt;
 
 pub use crate::param::{EncodedSignature, EncodedSigningKey, EncodedVerifyingKey, MlDsaParams};
 pub use crate::util::B32;
-pub use signature::{self, Error, MultiPartSigner, MultiPartVerifier};
+pub use signature::{self, Error, MultipartSigner, MultipartVerifier};
 
 /// An ML-DSA signature
 #[derive(Clone, PartialEq, Debug)]
@@ -245,14 +245,14 @@ where
 /// only supports signing with an empty context string.
 impl<P: MlDsaParams> signature::Signer<Signature<P>> for KeyPair<P> {
     fn try_sign(&self, msg: &[u8]) -> Result<Signature<P>, Error> {
-        self.try_multi_part_sign(&[msg])
+        self.try_multipart_sign(&[msg])
     }
 }
 
 /// The `Signer` implementation for `KeyPair` uses the optional deterministic variant of ML-DSA, and
 /// only supports signing with an empty context string.
-impl<P: MlDsaParams> MultiPartSigner<Signature<P>> for KeyPair<P> {
-    fn try_multi_part_sign(&self, msg: &[&[u8]]) -> Result<Signature<P>, Error> {
+impl<P: MlDsaParams> MultipartSigner<Signature<P>> for KeyPair<P> {
+    fn try_multipart_sign(&self, msg: &[&[u8]]) -> Result<Signature<P>, Error> {
         self.signing_key.raw_sign_deterministic(msg, &[])
     }
 }
@@ -511,15 +511,15 @@ impl<P: MlDsaParams> SigningKey<P> {
 /// string, use the [`SigningKey::sign_deterministic`] method.
 impl<P: MlDsaParams> signature::Signer<Signature<P>> for SigningKey<P> {
     fn try_sign(&self, msg: &[u8]) -> Result<Signature<P>, Error> {
-        self.try_multi_part_sign(&[msg])
+        self.try_multipart_sign(&[msg])
     }
 }
 
 /// The `Signer` implementation for `SigningKey` uses the optional deterministic variant of ML-DSA, and
 /// only supports signing with an empty context string.  If you would like to include a context
 /// string, use the [`SigningKey::sign_deterministic`] method.
-impl<P: MlDsaParams> MultiPartSigner<Signature<P>> for SigningKey<P> {
-    fn try_multi_part_sign(&self, msg: &[&[u8]]) -> Result<Signature<P>, Error> {
+impl<P: MlDsaParams> MultipartSigner<Signature<P>> for SigningKey<P> {
+    fn try_multipart_sign(&self, msg: &[&[u8]]) -> Result<Signature<P>, Error> {
         self.raw_sign_deterministic(msg, &[])
     }
 }
@@ -674,12 +674,12 @@ impl<P: MlDsaParams> VerifyingKey<P> {
 
 impl<P: MlDsaParams> signature::Verifier<Signature<P>> for VerifyingKey<P> {
     fn verify(&self, msg: &[u8], signature: &Signature<P>) -> Result<(), Error> {
-        self.multi_part_verify(&[msg], signature)
+        self.multipart_verify(&[msg], signature)
     }
 }
 
-impl<P: MlDsaParams> MultiPartVerifier<Signature<P>> for VerifyingKey<P> {
-    fn multi_part_verify(&self, msg: &[&[u8]], signature: &Signature<P>) -> Result<(), Error> {
+impl<P: MlDsaParams> MultipartVerifier<Signature<P>> for VerifyingKey<P> {
+    fn multipart_verify(&self, msg: &[&[u8]], signature: &Signature<P>) -> Result<(), Error> {
         self.raw_verify_with_context(msg, &[], signature)
             .then_some(())
             .ok_or(Error::new())

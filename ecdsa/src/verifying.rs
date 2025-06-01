@@ -13,7 +13,7 @@ use elliptic_curve::{
     sec1::{self, CompressedPoint, EncodedPoint, FromEncodedPoint, ToEncodedPoint},
 };
 use signature::{
-    DigestVerifier, MultiPartVerifier, Verifier,
+    DigestVerifier, MultipartVerifier, Verifier,
     digest::{Digest, FixedOutput},
     hazmat::PrehashVerifier,
 };
@@ -178,16 +178,16 @@ where
     SignatureSize<C>: ArraySize,
 {
     fn verify(&self, msg: &[u8], signature: &Signature<C>) -> Result<()> {
-        self.multi_part_verify(&[msg], signature)
+        self.multipart_verify(&[msg], signature)
     }
 }
 
-impl<C> MultiPartVerifier<Signature<C>> for VerifyingKey<C>
+impl<C> MultipartVerifier<Signature<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     SignatureSize<C>: ArraySize,
 {
-    fn multi_part_verify(&self, msg: &[&[u8]], signature: &Signature<C>) -> Result<()> {
+    fn multipart_verify(&self, msg: &[&[u8]], signature: &Signature<C>) -> Result<()> {
         let mut digest = C::Digest::new();
         msg.iter().for_each(|slice| digest.update(slice));
         self.verify_digest(digest, signature)
@@ -201,17 +201,17 @@ where
     SignatureSize<C>: ArraySize,
 {
     fn verify(&self, msg: &[u8], sig: &SignatureWithOid<C>) -> Result<()> {
-        self.multi_part_verify(&[msg], sig)
+        self.multipart_verify(&[msg], sig)
     }
 }
 
 #[cfg(feature = "sha2")]
-impl<C> MultiPartVerifier<SignatureWithOid<C>> for VerifyingKey<C>
+impl<C> MultipartVerifier<SignatureWithOid<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     SignatureSize<C>: ArraySize,
 {
-    fn multi_part_verify(&self, msg: &[&[u8]], sig: &SignatureWithOid<C>) -> Result<()> {
+    fn multipart_verify(&self, msg: &[&[u8]], sig: &SignatureWithOid<C>) -> Result<()> {
         match sig.oid() {
             ECDSA_SHA224_OID => {
                 let mut digest = Sha224::new();
@@ -282,16 +282,16 @@ where
 }
 
 #[cfg(feature = "der")]
-impl<C> MultiPartVerifier<der::Signature<C>> for VerifyingKey<C>
+impl<C> MultipartVerifier<der::Signature<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
 {
-    fn multi_part_verify(&self, msg: &[&[u8]], signature: &der::Signature<C>) -> Result<()> {
+    fn multipart_verify(&self, msg: &[&[u8]], signature: &der::Signature<C>) -> Result<()> {
         let signature = Signature::<C>::try_from(signature.clone())?;
-        MultiPartVerifier::<Signature<C>>::multi_part_verify(self, msg, &signature)
+        MultipartVerifier::<Signature<C>>::multipart_verify(self, msg, &signature)
     }
 }
 

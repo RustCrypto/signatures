@@ -5,7 +5,7 @@ use crate::Shake;
 use crate::address::ForsTree;
 use crate::signature_encoding::Signature;
 use crate::util::split_digest;
-use ::signature::{Error, MultiPartVerifier, Verifier};
+use ::signature::{Error, MultipartVerifier, Verifier};
 use hybrid_array::{Array, ArraySize};
 use pkcs8::{der, spki};
 use rand_core::CryptoRng;
@@ -168,12 +168,12 @@ impl<P: ParameterSet> TryFrom<&[u8]> for VerifyingKey<P> {
 
 impl<P: ParameterSet> Verifier<Signature<P>> for VerifyingKey<P> {
     fn verify(&self, msg: &[u8], signature: &Signature<P>) -> Result<(), Error> {
-        self.multi_part_verify(&[msg], signature)
+        self.multipart_verify(&[msg], signature)
     }
 }
 
-impl<P: ParameterSet> MultiPartVerifier<Signature<P>> for VerifyingKey<P> {
-    fn multi_part_verify(&self, msg: &[&[u8]], signature: &Signature<P>) -> Result<(), Error> {
+impl<P: ParameterSet> MultipartVerifier<Signature<P>> for VerifyingKey<P> {
+    fn multipart_verify(&self, msg: &[&[u8]], signature: &Signature<P>) -> Result<(), Error> {
         self.raw_try_verify_with_context(msg, &[], signature) // TODO - context processing
     }
 }

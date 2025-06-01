@@ -4,7 +4,7 @@ use crate::util::split_digest;
 use crate::verifying_key::VerifyingKey;
 use crate::{ParameterSet, PkSeed, Sha2L1, Sha2L35, Shake, VerifyingKeyLen};
 use ::signature::{
-    Error, KeypairRef, MultiPartSigner, RandomizedMultiPartSigner, RandomizedSigner, Signer,
+    Error, KeypairRef, MultipartSigner, RandomizedMultipartSigner, RandomizedSigner, Signer,
     rand_core::{CryptoRng, TryCryptoRng},
 };
 use hybrid_array::{Array, ArraySize};
@@ -231,12 +231,12 @@ impl<P: ParameterSet> TryFrom<&[u8]> for SigningKey<P> {
 
 impl<P: ParameterSet> Signer<Signature<P>> for SigningKey<P> {
     fn try_sign(&self, msg: &[u8]) -> Result<Signature<P>, Error> {
-        self.try_multi_part_sign(&[msg])
+        self.try_multipart_sign(&[msg])
     }
 }
 
-impl<P: ParameterSet> MultiPartSigner<Signature<P>> for SigningKey<P> {
-    fn try_multi_part_sign(&self, msg: &[&[u8]]) -> Result<Signature<P>, Error> {
+impl<P: ParameterSet> MultipartSigner<Signature<P>> for SigningKey<P> {
+    fn try_multipart_sign(&self, msg: &[&[u8]]) -> Result<Signature<P>, Error> {
         self.raw_try_sign_with_context(msg, &[], None)
     }
 }
@@ -247,12 +247,12 @@ impl<P: ParameterSet> RandomizedSigner<Signature<P>> for SigningKey<P> {
         rng: &mut R,
         msg: &[u8],
     ) -> Result<Signature<P>, signature::Error> {
-        self.try_multi_part_sign_with_rng(rng, &[msg])
+        self.try_multipart_sign_with_rng(rng, &[msg])
     }
 }
 
-impl<P: ParameterSet> RandomizedMultiPartSigner<Signature<P>> for SigningKey<P> {
-    fn try_multi_part_sign_with_rng<R: TryCryptoRng + ?Sized>(
+impl<P: ParameterSet> RandomizedMultipartSigner<Signature<P>> for SigningKey<P> {
+    fn try_multipart_sign_with_rng<R: TryCryptoRng + ?Sized>(
         &self,
         rng: &mut R,
         msg: &[&[u8]],

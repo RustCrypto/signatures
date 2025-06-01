@@ -15,7 +15,7 @@ use elliptic_curve::{
     zeroize::{Zeroize, ZeroizeOnDrop},
 };
 use signature::{
-    DigestSigner, MultiPartSigner, RandomizedDigestSigner, RandomizedMultiPartSigner,
+    DigestSigner, MultipartSigner, RandomizedDigestSigner, RandomizedMultipartSigner,
     RandomizedSigner, Signer,
     hazmat::{PrehashSigner, RandomizedPrehashSigner},
     rand_core::{CryptoRng, TryCryptoRng},
@@ -177,17 +177,17 @@ where
     SignatureSize<C>: ArraySize,
 {
     fn try_sign(&self, msg: &[u8]) -> Result<Signature<C>> {
-        self.try_multi_part_sign(&[msg])
+        self.try_multipart_sign(&[msg])
     }
 }
 
-impl<C> MultiPartSigner<Signature<C>> for SigningKey<C>
+impl<C> MultipartSigner<Signature<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
-    fn try_multi_part_sign(&self, msg: &[&[u8]]) -> core::result::Result<Signature<C>, Error> {
+    fn try_multipart_sign(&self, msg: &[&[u8]]) -> core::result::Result<Signature<C>, Error> {
         let mut digest = C::Digest::new();
         msg.iter().for_each(|slice| digest.update(slice));
         self.try_sign_digest(digest)
@@ -248,18 +248,18 @@ where
         rng: &mut R,
         msg: &[u8],
     ) -> Result<Signature<C>> {
-        self.try_multi_part_sign_with_rng(rng, &[msg])
+        self.try_multipart_sign_with_rng(rng, &[msg])
     }
 }
 
-impl<C> RandomizedMultiPartSigner<Signature<C>> for SigningKey<C>
+impl<C> RandomizedMultipartSigner<Signature<C>> for SigningKey<C>
 where
     Self: RandomizedDigestSigner<C::Digest, Signature<C>>,
     C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
-    fn try_multi_part_sign_with_rng<R: TryCryptoRng + ?Sized>(
+    fn try_multipart_sign_with_rng<R: TryCryptoRng + ?Sized>(
         &self,
         rng: &mut R,
         msg: &[&[u8]],
@@ -292,18 +292,18 @@ where
     SignatureSize<C>: ArraySize,
 {
     fn try_sign(&self, msg: &[u8]) -> Result<SignatureWithOid<C>> {
-        self.try_multi_part_sign(&[msg])
+        self.try_multipart_sign(&[msg])
     }
 }
 
-impl<C> MultiPartSigner<SignatureWithOid<C>> for SigningKey<C>
+impl<C> MultipartSigner<SignatureWithOid<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     C::Digest: AssociatedOid,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
-    fn try_multi_part_sign(&self, msg: &[&[u8]]) -> Result<SignatureWithOid<C>> {
+    fn try_multipart_sign(&self, msg: &[&[u8]]) -> Result<SignatureWithOid<C>> {
         let mut digest = C::Digest::new();
         msg.iter().for_each(|slice| digest.update(slice));
         self.try_sign_digest(digest)
@@ -411,7 +411,7 @@ where
 }
 
 #[cfg(feature = "der")]
-impl<C> RandomizedMultiPartSigner<der::Signature<C>> for SigningKey<C>
+impl<C> RandomizedMultipartSigner<der::Signature<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
@@ -419,12 +419,12 @@ where
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
 {
-    fn try_multi_part_sign_with_rng<R: TryCryptoRng + ?Sized>(
+    fn try_multipart_sign_with_rng<R: TryCryptoRng + ?Sized>(
         &self,
         rng: &mut R,
         msg: &[&[u8]],
     ) -> Result<der::Signature<C>> {
-        RandomizedMultiPartSigner::<Signature<C>>::try_multi_part_sign_with_rng(self, rng, msg)
+        RandomizedMultipartSigner::<Signature<C>>::try_multipart_sign_with_rng(self, rng, msg)
             .map(Into::into)
     }
 }
