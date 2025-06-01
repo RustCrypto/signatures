@@ -58,8 +58,8 @@ impl SigningKey {
         })
     }
 
-    #[cfg(feature = "hazmat")]
     /// Generate a new DSA keypair
+    #[cfg(feature = "hazmat")]
     #[inline]
     pub fn generate<R: CryptoRng + ?Sized>(rng: &mut R, components: Components) -> SigningKey {
         crate::generate::keypair(rng, components)
@@ -78,11 +78,11 @@ impl SigningKey {
         &self.x
     }
 
-    #[cfg(feature = "hazmat")]
     /// Try to sign the given message digest deterministically with a prehashed digest.
     /// The parameter `D` must match the hash function used to sign the digest.
     ///
     /// [RFC6979]: https://datatracker.ietf.org/doc/html/rfc6979
+    #[cfg(feature = "hazmat")]
     pub fn sign_prehashed_rfc6979<D>(&self, prehash: &[u8]) -> Result<Signature, signature::Error>
     where
         D: Digest + BlockSizeUser + FixedOutputReset,

@@ -39,6 +39,9 @@ der = { version = "0.8.0-rc.1", features = ["derive"] }
 std = []
 hazmat = []
 
+[package.metadata.docs.rs]
+all-features = true
+
 [[example]]
 name = "sign"
 required-features = ["hazmat"]
