@@ -254,7 +254,7 @@ mod tests {
         let pk =
             VerifyingKey::<LmsSha256M32H5<LmsOtsSha256N32W8>>::try_from(&pk_bytes[..]).unwrap();
         let sig = Signature::<LmsSha256M32H5<LmsOtsSha256N32W8>>::try_from(&sig_bytes[..]).unwrap();
-        assert!(pk.verify(&msg[..], &sig).is_ok());
+        assert!(pk.verify(&[&msg[..]], &sig).is_ok());
     }
 
     fn test_serialize_deserialize_random<Mode: LmsMode>()
@@ -272,10 +272,10 @@ mod tests {
         let mut sk = SigningKey::<Mode>::new(&mut rng);
         let pk = sk.public();
         let msg = b"Hello, world!";
-        let sig = sk.sign_with_rng(&mut rng, msg);
+        let sig = sk.sign_with_rng(&mut rng, &[msg]);
         let sig_bytes: Vec<_> = sig.clone().into();
         let sig2 = Signature::<Mode>::try_from(&sig_bytes[..]).unwrap();
-        assert!(pk.verify(msg, &sig2).is_ok());
+        assert!(pk.verify(&[msg], &sig2).is_ok());
     }
 
     #[test]

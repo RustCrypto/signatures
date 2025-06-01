@@ -35,7 +35,7 @@ fn verify<P: MlDsaParams>(tg: &acvp::TestGroup, tc: &acvp::TestCase) {
 
     // Verify the signature if it successfully decoded
     let test_passed = sig
-        .map(|sig| vk.verify_internal(&[&tc.message], &sig))
+        .map(|sig| vk.verify_internal(&[&[&tc.message]], &sig))
         .unwrap_or_default();
     assert_eq!(test_passed, tc.test_passed);
 }

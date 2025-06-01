@@ -25,3 +25,5 @@ lms-signature = { path = "./lms" }
 ml-dsa = { path = "./ml-dsa" }
 rfc6979 = { path = "./rfc6979" }
 slh-dsa = { path = "./slh-dsa" }
+
+signature = { git = "https://github.com/RustCrypto/traits", rev = "9e3f5ec97faf6a96c0bad7756402c940db240066" }

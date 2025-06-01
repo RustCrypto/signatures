@@ -132,7 +132,7 @@ impl<P: ParameterSet> SigningKey<P> {
     /// Implements [slh_sign_internal] as defined in FIPS-205.
     /// Published for KAT validation purposes but not intended for general use.
     /// opt_rand must be a P::N length slice, panics otherwise.
-    pub fn slh_sign_internal(&self, msg: &[&[u8]], opt_rand: Option<&[u8]>) -> Signature<P> {
+    pub fn slh_sign_internal(&self, msg: &[&[&[u8]]], opt_rand: Option<&[u8]>) -> Signature<P> {
         let rand = opt_rand
             .unwrap_or(&self.verifying_key.pk_seed.0)
             .try_into()
@@ -164,14 +164,14 @@ impl<P: ParameterSet> SigningKey<P> {
     /// Returns an error if the context string is too long.
     pub fn try_sign_with_context(
         &self,
-        msg: &[u8],
+        msg: &[&[u8]],
         ctx: &[u8],
         opt_rand: Option<&[u8]>,
     ) -> Result<Signature<P>, Error> {
         let ctx_len = u8::try_from(ctx.len()).map_err(|_| Error::new())?;
         let ctx_len_bytes = ctx_len.to_be_bytes();
 
-        let ctx_msg = [&[0], &ctx_len_bytes, ctx, msg];
+        let ctx_msg = [&[&[0], &ctx_len_bytes, ctx], msg];
         Ok(self.slh_sign_internal(&ctx_msg, opt_rand))
     }
 
@@ -217,7 +217,7 @@ impl<P: ParameterSet> TryFrom<&[u8]> for SigningKey<P> {
 }
 
 impl<P: ParameterSet> Signer<Signature<P>> for SigningKey<P> {
-    fn try_sign(&self, msg: &[u8]) -> Result<Signature<P>, Error> {
+    fn try_sign(&self, msg: &[&[u8]]) -> Result<Signature<P>, Error> {
         self.try_sign_with_context(msg, &[], None)
     }
 }
@@ -226,7 +226,7 @@ impl<P: ParameterSet> RandomizedSigner<Signature<P>> for SigningKey<P> {
     fn try_sign_with_rng<R: TryCryptoRng + ?Sized>(
         &self,
         rng: &mut R,
-        msg: &[u8],
+        msg: &[&[u8]],
     ) -> Result<Signature<P>, signature::Error> {
         let mut randomizer = Array::<u8, P::N>::default();
         rng.try_fill_bytes(randomizer.as_mut_slice())

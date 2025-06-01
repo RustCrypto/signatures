@@ -43,7 +43,7 @@
 //!         // NOTE: use `try_sign` if you'd like to be able to handle
 //!         // errors from external signing services/devices (e.g. HSM/KMS)
 //!         // <https://docs.rs/signature/latest/signature/trait.Signer.html#tymethod.try_sign>
-//!         self.signing_key.sign(format_message(person).as_bytes())
+//!         self.signing_key.sign(&[format_message(person).as_bytes()])
 //!     }
 //! }
 //!
@@ -60,7 +60,7 @@
 //!         person: &str,
 //!         signature: &ed25519::Signature
 //!     ) -> Result<(), ed25519::Error> {
-//!         self.verifying_key.verify(format_message(person).as_bytes(), signature)
+//!         self.verifying_key.verify(&[format_message(person).as_bytes()], signature)
 //!     }
 //! }
 //!

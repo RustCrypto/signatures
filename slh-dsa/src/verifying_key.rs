@@ -57,7 +57,7 @@ impl<P: ParameterSet + VerifyingKeyLen> VerifyingKey<P> {
     /// Published for KAT validation purposes but not intended for general use.
     pub fn slh_verify_internal(
         &self,
-        msg: &[&[u8]],
+        msg: &[&[&[u8]]],
         signature: &Signature<P>,
     ) -> Result<(), Error> {
         let pk_seed = &self.pk_seed;
@@ -81,14 +81,14 @@ impl<P: ParameterSet + VerifyingKeyLen> VerifyingKey<P> {
     /// Returns an error if the context is too long or if the signature is invalid
     pub fn try_verify_with_context(
         &self,
-        msg: &[u8],
+        msg: &[&[u8]],
         ctx: &[u8],
         signature: &Signature<P>,
     ) -> Result<(), Error> {
         let ctx_len = u8::try_from(ctx.len()).map_err(|_| Error::new())?;
         let ctx_len_bytes = ctx_len.to_be_bytes();
 
-        let ctx_msg = [&[0], &ctx_len_bytes, ctx, msg];
+        let ctx_msg = [&[&[0], &ctx_len_bytes, ctx], msg];
         self.slh_verify_internal(&ctx_msg, signature) // TODO - context processing
     }
 
@@ -150,7 +150,7 @@ impl<P: ParameterSet> TryFrom<&[u8]> for VerifyingKey<P> {
 }
 
 impl<P: ParameterSet> Verifier<Signature<P>> for VerifyingKey<P> {
-    fn verify(&self, msg: &[u8], signature: &Signature<P>) -> Result<(), Error> {
+    fn verify(&self, msg: &[&[u8]], signature: &Signature<P>) -> Result<(), Error> {
         self.try_verify_with_context(msg, &[], signature) // TODO - context processing
     }
 }

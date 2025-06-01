@@ -32,11 +32,11 @@ mod tests {
         let msg = "this is a test message".as_bytes();
 
         // Sign the message
-        let sig = sk.try_sign_with_rng(&mut rng, msg);
+        let sig = sk.try_sign_with_rng(&mut rng, &[msg]);
         let sig = sig.unwrap();
 
         // Verify the signature
-        assert!(pk.verify(msg, &sig).is_ok());
+        assert!(pk.verify(&[msg], &sig).is_ok());
     }
 
     // TODO: macro-generate these exhaustively

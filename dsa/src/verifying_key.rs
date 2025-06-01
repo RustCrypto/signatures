@@ -107,8 +107,10 @@ impl VerifyingKey {
 }
 
 impl Verifier<Signature> for VerifyingKey {
-    fn verify(&self, msg: &[u8], signature: &Signature) -> Result<(), signature::Error> {
-        self.verify_digest(sha2::Sha256::new_with_prefix(msg), signature)
+    fn verify(&self, msg: &[&[u8]], signature: &Signature) -> Result<(), signature::Error> {
+        let mut digest = sha2::Sha256::default();
+        msg.iter().for_each(|slice| digest.update(slice));
+        self.verify_digest(digest, signature)
     }
 }
 

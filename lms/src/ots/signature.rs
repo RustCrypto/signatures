@@ -105,17 +105,17 @@ impl<Mode: LmsOtsMode> Signature<Mode> {
     /// Returns a public key candidate for this signature as defined by
     /// algorithm 4b of the LMS RFC. The signature will always be valid for
     /// the returned public key candidate.
-    pub fn recover_pubkey(&self, id: Identifier, q: u32, msg: &[u8]) -> VerifyingKey<Mode> {
+    pub fn recover_pubkey(&self, id: Identifier, q: u32, msg: &[&[u8]]) -> VerifyingKey<Mode> {
         // algorithm 4b
 
         // Q = H(I || u32str(q) || u16str(D_MESG) || C || message)
-        let msg_hash = Mode::Hasher::new()
-            .chain_update(id)
-            .chain_update(q.to_be_bytes())
-            .chain_update(D_MESG)
-            .chain_update(&self.c)
-            .chain_update(msg)
-            .finalize();
+        let mut msg_hasher = Mode::Hasher::new();
+        msg_hasher.update(id);
+        msg_hasher.update(q.to_be_bytes());
+        msg_hasher.update(D_MESG);
+        msg_hasher.update(&self.c);
+        msg.iter().for_each(|slice| msg_hasher.update(slice));
+        let msg_hash = msg_hasher.finalize();
 
         // first part of
         // Kc = H(I || u32str(q) || u16str(D_PBLC) || z[0] || z[1] || ... || z[p-1])

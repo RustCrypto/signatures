@@ -96,7 +96,7 @@ impl RecoveryId {
     /// otherwise.
     pub fn trial_recovery_from_msg<C>(
         verifying_key: &VerifyingKey<C>,
-        msg: &[u8],
+        msg: &[&[u8]],
         signature: &Signature<C>,
     ) -> Result<Self>
     where
@@ -105,7 +105,9 @@ impl RecoveryId {
         FieldBytesSize<C>: sec1::ModulusSize,
         SignatureSize<C>: ArraySize,
     {
-        Self::trial_recovery_from_digest(verifying_key, C::Digest::new_with_prefix(msg), signature)
+        let mut digest = C::Digest::new();
+        msg.iter().for_each(|slice| digest.update(slice));
+        Self::trial_recovery_from_digest(verifying_key, digest, signature)
     }
 
     /// Given a public key, message digest, and signature, use trial recovery
@@ -220,8 +222,10 @@ where
 
     /// Sign the given message, hashing it with the curve's default digest
     /// function, and returning a signature and recovery ID.
-    pub fn sign_recoverable(&self, msg: &[u8]) -> Result<(Signature<C>, RecoveryId)> {
-        self.sign_digest_recoverable(C::Digest::new_with_prefix(msg))
+    pub fn sign_recoverable(&self, msg: &[&[u8]]) -> Result<(Signature<C>, RecoveryId)> {
+        let mut digest = C::Digest::new();
+        msg.iter().for_each(|slice| digest.update(slice));
+        self.sign_digest_recoverable(digest)
     }
 }
 
@@ -290,7 +294,7 @@ where
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
-    fn try_sign(&self, msg: &[u8]) -> Result<(Signature<C>, RecoveryId)> {
+    fn try_sign(&self, msg: &[&[u8]]) -> Result<(Signature<C>, RecoveryId)> {
         self.sign_recoverable(msg)
     }
 }
@@ -308,14 +312,16 @@ where
     ///
     /// The message is first hashed using this curve's [`DigestPrimitive`].
     pub fn recover_from_msg(
-        msg: &[u8],
+        msg: &[&[u8]],
         signature: &Signature<C>,
         recovery_id: RecoveryId,
     ) -> Result<Self>
     where
         C: DigestPrimitive,
     {
-        Self::recover_from_digest(C::Digest::new_with_prefix(msg), signature, recovery_id)
+        let mut digest = C::Digest::new();
+        msg.iter().for_each(|slice| digest.update(slice));
+        Self::recover_from_digest(digest, signature, recovery_id)
     }
 
     /// Recover a [`VerifyingKey`] from the given message [`Digest`],

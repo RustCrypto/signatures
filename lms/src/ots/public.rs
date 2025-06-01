@@ -47,7 +47,7 @@ where
     Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U2>: ArraySize,
 {
     // this implements algorithm 4a of https://datatracker.ietf.org/doc/html/rfc8554#section-4.6
-    fn verify(&self, msg: &[u8], signature: &Signature<Mode>) -> Result<(), Error> {
+    fn verify(&self, msg: &[&[u8]], signature: &Signature<Mode>) -> Result<(), Error> {
         // If the public key is not at least four bytes long, return INVALID.
         // We are calling this method on a valid public key so there's no worry here.
         let kc = signature.recover_pubkey(self.id, self.q, msg);

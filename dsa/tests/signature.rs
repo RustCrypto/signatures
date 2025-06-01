@@ -104,9 +104,9 @@ fn signer_verifier_signature() {
     // construct signature manually and by `Signer` defaults. Ensure results are identical.
     let manual_digest = Sha256::new_with_prefix(message).finalize();
     let manual_signature = signing_key.sign_prehash(&manual_digest).unwrap();
-    let signer_signature = signing_key.sign(message);
-    verifying_key.verify(message, &manual_signature).unwrap();
-    verifying_key.verify(message, &signer_signature).unwrap();
+    let signer_signature = signing_key.sign(&[message]);
+    verifying_key.verify(&[message], &manual_signature).unwrap();
+    verifying_key.verify(&[message], &signer_signature).unwrap();
     assert_eq!(manual_signature, signer_signature);
 
     // verify signature manually and by `Verifier` defaults. Ensure signatures can be applied interchangeably.
@@ -116,8 +116,8 @@ fn signer_verifier_signature() {
     verifying_key
         .verify_prehash(&manual_digest, &signer_signature)
         .unwrap();
-    verifying_key.verify(message, &manual_signature).unwrap();
-    verifying_key.verify(message, &signer_signature).unwrap();
+    verifying_key.verify(&[message], &manual_signature).unwrap();
+    verifying_key.verify(&[message], &signer_signature).unwrap();
 }
 
 /// This test forces the r and s of the signature to a bit precision different to what would

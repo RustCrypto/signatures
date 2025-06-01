@@ -18,7 +18,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     let kp = MlDsa65::key_gen_internal(&xi);
     let sk = kp.signing_key();
     let vk = kp.verifying_key();
-    let sig = sk.sign_deterministic(&m, &ctx).unwrap();
+    let sig = sk.sign_deterministic(&[&m], &ctx).unwrap();
 
     let sk_bytes = sk.encode();
     let vk_bytes = vk.encode();
@@ -37,7 +37,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("sign", |b| {
         b.iter(|| {
             let sk = SigningKey::<MlDsa65>::decode(&sk_bytes);
-            let _sig = sk.sign_deterministic(&m, &ctx);
+            let _sig = sk.sign_deterministic(&[&m], &ctx);
         })
     });
 
@@ -46,7 +46,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         b.iter(|| {
             let vk = VerifyingKey::<MlDsa65>::decode(&vk_bytes);
             let sig = Signature::<MlDsa65>::decode(&sig_bytes).unwrap();
-            let _ver = vk.verify_with_context(&m, &ctx, &sig);
+            let _ver = vk.verify_with_context(&[&m], &ctx, &sig);
         })
     });
 
@@ -54,8 +54,8 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("round_trip", |b| {
         b.iter(|| {
             let kp = MlDsa65::key_gen_internal(&xi);
-            let sig = kp.signing_key().sign_deterministic(&m, &ctx).unwrap();
-            let _ver = kp.verifying_key().verify_with_context(&m, &ctx, &sig);
+            let sig = kp.signing_key().sign_deterministic(&[&m], &ctx).unwrap();
+            let _ver = kp.verifying_key().verify_with_context(&[&m], &ctx, &sig);
         })
     });
 }

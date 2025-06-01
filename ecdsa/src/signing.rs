@@ -175,8 +175,10 @@ where
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
-    fn try_sign(&self, msg: &[u8]) -> Result<Signature<C>> {
-        self.try_sign_digest(C::Digest::new_with_prefix(msg))
+    fn try_sign(&self, msg: &[&[u8]]) -> Result<Signature<C>> {
+        let mut digest = C::Digest::new();
+        msg.iter().for_each(|slice| digest.update(slice));
+        self.try_sign_digest(digest)
     }
 }
 
@@ -232,9 +234,11 @@ where
     fn try_sign_with_rng<R: TryCryptoRng + ?Sized>(
         &self,
         rng: &mut R,
-        msg: &[u8],
+        msg: &[&[u8]],
     ) -> Result<Signature<C>> {
-        self.try_sign_digest_with_rng(rng, C::Digest::new_with_prefix(msg))
+        let mut digest = C::Digest::new();
+        msg.iter().for_each(|slice| digest.update(slice));
+        self.try_sign_digest_with_rng(rng, digest)
     }
 }
 
@@ -259,8 +263,10 @@ where
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
-    fn try_sign(&self, msg: &[u8]) -> Result<SignatureWithOid<C>> {
-        self.try_sign_digest(C::Digest::new_with_prefix(msg))
+    fn try_sign(&self, msg: &[&[u8]]) -> Result<SignatureWithOid<C>> {
+        let mut digest = C::Digest::new();
+        msg.iter().for_each(|slice| digest.update(slice));
+        self.try_sign_digest(digest)
     }
 }
 
@@ -287,7 +293,7 @@ where
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
 {
-    fn try_sign(&self, msg: &[u8]) -> Result<der::Signature<C>> {
+    fn try_sign(&self, msg: &[&[u8]]) -> Result<der::Signature<C>> {
         Signer::<Signature<C>>::try_sign(self, msg).map(Into::into)
     }
 }
@@ -358,7 +364,7 @@ where
     fn try_sign_with_rng<R: TryCryptoRng + ?Sized>(
         &self,
         rng: &mut R,
-        msg: &[u8],
+        msg: &[&[u8]],
     ) -> Result<der::Signature<C>> {
         RandomizedSigner::<Signature<C>>::try_sign_with_rng(self, rng, msg).map(Into::into)
     }

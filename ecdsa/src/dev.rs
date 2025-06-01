@@ -200,7 +200,7 @@ macro_rules! new_wycheproof_test {
                     Err(_) => return Some("failed to parse signature ASN.1"),
                 };
 
-                match verifying_key.verify(msg, &sig) {
+                match verifying_key.verify(&[msg], &sig) {
                     Ok(_) if pass => None,
                     Ok(_) => Some("signature verify unexpectedly succeeded"),
                     Err(_) if !pass => None,

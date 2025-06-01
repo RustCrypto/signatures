@@ -108,7 +108,7 @@ impl<Mode: LmsMode> RandomizedSignerMut<Signature<Mode>> for SigningKey<Mode> {
     fn try_sign_with_rng<R: TryCryptoRng + ?Sized>(
         &mut self,
         rng: &mut R,
-        msg: &[u8],
+        msg: &[&[u8]],
     ) -> Result<Signature<Mode>, Error> {
         if self.q >= Mode::LEAVES {
             return Err(Error::from_source(LmsOutOfPrivateKeys {}));
@@ -354,7 +354,7 @@ mod tests {
 
         let mut rng = ConstantRng(&c);
         let sig = lms_priv
-            .try_sign_with_rng(&mut rng, msg)
+            .try_sign_with_rng(&mut rng, &[msg])
             .unwrap()
             .to_bytes();
         assert_eq!(sig.len(), expected_signature.len());

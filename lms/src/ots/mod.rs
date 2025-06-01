@@ -47,13 +47,13 @@ pub mod tests {
         let msg = "this is a test message".as_bytes();
 
         assert!(sk.is_valid());
-        let sig = sk.try_sign_with_rng(&mut rng, msg);
+        let sig = sk.try_sign_with_rng(&mut rng, &[msg]);
         assert!(!sk.is_valid());
 
         assert!(sig.is_ok());
 
         let sig = sig.unwrap();
-        let result = pk.verify(msg, &sig);
+        let result = pk.verify(&[msg], &sig);
 
         assert!(matches!(result, Ok(())));
     }
@@ -71,7 +71,7 @@ pub mod tests {
         let msg = "this is a test message".as_bytes();
 
         assert!(sk.is_valid());
-        let sig = sk.try_sign_with_rng(&mut rng, msg);
+        let sig = sk.try_sign_with_rng(&mut rng, &[msg]);
         assert!(!sk.is_valid());
 
         assert!(sig.is_ok());
@@ -79,7 +79,7 @@ pub mod tests {
         let sig = sig.unwrap();
         // modify q to get the wrong public key
         pk.q = 1;
-        let result = pk.verify(msg, &sig);
+        let result = pk.verify(&[msg], &sig);
 
         assert!(result.is_err());
     }
@@ -163,7 +163,7 @@ pub mod tests {
         let c = hex!("0eb1ed54a2460d512388cad533138d240534e97b1e82d33bd927d201dfc24ebb");
         let mut rng = ConstantRng(&c);
         let msg = "The enumeration in the Constitution, of certain rights, shall not be construed to deny or disparage others retained by the people.\n".as_bytes();
-        let sig = sk.try_sign_with_rng(&mut rng, msg).unwrap();
+        let sig = sk.try_sign_with_rng(&mut rng, &[msg]).unwrap();
 
         assert_eq!(sig.c, Array::from(c));
         assert_eq!(sig.y[0], Array::from(y0));

@@ -8,7 +8,7 @@ pub fn sign_benchmark<P: ParameterSet>(c: &mut Criterion) {
     c.bench_function(&format!("sign: {}", P::NAME), |b| {
         b.iter(|| {
             let msg = b"Hello, world!";
-            let sig = sk.try_sign(msg).unwrap();
+            let sig = sk.try_sign(&[msg]).unwrap();
             black_box(sig)
         })
     });
@@ -18,11 +18,11 @@ pub fn verify_benchmark<P: ParameterSet>(c: &mut Criterion) {
     let mut rng = rand::rng();
     let sk = SigningKey::<P>::new(&mut rng);
     let msg = b"Hello, world!";
-    let sig = sk.try_sign(msg).unwrap();
+    let sig = sk.try_sign(&[msg]).unwrap();
     let vk = sk.verifying_key();
     c.bench_function(&format!("verify: {}", P::NAME), |b| {
         b.iter(|| {
-            let ok = vk.verify(msg, &sig);
+            let ok = vk.verify(&[msg], &sig);
             black_box(ok)
         })
     });

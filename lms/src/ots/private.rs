@@ -99,7 +99,7 @@ impl<Mode: LmsOtsMode> RandomizedSignerMut<Signature<Mode>> for SigningKey<Mode>
     fn try_sign_with_rng<R: TryCryptoRng + ?Sized>(
         &mut self,
         rng: &mut R,
-        msg: &[u8],
+        msg: &[&[u8]],
     ) -> Result<Signature<Mode>, Error> {
         if !self.valid {
             return Err(Error::from_source(LmsOtsInvalidPrivateKey {}));
@@ -110,13 +110,13 @@ impl<Mode: LmsOtsMode> RandomizedSignerMut<Signature<Mode>> for SigningKey<Mode>
         rng.try_fill_bytes(&mut c).map_err(|_| Error::new())?;
 
         // Q is the randomized message hash
-        let q = Mode::Hasher::new()
-            .chain_update(self.id)
-            .chain_update(self.q.to_be_bytes())
-            .chain_update(D_MESG)
-            .chain_update(&c)
-            .chain_update(msg)
-            .finalize();
+        let mut q_hasher = Mode::Hasher::new();
+        q_hasher.update(self.id);
+        q_hasher.update(self.q.to_be_bytes());
+        q_hasher.update(D_MESG);
+        q_hasher.update(&c);
+        msg.iter().for_each(|slice| q_hasher.update(slice));
+        let q = q_hasher.finalize();
 
         // Y is the signature. We iterate over the message hash and checksum expanded into Winternitz coefficients
         let y = Mode::expand(&q).into_iter().enumerate().map(|(i, a)| {

@@ -142,7 +142,7 @@ where
         let mut opt_rand = vec![0; P::VkLen::USIZE / 2];
         rng.fill_bytes(opt_rand.as_mut());
 
-        let sig = sk.slh_sign_internal(&[msg], Some(&opt_rand)).to_bytes();
+        let sig = sk.slh_sign_internal(&[&[msg]], Some(&opt_rand)).to_bytes();
         writeln!(resp, "smlen = {}", sig.as_slice().len() + msg.len()).unwrap();
         writeln!(
             resp,

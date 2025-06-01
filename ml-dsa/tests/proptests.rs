@@ -26,10 +26,10 @@ prop_compose! {
 
 macro_rules! round_trip_test {
     ($params:path, $keypair:expr) => {
-        let sig = $keypair.signing_key().sign(MSG);
+        let sig = $keypair.signing_key().sign(&[MSG]);
 
         // Check signature verification
-        let verify_result = $keypair.verifying_key().verify(MSG, &sig);
+        let verify_result = $keypair.verifying_key().verify(&[MSG], &sig);
         prop_assert!(verify_result.is_ok());
 
         // Check signature encoding round trip

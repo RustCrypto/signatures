@@ -37,13 +37,13 @@
 //!
 //! // Sign a message
 //! let message = b"Hello world";
-//! let sig = sk.sign_with_rng(&mut rng, message); // .sign() can be used for deterministic signatures
+//! let sig = sk.sign_with_rng(&mut rng, &[message]); // .sign() can be used for deterministic signatures
 //!
 //! // Deserialize a verifying key
 //! let vk_deserialized = vk_bytes.try_into().unwrap();
 //! assert_eq!(vk, vk_deserialized);
 //!
-//! assert!(vk_deserialized.verify(message, &sig).is_ok())
+//! assert!(vk_deserialized.verify(&[message], &sig).is_ok())
 //! ```
 
 #[cfg(feature = "alloc")]
@@ -93,8 +93,8 @@ mod tests {
         let sk = SigningKey::<P>::new(&mut rng);
         let vk = sk.verifying_key();
         let msg = b"Hello, world!";
-        let sig = sk.try_sign(msg).unwrap();
-        vk.verify(msg, &sig).unwrap();
+        let sig = sk.try_sign(&[msg]).unwrap();
+        vk.verify(&[msg], &sig).unwrap();
     }
     test_parameter_sets!(test_sign_verify);
 
@@ -106,10 +106,10 @@ mod tests {
         let msg = b"Hello, world!";
         let modified_msg = b"Goodbye, world!";
 
-        let sig = sk.try_sign(msg).unwrap();
+        let sig = sk.try_sign(&[msg]).unwrap();
         let vk = sk.verifying_key();
-        assert!(vk.verify(msg, &sig).is_ok());
-        assert!(vk.verify(modified_msg, &sig).is_err());
+        assert!(vk.verify(&[msg], &sig).is_ok());
+        assert!(vk.verify(&[modified_msg], &sig).is_err());
     }
 
     #[test]
@@ -119,11 +119,11 @@ mod tests {
         let wrong_sk = SigningKey::<Shake128f>::new(&mut rng); // Generate a different signing key
         let msg = b"Hello, world!";
 
-        let sig = sk.try_sign(msg).unwrap();
+        let sig = sk.try_sign(&[msg]).unwrap();
         let vk = sk.verifying_key();
         let wrong_vk = wrong_sk.verifying_key(); // Get the verifying key of the wrong signing key
-        assert!(vk.verify(msg, &sig).is_ok());
-        assert!(wrong_vk.verify(msg, &sig).is_err()); // This should fail because the verifying key does not match the signing key used
+        assert!(vk.verify(&[msg], &sig).is_ok());
+        assert!(wrong_vk.verify(&[msg], &sig).is_err()); // This should fail because the verifying key does not match the signing key used
     }
 
     #[test]
@@ -132,7 +132,7 @@ mod tests {
         let sk = SigningKey::<Shake128f>::new(&mut rng);
         let msg = b"Hello, world!";
 
-        let mut sig_bytes = sk.try_sign(msg).unwrap().to_bytes();
+        let mut sig_bytes = sk.try_sign(&[msg]).unwrap().to_bytes();
         // Randomly modify one byte in the signature
         let sig_len = sig_bytes.len();
         let random_byte_index = rng.random_range(0..sig_len);
@@ -141,7 +141,7 @@ mod tests {
 
         let vk = sk.verifying_key();
         assert!(
-            vk.verify(msg, &sig).is_err(),
+            vk.verify(&[msg], &sig).is_err(),
             "Verification should fail with a modified signature"
         );
     }
@@ -152,8 +152,8 @@ mod tests {
         let sk = SigningKey::<Shake128f>::new(&mut rng);
         let msg = b"Hello, world!";
 
-        let sig1 = sk.try_sign_with_rng(&mut rng, msg).unwrap();
-        let sig2 = sk.try_sign_with_rng(&mut rng, msg).unwrap();
+        let sig1 = sk.try_sign_with_rng(&mut rng, &[msg]).unwrap();
+        let sig2 = sk.try_sign_with_rng(&mut rng, &[msg]).unwrap();
 
         assert_ne!(
             sig1, sig2,
@@ -168,8 +168,8 @@ mod tests {
         let vk = sk.verifying_key();
         let msg = b"Hello, world!";
         let ctx = b"Test context";
-        let sig = sk.try_sign_with_context(msg, ctx, None).unwrap();
-        vk.try_verify_with_context(msg, ctx, &sig).unwrap();
+        let sig = sk.try_sign_with_context(&[msg], ctx, None).unwrap();
+        vk.try_verify_with_context(&[msg], ctx, &sig).unwrap();
     }
 
     #[test]
@@ -180,7 +180,7 @@ mod tests {
         let msg = b"Hello, world!";
         let ctx = b"Test context!";
         let wrong_ctx = b"Wrong context";
-        let sig = sk.try_sign_with_context(msg, ctx, None).unwrap();
-        assert!(vk.try_verify_with_context(msg, wrong_ctx, &sig).is_err());
+        let sig = sk.try_sign_with_context(&[msg], ctx, None).unwrap();
+        assert!(vk.try_verify_with_context(&[msg], wrong_ctx, &sig).is_err());
     }
 }

@@ -25,9 +25,9 @@
 //! let kp = MlDsa65::key_gen(&mut rng);
 //!
 //! let msg = b"Hello world";
-//! let sig = kp.signing_key().sign(msg);
+//! let sig = kp.signing_key().sign(&[msg]);
 //!
-//! assert!(kp.verifying_key().verify(msg, &sig).is_ok());
+//! assert!(kp.verifying_key().verify(&[msg], &sig).is_ok());
 //! # }
 //! ```
 
@@ -168,10 +168,10 @@ where
 // This method takes a slice of slices so that we can accommodate the varying calculations (direct
 // for test vectors, 0... for sign/sign_deterministic, 1... for the pre-hashed version) without
 // having to allocate memory for components.
-fn message_representative(tr: &[u8], Mp: &[&[u8]]) -> B64 {
+fn message_representative(tr: &[u8], Mp: &[&[&[u8]]]) -> B64 {
     let mut h = H::default().absorb(tr);
 
-    for m in Mp {
+    for m in Mp.iter().flat_map(|slices| slices.iter()) {
         h = h.absorb(m);
     }
 
@@ -244,7 +244,7 @@ where
 /// The `Signer` implementation for `KeyPair` uses the optional deterministic variant of ML-DSA, and
 /// only supports signing with an empty context string.
 impl<P: MlDsaParams> signature::Signer<Signature<P>> for KeyPair<P> {
-    fn try_sign(&self, msg: &[u8]) -> Result<Signature<P>, Error> {
+    fn try_sign(&self, msg: &[&[u8]]) -> Result<Signature<P>, Error> {
         self.signing_key.sign_deterministic(msg, &[])
     }
 }
@@ -349,7 +349,7 @@ impl<P: MlDsaParams> SigningKey<P> {
     /// and it does not separate the context string from the rest of the message.
     // Algorithm 7 ML-DSA.Sign_internal
     // TODO(RLB) Only expose based on a feature.  Tests need access, but normal code shouldn't.
-    pub fn sign_internal(&self, Mp: &[&[u8]], rnd: &B32) -> Signature<P>
+    pub fn sign_internal(&self, Mp: &[&[&[u8]]], rnd: &B32) -> Signature<P>
     where
         P: MlDsaParams,
     {
@@ -418,7 +418,7 @@ impl<P: MlDsaParams> SigningKey<P> {
     #[cfg(feature = "rand_core")]
     pub fn sign_randomized<R: TryCryptoRng + ?Sized>(
         &self,
-        M: &[u8],
+        M: &[&[u8]],
         ctx: &[u8],
         rng: &mut R,
     ) -> Result<Signature<P>, Error> {
@@ -429,7 +429,7 @@ impl<P: MlDsaParams> SigningKey<P> {
         let mut rnd = B32::default();
         rng.try_fill_bytes(&mut rnd).map_err(|_| Error::new())?;
 
-        let Mp = &[&[0], &[Truncate::truncate(ctx.len())], ctx, M];
+        let Mp = &[&[&[0], &[Truncate::truncate(ctx.len())], ctx], M];
         Ok(self.sign_internal(Mp, &rnd))
     }
 
@@ -439,13 +439,13 @@ impl<P: MlDsaParams> SigningKey<P> {
     ///
     /// This method will return an opaque error if the context string is more than 255 bytes long.
     // Algorithm 2 ML-DSA.Sign (optional deterministic variant)
-    pub fn sign_deterministic(&self, M: &[u8], ctx: &[u8]) -> Result<Signature<P>, Error> {
+    pub fn sign_deterministic(&self, M: &[&[u8]], ctx: &[u8]) -> Result<Signature<P>, Error> {
         if ctx.len() > 255 {
             return Err(Error::new());
         }
 
         let rnd = B32::default();
-        let Mp = &[&[0], &[Truncate::truncate(ctx.len())], ctx, M];
+        let Mp = &[&[&[0], &[Truncate::truncate(ctx.len())], ctx], M];
         Ok(self.sign_internal(Mp, &rnd))
     }
 
@@ -491,7 +491,7 @@ impl<P: MlDsaParams> SigningKey<P> {
 /// only supports signing with an empty context string.  If you would like to include a context
 /// string, use the [`SigningKey::sign_deterministic`] method.
 impl<P: MlDsaParams> signature::Signer<Signature<P>> for SigningKey<P> {
-    fn try_sign(&self, msg: &[u8]) -> Result<Signature<P>, Error> {
+    fn try_sign(&self, msg: &[&[u8]]) -> Result<Signature<P>, Error> {
         self.sign_deterministic(msg, &[])
     }
 }
@@ -504,7 +504,7 @@ impl<P: MlDsaParams> signature::RandomizedSigner<Signature<P>> for SigningKey<P>
     fn try_sign_with_rng<R: TryCryptoRng + ?Sized>(
         &self,
         rng: &mut R,
-        msg: &[u8],
+        msg: &[&[u8]],
     ) -> Result<Signature<P>, Error> {
         self.sign_randomized(msg, &[], rng)
     }
@@ -575,7 +575,7 @@ impl<P: MlDsaParams> VerifyingKey<P> {
     /// include the domain separator that distinguishes between the normal and pre-hashed cases,
     /// and it does not separate the context string from the rest of the message.
     // Algorithm 8 ML-DSA.Verify_internal
-    pub fn verify_internal(&self, Mp: &[&[u8]], sigma: &Signature<P>) -> bool
+    pub fn verify_internal(&self, Mp: &[&[&[u8]]], sigma: &Signature<P>) -> bool
     where
         P: MlDsaParams,
     {
@@ -604,12 +604,12 @@ impl<P: MlDsaParams> VerifyingKey<P> {
 
     /// This algorithm reflect the ML-DSA.Verify algorithm from FIPS 204.
     // Algorithm 3 ML-DSA.Verify
-    pub fn verify_with_context(&self, M: &[u8], ctx: &[u8], sigma: &Signature<P>) -> bool {
+    pub fn verify_with_context(&self, M: &[&[u8]], ctx: &[u8], sigma: &Signature<P>) -> bool {
         if ctx.len() > 255 {
             return false;
         }
 
-        let Mp = &[&[0], &[Truncate::truncate(ctx.len())], ctx, M];
+        let Mp = &[&[&[0], &[Truncate::truncate(ctx.len())], ctx], M];
         self.verify_internal(Mp, sigma)
     }
 
@@ -634,7 +634,7 @@ impl<P: MlDsaParams> VerifyingKey<P> {
 }
 
 impl<P: MlDsaParams> signature::Verifier<Signature<P>> for VerifyingKey<P> {
-    fn verify(&self, msg: &[u8], signature: &Signature<P>) -> Result<(), Error> {
+    fn verify(&self, msg: &[&[u8]], signature: &Signature<P>) -> Result<(), Error> {
         self.verify_with_context(msg, &[], signature)
             .then_some(())
             .ok_or(Error::new())
@@ -889,7 +889,7 @@ mod test {
 
         let M = b"Hello world";
         let rnd = Array([0u8; 32]);
-        let sig = sk.sign_internal(&[M], &rnd);
+        let sig = sk.sign_internal(&[&[M]], &rnd);
         let sig_bytes = sig.encode();
         let sig2 = Signature::<P>::decode(&sig_bytes).unwrap();
         assert!(sig == sig2);
@@ -912,9 +912,9 @@ mod test {
 
         let M = b"Hello world";
         let rnd = Array([0u8; 32]);
-        let sig = sk.sign_internal(&[M], &rnd);
+        let sig = sk.sign_internal(&[&[M]], &rnd);
 
-        assert!(vk.verify_internal(&[M], &sig));
+        assert!(vk.verify_internal(&[&[M]], &sig));
     }
 
     #[test]
@@ -945,13 +945,13 @@ mod test {
 
             let M = b"Hello world";
             let rnd = Array([0u8; 32]);
-            let sig = sk.sign_internal(&[M], &rnd);
+            let sig = sk.sign_internal(&[&[M]], &rnd);
 
             let sig_enc = sig.encode();
             let sig_dec = Signature::<P>::decode(&sig_enc).unwrap();
 
             assert_eq!(sig_dec, sig);
-            assert!(vk.verify_internal(&[M], &sig_dec));
+            assert!(vk.verify_internal(&[&[M]], &sig_dec));
         }
     }
 
