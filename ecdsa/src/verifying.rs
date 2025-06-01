@@ -13,7 +13,7 @@ use elliptic_curve::{
     sec1::{self, CompressedPoint, EncodedPoint, FromEncodedPoint, ToEncodedPoint},
 };
 use signature::{
-    DigestVerifier, Verifier,
+    DigestVerifier, MultiPartVerifier, Verifier,
     digest::{Digest, FixedOutput},
     hazmat::PrehashVerifier,
 };
@@ -178,7 +178,19 @@ where
     SignatureSize<C>: ArraySize,
 {
     fn verify(&self, msg: &[u8], signature: &Signature<C>) -> Result<()> {
-        self.verify_digest(C::Digest::new_with_prefix(msg), signature)
+        self.multi_part_verify(&[msg], signature)
+    }
+}
+
+impl<C> MultiPartVerifier<Signature<C>> for VerifyingKey<C>
+where
+    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
+    SignatureSize<C>: ArraySize,
+{
+    fn multi_part_verify(&self, msg: &[&[u8]], signature: &Signature<C>) -> Result<()> {
+        let mut digest = C::Digest::new();
+        msg.iter().for_each(|slice| digest.update(slice));
+        self.verify_digest(digest, signature)
     }
 }
 
@@ -189,11 +201,38 @@ where
     SignatureSize<C>: ArraySize,
 {
     fn verify(&self, msg: &[u8], sig: &SignatureWithOid<C>) -> Result<()> {
+        self.multi_part_verify(&[msg], sig)
+    }
+}
+
+#[cfg(feature = "sha2")]
+impl<C> MultiPartVerifier<SignatureWithOid<C>> for VerifyingKey<C>
+where
+    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
+    SignatureSize<C>: ArraySize,
+{
+    fn multi_part_verify(&self, msg: &[&[u8]], sig: &SignatureWithOid<C>) -> Result<()> {
         match sig.oid() {
-            ECDSA_SHA224_OID => self.verify_prehash(&Sha224::digest(msg), sig.signature()),
-            ECDSA_SHA256_OID => self.verify_prehash(&Sha256::digest(msg), sig.signature()),
-            ECDSA_SHA384_OID => self.verify_prehash(&Sha384::digest(msg), sig.signature()),
-            ECDSA_SHA512_OID => self.verify_prehash(&Sha512::digest(msg), sig.signature()),
+            ECDSA_SHA224_OID => {
+                let mut digest = Sha224::new();
+                msg.iter().for_each(|slice| digest.update(slice));
+                self.verify_prehash(&digest.finalize(), sig.signature())
+            }
+            ECDSA_SHA256_OID => {
+                let mut digest = Sha256::new();
+                msg.iter().for_each(|slice| digest.update(slice));
+                self.verify_prehash(&digest.finalize(), sig.signature())
+            }
+            ECDSA_SHA384_OID => {
+                let mut digest = Sha384::new();
+                msg.iter().for_each(|slice| digest.update(slice));
+                self.verify_prehash(&digest.finalize(), sig.signature())
+            }
+            ECDSA_SHA512_OID => {
+                let mut digest = Sha512::new();
+                msg.iter().for_each(|slice| digest.update(slice));
+                self.verify_prehash(&digest.finalize(), sig.signature())
+            }
             _ => Err(Error::new()),
         }
     }
@@ -239,6 +278,20 @@ where
     fn verify(&self, msg: &[u8], signature: &der::Signature<C>) -> Result<()> {
         let signature = Signature::<C>::try_from(signature.clone())?;
         Verifier::<Signature<C>>::verify(self, msg, &signature)
+    }
+}
+
+#[cfg(feature = "der")]
+impl<C> MultiPartVerifier<der::Signature<C>> for VerifyingKey<C>
+where
+    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
+    SignatureSize<C>: ArraySize,
+    der::MaxSize<C>: ArraySize,
+    <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
+{
+    fn multi_part_verify(&self, msg: &[&[u8]], signature: &der::Signature<C>) -> Result<()> {
+        let signature = Signature::<C>::try_from(signature.clone())?;
+        MultiPartVerifier::<Signature<C>>::multi_part_verify(self, msg, &signature)
     }
 }
 
