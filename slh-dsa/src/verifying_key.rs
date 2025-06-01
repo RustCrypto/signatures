@@ -5,7 +5,7 @@ use crate::Shake;
 use crate::address::ForsTree;
 use crate::signature_encoding::Signature;
 use crate::util::split_digest;
-use ::signature::{Error, Verifier};
+use ::signature::{Error, MultiPartVerifier, Verifier};
 use hybrid_array::{Array, ArraySize};
 use pkcs8::{der, spki};
 use rand_core::CryptoRng;
@@ -60,6 +60,14 @@ impl<P: ParameterSet + VerifyingKeyLen> VerifyingKey<P> {
         msg: &[&[u8]],
         signature: &Signature<P>,
     ) -> Result<(), Error> {
+        self.raw_slh_verify_internal(&[msg], signature)
+    }
+
+    fn raw_slh_verify_internal(
+        &self,
+        msg: &[&[&[u8]]],
+        signature: &Signature<P>,
+    ) -> Result<(), Error> {
         let pk_seed = &self.pk_seed;
         let randomizer = &signature.randomizer;
         let fors_sig = &signature.fors_sig;
@@ -85,11 +93,20 @@ impl<P: ParameterSet + VerifyingKeyLen> VerifyingKey<P> {
         ctx: &[u8],
         signature: &Signature<P>,
     ) -> Result<(), Error> {
+        self.raw_try_verify_with_context(&[msg], ctx, signature)
+    }
+
+    fn raw_try_verify_with_context(
+        &self,
+        msg: &[&[u8]],
+        ctx: &[u8],
+        signature: &Signature<P>,
+    ) -> Result<(), Error> {
         let ctx_len = u8::try_from(ctx.len()).map_err(|_| Error::new())?;
         let ctx_len_bytes = ctx_len.to_be_bytes();
 
-        let ctx_msg = [&[0], &ctx_len_bytes, ctx, msg];
-        self.slh_verify_internal(&ctx_msg, signature) // TODO - context processing
+        let ctx_msg = [&[&[0], &ctx_len_bytes, ctx], msg];
+        self.raw_slh_verify_internal(&ctx_msg, signature) // TODO - context processing
     }
 
     /// Serialize the verifying key to a new stack-allocated array
@@ -151,7 +168,13 @@ impl<P: ParameterSet> TryFrom<&[u8]> for VerifyingKey<P> {
 
 impl<P: ParameterSet> Verifier<Signature<P>> for VerifyingKey<P> {
     fn verify(&self, msg: &[u8], signature: &Signature<P>) -> Result<(), Error> {
-        self.try_verify_with_context(msg, &[], signature) // TODO - context processing
+        self.multi_part_verify(&[msg], signature)
+    }
+}
+
+impl<P: ParameterSet> MultiPartVerifier<Signature<P>> for VerifyingKey<P> {
+    fn multi_part_verify(&self, msg: &[&[u8]], signature: &Signature<P>) -> Result<(), Error> {
+        self.raw_try_verify_with_context(msg, &[], signature) // TODO - context processing
     }
 }
 

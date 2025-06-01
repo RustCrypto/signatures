@@ -23,7 +23,7 @@ pub(crate) trait HashSuite: Sized + Clone + Debug + PartialEq + Eq {
     fn prf_msg(
         sk_prf: &SkPrf<Self::N>,
         opt_rand: &Array<u8, Self::N>,
-        msg: &[impl AsRef<[u8]>],
+        msg: &[&[impl AsRef<[u8]>]],
     ) -> Array<u8, Self::N>;
 
     /// Hashes a message using a given randomizer
@@ -31,7 +31,7 @@ pub(crate) trait HashSuite: Sized + Clone + Debug + PartialEq + Eq {
         rand: &Array<u8, Self::N>,
         pk_seed: &PkSeed<Self::N>,
         pk_root: &Array<u8, Self::N>,
-        msg: &[impl AsRef<[u8]>],
+        msg: &[&[impl AsRef<[u8]>]],
     ) -> Array<u8, Self::M>;
 
     /// PRF that is used to generate the secret values in WOTS+ and FORS private keys.
@@ -76,7 +76,7 @@ mod tests {
         let opt_rand = Array::<u8, H::N>::from_fn(|_| 1);
         let msg = [2u8; 32];
 
-        let result = H::prf_msg(&sk_prf, &opt_rand, &[msg]);
+        let result = H::prf_msg(&sk_prf, &opt_rand, &[&[msg]]);
 
         assert_eq!(result.as_slice(), expected);
     }
@@ -87,7 +87,7 @@ mod tests {
         let pk_root = Array::<u8, H::N>::from_fn(|_| 2);
         let msg = [3u8; 32];
 
-        let result = H::h_msg(&rand, &pk_seed, &pk_root, &[msg]);
+        let result = H::h_msg(&rand, &pk_seed, &pk_root, &[&[msg]]);
 
         assert_eq!(result.as_slice(), expected);
     }
