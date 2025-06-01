@@ -36,7 +36,6 @@ sha1 = "0.11.0-rc.0"
 der = { version = "0.8.0-rc.1", features = ["derive"] }
 
 [features]
-std = []
 hazmat = []
 
 [package.metadata.docs.rs]
