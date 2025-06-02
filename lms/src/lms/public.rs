@@ -9,7 +9,7 @@ use crate::types::Typecode;
 use crate::{constants::D_INTR, lms::LmsMode};
 use digest::{Digest, OutputSizeUser};
 use hybrid_array::{Array, ArraySize};
-use signature::{Error, Verifier};
+use signature::{Error, MultipartVerifier, Verifier};
 use typenum::{Sum, U24};
 
 //use crate::signature::Signature as Signature;
@@ -57,12 +57,18 @@ impl<Mode: LmsMode> VerifyingKey<Mode> {
 
 impl<Mode: LmsMode> Verifier<Signature<Mode>> for VerifyingKey<Mode> {
     fn verify(&self, msg: &[u8], signature: &Signature<Mode>) -> Result<(), Error> {
+        self.multipart_verify(&[msg], signature)
+    }
+}
+
+impl<Mode: LmsMode> MultipartVerifier<Signature<Mode>> for VerifyingKey<Mode> {
+    fn multipart_verify(&self, msg: &[&[u8]], signature: &Signature<Mode>) -> Result<(), Error> {
         // Compute the LMS Public Key Candidate Tc from the signature,
         //    message, identifier, pubtype, and ots_typecode, using
         //    Algorithm 6a.
         let key_candidate = signature
             .lmots_sig
-            .recover_pubkey(self.id, signature.q, msg);
+            .raw_recover_pubkey(self.id, signature.q, msg);
 
         let mut node_num = signature.q + Mode::LEAVES;
         let mut tmp = Mode::Hasher::new()

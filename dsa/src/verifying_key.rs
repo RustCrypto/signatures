@@ -17,7 +17,7 @@ use pkcs8::{
     },
     spki,
 };
-use signature::{DigestVerifier, Verifier, hazmat::PrehashVerifier};
+use signature::{DigestVerifier, MultipartVerifier, Verifier, hazmat::PrehashVerifier};
 
 /// DSA public key.
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
@@ -108,7 +108,19 @@ impl VerifyingKey {
 
 impl Verifier<Signature> for VerifyingKey {
     fn verify(&self, msg: &[u8], signature: &Signature) -> Result<(), signature::Error> {
-        self.verify_digest(sha2::Sha256::new_with_prefix(msg), signature)
+        self.multipart_verify(&[msg], signature)
+    }
+}
+
+impl MultipartVerifier<Signature> for VerifyingKey {
+    fn multipart_verify(
+        &self,
+        msg: &[&[u8]],
+        signature: &Signature,
+    ) -> Result<(), signature::Error> {
+        let mut digest = sha2::Sha256::new();
+        msg.iter().for_each(|slice| digest.update(slice));
+        self.verify_digest(digest, signature)
     }
 }
 

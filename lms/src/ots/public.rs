@@ -9,7 +9,7 @@ use crate::types::Identifier;
 use digest::{Output, OutputSizeUser};
 
 use hybrid_array::{Array, ArraySize};
-use signature::{Error, Verifier};
+use signature::{Error, MultipartVerifier, Verifier};
 use std::cmp::Ordering;
 use std::ops::Add;
 use typenum::{Sum, U2, U24};
@@ -48,9 +48,21 @@ where
 {
     // this implements algorithm 4a of https://datatracker.ietf.org/doc/html/rfc8554#section-4.6
     fn verify(&self, msg: &[u8], signature: &Signature<Mode>) -> Result<(), Error> {
+        self.multipart_verify(&[msg], signature)
+    }
+}
+
+impl<Mode: LmsOtsMode> MultipartVerifier<Signature<Mode>> for VerifyingKey<Mode>
+where
+    // required to concat Q and cksm(Q)
+    <Mode::Hasher as OutputSizeUser>::OutputSize: Add<U2>,
+    Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U2>: ArraySize,
+{
+    // this implements algorithm 4a of https://datatracker.ietf.org/doc/html/rfc8554#section-4.6
+    fn multipart_verify(&self, msg: &[&[u8]], signature: &Signature<Mode>) -> Result<(), Error> {
         // If the public key is not at least four bytes long, return INVALID.
         // We are calling this method on a valid public key so there's no worry here.
-        let kc = signature.recover_pubkey(self.id, self.q, msg);
+        let kc = signature.raw_recover_pubkey(self.id, self.q, msg);
         // 4. If Kc is equal to K, return VALID; otherwise, return INVALID.
         if self.k == kc.k {
             Ok(())

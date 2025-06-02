@@ -8,7 +8,7 @@ use crate::types::{Identifier, Typecode};
 use digest::{Digest, Output, OutputSizeUser};
 use hybrid_array::{Array, ArraySize};
 use rand_core::{CryptoRng, TryCryptoRng};
-use signature::{Error, RandomizedSignerMut};
+use signature::{Error, RandomizedMultipartSignerMut, RandomizedSignerMut};
 
 use core::array::TryFromSliceError;
 use std::cmp::Ordering;
@@ -110,13 +110,24 @@ impl<Mode: LmsMode> RandomizedSignerMut<Signature<Mode>> for SigningKey<Mode> {
         rng: &mut R,
         msg: &[u8],
     ) -> Result<Signature<Mode>, Error> {
+        self.try_multipart_sign_with_rng(rng, &[msg])
+    }
+}
+
+// this implements the algorithm from Appendix D in <https://datatracker.ietf.org/doc/html/rfc8554#appendix-D>
+impl<Mode: LmsMode> RandomizedMultipartSignerMut<Signature<Mode>> for SigningKey<Mode> {
+    fn try_multipart_sign_with_rng<R: TryCryptoRng + ?Sized>(
+        &mut self,
+        rng: &mut R,
+        msg: &[&[u8]],
+    ) -> Result<Signature<Mode>, Error> {
         if self.q >= Mode::LEAVES {
             return Err(Error::from_source(LmsOutOfPrivateKeys {}));
         }
 
         let mut ots_priv_key =
             OtsPrivateKey::<Mode::OtsMode>::new_from_seed(self.q, self.id, &self.seed);
-        let ots_sig = ots_priv_key.try_sign_with_rng(rng, msg)?;
+        let ots_sig = ots_priv_key.try_multipart_sign_with_rng(rng, msg)?;
 
         let r = (1 << Mode::H) + self.q;
 

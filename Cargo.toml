@@ -27,4 +27,4 @@ rfc6979 = { path = "./rfc6979" }
 slh-dsa = { path = "./slh-dsa" }
 
 # https://github.com/RustCrypto/traits/pull/1880
-signature = { git = "https://github.com/RustCrypto/traits", rev = "f05989fadee8bb73d2c278f40c7ba943b0582977" }
+signature = { git = "https://github.com/RustCrypto/traits", rev = "33d3c531068dd25c9ac237bf3cdd17e399e63c81" }

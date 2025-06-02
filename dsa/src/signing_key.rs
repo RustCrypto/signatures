@@ -22,7 +22,7 @@ use pkcs8::{
 #[cfg(feature = "hazmat")]
 use signature::rand_core::CryptoRng;
 use signature::{
-    DigestSigner, RandomizedDigestSigner, Signer,
+    DigestSigner, MultipartSigner, RandomizedDigestSigner, Signer,
     hazmat::{PrehashSigner, RandomizedPrehashSigner},
     rand_core::TryCryptoRng,
 };
@@ -149,7 +149,14 @@ impl ZeroizeOnDrop for SigningKey {}
 
 impl Signer<Signature> for SigningKey {
     fn try_sign(&self, msg: &[u8]) -> Result<Signature, signature::Error> {
-        let digest = sha2::Sha256::new_with_prefix(msg);
+        self.try_multipart_sign(&[msg])
+    }
+}
+
+impl MultipartSigner<Signature> for SigningKey {
+    fn try_multipart_sign(&self, msg: &[&[u8]]) -> Result<Signature, signature::Error> {
+        let mut digest = sha2::Sha256::new();
+        msg.iter().for_each(|slice| digest.update(slice));
         self.try_sign_digest(digest)
     }
 }
