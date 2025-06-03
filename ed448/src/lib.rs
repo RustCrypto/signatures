@@ -82,18 +82,11 @@ pub use signature::{self, Error, SignatureEncoding};
 use core::fmt;
 
 /// Size of a single component of an Ed448 signature.
-const COMPONENT_SIZE: usize = 57;
+pub const COMPONENT_SIZE: usize = 57;
 
 /// Size of an `R` or `s` component of an Ed448 signature when serialized
 /// as bytes.
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub struct ComponentBytes([u8; COMPONENT_SIZE]);
-
-impl Default for ComponentBytes {
-    fn default() -> Self {
-        ComponentBytes([0; COMPONENT_SIZE])
-    }
-}
+pub type ComponentBytes = [u8; COMPONENT_SIZE];
 
 /// Ed448 signature serialized as a byte array.
 pub type SignatureBytes = [u8; Signature::BYTE_SIZE];
@@ -119,12 +112,12 @@ impl Signature {
 
     /// Parse an Ed448 signature from a byte slice.
     pub fn from_bytes(bytes: &SignatureBytes) -> Self {
-        let mut R = ComponentBytes::default();
-        let mut s = ComponentBytes::default();
+        let mut R = [0; COMPONENT_SIZE];
+        let mut s = [0; COMPONENT_SIZE];
 
         let components = bytes.split_at(COMPONENT_SIZE);
-        R.0.copy_from_slice(components.0);
-        s.0.copy_from_slice(components.1);
+        R.copy_from_slice(components.0);
+        s.copy_from_slice(components.1);
 
         Self { R, s }
     }
@@ -154,9 +147,18 @@ impl Signature {
     pub fn to_bytes(&self) -> SignatureBytes {
         let mut ret = [0u8; Self::BYTE_SIZE];
         let (R, s) = ret.split_at_mut(COMPONENT_SIZE);
-        R.copy_from_slice(&self.R.0);
-        s.copy_from_slice(&self.s.0);
+        R.copy_from_slice(&self.R);
+        s.copy_from_slice(&self.s);
         ret
+    }
+
+    /// Create a [`Signature`] from the serialized `r` and `s` component values
+    /// which comprise the signature.
+    pub fn from_components(r: impl Into<ComponentBytes>, s: impl Into<ComponentBytes>) -> Self {
+        Self {
+            R: r.into(),
+            s: s.into(),
+        }
     }
 }
 

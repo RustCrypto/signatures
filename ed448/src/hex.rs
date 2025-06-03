@@ -4,7 +4,7 @@ use core::{fmt, str};
 
 impl fmt::LowerHex for Signature {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for component in [&self.R.0, &self.s.0] {
+        for component in [&self.R, &self.s] {
             for byte in component {
                 write!(f, "{:02x}", byte)?;
             }
@@ -15,7 +15,7 @@ impl fmt::LowerHex for Signature {
 
 impl fmt::UpperHex for Signature {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for component in [&self.R.0, &self.s.0] {
+        for component in [&self.R, &self.s] {
             for byte in component {
                 write!(f, "{:02X}", byte)?;
             }
