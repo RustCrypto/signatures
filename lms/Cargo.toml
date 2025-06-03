@@ -18,7 +18,7 @@ rand = "0.9.0"
 sha2 = "0.11.0-rc.0"
 static_assertions = "1.1.0"
 rand_core = "0.9.0"
-signature = { version = "3.0.0-rc.0", features = ["alloc", "digest", "rand_core"] }
+signature = { version = "3.0.0-rc.1", features = ["alloc", "digest", "rand_core"] }
 typenum = { version = "1.17.0", features = ["const-generics"] }
 zeroize = "1.8.1"
 
