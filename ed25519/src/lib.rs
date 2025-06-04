@@ -396,10 +396,7 @@ impl SignatureBitStringEncoding for Signature {
 impl AssociatedAlgorithmIdentifier for Signature {
     type Params = AnyRef<'static>;
 
-    const ALGORITHM_IDENTIFIER: AlgorithmIdentifierRef<'static> = AlgorithmIdentifierRef {
-        oid: ObjectIdentifier::new_unwrap("1.3.101.112"),
-        parameters: None,
-    };
+    const ALGORITHM_IDENTIFIER: AlgorithmIdentifierRef<'static> = pkcs8::ALGORITHM_ID;
 }
 
 impl From<Signature> for SignatureBytes {
