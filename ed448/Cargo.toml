@@ -31,8 +31,7 @@ hex-literal = "1"
 bincode = "1"
 
 [features]
-default = ["std"]
+default = ["alloc"]
 alloc = ["pkcs8?/alloc"]
 pem = ["alloc", "pkcs8/pem"]
 serde_bytes = ["serde", "dep:serde_bytes"]
-std = ["pkcs8?/std", "serde_bytes?/std"]
