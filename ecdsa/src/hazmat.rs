@@ -136,23 +136,26 @@ where
 {
     let z = <Scalar<C> as Reduce<C::Uint>>::reduce_bytes(z);
 
-    // Compute scalar inversion of 𝑘
+    // Compute scalar inversion of 𝑘.
     let k_inv = k.invert();
 
-    // Compute 𝑹 = 𝑘×𝑮
+    // Compute 𝑹 = 𝑘×𝑮.
     let R = ProjectivePoint::<C>::mul_by_generator(k).to_affine();
 
     // Lift x-coordinate of 𝑹 (element of base field) into a serialized big
-    // integer, then reduce it into an element of the scalar field
+    // integer, then reduce it into an element of the scalar field.
     let r = Scalar::<C>::reduce_bytes(&R.x());
-    let x_is_reduced = r.to_repr() != R.x();
 
     // Compute 𝒔 as a signature over 𝒓 and 𝒛.
     let s = *k_inv * (z + (r * d.as_ref()));
 
     // NOTE: `Signature::from_scalars` checks that both `r` and `s` are non-zero.
     let mut signature = Signature::from_scalars(r, s)?;
-    let mut recovery_id = RecoveryId::new(R.y_is_odd().into(), x_is_reduced);
+
+    // Compute recovery ID.
+    let x_is_reduced = r.to_repr() != R.x();
+    let y_is_odd = R.y_is_odd();
+    let mut recovery_id = RecoveryId::new(y_is_odd.into(), x_is_reduced);
 
     // Apply low-S normalization if the curve is configured for it
     if C::NORMALIZE_S {
