@@ -14,7 +14,7 @@
 
 //! # Using Ed448 generically over algorithm implementations/providers
 //!
-//! By using the `ed448-signature` crate, you can write code which signs and verifies
+//! By using the `ed448` crate, you can write code which signs and verifies
 //! messages using the Ed448 signature algorithm generically over any
 //! supported Ed448 implementation (see the next section for available
 //! providers).
@@ -26,20 +26,20 @@
 //! ## Example
 //!
 //! ```
-//! use ed448_signature::signature::{Signer, Verifier};
+//! use ed448::signature::{Signer, Verifier};
 //!
 //! pub struct HelloSigner<S>
 //! where
-//!     S: Signer<ed448_signature::Signature>
+//!     S: Signer<ed448::Signature>
 //! {
 //!     pub signing_key: S
 //! }
 //!
 //! impl<S> HelloSigner<S>
 //! where
-//!     S: Signer<ed448_signature::Signature>
+//!     S: Signer<ed448::Signature>
 //! {
-//!     pub fn sign(&self, person: &str) -> ed448_signature::Signature {
+//!     pub fn sign(&self, person: &str) -> ed448::Signature {
 //!         // NOTE: use `try_sign` if you'd like to be able to handle
 //!         // errors from external signing services/devices (e.g. HSM/KMS)
 //!         // <https://docs.rs/signature/latest/signature/trait.Signer.html#tymethod.try_sign>
@@ -53,13 +53,13 @@
 //!
 //! impl<V> HelloVerifier<V>
 //! where
-//!     V: Verifier<ed448_signature::Signature>
+//!     V: Verifier<ed448::Signature>
 //! {
 //!     pub fn verify(
 //!         &self,
 //!         person: &str,
-//!         signature: &ed448_signature::Signature
-//!     ) -> Result<(), ed448_signature::Error> {
+//!         signature: &ed448::Signature
+//!     ) -> Result<(), ed448::Error> {
 //!         self.verifying_key.verify(format_message(person).as_bytes(), signature)
 //!     }
 //! }
@@ -211,7 +211,7 @@ impl TryFrom<&[u8]> for Signature {
 
 impl fmt::Debug for Signature {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("ed448_signature::Signature")
+        f.debug_struct("ed448::Signature")
             .field("R", self.r_bytes())
             .field("s", self.s_bytes())
             .finish()
