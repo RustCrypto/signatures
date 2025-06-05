@@ -81,6 +81,21 @@ pub use signature::{self, Error, SignatureEncoding};
 
 use core::fmt;
 
+#[cfg(feature = "pkcs8")]
+pub use crate::pkcs8::{
+    KeypairBytes, PublicKeyBytes,
+    spki::{
+        AlgorithmIdentifierRef, AssociatedAlgorithmIdentifier,
+        der::{AnyRef, oid::ObjectIdentifier},
+    },
+};
+
+#[cfg(all(feature = "alloc", feature = "pkcs8"))]
+use pkcs8::spki::{
+    SignatureBitStringEncoding,
+    der::{self, asn1::BitString},
+};
+
 /// Size of a single component of an Ed448 signature.
 pub const COMPONENT_SIZE: usize = 57;
 
@@ -207,4 +222,18 @@ impl fmt::Display for Signature {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:X}", self)
     }
+}
+
+#[cfg(all(feature = "alloc", feature = "pkcs8"))]
+impl SignatureBitStringEncoding for Signature {
+    fn to_bitstring(&self) -> der::Result<BitString> {
+        BitString::new(0, self.to_bytes())
+    }
+}
+
+#[cfg(feature = "pkcs8")]
+impl AssociatedAlgorithmIdentifier for Signature {
+    type Params = AnyRef<'static>;
+
+    const ALGORITHM_IDENTIFIER: AlgorithmIdentifierRef<'static> = pkcs8::ALGORITHM_ID;
 }
