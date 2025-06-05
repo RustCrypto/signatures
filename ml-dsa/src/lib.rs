@@ -89,7 +89,7 @@ use core::fmt;
 
 pub use crate::param::{EncodedSignature, EncodedSigningKey, EncodedVerifyingKey, MlDsaParams};
 pub use crate::util::B32;
-pub use signature::{self, Error};
+pub use signature::{self, Error, MultipartSigner, MultipartVerifier};
 
 /// An ML-DSA signature
 #[derive(Clone, PartialEq, Debug)]
@@ -168,10 +168,10 @@ where
 // This method takes a slice of slices so that we can accommodate the varying calculations (direct
 // for test vectors, 0... for sign/sign_deterministic, 1... for the pre-hashed version) without
 // having to allocate memory for components.
-fn message_representative(tr: &[u8], Mp: &[&[u8]]) -> B64 {
+fn message_representative(tr: &[u8], Mp: &[&[&[u8]]]) -> B64 {
     let mut h = H::default().absorb(tr);
 
-    for m in Mp {
+    for m in Mp.iter().copied().flatten() {
         h = h.absorb(m);
     }
 
@@ -245,7 +245,15 @@ where
 /// only supports signing with an empty context string.
 impl<P: MlDsaParams> signature::Signer<Signature<P>> for KeyPair<P> {
     fn try_sign(&self, msg: &[u8]) -> Result<Signature<P>, Error> {
-        self.signing_key.sign_deterministic(msg, &[])
+        self.try_multipart_sign(&[msg])
+    }
+}
+
+/// The `Signer` implementation for `KeyPair` uses the optional deterministic variant of ML-DSA, and
+/// only supports signing with an empty context string.
+impl<P: MlDsaParams> MultipartSigner<Signature<P>> for KeyPair<P> {
+    fn try_multipart_sign(&self, msg: &[&[u8]]) -> Result<Signature<P>, Error> {
+        self.signing_key.raw_sign_deterministic(msg, &[])
     }
 }
 
@@ -353,6 +361,13 @@ impl<P: MlDsaParams> SigningKey<P> {
     where
         P: MlDsaParams,
     {
+        self.raw_sign_internal(&[Mp], rnd)
+    }
+
+    fn raw_sign_internal(&self, Mp: &[&[&[u8]]], rnd: &B32) -> Signature<P>
+    where
+        P: MlDsaParams,
+    {
         // Compute the message representative
         // XXX(RLB): This line incorporates some of the logic from ML-DSA.sign to avoid computing
         // the concatenated M'.
@@ -440,13 +455,17 @@ impl<P: MlDsaParams> SigningKey<P> {
     /// This method will return an opaque error if the context string is more than 255 bytes long.
     // Algorithm 2 ML-DSA.Sign (optional deterministic variant)
     pub fn sign_deterministic(&self, M: &[u8], ctx: &[u8]) -> Result<Signature<P>, Error> {
+        self.raw_sign_deterministic(&[M], ctx)
+    }
+
+    fn raw_sign_deterministic(&self, M: &[&[u8]], ctx: &[u8]) -> Result<Signature<P>, Error> {
         if ctx.len() > 255 {
             return Err(Error::new());
         }
 
         let rnd = B32::default();
-        let Mp = &[&[0], &[Truncate::truncate(ctx.len())], ctx, M];
-        Ok(self.sign_internal(Mp, &rnd))
+        let Mp = &[&[&[0], &[Truncate::truncate(ctx.len())], ctx], M];
+        Ok(self.raw_sign_internal(Mp, &rnd))
     }
 
     /// Encode the key in a fixed-size byte array.
@@ -492,7 +511,16 @@ impl<P: MlDsaParams> SigningKey<P> {
 /// string, use the [`SigningKey::sign_deterministic`] method.
 impl<P: MlDsaParams> signature::Signer<Signature<P>> for SigningKey<P> {
     fn try_sign(&self, msg: &[u8]) -> Result<Signature<P>, Error> {
-        self.sign_deterministic(msg, &[])
+        self.try_multipart_sign(&[msg])
+    }
+}
+
+/// The `Signer` implementation for `SigningKey` uses the optional deterministic variant of ML-DSA, and
+/// only supports signing with an empty context string.  If you would like to include a context
+/// string, use the [`SigningKey::sign_deterministic`] method.
+impl<P: MlDsaParams> MultipartSigner<Signature<P>> for SigningKey<P> {
+    fn try_multipart_sign(&self, msg: &[&[u8]]) -> Result<Signature<P>, Error> {
+        self.raw_sign_deterministic(msg, &[])
     }
 }
 
@@ -579,6 +607,13 @@ impl<P: MlDsaParams> VerifyingKey<P> {
     where
         P: MlDsaParams,
     {
+        self.raw_verify_internal(&[Mp], sigma)
+    }
+
+    fn raw_verify_internal(&self, Mp: &[&[&[u8]]], sigma: &Signature<P>) -> bool
+    where
+        P: MlDsaParams,
+    {
         // Compute the message representative
         let mu = message_representative(&self.tr, Mp);
 
@@ -605,12 +640,16 @@ impl<P: MlDsaParams> VerifyingKey<P> {
     /// This algorithm reflect the ML-DSA.Verify algorithm from FIPS 204.
     // Algorithm 3 ML-DSA.Verify
     pub fn verify_with_context(&self, M: &[u8], ctx: &[u8], sigma: &Signature<P>) -> bool {
+        self.raw_verify_with_context(&[M], ctx, sigma)
+    }
+
+    fn raw_verify_with_context(&self, M: &[&[u8]], ctx: &[u8], sigma: &Signature<P>) -> bool {
         if ctx.len() > 255 {
             return false;
         }
 
-        let Mp = &[&[0], &[Truncate::truncate(ctx.len())], ctx, M];
-        self.verify_internal(Mp, sigma)
+        let Mp = &[&[&[0], &[Truncate::truncate(ctx.len())], ctx], M];
+        self.raw_verify_internal(Mp, sigma)
     }
 
     fn encode_internal(rho: &B32, t1: &Vector<P::K>) -> EncodedVerifyingKey<P> {
@@ -635,7 +674,13 @@ impl<P: MlDsaParams> VerifyingKey<P> {
 
 impl<P: MlDsaParams> signature::Verifier<Signature<P>> for VerifyingKey<P> {
     fn verify(&self, msg: &[u8], signature: &Signature<P>) -> Result<(), Error> {
-        self.verify_with_context(msg, &[], signature)
+        self.multipart_verify(&[msg], signature)
+    }
+}
+
+impl<P: MlDsaParams> MultipartVerifier<Signature<P>> for VerifyingKey<P> {
+    fn multipart_verify(&self, msg: &[&[u8]], signature: &Signature<P>) -> Result<(), Error> {
+        self.raw_verify_with_context(msg, &[], signature)
             .then_some(())
             .ok_or(Error::new())
     }

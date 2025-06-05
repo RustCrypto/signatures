@@ -7,7 +7,7 @@ use {
     crate::{SigningKey, hazmat::sign_prehashed_rfc6979},
     elliptic_curve::{FieldBytes, subtle::CtOption},
     signature::{
-        DigestSigner, RandomizedDigestSigner, Signer,
+        DigestSigner, MultipartSigner, RandomizedDigestSigner, Signer,
         digest::FixedOutput,
         hazmat::{PrehashSigner, RandomizedPrehashSigner},
         rand_core::TryCryptoRng,
@@ -291,7 +291,21 @@ where
     SignatureSize<C>: ArraySize,
 {
     fn try_sign(&self, msg: &[u8]) -> Result<(Signature<C>, RecoveryId)> {
-        self.sign_recoverable(msg)
+        self.try_multipart_sign(&[msg])
+    }
+}
+
+#[cfg(feature = "signing")]
+impl<C> MultipartSigner<(Signature<C>, RecoveryId)> for SigningKey<C>
+where
+    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
+    SignatureSize<C>: ArraySize,
+{
+    fn try_multipart_sign(&self, msg: &[&[u8]]) -> Result<(Signature<C>, RecoveryId)> {
+        let mut digest = C::Digest::new();
+        msg.iter().for_each(|slice| digest.update(slice));
+        self.sign_digest_recoverable(digest)
     }
 }
 
