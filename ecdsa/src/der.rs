@@ -385,11 +385,6 @@ impl<'a> DecodeValue<'a> for SignatureRef<'a> {
 }
 impl<'a> Sequence<'a> for SignatureRef<'a> {}
 
-/// Decode the `r` and `s` components of a DER-encoded ECDSA signature.
-fn decode_der(der_bytes: &[u8]) -> der::Result<SignatureRef<'_>> {
-    SignatureRef::from_der(der_bytes)
-}
-
 /// Locate the range within a slice at which a particular subslice is located
 fn find_scalar_range(outer: &[u8], inner: &[u8]) -> Result<Range<usize>> {
     let outer_start = outer.as_ptr() as usize;
