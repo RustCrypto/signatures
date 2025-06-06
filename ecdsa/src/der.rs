@@ -85,7 +85,7 @@ where
 {
     /// Parse signature from DER-encoded bytes.
     pub fn from_bytes(input: &[u8]) -> Result<Self> {
-        let SignatureRef { r, s } = decode_der(input).map_err(|_| Error::new())?;
+        let SignatureRef { r, s } = SignatureRef::from_der(input).map_err(|_| Error::new())?;
 
         if r.as_bytes().len() > C::FieldBytesSize::USIZE
             || s.as_bytes().len() > C::FieldBytesSize::USIZE
