@@ -390,7 +390,7 @@ dependencies = [
 
 [[package]]
 name = "ed448"
-version = "0.0.0"
+version = "0.5.0-pre.0"
 dependencies = [
  "bincode",
  "hex-literal 1.0.0",

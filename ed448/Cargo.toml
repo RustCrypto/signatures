@@ -1,13 +1,13 @@
 [package]
 name = "ed448"
-version = "0.0.0"
+version = "0.5.0-pre.0"
 edition = "2024"
 authors = ["RustCrypto Developers"]
 license = "Apache-2.0 OR MIT"
 description = """
-Edwards Digital Signature Algorithm (EdDSA) over Curve448 (as specified in RFC 7748)
-support library providing signature type definitions and PKCS#8 private key
-decoding/encoding support
+Edwards Digital Signature Algorithm (EdDSA) over Curve448 (as specified in
+RFC8032) support library providing signature type definitions and PKCS#8
+private key decoding/encoding support
 """
 documentation = "https://docs.rs/ed448"
 homepage = "https://github.com/RustCrypto/signatures/tree/master/ed448"
