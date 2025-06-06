@@ -19,7 +19,7 @@ opt-level = 2
 # when pulling a member crate through git
 dsa = { path = "./dsa" }
 ecdsa = { path = "./ecdsa" }
-ed448-signature = { path = "./ed448" }
+ed448 = { path = "./ed448" }
 ed25519 = { path = "./ed25519" }
 lms-signature = { path = "./lms" }
 ml-dsa = { path = "./ml-dsa" }

@@ -15,7 +15,7 @@ in [RFC 7748][2].
 ## About
 
 This crate doesn't contain an implementation of Ed448, but instead
-contains an [`ed448_signature::Signature`][3] type which other crates can use in
+contains an [`ed448::Signature`][3] type which other crates can use in
 conjunction with the [`signature::Signer`][4] and [`signature::Verifier`][5]
 traits.
 
@@ -48,10 +48,10 @@ dual licensed as above, without any additional terms or conditions.
 
 [//]: # (badges)
 
-[crate-image]: https://img.shields.io/crates/v/ed448-signature
-[crate-link]: https://crates.io/crates/ed448-signature
-[docs-image]: https://docs.rs/ed448-signature/badge.svg
-[docs-link]: https://docs.rs/ed448-signature/
+[crate-image]: https://img.shields.io/crates/v/ed448
+[crate-link]: https://crates.io/crates/ed448
+[docs-image]: https://docs.rs/ed448/badge.svg
+[docs-link]: https://docs.rs/ed448/
 [build-image]: https://github.com/RustCrypto/signatures/actions/workflows/ed448.yml/badge.svg
 [build-link]: https://github.com/RustCrypto/signatures/actions/workflows/ed448.yml
 [license-image]: https://img.shields.io/badge/license-Apache2.0/MIT-blue.svg
@@ -67,6 +67,6 @@ dual licensed as above, without any additional terms or conditions.
 
 [1]: https://en.wikipedia.org/wiki/EdDSA#Ed448
 [2]: https://tools.ietf.org/html/rfc7748
-[3]: https://docs.rs/ed448-signature/latest/ed448-signature/struct.Signature.html
+[3]: https://docs.rs/ed448/latest/ed448/struct.Signature.html
 [4]: https://docs.rs/signature/latest/signature/trait.Signer.html
 [5]: https://docs.rs/signature/latest/signature/trait.Verifier.html

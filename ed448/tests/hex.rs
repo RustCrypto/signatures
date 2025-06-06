@@ -1,6 +1,6 @@
 //! Hexadecimal display/serialization tests.
 
-use ed448_signature::Signature;
+use ed448::Signature;
 use hex_literal::hex;
 use std::str::FromStr;
 
