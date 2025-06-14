@@ -2,7 +2,7 @@
 
 use crate::{
     EcdsaCurve, Error, Result, Signature, SignatureSize,
-    hazmat::{self, DigestPrimitive, bits2field},
+    hazmat::{self, DigestAlgorithm, bits2field},
 };
 use core::{cmp::Ordering, fmt::Debug};
 use elliptic_curve::{
@@ -174,7 +174,7 @@ where
 
 impl<C> Verifier<Signature<C>> for VerifyingKey<C>
 where
-    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
     SignatureSize<C>: ArraySize,
 {
     fn verify(&self, msg: &[u8], signature: &Signature<C>) -> Result<()> {
@@ -184,7 +184,7 @@ where
 
 impl<C> MultipartVerifier<Signature<C>> for VerifyingKey<C>
 where
-    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
     SignatureSize<C>: ArraySize,
 {
     fn multipart_verify(&self, msg: &[&[u8]], signature: &Signature<C>) -> Result<()> {
@@ -197,7 +197,7 @@ where
 #[cfg(feature = "sha2")]
 impl<C> Verifier<SignatureWithOid<C>> for VerifyingKey<C>
 where
-    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
     SignatureSize<C>: ArraySize,
 {
     fn verify(&self, msg: &[u8], sig: &SignatureWithOid<C>) -> Result<()> {
@@ -208,7 +208,7 @@ where
 #[cfg(feature = "sha2")]
 impl<C> MultipartVerifier<SignatureWithOid<C>> for VerifyingKey<C>
 where
-    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
     SignatureSize<C>: ArraySize,
 {
     fn multipart_verify(&self, msg: &[&[u8]], sig: &SignatureWithOid<C>) -> Result<()> {
@@ -270,7 +270,7 @@ where
 #[cfg(feature = "der")]
 impl<C> Verifier<der::Signature<C>> for VerifyingKey<C>
 where
-    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
     SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
@@ -284,7 +284,7 @@ where
 #[cfg(feature = "der")]
 impl<C> MultipartVerifier<der::Signature<C>> for VerifyingKey<C>
 where
-    C: EcdsaCurve + CurveArithmetic + DigestPrimitive,
+    C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
     SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
