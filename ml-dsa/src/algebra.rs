@@ -212,6 +212,7 @@ impl<K: ArraySize> AlgebraExt for Vector<K> {
 }
 
 #[cfg(test)]
+#[allow(clippy::integer_division_remainder_used)]
 mod test {
     use super::*;
 

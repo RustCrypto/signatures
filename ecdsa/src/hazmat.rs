@@ -262,7 +262,7 @@ mod tests {
     #[test]
     fn bits2field_size_less() {
         let prehash = hex!("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-        let field_bytes = bits2field::<MockCurve>(&prehash).unwrap();
+        let field_bytes = bits2field::<MockCurve>(&prehash).expect("field bytes");
         assert_eq!(
             field_bytes.as_slice(),
             &hex!("00000000000000000000000000000000AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
@@ -272,7 +272,7 @@ mod tests {
     #[test]
     fn bits2field_size_eq() {
         let prehash = hex!("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-        let field_bytes = bits2field::<MockCurve>(&prehash).unwrap();
+        let field_bytes = bits2field::<MockCurve>(&prehash).expect("field bytes");
         assert_eq!(field_bytes.as_slice(), &prehash);
     }
 
@@ -281,7 +281,7 @@ mod tests {
         let prehash = hex!(
             "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
         );
-        let field_bytes = bits2field::<MockCurve>(&prehash).unwrap();
+        let field_bytes = bits2field::<MockCurve>(&prehash).expect("field bytes");
         assert_eq!(
             field_bytes.as_slice(),
             &hex!("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
