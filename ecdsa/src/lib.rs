@@ -467,12 +467,12 @@ where
 #[cfg(all(feature = "digest", feature = "hazmat"))]
 impl<C> AssociatedOid for Signature<C>
 where
-    C: hazmat::DigestPrimitive,
+    C: hazmat::DigestAlgorithm,
     C::Digest: AssociatedOid,
 {
     const OID: ObjectIdentifier = match ecdsa_oid_for_digest(C::Digest::OID) {
         Some(oid) => oid,
-        None => panic!("no RFC5758 ECDSA OID defined for DigestPrimitive::Digest"),
+        None => panic!("no RFC5758 ECDSA OID defined for DigestAlgorithm::Digest"),
     };
 }
 
@@ -721,14 +721,14 @@ where
 }
 
 /// NOTE: this implementation assumes the default digest for the given elliptic
-/// curve as defined by [`hazmat::DigestPrimitive`].
+/// curve as defined by [`hazmat::DigestAlgorithm`].
 ///
 /// When working with alternative digests, you will need to use e.g.
 /// [`SignatureWithOid::new_with_digest`].
 #[cfg(all(feature = "digest", feature = "hazmat"))]
 impl<C> SignatureEncoding for SignatureWithOid<C>
 where
-    C: hazmat::DigestPrimitive,
+    C: hazmat::DigestAlgorithm,
     C::Digest: AssociatedOid,
     SignatureSize<C>: ArraySize,
 {
@@ -736,14 +736,14 @@ where
 }
 
 /// NOTE: this implementation assumes the default digest for the given elliptic
-/// curve as defined by [`hazmat::DigestPrimitive`].
+/// curve as defined by [`hazmat::DigestAlgorithm`].
 ///
 /// When working with alternative digests, you will need to use e.g.
 /// [`SignatureWithOid::new_with_digest`].
 #[cfg(all(feature = "digest", feature = "hazmat"))]
 impl<C> TryFrom<&[u8]> for SignatureWithOid<C>
 where
-    C: hazmat::DigestPrimitive,
+    C: hazmat::DigestAlgorithm,
     C::Digest: AssociatedOid,
     SignatureSize<C>: ArraySize,
 {

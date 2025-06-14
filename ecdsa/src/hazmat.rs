@@ -53,7 +53,7 @@ use crate::{Signature, elliptic_curve::array::ArraySize};
 ///
 /// [1]: https://github.com/RustCrypto/traits/tree/master/signature/derive
 #[cfg(feature = "digest")]
-pub trait DigestPrimitive: EcdsaCurve {
+pub trait DigestAlgorithm: EcdsaCurve {
     /// Preferred digest to use when computing ECDSA signatures for this
     /// elliptic curve. This is typically a member of the SHA-2 family.
     type Digest: BlockSizeUser + Digest + FixedOutput + FixedOutputReset;
@@ -62,7 +62,7 @@ pub trait DigestPrimitive: EcdsaCurve {
 #[cfg(feature = "digest")]
 impl<C> PrehashSignature for Signature<C>
 where
-    C: DigestPrimitive,
+    C: DigestAlgorithm,
     <FieldBytesSize<C> as core::ops::Add>::Output: ArraySize,
 {
     type Digest = C::Digest;
