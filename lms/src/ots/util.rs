@@ -12,7 +12,7 @@ pub(crate) fn coefs<'a>(
         2 => 0x03,
         4 => 0x0f,
         8 => 0xff,
-        _ => panic!("invalid bit width: {}", w),
+        _ => panic!("invalid bit width: {w}"),
     };
 
     let entries_per_byte: usize = 8 / w;

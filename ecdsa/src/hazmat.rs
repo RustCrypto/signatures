@@ -108,7 +108,7 @@ pub fn bits2field<C: EcdsaCurve>(bits: &[u8]) -> Result<FieldBytes<C>> {
 /// - `d`: signing key. MUST BE UNIFORMLY RANDOM!!!
 /// - `k`: ephemeral scalar value. MUST BE UNIFORMLY RANDOM!!!
 /// - `z`: message digest to be signed. MUST BE OUTPUT OF A CRYPTOGRAPHICALLY
-///        SECURE DIGEST ALGORITHM!!!
+///   SECURE DIGEST ALGORITHM!!!
 ///
 /// # Low-S Normalization
 ///
@@ -216,7 +216,7 @@ where
 ///
 /// - `q`: public key with which to verify the signature.
 /// - `z`: message digest to be verified. MUST BE OUTPUT OF A CRYPTOGRAPHICALLY SECURE DIGEST
-///        ALGORITHM!!!
+///   ALGORITHM!!!
 /// - `sig`: signature to be verified against the key and message.
 ///
 /// # Low-S Normalization

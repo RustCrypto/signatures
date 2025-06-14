@@ -187,7 +187,7 @@ where
         write!(f, "ecdsa::der::Signature<{:?}>(", C::default())?;
 
         for &byte in self.as_ref() {
-            write!(f, "{:02X}", byte)?;
+            write!(f, "{byte:02X}")?;
         }
 
         write!(f, ")")
