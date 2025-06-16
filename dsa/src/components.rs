@@ -30,11 +30,17 @@ pub struct Components {
 
 impl Components {
     /// Construct the common components container from its inner values (p, q and g)
-    pub fn from_components(
-        p: Odd<BoxedUint>,
-        q: NonZero<BoxedUint>,
-        g: NonZero<BoxedUint>,
-    ) -> signature::Result<Self> {
+    pub fn from_components(p: BoxedUint, q: BoxedUint, g: BoxedUint) -> signature::Result<Self> {
+        let p = Odd::new(p)
+            .into_option()
+            .ok_or_else(signature::Error::new)?;
+        let q = NonZero::new(q)
+            .into_option()
+            .ok_or_else(signature::Error::new)?;
+        let g = NonZero::new(g)
+            .into_option()
+            .ok_or_else(signature::Error::new)?;
+
         if *p < two() || *q < two() || *g > *p {
             return Err(signature::Error::new());
         }
@@ -54,7 +60,8 @@ impl Components {
     /// Generate a new pair of common components
     pub fn generate<R: CryptoRng + ?Sized>(rng: &mut R, key_size: KeySize) -> Self {
         let (p, q, g) = crate::generate::common_components(rng, key_size);
-        Self::from_components(p, q, g).expect("[Bug] Newly generated components considered invalid")
+        Self::from_components(p.get(), q.get(), g.get())
+            .expect("[Bug] Newly generated components considered invalid")
     }
 
     /// DSA prime p
@@ -84,22 +91,9 @@ impl<'a> DecodeValue<'a> for Components {
         let q = reader.decode::<UintRef<'_>>()?;
         let g = reader.decode::<UintRef<'_>>()?;
 
-        let p = BoxedUint::from_be_slice(p.as_bytes(), (p.as_bytes().len() * 8) as u32)
-            .expect("invariant violation");
-        let q = BoxedUint::from_be_slice(q.as_bytes(), (q.as_bytes().len() * 8) as u32)
-            .expect("invariant violation");
-        let g = BoxedUint::from_be_slice(g.as_bytes(), (g.as_bytes().len() * 8) as u32)
-            .expect("invariant violation");
-
-        let p = Odd::new(p)
-            .into_option()
-            .ok_or(Tag::Integer.value_error())?;
-        let q = NonZero::new(q)
-            .into_option()
-            .ok_or(Tag::Integer.value_error())?;
-        let g = NonZero::new(g)
-            .into_option()
-            .ok_or(Tag::Integer.value_error())?;
+        let p = BoxedUint::from_be_slice_vartime(p.as_bytes());
+        let q = BoxedUint::from_be_slice_vartime(q.as_bytes());
+        let g = BoxedUint::from_be_slice_vartime(g.as_bytes());
 
         Self::from_components(p, q, g).map_err(|_| Tag::Integer.value_error())
     }

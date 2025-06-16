@@ -15,6 +15,8 @@ members = [
 opt-level = 2
 
 [patch.crates-io]
+elliptic-curve = { git = "https://github.com/RustCrypto/traits.git" }
+
 # A global patch crates-io block is used to avoid duplicate dependencies
 # when pulling a member crate through git
 dsa = { path = "./dsa" }

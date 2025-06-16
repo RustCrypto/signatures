@@ -39,7 +39,7 @@ pub fn keypair<R: CryptoRng + ?Sized>(rng: &mut R, components: Components) -> Si
 
     let (x, y) = find_components(rng, &components);
 
-    VerifyingKey::from_components(components, y)
-        .and_then(|verifying_key| SigningKey::from_components(verifying_key, x))
+    VerifyingKey::from_components(components, y.get())
+        .and_then(|verifying_key| SigningKey::from_components(verifying_key, x.get()))
         .expect("[Bug] Newly generated keypair considered invalid")
 }
