@@ -29,12 +29,12 @@
 //! # use crypto_bigint::{BoxedUint, NonZero, Odd};
 //! # let read_common_parameters = ||
 //! #     (
-//! #          Odd::new(BoxedUint::one()).unwrap(),
-//! #          NonZero::new(BoxedUint::one()).unwrap(),
-//! #          NonZero::new(BoxedUint::one()).unwrap(),
+//! #          BoxedUint::one(),
+//! #          BoxedUint::one(),
+//! #          BoxedUint::one(),
 //! #     );
-//! # let read_public_component = || NonZero::new(BoxedUint::one()).unwrap();
-//! # let read_private_component = || NonZero::new(BoxedUint::one()).unwrap();
+//! # let read_public_component = || BoxedUint::one();
+//! # let read_private_component = || BoxedUint::one();
 //! # || -> signature::Result<()> {
 //! let (p, q, g) = read_common_parameters();
 //! let components = Components::from_components(p, q, g)?;
@@ -57,10 +57,11 @@ pub use crate::signing_key::SigningKey;
 
 pub use crate::{components::Components, size::KeySize, verifying_key::VerifyingKey};
 
-pub use crypto_bigint::{BoxedUint, NonZero, Odd};
+pub use crypto_bigint::BoxedUint;
 pub use pkcs8;
 pub use signature;
 
+use crypto_bigint::NonZero;
 use pkcs8::spki::ObjectIdentifier;
 
 mod components;
@@ -94,8 +95,10 @@ pub struct Signature {
 
 impl Signature {
     /// Create a new Signature container from its components
-    pub fn from_components(r: NonZero<BoxedUint>, s: NonZero<BoxedUint>) -> Self {
-        Self { r, s }
+    pub fn from_components(r: BoxedUint, s: BoxedUint) -> Option<Self> {
+        let r = NonZero::new(r).into_option()?;
+        let s = NonZero::new(s).into_option()?;
+        Some(Self { r, s })
     }
 
     /// Signature part r
@@ -124,14 +127,7 @@ impl<'a> DecodeValue<'a> for Signature {
             let s = BoxedUint::from_be_slice(s.as_bytes(), s.as_bytes().len() as u32 * 8)
                 .map_err(|_| UintRef::TAG.value_error())?;
 
-            let r = NonZero::new(r)
-                .into_option()
-                .ok_or(UintRef::TAG.value_error())?;
-            let s = NonZero::new(s)
-                .into_option()
-                .ok_or(UintRef::TAG.value_error())?;
-
-            Ok(Self::from_components(r, s))
+            Self::from_components(r, s).ok_or_else(|| UintRef::TAG.value_error())
         })
     }
 }

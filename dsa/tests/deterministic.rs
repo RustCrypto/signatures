@@ -1,5 +1,5 @@
 #![cfg(feature = "hazmat")]
-use crypto_bigint::{BoxedUint, NonZero, Odd};
+use crypto_bigint::BoxedUint;
 use digest::{Digest, FixedOutputReset, block_api::BlockSizeUser};
 use dsa::{Components, Signature, SigningKey, VerifyingKey};
 use sha1::Sha1;
@@ -38,14 +38,6 @@ fn dsa_1024_signing_key() -> SigningKey {
             4CE935437DC11C3C8FD426338933EBFE739CB3465F4D3668C5E473508253B1E6\
             82F65CBDC4FAE93C2EA212390E54905A86E2223170B44EAA7DA5DD9FFCFB7F3B";
     let y = decode_hex_number(y_str, 1024);
-
-    let (p, q, g, y, x) = (
-        Odd::new(p).unwrap(),
-        NonZero::new(q).unwrap(),
-        NonZero::new(g).unwrap(),
-        NonZero::new(y).unwrap(),
-        NonZero::new(x).unwrap(),
-    );
 
     let components = Components::from_components(p, q, g).expect("Invalid components");
     let verifying_key =
@@ -98,14 +90,6 @@ fn dsa_2048_signing_key() -> SigningKey {
         2048,
     );
 
-    let (p, q, g, y, x) = (
-        Odd::new(p).unwrap(),
-        NonZero::new(q).unwrap(),
-        NonZero::new(g).unwrap(),
-        NonZero::new(y).unwrap(),
-        NonZero::new(x).unwrap(),
-    );
-
     let components = Components::from_components(p, q, g).expect("Invalid components");
     let verifying_key =
         VerifyingKey::from_components(components, y).expect("Invalid verifying key");
@@ -144,9 +128,10 @@ fn from_str_signature(r: &str, s: &str) -> Signature {
     let precision = (r.len() * 8) as u32;
 
     Signature::from_components(
-        NonZero::new(decode_hex_number(r, precision)).unwrap(),
-        NonZero::new(decode_hex_number(s, precision)).unwrap(),
+        decode_hex_number(r, precision),
+        decode_hex_number(s, precision),
     )
+    .unwrap()
 }
 
 /// Return the RFC 6979 test cases

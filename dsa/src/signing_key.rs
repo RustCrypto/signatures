@@ -44,10 +44,11 @@ pub struct SigningKey {
 
 impl SigningKey {
     /// Construct a new private key from the public key and private component
-    pub fn from_components(
-        verifying_key: VerifyingKey,
-        x: NonZero<BoxedUint>,
-    ) -> signature::Result<Self> {
+    pub fn from_components(verifying_key: VerifyingKey, x: BoxedUint) -> signature::Result<Self> {
+        let x = NonZero::new(x)
+            .into_option()
+            .ok_or_else(signature::Error::new)?;
+
         if x > *verifying_key.components().q() {
             return Err(signature::Error::new());
         }
@@ -116,11 +117,6 @@ impl SigningKey {
         debug_assert_eq!(key_size.l_aligned(), r.bits_precision());
 
         let r_short = r.clone().resize(key_size.n_aligned());
-        let r_short = NonZero::new(r_short)
-            .expect("[bug] invalid value of k used here, the secret number computed was invalid");
-        let r = NonZero::new(r)
-            .expect("[bug] invalid value of k used here, the secret number computed was invalid");
-
         let n = q.bits() / 8;
         let block_size = hash.len(); // Hash function output size
 
@@ -128,14 +124,12 @@ impl SigningKey {
         let z = BoxedUint::from_be_slice(&hash[..z_len], z_len as u32 * 8)
             .expect("invariant violation");
 
-        let s = inv_k.mul_mod(&(z + &**x * &*r), &q.resize(key_size.l_aligned()));
+        let s = inv_k.mul_mod(&(z + &**x * &r), &q.resize(key_size.l_aligned()));
         let s = s.resize(key_size.n_aligned());
-        let s = NonZero::new(s)
-            .expect("[bug] invalid value of k used here, the secret number computed was invalid");
 
         debug_assert_eq!(key_size.n_aligned(), r_short.bits_precision());
         debug_assert_eq!(key_size.n_aligned(), s.bits_precision());
-        let signature = Signature::from_components(r_short, s);
+        let signature = Signature::from_components(r_short, s).ok_or_else(signature::Error::new)?;
 
         if signature.r() < q && signature.s() < q {
             Ok(signature)
@@ -260,21 +254,19 @@ impl<'a> TryFrom<PrivateKeyInfoRef<'a>> for SigningKey {
 
         let y = if let Some(y_bytes) = value.public_key.as_ref().and_then(|bs| bs.as_bytes()) {
             let y = UintRef::from_der(y_bytes)?;
-            let y = BoxedUint::from_be_slice(y.as_bytes(), precision)
-                .map_err(|_| pkcs8::Error::KeyMalformed)?;
-            NonZero::new(y)
-                .into_option()
-                .ok_or(pkcs8::Error::KeyMalformed)?
+            BoxedUint::from_be_slice(y.as_bytes(), precision)
+                .map_err(|_| pkcs8::Error::KeyMalformed)?
         } else {
             crate::generate::public_component(&components, &x)
                 .into_option()
                 .ok_or(pkcs8::Error::KeyMalformed)?
+                .get()
         };
 
         let verifying_key =
             VerifyingKey::from_components(components, y).map_err(|_| pkcs8::Error::KeyMalformed)?;
 
-        SigningKey::from_components(verifying_key, x).map_err(|_| pkcs8::Error::KeyMalformed)
+        SigningKey::from_components(verifying_key, x.get()).map_err(|_| pkcs8::Error::KeyMalformed)
     }
 }
 

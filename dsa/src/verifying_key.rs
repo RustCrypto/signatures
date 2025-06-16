@@ -32,10 +32,11 @@ pub struct VerifyingKey {
 
 impl VerifyingKey {
     /// Construct a new public key from the common components and the public component
-    pub fn from_components(
-        components: Components,
-        y: NonZero<BoxedUint>,
-    ) -> signature::Result<Self> {
+    pub fn from_components(components: Components, y: BoxedUint) -> signature::Result<Self> {
+        let y = NonZero::new(y)
+            .into_option()
+            .ok_or_else(signature::Error::new)?;
+
         let params = BoxedMontyParams::new_vartime(components.p().clone());
         let form = BoxedMontyForm::new((*y).clone(), params);
 
@@ -192,13 +193,7 @@ impl<'a> TryFrom<SubjectPublicKeyInfoRef<'a>> for VerifyingKey {
                 .as_bytes()
                 .ok_or(spki::Error::KeyMalformed)?,
         )?;
-
-        let y = NonZero::new(
-            BoxedUint::from_be_slice(y.as_bytes(), y.as_bytes().len() as u32 * 8)
-                .expect("invariant violation"),
-        )
-        .into_option()
-        .ok_or(spki::Error::KeyMalformed)?;
+        let y = BoxedUint::from_be_slice_vartime(y.as_bytes());
 
         Self::from_components(components, y).map_err(|_| spki::Error::KeyMalformed)
     }
