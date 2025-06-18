@@ -67,6 +67,6 @@ dual licensed as above, without any additional terms or conditions.
 
 [1]: https://en.wikipedia.org/wiki/EdDSA#Ed448
 [2]: https://tools.ietf.org/html/rfc7748
-[3]: https://docs.rs/ed448/latest/ed448/struct.Signature.html
+[3]: https://docs.rs/ed448-goldilocks-plus/latest/ed448_goldilocks_plus/struct.Signature.html
 [4]: https://docs.rs/signature/latest/signature/trait.Signer.html
 [5]: https://docs.rs/signature/latest/signature/trait.Verifier.html
