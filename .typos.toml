@@ -1,0 +1,5 @@
+[files]
+extend-exclude = [
+    ".git/",
+    "ml-dsa/tests/examples/*",
+]
