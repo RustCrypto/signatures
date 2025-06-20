@@ -357,6 +357,7 @@ struct SignatureRef<'a> {
     pub r: UintRef<'a>,
     pub s: UintRef<'a>,
 }
+
 impl EncodeValue for SignatureRef<'_> {
     fn value_len(&self) -> der::Result<Length> {
         self.r.encoded_len()? + self.s.encoded_len()?
@@ -368,19 +369,15 @@ impl EncodeValue for SignatureRef<'_> {
         Ok(())
     }
 }
-impl<'a> SignatureRef<'a> {
-    fn decode_value_inner<R: Reader<'a>>(reader: &mut R) -> der::Result<Self> {
+
+impl<'a> DecodeValue<'a> for SignatureRef<'a> {
+    type Error = der::Error;
+
+    fn decode_value<R: Reader<'a>>(reader: &mut R, _header: Header) -> der::Result<Self> {
         Ok(Self {
             r: UintRef::decode(reader)?,
             s: UintRef::decode(reader)?,
         })
-    }
-}
-impl<'a> DecodeValue<'a> for SignatureRef<'a> {
-    type Error = der::Error;
-
-    fn decode_value<R: Reader<'a>>(reader: &mut R, header: Header) -> der::Result<Self> {
-        reader.read_nested(header.length, Self::decode_value_inner)
     }
 }
 impl<'a> Sequence<'a> for SignatureRef<'a> {}
