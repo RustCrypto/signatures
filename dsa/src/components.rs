@@ -95,7 +95,7 @@ impl<'a> DecodeValue<'a> for Components {
         let q = BoxedUint::from_be_slice_vartime(q.as_bytes());
         let g = BoxedUint::from_be_slice_vartime(g.as_bytes());
 
-        Self::from_components(p, q, g).map_err(|_| Tag::Integer.value_error())
+        Self::from_components(p, q, g).map_err(|_| reader.error(Tag::Integer.value_error()))
     }
 }
 

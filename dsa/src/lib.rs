@@ -117,18 +117,16 @@ impl Signature {
 impl<'a> DecodeValue<'a> for Signature {
     type Error = der::Error;
 
-    fn decode_value<R: Reader<'a>>(reader: &mut R, header: Header) -> der::Result<Self> {
-        reader.read_nested(header.length, |reader| {
-            let r = UintRef::decode(reader)?;
-            let s = UintRef::decode(reader)?;
+    fn decode_value<R: Reader<'a>>(reader: &mut R, _header: Header) -> der::Result<Self> {
+        let r = UintRef::decode(reader)?;
+        let s = UintRef::decode(reader)?;
 
-            let r = BoxedUint::from_be_slice(r.as_bytes(), r.as_bytes().len() as u32 * 8)
-                .map_err(|_| UintRef::TAG.value_error())?;
-            let s = BoxedUint::from_be_slice(s.as_bytes(), s.as_bytes().len() as u32 * 8)
-                .map_err(|_| UintRef::TAG.value_error())?;
+        let r = BoxedUint::from_be_slice(r.as_bytes(), r.as_bytes().len() as u32 * 8)
+            .map_err(|_| UintRef::TAG.value_error())?;
+        let s = BoxedUint::from_be_slice(s.as_bytes(), s.as_bytes().len() as u32 * 8)
+            .map_err(|_| UintRef::TAG.value_error())?;
 
-            Self::from_components(r, s).ok_or_else(|| UintRef::TAG.value_error())
-        })
+        Self::from_components(r, s).ok_or_else(|| reader.error(UintRef::TAG.value_error()))
     }
 }
 

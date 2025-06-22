@@ -734,7 +734,7 @@ where
             &EncodedVerifyingKey::<P>::try_from(
                 spki.subject_public_key
                     .as_bytes()
-                    .ok_or_else(|| der::Tag::BitString.value_error())?,
+                    .ok_or_else(|| der::Tag::BitString.value_error().to_error())?,
             )
             .map_err(|_| pkcs8::Error::KeyMalformed)?,
         ))

@@ -121,7 +121,7 @@ where
 
         sig.encode_to_slice(&mut bytes)?
             .try_into()
-            .map_err(|_| Tag::Sequence.value_error())
+            .map_err(|_| Tag::Sequence.value_error().into())
     }
 
     /// Borrow this signature as a byte slice
@@ -210,10 +210,10 @@ where
         let len = (header.encoded_len()? + header.length)?;
         let slice = buf
             .get_mut(..usize::try_from(len)?)
-            .ok_or_else(|| reader.error(Tag::Sequence.length_error().kind()))?;
+            .ok_or_else(|| reader.error(Tag::Sequence.length_error()))?;
 
         reader.read_into(slice)?;
-        Self::from_bytes(slice).map_err(|_| Tag::Integer.value_error())
+        Self::from_bytes(slice).map_err(|_| reader.error(Tag::Integer.value_error()))
     }
 }
 
