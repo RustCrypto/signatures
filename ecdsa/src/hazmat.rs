@@ -28,7 +28,7 @@ use {
 };
 
 #[cfg(feature = "digest")]
-use signature::digest::{block_api::BlockSizeUser, Digest, FixedOutput, FixedOutputReset};
+use signature::digest::{Digest, FixedOutput, FixedOutputReset, block_api::BlockSizeUser};
 
 #[cfg(feature = "rfc6979")]
 use elliptic_curve::FieldBytesEncoding;
