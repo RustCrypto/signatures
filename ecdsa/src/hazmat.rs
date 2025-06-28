@@ -33,7 +33,7 @@ use signature::digest::{Digest, FixedOutput, FixedOutputReset, block_api::BlockS
 #[cfg(feature = "rfc6979")]
 use elliptic_curve::FieldBytesEncoding;
 
-#[cfg(any(feature = "arithmetic", feature = "digest"))]
+#[cfg(any(feature = "arithmetic", feature = "rfc6979"))]
 use crate::{Signature, elliptic_curve::array::ArraySize};
 
 /// Bind a preferred [`Digest`] algorithm to an elliptic curve type.
