@@ -504,6 +504,23 @@ impl<P: MlDsaParams> SigningKey<P> {
             None,
         )
     }
+
+    /// This auxiliary function derives a `VerifyingKey` from a bare
+    /// `SigningKey` (even in the absence of the original seed)
+    ///
+    /// This is a utility function that is useful when importing the private key
+    /// from an external source which does not export the seed and does not
+    /// provide the precomputed public key associated with the private key
+    /// itself.
+    pub fn verifying_key(&self) -> VerifyingKey<P> {
+        let As1 = &self.A_hat * &self.s1_hat;
+        let t = &As1.ntt_inverse() + &self.s2;
+
+        /* Discard t0 */
+        let (t1, _) = t.power2round();
+
+        VerifyingKey::new(self.rho.clone(), t1, Some(self.A_hat.clone()), None)
+    }
 }
 
 /// The `Signer` implementation for `SigningKey` uses the optional deterministic variant of ML-DSA, and
@@ -945,6 +962,25 @@ mod test {
         encode_decode_round_trip_test::<MlDsa44>();
         encode_decode_round_trip_test::<MlDsa65>();
         encode_decode_round_trip_test::<MlDsa87>();
+    }
+
+    fn public_from_private_test<P>()
+    where
+        P: MlDsaParams + PartialEq,
+    {
+        let kp = P::key_gen_internal(&Array::default());
+        let sk = kp.signing_key;
+        let vk = kp.verifying_key;
+        let vk_derived = sk.verifying_key();
+
+        assert!(vk == vk_derived);
+    }
+
+    #[test]
+    fn public_from_private() {
+        public_from_private_test::<MlDsa44>();
+        public_from_private_test::<MlDsa65>();
+        public_from_private_test::<MlDsa87>();
     }
 
     fn sign_verify_round_trip_test<P>()
