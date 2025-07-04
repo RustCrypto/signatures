@@ -393,16 +393,6 @@ fn find_scalar_range(outer: &[u8], inner: &[u8]) -> Result<Range<usize>> {
     Ok(Range { start, end })
 }
 
-#[cfg(all(feature = "digest", feature = "hazmat"))]
-impl<C> signature::PrehashSignature for Signature<C>
-where
-    C: EcdsaCurve + crate::hazmat::DigestAlgorithm,
-    MaxSize<C>: ArraySize,
-    <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArraySize,
-{
-    type Digest = C::Digest;
-}
-
 #[cfg(all(test, feature = "arithmetic"))]
 mod tests {
     use elliptic_curve::dev::MockCurve;
