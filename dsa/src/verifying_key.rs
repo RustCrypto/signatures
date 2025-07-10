@@ -2,22 +2,27 @@
 //! Module containing the definition of the public key container
 //!
 
-use crate::{Components, OID, Signature, two};
+use crate::{Components, Signature, two};
 use core::cmp::min;
 use crypto_bigint::{
     BoxedUint, NonZero, Resize,
     modular::{BoxedMontyForm, BoxedMontyParams},
 };
 use digest::Digest;
-use pkcs8::{
-    AlgorithmIdentifierRef, EncodePublicKey, SubjectPublicKeyInfoRef,
-    der::{
-        AnyRef, Decode, Encode,
-        asn1::{BitStringRef, UintRef},
-    },
-    spki,
-};
 use signature::{DigestVerifier, MultipartVerifier, Verifier, hazmat::PrehashVerifier};
+
+#[cfg(feature = "pkcs8")]
+use {
+    crate::OID,
+    pkcs8::{
+        AlgorithmIdentifierRef, EncodePublicKey, SubjectPublicKeyInfoRef,
+        der::{
+            AnyRef, Decode, Encode,
+            asn1::{BitStringRef, UintRef},
+        },
+        spki,
+    },
+};
 
 /// DSA public key.
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
@@ -158,6 +163,7 @@ where
     }
 }
 
+#[cfg(feature = "pkcs8")]
 impl EncodePublicKey for VerifyingKey {
     fn to_public_key_der(&self) -> spki::Result<spki::Document> {
         let parameters = self.components.to_der()?;
@@ -179,6 +185,7 @@ impl EncodePublicKey for VerifyingKey {
     }
 }
 
+#[cfg(feature = "pkcs8")]
 impl<'a> TryFrom<SubjectPublicKeyInfoRef<'a>> for VerifyingKey {
     type Error = spki::Error;
 

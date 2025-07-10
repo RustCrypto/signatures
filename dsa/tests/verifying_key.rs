@@ -1,6 +1,7 @@
 // We abused the deprecated attribute for unsecure key sizes
 // But we want to use those small key sizes for fast tests
 #![allow(deprecated)]
+#![cfg(feature = "pkcs8")]
 
 use dsa::VerifyingKey;
 use pkcs8::{DecodePublicKey, EncodePublicKey, LineEnding};

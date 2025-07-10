@@ -2,7 +2,9 @@
 //! Module containing the definition of the private key container
 //!
 
-use crate::{Components, OID, Signature, VerifyingKey};
+#![cfg(feature = "hazmat")]
+
+use crate::{Signature, VerifyingKey};
 use core::{
     cmp::min,
     fmt::{self, Debug},
@@ -12,21 +14,27 @@ use crypto_bigint::{
     modular::{BoxedMontyForm, BoxedMontyParams},
 };
 use digest::{Digest, FixedOutputReset, block_api::BlockSizeUser};
-use pkcs8::{
-    AlgorithmIdentifierRef, EncodePrivateKey, PrivateKeyInfoRef, SecretDocument,
-    der::{
-        AnyRef, Decode, Encode,
-        asn1::{OctetStringRef, UintRef},
-    },
-};
-#[cfg(feature = "hazmat")]
-use signature::rand_core::CryptoRng;
 use signature::{
     DigestSigner, MultipartSigner, RandomizedDigestSigner, Signer,
     hazmat::{PrehashSigner, RandomizedPrehashSigner},
     rand_core::TryCryptoRng,
 };
-use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
+use zeroize::{ZeroizeOnDrop, Zeroizing};
+
+#[cfg(feature = "hazmat")]
+use {crate::Components, signature::rand_core::CryptoRng};
+#[cfg(feature = "pkcs8")]
+use {
+    crate::OID,
+    pkcs8::{
+        AlgorithmIdentifierRef, EncodePrivateKey, PrivateKeyInfoRef, SecretDocument,
+        der::{
+            AnyRef, Decode, Encode,
+            asn1::{OctetStringRef, UintRef},
+        },
+    },
+    zeroize::Zeroize,
+};
 
 /// DSA private key.
 ///
@@ -208,6 +216,7 @@ where
     }
 }
 
+#[cfg(feature = "pkcs8")]
 impl EncodePrivateKey for SigningKey {
     fn to_pkcs8_der(&self) -> pkcs8::Result<SecretDocument> {
         let parameters = self.verifying_key().components().to_der()?;
@@ -232,6 +241,7 @@ impl EncodePrivateKey for SigningKey {
     }
 }
 
+#[cfg(feature = "pkcs8")]
 impl<'a> TryFrom<PrivateKeyInfoRef<'a>> for SigningKey {
     type Error = pkcs8::Error;
 

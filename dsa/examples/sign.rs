@@ -1,5 +1,3 @@
-#![cfg(feature = "hazmat")]
-
 use digest::Digest;
 use dsa::{Components, KeySize, SigningKey};
 use pkcs8::{EncodePrivateKey, EncodePublicKey, LineEnding};

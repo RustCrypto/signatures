@@ -58,11 +58,12 @@ pub use crate::signing_key::SigningKey;
 pub use crate::{components::Components, size::KeySize, verifying_key::VerifyingKey};
 
 pub use crypto_bigint::BoxedUint;
-pub use pkcs8;
 pub use signature;
 
+#[cfg(feature = "pkcs8")]
+pub use pkcs8;
+
 use crypto_bigint::NonZero;
-use pkcs8::spki::ObjectIdentifier;
 
 mod components;
 mod generate;
@@ -70,17 +71,21 @@ mod signing_key;
 mod size;
 mod verifying_key;
 
+use alloc::{boxed::Box, vec::Vec};
+use der::{
+    Decode, DecodeValue, Encode, EncodeValue, FixedTag, Length, Reader, Sequence, Writer,
+    asn1::UintRef,
+};
+use signature::SignatureEncoding;
+
+#[cfg(feature = "pkcs8")]
+use pkcs8::ObjectIdentifier;
+
 /// DSA object identifier as defined by [RFC3279 § 2.3.2].
 ///
 /// [RFC3279 2.3.2]: https://www.rfc-editor.org/rfc/rfc3279#section-2.3.2
+#[cfg(feature = "pkcs8")]
 pub const OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.2.840.10040.4.1");
-
-use alloc::{boxed::Box, vec::Vec};
-use pkcs8::der::{
-    self, Decode, DecodeValue, Encode, EncodeValue, FixedTag, Header, Length, Reader, Sequence,
-    Writer, asn1::UintRef,
-};
-use signature::SignatureEncoding;
 
 /// Container of the DSA signature
 #[derive(Clone, Debug)]
@@ -117,7 +122,7 @@ impl Signature {
 impl<'a> DecodeValue<'a> for Signature {
     type Error = der::Error;
 
-    fn decode_value<R: Reader<'a>>(reader: &mut R, _header: Header) -> der::Result<Self> {
+    fn decode_value<R: Reader<'a>>(reader: &mut R, _header: der::Header) -> der::Result<Self> {
         let r = UintRef::decode(reader)?;
         let s = UintRef::decode(reader)?;
 
