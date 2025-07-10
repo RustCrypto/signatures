@@ -1,4 +1,4 @@
-#![cfg(feature = "hazmat")]
+#![cfg(all(feature = "hazmat", feature = "pkcs8"))]
 //! Property-based tests.
 
 use der::{Decode, Encode, Sequence, asn1::Uint};

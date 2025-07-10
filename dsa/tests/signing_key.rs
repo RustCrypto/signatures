@@ -1,4 +1,4 @@
-#![cfg(feature = "hazmat")]
+#![cfg(all(feature = "hazmat", feature = "pkcs8"))]
 // We abused the deprecated attribute for unsecure key sizes
 // But we want to use those small key sizes for fast tests
 #![allow(deprecated)]

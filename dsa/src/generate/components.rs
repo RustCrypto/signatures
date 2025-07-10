@@ -3,7 +3,6 @@
 //!
 
 use crate::{
-    Components,
     generate::{calculate_bounds, generate_prime},
     size::KeySize,
     two,
@@ -11,10 +10,12 @@ use crate::{
 use crypto_bigint::{
     BoxedUint, NonZero, Odd, RandomBits, Resize,
     modular::{BoxedMontyForm, BoxedMontyParams},
-    subtle::CtOption,
 };
 use crypto_primes::{Flavor, is_prime};
 use signature::rand_core::CryptoRng;
+
+#[cfg(feature = "hazmat")]
+use {crate::Components, crypto_bigint::subtle::CtOption};
 
 /// Generate the common components p, q, and g
 ///
@@ -85,6 +86,7 @@ pub fn common<R: CryptoRng + ?Sized>(
 }
 
 /// Calculate the public component from the common components and the private component
+#[cfg(feature = "hazmat")]
 #[inline]
 pub fn public(components: &Components, x: &NonZero<BoxedUint>) -> CtOption<NonZero<BoxedUint>> {
     let p = components.p();

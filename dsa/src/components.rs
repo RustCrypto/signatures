@@ -4,7 +4,7 @@
 
 use crate::{size::KeySize, two};
 use crypto_bigint::{BoxedUint, NonZero, Odd};
-use pkcs8::der::{
+use der::{
     self, DecodeValue, Encode, EncodeValue, Header, Length, Reader, Sequence, Tag, Writer,
     asn1::UintRef,
 };
