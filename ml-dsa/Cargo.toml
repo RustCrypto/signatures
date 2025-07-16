@@ -36,7 +36,7 @@ hybrid-array = { version = "0.3", features = ["extra-sizes"] }
 num-traits = { version = "0.2.19", default-features = false }
 rand_core = { version = "0.9", optional = true }
 sha3 = "0.11.0-rc.0"
-signature = { version = "3.0.0-rc.1", default-features = false }
+signature = { version = "3.0.0-rc.2", default-features = false }
 zeroize = { version = "1.8.1", optional = true, default-features = false }
 
 const-oid = { version = "0.10", features = ["db"], optional = true }
