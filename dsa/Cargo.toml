@@ -26,12 +26,12 @@ signature = { version = "3.0.0-rc.2", default-features = false, features = ["all
 zeroize = { version = "1", default-features = false, features = ["alloc"] }
 
 # optional dependencies
-pkcs8 = { version = "0.11.0-rc.5", optional = true, default-features = false, features = ["alloc"] }
+pkcs8 = { version = "0.11.0-rc.6", optional = true, default-features = false, features = ["alloc"] }
 
 [dev-dependencies]
 hex = "0.4.3"
 hex-literal = "1"
-pkcs8 = { version = "0.11.0-rc.5", default-features = false, features = ["pem"] }
+pkcs8 = { version = "0.11.0-rc.6", default-features = false, features = ["pem"] }
 proptest = "1"
 rand = "0.9"
 rand_chacha = "0.9"
