@@ -20,7 +20,9 @@ mod tests {
 
     use super::*;
 
-    use crate::{lms::SigningKey, ots::LmsOtsSha256N32W4};
+    use crate::ots::{
+        LmsOtsSha256N32W1, LmsOtsSha256N32W2, LmsOtsSha256N32W4, LmsOtsSha256N32W8,
+    };
 
     fn test_sign_and_verify<Mode: LmsMode>() {
         let mut rng = rand::rng();
@@ -39,9 +41,33 @@ mod tests {
         assert!(pk.verify(msg, &sig).is_ok());
     }
 
-    // TODO: macro-generate these exhaustively
-    #[test]
-    fn test_sign_and_verify_lms_sha256_m32_h5_lmsots_sha256_n32_w4() {
-        test_sign_and_verify::<LmsSha256M32H5<LmsOtsSha256N32W4>>();
+    // Macro to generate exhaustive tests for all LMS and OTS mode combinations
+    macro_rules! generate_lms_tests {
+        (
+            $(($lms_mode:ident, $ots_mode:ident)),+ $(,)?
+        ) => {
+            $(
+                paste::paste! {
+                    #[test]
+                    fn [<test_sign_and_verify_ $lms_mode:snake _ $ots_mode:snake>]() {
+                        test_sign_and_verify::<$lms_mode<$ots_mode>>();
+                    }
+                }
+            )+
+        };
+    }
+
+    // Generate tests for all feasible combinations of LMS and OTS modes
+    // Note: H15, H20, H25 modes are excluded as they use too much memory and overflow the stack
+    generate_lms_tests! {
+        (LmsSha256M32H5, LmsOtsSha256N32W1),
+        (LmsSha256M32H5, LmsOtsSha256N32W2),
+        (LmsSha256M32H5, LmsOtsSha256N32W4),
+        (LmsSha256M32H5, LmsOtsSha256N32W8),
+        
+        (LmsSha256M32H10, LmsOtsSha256N32W1),
+        (LmsSha256M32H10, LmsOtsSha256N32W2),
+        (LmsSha256M32H10, LmsOtsSha256N32W4),
+        (LmsSha256M32H10, LmsOtsSha256N32W8),
     }
 }
