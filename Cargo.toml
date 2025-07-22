@@ -15,6 +15,8 @@ members = [
 opt-level = 2
 
 [patch.crates-io]
+der = { git = "https://github.com/RustCrypto/formats" }
+der_derive = { git = "https://github.com/RustCrypto/formats" }
 elliptic-curve = { git = "https://github.com/RustCrypto/traits" }
 
 # A global patch crates-io block is used to avoid duplicate dependencies
