@@ -506,20 +506,20 @@ impl<P: MlDsaParams> SigningKey<P> {
     }
 
     /// This auxiliary function derives a `VerifyingKey` from a bare
-    /// `SigningKey` (even in the absence of the original seed)
+    /// `SigningKey` (even in the absence of the original seed).
     ///
     /// This is a utility function that is useful when importing the private key
     /// from an external source which does not export the seed and does not
     /// provide the precomputed public key associated with the private key
     /// itself.
+    ///
+    /// `SigningKey` implements `signature::Keypair`: this inherent method is
+    /// retained for convenience, so it is available for callers even when the
+    /// `signature::Keypair` trait is out-of-scope.
     pub fn verifying_key(&self) -> VerifyingKey<P> {
-        let As1 = &self.A_hat * &self.s1_hat;
-        let t = &As1.ntt_inverse() + &self.s2;
+        let kp: &dyn signature::Keypair<VerifyingKey = VerifyingKey<P>> = self;
 
-        /* Discard t0 */
-        let (t1, _) = t.power2round();
-
-        VerifyingKey::new(self.rho.clone(), t1, Some(self.A_hat.clone()), None)
+        kp.verifying_key()
     }
 }
 
@@ -538,6 +538,26 @@ impl<P: MlDsaParams> signature::Signer<Signature<P>> for SigningKey<P> {
 impl<P: MlDsaParams> MultipartSigner<Signature<P>> for SigningKey<P> {
     fn try_multipart_sign(&self, msg: &[&[u8]]) -> Result<Signature<P>, Error> {
         self.raw_sign_deterministic(msg, &[])
+    }
+}
+
+/// The `KeyPair` implementation for `SigningKey` allows to derive a `VerifyingKey` from
+/// a bare `SigningKey` (even in the absence of the original seed).
+impl<P: MlDsaParams> signature::Keypair for SigningKey<P> {
+    type VerifyingKey = VerifyingKey<P>;
+
+    /// This is a utility function that is useful when importing the private key
+    /// from an external source which does not export the seed and does not
+    /// provide the precomputed public key associated with the private key
+    /// itself.
+    fn verifying_key(&self) -> Self::VerifyingKey {
+        let As1 = &self.A_hat * &self.s1_hat;
+        let t = &As1.ntt_inverse() + &self.s2;
+
+        /* Discard t0 */
+        let (t1, _) = t.power2round();
+
+        VerifyingKey::new(self.rho.clone(), t1, Some(self.A_hat.clone()), None)
     }
 }
 
