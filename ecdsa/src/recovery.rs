@@ -373,7 +373,7 @@ where
         recovery_id: RecoveryId,
     ) -> Result<Self> {
         let (r, s) = signature.split_scalars();
-        let z = <Scalar<C> as Reduce<C::Uint>>::reduce_bytes(&bits2field::<C>(prehash)?);
+        let z = Scalar::<C>::reduce(&bits2field::<C>(prehash)?);
 
         let r_bytes = if recovery_id.is_x_reduced() {
             Option::<C::Uint>::from(
