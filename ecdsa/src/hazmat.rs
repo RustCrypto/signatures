@@ -113,7 +113,7 @@ where
     C: EcdsaCurve + CurveArithmetic,
     SignatureSize<C>: ArraySize,
 {
-    let z = <Scalar<C> as Reduce<C::Uint>>::reduce_bytes(z);
+    let z = Scalar::<C>::reduce(z);
 
     // Compute scalar inversion of 𝑘.
     let k_inv = k.invert();
@@ -123,7 +123,7 @@ where
 
     // Lift x-coordinate of 𝑹 (element of base field) into a serialized big
     // integer, then reduce it into an element of the scalar field.
-    let r = Scalar::<C>::reduce_bytes(&R.x());
+    let r = Scalar::<C>::reduce(&R.x());
 
     // Compute 𝒔 as a signature over 𝒓 and 𝒛.
     let s = *k_inv * (z + (r * d.as_ref()));
@@ -176,7 +176,7 @@ where
     // transform and an extra modular reduction:
     //
     // h = bits2int(H(m)) mod q
-    let z2 = <Scalar<C> as Reduce<C::Uint>>::reduce_bytes(z);
+    let z2 = Scalar::<C>::reduce(z);
 
     let k = NonZeroScalar::<C>::from_repr(rfc6979::generate_k::<D, _>(
         &d.to_repr(),
@@ -211,7 +211,7 @@ where
     C: EcdsaCurve + CurveArithmetic,
     SignatureSize<C>: ArraySize,
 {
-    let z = Scalar::<C>::reduce_bytes(z);
+    let z = Scalar::<C>::reduce(z);
     let (r, s) = sig.split_scalars();
     let s_inv = *s.invert_vartime();
     let u1 = z * s_inv;
@@ -220,7 +220,7 @@ where
         .to_affine()
         .x();
 
-    if *r == Scalar::<C>::reduce_bytes(&x) {
+    if *r == Scalar::<C>::reduce(&x) {
         Ok(())
     } else {
         Err(Error::new())
