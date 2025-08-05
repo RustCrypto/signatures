@@ -376,21 +376,20 @@ where
         let z = Scalar::<C>::reduce(&bits2field::<C>(prehash)?);
 
         let r_bytes = if recovery_id.is_x_reduced() {
-            Option::<C::Uint>::from(
-                C::Uint::decode_field_bytes(&r.to_repr()).checked_add(&C::ORDER),
-            )
-            .ok_or_else(Error::new)?
-            .encode_field_bytes()
+            C::Uint::decode_field_bytes(&r.to_repr())
+                .checked_add(&C::ORDER)
+                .into_option()
+                .ok_or_else(Error::new)?
+                .encode_field_bytes()
         } else {
             r.to_repr()
         };
 
-        let R: ProjectivePoint<C> = Option::<AffinePoint<C>>::from(AffinePoint::<C>::decompress(
-            &r_bytes,
-            u8::from(recovery_id.is_y_odd()).into(),
-        ))
-        .ok_or_else(Error::new)?
-        .into();
+        let R: ProjectivePoint<C> =
+            AffinePoint::<C>::decompress(&r_bytes, u8::from(recovery_id.is_y_odd()).into())
+                .into_option()
+                .ok_or_else(Error::new)?
+                .into();
 
         let r_inv = *r.invert();
         let u1 = -(r_inv * z);
