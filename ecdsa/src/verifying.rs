@@ -108,7 +108,8 @@ where
 
     /// Initialize [`VerifyingKey`] from an [`EncodedPoint`].
     pub fn from_encoded_point(public_key: &EncodedPoint<C>) -> Result<Self> {
-        Option::from(PublicKey::<C>::from_encoded_point(public_key))
+        PublicKey::<C>::from_encoded_point(public_key)
+            .into_option()
             .map(|public_key| Self { inner: public_key })
             .ok_or_else(Error::new)
     }
