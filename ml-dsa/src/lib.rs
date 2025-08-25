@@ -832,7 +832,7 @@ impl AssociatedAlgorithmIdentifier for MlDsa65 {
     };
 }
 
-/// `MlKem87` is the parameter set for security category 5.
+/// `MlDsa87` is the parameter set for security category 5.
 #[derive(Default, Clone, Debug, PartialEq)]
 pub struct MlDsa87;
 
