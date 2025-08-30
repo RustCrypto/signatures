@@ -10,17 +10,17 @@ const MSG: &[u8] = b"Hello world";
 // Keypairs
 prop_compose! {
     fn mldsa44_keypair()(seed_bytes in any::<[u8; 32]>()) -> KeyPair<MlDsa44> {
-       MlDsa44::key_gen_internal(seed_bytes.as_ref())
+       MlDsa44::key_gen_internal((&seed_bytes).into())
     }
 }
 prop_compose! {
     fn mldsa65_keypair()(seed_bytes in any::<[u8; 32]>()) -> KeyPair<MlDsa65> {
-       MlDsa65::key_gen_internal(seed_bytes.as_ref())
+       MlDsa65::key_gen_internal((&seed_bytes).into())
     }
 }
 prop_compose! {
     fn mldsa87_keypair()(seed_bytes in any::<[u8; 32]>()) -> KeyPair<MlDsa87> {
-        MlDsa87::key_gen_internal(seed_bytes.as_ref())
+        MlDsa87::key_gen_internal((&seed_bytes).into())
     }
 }
 

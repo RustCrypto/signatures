@@ -25,3 +25,6 @@ lms-signature = { path = "./lms" }
 ml-dsa = { path = "./ml-dsa" }
 rfc6979 = { path = "./rfc6979" }
 slh-dsa = { path = "./slh-dsa" }
+
+# https://github.com/RustCrypto/hybrid-array/pull/132
+hybrid-array = { git = "https://github.com/kayabaNerve/hybrid-array", branch = "remove-as-ref" }
