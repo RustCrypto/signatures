@@ -42,12 +42,6 @@ checksum = "ace50bade8e6234aa140d9a2f552bbee1db4d353f69b8217bc503490fc1a9f26"
 
 [[package]]
 name = "base16ct"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4c7f02d4ea65f2c1853089ffd8d2787bdbc63de2f0d29dedbcf8ccdfa0ccd4cf"
-
-[[package]]
-name = "base16ct"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d8b59d472eab27ade8d770dcb11da7201c11234bef9f82ce7aa517be028d462b"
@@ -272,7 +266,7 @@ dependencies = [
  "hybrid-array",
  "num-traits",
  "rand_core 0.9.3",
- "serdect 0.4.1",
+ "serdect",
  "subtle",
  "zeroize",
 ]
@@ -369,7 +363,7 @@ dependencies = [
  "elliptic-curve",
  "hex-literal 1.0.0",
  "rfc6979",
- "serdect 0.3.0",
+ "serdect",
  "sha2",
  "signature",
  "spki",
@@ -414,7 +408,7 @@ name = "elliptic-curve"
 version = "0.14.0-rc.12"
 source = "git+https://github.com/RustCrypto/traits#b91704f633a83798c1ba89f908cff067ddc7d843"
 dependencies = [
- "base16ct 0.3.0",
+ "base16ct",
  "crypto-bigint",
  "digest",
  "ff",
@@ -425,7 +419,7 @@ dependencies = [
  "pkcs8",
  "rand_core 0.9.3",
  "sec1",
- "serdect 0.4.1",
+ "serdect",
  "subtle",
  "zeroize",
 ]
@@ -1041,10 +1035,10 @@ name = "sec1"
 version = "0.8.0-rc.8"
 source = "git+https://github.com/RustCrypto/formats?branch=sec1%2Fhybrid-array-v0.4#fdc1f293f71bfbbee5e89997b1ec17b13e632c61"
 dependencies = [
- "base16ct 0.3.0",
+ "base16ct",
  "der",
  "hybrid-array",
- "serdect 0.4.1",
+ "serdect",
  "subtle",
  "zeroize",
 ]
@@ -1092,21 +1086,11 @@ dependencies = [
 
 [[package]]
 name = "serdect"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f42f67da2385b51a5f9652db9c93d78aeaf7610bf5ec366080b6de810604af53"
-dependencies = [
- "base16ct 0.2.0",
- "serde",
-]
-
-[[package]]
-name = "serdect"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d3ef0e35b322ddfaecbc60f34ab448e157e48531288ee49fafbb053696b8ffe2"
 dependencies = [
- "base16ct 0.3.0",
+ "base16ct",
  "serde",
 ]
 
