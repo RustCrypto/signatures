@@ -260,8 +260,8 @@ checksum = "43da5946c66ffcc7745f48db692ffbb10a83bfe0afd96235c5c2a4fb23994929"
 
 [[package]]
 name = "crypto-bigint"
-version = "0.7.0-rc.2"
-source = "git+https://github.com/RustCrypto/crypto-bigint#60047823b17a8400969dca71416a363e71c74a03"
+version = "0.7.0-rc.3"
+source = "git+https://github.com/andrewwhitehead/crypto-bigint?branch=upd%2Fboxed-shift-2#0f35070ae527044f9fac0d7203e7e395da3feb37"
 dependencies = [
  "hybrid-array",
  "num-traits",

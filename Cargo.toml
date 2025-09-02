@@ -29,7 +29,8 @@ slh-dsa = { path = "./slh-dsa" }
 # https://github.com/RustCrypto/utils/pull/1208
 block-buffer = { git = "https://github.com/RustCrypto/utils" }
 # https://github.com/RustCrypto/crypto-bigint/pull/934
-crypto-bigint = { git = "https://github.com/RustCrypto/crypto-bigint" }
+# https://github.com/RustCrypto/crypto-bigint/pull/938
+crypto-bigint = { git = "https://github.com/andrewwhitehead/crypto-bigint", branch = "upd/boxed-shift-2" }
 # https://github.com/RustCrypto/traits/pull/1976
 crypto-common = { git = "https://github.com/RustCrypto/traits" }
 # https://github.com/RustCrypto/traits/pull/1976
@@ -40,3 +41,5 @@ elliptic-curve = { git = "https://github.com/RustCrypto/traits" }
 sec1 = { git = "https://github.com/RustCrypto/formats", branch = "sec1/hybrid-array-v0.4" }
 # https://github.com/RustCrypto/utils/pull/1208
 inout = { git = "https://github.com/RustCrypto/utils" }
+
+
