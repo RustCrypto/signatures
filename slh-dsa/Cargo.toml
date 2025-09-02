@@ -16,7 +16,7 @@ keywords = ["crypto", "signature"]
 exclude = ["tests"]
 
 [dependencies]
-hybrid-array = { version = "0.3", features = ["extra-sizes"] }
+hybrid-array = { version = "0.4", features = ["extra-sizes"] }
 typenum = { version = "1.17.0", features = ["const-generics"] }
 sha3 = { version = "0.11.0-rc.0", default-features = false }
 zerocopy = { version = "0.7.34", features = ["derive"] }
