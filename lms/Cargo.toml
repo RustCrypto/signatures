@@ -13,7 +13,7 @@ keywords = ["crypto", "signature"]
 
 [dependencies]
 digest = "0.11.0-rc.0"
-hybrid-array = { version = "0.3", features = ["extra-sizes", "zeroize"] }
+hybrid-array = { version = "0.4", features = ["extra-sizes", "zeroize"] }
 rand = "0.9.0"
 sha2 = "0.11.0-rc.0"
 static_assertions = "1.1.0"
