@@ -352,6 +352,41 @@ impl<P: MlDsaParams> SigningKey<P> {
         }
     }
 
+    /// Create a `SigningKey` from a fresh 32-byte seed vector.
+    #[must_use]
+    pub fn from_seed(seed: &B32) -> Self
+    where
+        P: MlDsaParams,
+    {
+        // Derive seeds
+        let mut h = H::default()
+            .absorb(seed)
+            .absorb(&[P::K::U8])
+            .absorb(&[P::L::U8]);
+
+        let rho: B32 = h.squeeze_new();
+        let rhop: B64 = h.squeeze_new();
+        let K: B32 = h.squeeze_new();
+
+        // Sample private key components
+        let A_hat = expand_a::<P::K, P::L>(&rho);
+        let s1 = expand_s::<P::L>(&rhop, P::Eta::ETA, 0);
+        let s2 = expand_s::<P::K>(&rhop, P::Eta::ETA, P::L::USIZE);
+
+        // Compute derived values
+        let As1_hat = &A_hat * &s1.ntt();
+        let t = &As1_hat.ntt_inverse() + &s2;
+
+        // Compress and encode
+        let (t1, t0) = t.power2round();
+        let t1_enc = P::encode_t1(&t1);
+        let enc = P::concat_vk(rho.clone(), t1_enc);
+        let tr: B64 = H::default().absorb(&enc).squeeze_new();
+
+        // Assemble the signing key
+        Self::new(rho, K, tr, s1, s2, t0, Some(A_hat))
+    }
+
     /// This method reflects the ML-DSA.Sign_internal algorithm from FIPS 204. It does not
     /// include the domain separator that distinguishes between the normal and pre-hashed cases,
     /// and it does not separate the context string from the rest of the message.
@@ -1171,5 +1206,41 @@ mod test {
         sign_internal_verify_mu::<MlDsa44>();
         sign_internal_verify_mu::<MlDsa65>();
         sign_internal_verify_mu::<MlDsa87>();
+    }
+
+    #[test]
+    fn signing_key_from_seed_matches_key_gen_internal() {
+        /// Verify that `SigningKey::from_seed(seed)` produces the same signing key as
+        /// `MlDsaParams::key_gen_internal(seed).signing_key` for the given seed.
+        fn verify_from_seed_equivalence_case<P>(seed: &B32)
+        where
+            P: MlDsaParams,
+        {
+            let kp1 = P::key_gen_internal(seed);
+            let sk1 = kp1.signing_key;
+            let sk2 = SigningKey::from_seed(seed);
+            assert_eq!(sk1, sk2, "Failed for seed {:?}", seed);
+        }
+
+        fn verify_from_seed_equivalence<P>()
+        where
+            P: MlDsaParams,
+        {
+            use rand::Rng;
+
+            verify_from_seed_equivalence_case::<P>(&Array([0u8; 32]));
+            verify_from_seed_equivalence_case::<P>(&Array([1u8; 32]));
+            verify_from_seed_equivalence_case::<P>(&Array([0xFFu8; 32]));
+
+            for _ in 0..10 {
+                let mut seed = B32::default();
+                rand::rng().fill(seed.as_mut_slice());
+                verify_from_seed_equivalence_case::<P>(&seed);
+            }
+        }
+
+        verify_from_seed_equivalence::<MlDsa44>();
+        verify_from_seed_equivalence::<MlDsa65>();
+        verify_from_seed_equivalence::<MlDsa87>();
     }
 }
