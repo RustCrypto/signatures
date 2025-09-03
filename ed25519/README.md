@@ -1,4 +1,4 @@
-# [RustCrypto]: Ed25519
+# [RustCrypto]: Ed25519 signatures
 
 [![crate][crate-image]][crate-link]
 [![Docs][docs-image]][docs-link]

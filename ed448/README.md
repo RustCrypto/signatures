@@ -1,4 +1,4 @@
-# [RustCrypto]: Ed448
+# [RustCrypto]: Ed448 signatures
 
 [![crate][crate-image]][crate-link]
 [![Docs][docs-image]][docs-link]
