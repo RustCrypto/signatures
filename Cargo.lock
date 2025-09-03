@@ -339,7 +339,7 @@ dependencies = [
 
 [[package]]
 name = "dsa"
-version = "0.7.0-rc.4"
+version = "0.7.0-rc.5"
 dependencies = [
  "crypto-bigint",
  "crypto-primes",
@@ -544,9 +544,9 @@ checksum = "bcaaec4551594c969335c98c903c1397853d4198408ea609190f420500f6be71"
 
 [[package]]
 name = "hmac"
-version = "0.13.0-rc.0"
+version = "0.13.0-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8dc6a2fcc35ab09136c6df2cdf9ca49790701420a3a6b5db0987dddbabc79b21"
+checksum = "49e206bca159aebaaed410f5e78b2fe56bfc0dd5b19ecae922813b8556b8b07e"
 dependencies = [
  "digest",
 ]
@@ -982,7 +982,7 @@ checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
 
 [[package]]
 name = "rfc6979"
-version = "0.5.0-rc.0"
+version = "0.5.0-rc.1"
 dependencies = [
  "hex-literal 1.0.0",
  "hmac",
@@ -1103,9 +1103,9 @@ dependencies = [
 
 [[package]]
 name = "sha1"
-version = "0.11.0-rc.0"
+version = "0.11.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f9318facddf9ac32a33527066936837e189b3f23ced6edc1603720ead5e2b3d"
+checksum = "c5e046edf639aa2e7afb285589e5405de2ef7e61d4b0ac1e30256e3eab911af9"
 dependencies = [
  "cfg-if",
  "cpufeatures",
