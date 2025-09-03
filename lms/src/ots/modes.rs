@@ -54,7 +54,7 @@ pub trait LmsOtsMode: Typecode {
         let cksum = (&arr)
             .into_iter()
             .take(Self::U)
-            .map(|&x| ((1u16 << Self::W) - 1 - (x as u16)))
+            .map(|&x| (1u16 << Self::W) - 1 - (x as u16))
             .sum::<u16>()
             << Self::LS;
 
