@@ -41,4 +41,3 @@ serde_bytes = ["serde", "dep:serde_bytes"]
 
 [package.metadata.docs.rs]
 all-features = true
-rustdoc-args = ["--cfg", "docsrs"]
