@@ -237,7 +237,7 @@ where
 
         let seed = Array::try_from(private_key_info.private_key.as_bytes())
             .map_err(|_| pkcs8::Error::KeyMalformed)?;
-        Ok(P::key_gen_internal(&seed))
+        Ok(P::from_seed(&seed))
     }
 }
 
@@ -350,6 +350,16 @@ impl<P: MlDsaParams> SigningKey<P> {
             t0_hat,
             A_hat,
         }
+    }
+
+    /// Deterministically generate a signing key from the specified seed.
+    ///
+    /// This method reflects the ML-DSA.KeyGen_internal algorithm from FIPS 204, but only returns a
+    /// signing key.
+    #[must_use]
+    pub fn from_seed(seed: &B32) -> Self {
+        let kp = P::from_seed(seed);
+        kp.signing_key
     }
 
     /// This method reflects the ML-DSA.Sign_internal algorithm from FIPS 204. It does not
@@ -913,8 +923,9 @@ pub trait KeyGen: MlDsaParams {
     fn key_gen<R: CryptoRng + ?Sized>(rng: &mut R) -> Self::KeyPair;
 
     /// Deterministically generate a signing key pair from the specified seed
-    // TODO(RLB): Only expose this based on a feature.
-    fn key_gen_internal(xi: &B32) -> Self::KeyPair;
+    ///
+    /// This method reflects the ML-DSA.KeyGen_internal algorithm from FIPS 204.
+    fn from_seed(xi: &B32) -> Self::KeyPair;
 }
 
 impl<P> KeyGen for P
@@ -929,12 +940,14 @@ where
     fn key_gen<R: CryptoRng + ?Sized>(rng: &mut R) -> KeyPair<P> {
         let mut xi = B32::default();
         rng.fill_bytes(&mut xi);
-        Self::key_gen_internal(&xi)
+        Self::from_seed(&xi)
     }
 
     /// Deterministically generate a signing key pair from the specified seed
+    ///
+    /// This method reflects the ML-DSA.KeyGen_internal algorithm from FIPS 204.
     // Algorithm 6 ML-DSA.KeyGen_internal
-    fn key_gen_internal(xi: &B32) -> KeyPair<P>
+    fn from_seed(xi: &B32) -> KeyPair<P>
     where
         P: MlDsaParams,
     {
@@ -1001,7 +1014,7 @@ mod test {
     where
         P: MlDsaParams + PartialEq,
     {
-        let kp = P::key_gen_internal(&Array::default());
+        let kp = P::from_seed(&Array::default());
         let sk = kp.signing_key;
         let vk = kp.verifying_key;
 
@@ -1032,7 +1045,7 @@ mod test {
     where
         P: MlDsaParams + PartialEq,
     {
-        let kp = P::key_gen_internal(&Array::default());
+        let kp = P::from_seed(&Array::default());
         let sk = kp.signing_key;
         let vk = kp.verifying_key;
         let vk_derived = sk.verifying_key();
@@ -1051,7 +1064,7 @@ mod test {
     where
         P: MlDsaParams,
     {
-        let kp = P::key_gen_internal(&Array::default());
+        let kp = P::from_seed(&Array::default());
         let sk = kp.signing_key;
         let vk = kp.verifying_key;
 
@@ -1084,7 +1097,7 @@ mod test {
             let seed_data: &mut [u8] = seed.as_mut();
             rng.fill(seed_data);
 
-            let kp = P::key_gen_internal(&seed);
+            let kp = P::from_seed(&seed);
             let sk = kp.signing_key;
             let vk = kp.verifying_key;
 
@@ -1113,7 +1126,7 @@ mod test {
         where
             P: MlDsaParams,
         {
-            let kp = P::key_gen_internal(&Array::default());
+            let kp = P::from_seed(&Array::default());
             let sk = kp.signing_key;
             let vk = kp.verifying_key;
 
@@ -1135,7 +1148,7 @@ mod test {
         where
             P: MlDsaParams,
         {
-            let kp = P::key_gen_internal(&Array::default());
+            let kp = P::from_seed(&Array::default());
             let sk = kp.signing_key;
             let vk = kp.verifying_key;
 
@@ -1157,7 +1170,7 @@ mod test {
         where
             P: MlDsaParams,
         {
-            let kp = P::key_gen_internal(&Array::default());
+            let kp = P::from_seed(&Array::default());
             let sk = kp.signing_key;
             let vk = kp.verifying_key;
 
@@ -1171,5 +1184,23 @@ mod test {
         sign_internal_verify_mu::<MlDsa44>();
         sign_internal_verify_mu::<MlDsa65>();
         sign_internal_verify_mu::<MlDsa87>();
+    }
+
+    #[test]
+    fn from_seed_implementations_match() {
+        fn assert_from_seed_equality<P>()
+        where
+            P: MlDsaParams,
+        {
+            let seed = Array([0u8; 32]);
+            let kp1 = P::from_seed(&seed);
+            let sk1 = SigningKey::<P>::from_seed(&seed);
+            let vk1 = sk1.verifying_key();
+            assert_eq!(kp1.signing_key, sk1);
+            assert_eq!(kp1.verifying_key, vk1);
+        }
+        assert_from_seed_equality::<MlDsa44>();
+        assert_from_seed_equality::<MlDsa65>();
+        assert_from_seed_equality::<MlDsa87>();
     }
 }
