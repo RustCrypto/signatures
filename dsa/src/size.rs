@@ -25,6 +25,14 @@ impl KeySize {
 
     /// DSA parameter size constant: L = 3072, N = 256
     pub const DSA_3072_256: Self = Self { l: 3072, n: 256 };
+
+    /// Create a KeySize from other, potentially unsafe, key lengths
+    ///
+    /// This aims at supporting non-standard or older/weak keys.
+    #[cfg(feature = "hazmat")]
+    pub(crate) fn other(l: u32, n: u32) -> Self {
+        Self { l, n }
+    }
 }
 
 impl KeySize {
