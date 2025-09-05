@@ -1,7 +1,8 @@
+use core::cmp::Ordering;
 use crypto_bigint::Limb;
 
 /// DSA key size
-#[derive(Clone, Debug, Copy, PartialEq, PartialOrd)]
+#[derive(Clone, Debug, Copy)]
 pub struct KeySize {
     /// Bit size of p
     pub(crate) l: u32,
@@ -25,6 +26,14 @@ impl KeySize {
 
     /// DSA parameter size constant: L = 3072, N = 256
     pub const DSA_3072_256: Self = Self { l: 3072, n: 256 };
+
+    /// Create a KeySize from other, potentially unsafe, key lengths
+    ///
+    /// This aims at supporting non-standard or older/weak keys.
+    #[cfg(feature = "hazmat")]
+    pub(crate) fn other(l: u32, n: u32) -> Self {
+        Self { l, n }
+    }
 }
 
 impl KeySize {
@@ -38,5 +47,20 @@ impl KeySize {
 
     pub(crate) fn matches(&self, l: u32, n: u32) -> bool {
         l == self.l_aligned() && n == self.n_aligned()
+    }
+}
+
+impl PartialEq for KeySize {
+    fn eq(&self, other: &Self) -> bool {
+        self.l_aligned() == other.l_aligned() && self.n_aligned() == other.n_aligned()
+    }
+}
+
+impl PartialOrd for KeySize {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        let l = self.l_aligned().partial_cmp(&other.l_aligned())?;
+        let n = self.n_aligned().partial_cmp(&other.n_aligned())?;
+
+        Some(l.then(n))
     }
 }

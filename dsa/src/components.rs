@@ -31,6 +31,44 @@ pub struct Components {
 impl Components {
     /// Construct the common components container from its inner values (p, q and g)
     pub fn from_components(p: BoxedUint, q: BoxedUint, g: BoxedUint) -> signature::Result<Self> {
+        let (p, q, g) = Self::adapt_components(p, q, g)?;
+
+        let key_size = match (p.bits_precision(), q.bits_precision()) {
+            #[allow(deprecated)]
+            (p, q) if KeySize::DSA_1024_160.matches(p, q) => KeySize::DSA_1024_160,
+            (p, q) if KeySize::DSA_2048_224.matches(p, q) => KeySize::DSA_2048_224,
+            (p, q) if KeySize::DSA_2048_256.matches(p, q) => KeySize::DSA_2048_256,
+            (p, q) if KeySize::DSA_3072_256.matches(p, q) => KeySize::DSA_3072_256,
+            _ => return Err(signature::Error::new()),
+        };
+
+        Ok(Self { p, q, g, key_size })
+    }
+
+    /// Construct the common components container from its inner values (p, q and g)
+    ///
+    /// # Safety
+    ///
+    /// Any length of keys may be used, no checks are to be performed. You are responsible for
+    /// checking the key strengths.
+    #[cfg(feature = "hazmat")]
+    pub fn from_components_unchecked(
+        p: BoxedUint,
+        q: BoxedUint,
+        g: BoxedUint,
+    ) -> signature::Result<Self> {
+        let (p, q, g) = Self::adapt_components(p, q, g)?;
+        let key_size = KeySize::other(p.bits_precision(), q.bits_precision());
+
+        Ok(Self { p, q, g, key_size })
+    }
+
+    /// Helper method to build a [`Components`]
+    fn adapt_components(
+        p: BoxedUint,
+        q: BoxedUint,
+        g: BoxedUint,
+    ) -> signature::Result<(Odd<BoxedUint>, NonZero<BoxedUint>, NonZero<BoxedUint>)> {
         let p = Odd::new(p)
             .into_option()
             .ok_or_else(signature::Error::new)?;
@@ -45,16 +83,7 @@ impl Components {
             return Err(signature::Error::new());
         }
 
-        let key_size = match (p.bits_precision(), q.bits_precision()) {
-            #[allow(deprecated)]
-            (p, q) if KeySize::DSA_1024_160.matches(p, q) => KeySize::DSA_1024_160,
-            (p, q) if KeySize::DSA_2048_224.matches(p, q) => KeySize::DSA_2048_224,
-            (p, q) if KeySize::DSA_2048_256.matches(p, q) => KeySize::DSA_2048_256,
-            (p, q) if KeySize::DSA_3072_256.matches(p, q) => KeySize::DSA_3072_256,
-            _ => return Err(signature::Error::new()),
-        };
-
-        Ok(Self { p, q, g, key_size })
+        Ok((p, q, g))
     }
 
     /// Generate a new pair of common components
