@@ -6,6 +6,7 @@
 #![allow(clippy::similar_names)] // TODO: Consider resolving these
 #![allow(clippy::clone_on_copy)] // Be explicit about moving data
 #![deny(missing_docs)] // Require all public interfaces to be documented
+#![warn(unreachable_pub)] // Prevent unexpected interface changes
 
 //! # Usage
 //! This crate implements the Stateless Hash-based Digital Signature Algorithm (SLH-DSA) based on the finalized
