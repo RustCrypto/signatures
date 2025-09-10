@@ -22,7 +22,7 @@ use zerocopy::AsBytes;
 use zerocopy::byteorder::big_endian::{U32, U64};
 
 /// `Address` represents a hash address as defined by FIPS-205 section 4.2
-pub trait Address: AsRef<[u8]> {
+pub(crate) trait Address: AsRef<[u8]> {
     const TYPE_CONST: u32;
 
     #[allow(clippy::doc_markdown)] // False positive
@@ -41,77 +41,77 @@ pub trait Address: AsRef<[u8]> {
 
 #[derive(Clone, AsBytes)]
 #[repr(C)]
-pub struct WotsHash {
-    pub layer_adrs: U32,
-    pub tree_adrs_high: U32,
-    pub tree_adrs_low: U64,
+pub(crate) struct WotsHash {
+    pub(crate) layer_adrs: U32,
+    pub(crate) tree_adrs_high: U32,
+    pub(crate) tree_adrs_low: U64,
     type_const: U32, // 0
-    pub key_pair_adrs: U32,
-    pub chain_adrs: U32,
-    pub hash_adrs: U32,
+    pub(crate) key_pair_adrs: U32,
+    pub(crate) chain_adrs: U32,
+    pub(crate) hash_adrs: U32,
 }
 
 #[derive(Clone, AsBytes)]
 #[repr(C)]
-pub struct WotsPk {
-    pub layer_adrs: U32,
-    pub tree_adrs_high: U32,
-    pub tree_adrs_low: U64,
+pub(crate) struct WotsPk {
+    pub(crate) layer_adrs: U32,
+    pub(crate) tree_adrs_high: U32,
+    pub(crate) tree_adrs_low: U64,
     type_const: U32, // 1
-    pub key_pair_adrs: U32,
+    pub(crate) key_pair_adrs: U32,
     padding: U64, // 0
 }
 
 #[derive(Clone, AsBytes)]
 #[repr(C)]
-pub struct HashTree {
-    pub layer_adrs: U32,
-    pub tree_adrs_high: U32,
-    pub tree_adrs_low: U64,
+pub(crate) struct HashTree {
+    pub(crate) layer_adrs: U32,
+    pub(crate) tree_adrs_high: U32,
+    pub(crate) tree_adrs_low: U64,
     type_const: U32, // 2
     padding: U32,    // 0
-    pub tree_height: U32,
-    pub tree_index: U32,
+    pub(crate) tree_height: U32,
+    pub(crate) tree_index: U32,
 }
 
 #[derive(Clone, AsBytes)]
 #[repr(C)]
-pub struct ForsTree {
+pub(crate) struct ForsTree {
     layer_adrs: U32, // 0
-    pub tree_adrs_high: U32,
-    pub tree_adrs_low: U64,
+    pub(crate) tree_adrs_high: U32,
+    pub(crate) tree_adrs_low: U64,
     type_const: U32, // 3
-    pub key_pair_adrs: U32,
-    pub tree_height: U32,
-    pub tree_index: U32,
+    pub(crate) key_pair_adrs: U32,
+    pub(crate) tree_height: U32,
+    pub(crate) tree_index: U32,
 }
 
 #[derive(Clone, AsBytes)]
 #[repr(C)]
-pub struct ForsRoots {
+pub(crate) struct ForsRoots {
     layer_adrs: U32, // 0
-    pub tree_adrs_high: U32,
-    pub tree_adrs_low: U64,
+    pub(crate) tree_adrs_high: U32,
+    pub(crate) tree_adrs_low: U64,
     type_const: U32, // 4
-    pub key_pair_adrs: U32,
+    pub(crate) key_pair_adrs: U32,
     padding: U64, // 0
 }
 
 #[derive(Clone, AsBytes)]
 #[repr(C)]
-pub struct WotsPrf {
-    pub layer_adrs: U32,
-    pub tree_adrs_high: U32,
-    pub tree_adrs_low: U64,
+pub(crate) struct WotsPrf {
+    pub(crate) layer_adrs: U32,
+    pub(crate) tree_adrs_high: U32,
+    pub(crate) tree_adrs_low: U64,
     type_const: U32, // 5
-    pub key_pair_adrs: U32,
-    pub chain_adrs: U32,
+    pub(crate) key_pair_adrs: U32,
+    pub(crate) chain_adrs: U32,
     hash_adrs: U32, // 0
 }
 
 #[derive(Clone, AsBytes)]
 #[repr(C)]
-pub struct ForsPrf {
+pub(crate) struct ForsPrf {
     layer_adrs: U32, // 0
     pub tree_adrs_high: U32,
     pub tree_adrs_low: U64,
@@ -185,7 +185,7 @@ impl AsRef<[u8]> for ForsPrf {
 }
 
 impl WotsHash {
-    pub fn prf_adrs(&self) -> WotsPrf {
+    pub(crate) fn prf_adrs(&self) -> WotsPrf {
         WotsPrf {
             layer_adrs: self.layer_adrs,
             tree_adrs_low: self.tree_adrs_low,
@@ -197,7 +197,7 @@ impl WotsHash {
         }
     }
 
-    pub fn pk_adrs(&self) -> WotsPk {
+    pub(crate) fn pk_adrs(&self) -> WotsPk {
         WotsPk {
             layer_adrs: self.layer_adrs,
             tree_adrs_low: self.tree_adrs_low,
@@ -208,7 +208,7 @@ impl WotsHash {
         }
     }
 
-    pub fn tree_adrs(&self) -> HashTree {
+    pub(crate) fn tree_adrs(&self) -> HashTree {
         HashTree {
             layer_adrs: self.layer_adrs,
             tree_adrs_low: self.tree_adrs_low,
@@ -222,7 +222,7 @@ impl WotsHash {
 }
 
 impl ForsTree {
-    pub fn new(tree_adrs_low: u64, key_pair_adrs: u32) -> ForsTree {
+    pub(crate) fn new(tree_adrs_low: u64, key_pair_adrs: u32) -> ForsTree {
         ForsTree {
             layer_adrs: 0.into(),
             tree_adrs_low: tree_adrs_low.into(),
@@ -233,7 +233,7 @@ impl ForsTree {
             tree_index: 0.into(),
         }
     }
-    pub fn prf_adrs(&self) -> ForsPrf {
+    pub(crate) fn prf_adrs(&self) -> ForsPrf {
         ForsPrf {
             layer_adrs: 0.into(),
             tree_adrs_low: self.tree_adrs_low,
@@ -245,7 +245,7 @@ impl ForsTree {
         }
     }
 
-    pub fn fors_roots(&self) -> ForsRoots {
+    pub(crate) fn fors_roots(&self) -> ForsRoots {
         ForsRoots {
             layer_adrs: 0.into(),
             tree_adrs_low: self.tree_adrs_low,
