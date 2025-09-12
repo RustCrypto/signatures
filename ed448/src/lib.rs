@@ -177,6 +177,14 @@ impl Signature {
     }
 }
 
+impl SignatureEncoding for Signature {
+    type Repr = SignatureBytes;
+
+    fn to_bytes(&self) -> SignatureBytes {
+        self.to_bytes()
+    }
+}
+
 impl From<Signature> for SignatureBytes {
     fn from(sig: Signature) -> SignatureBytes {
         sig.to_bytes()
