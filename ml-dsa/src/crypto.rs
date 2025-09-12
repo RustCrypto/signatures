@@ -18,6 +18,10 @@ impl<Shake: ExtendableOutput + Default> Default for ShakeState<Shake> {
 }
 
 impl<Shake: ExtendableOutput + Default + Clone> ShakeState<Shake> {
+    pub fn pre_digest(digest: Shake) -> Self {
+        Self::Absorbing(digest)
+    }
+
     pub fn absorb(mut self, input: &[u8]) -> Self {
         match &mut self {
             Self::Absorbing(sponge) => sponge.update(input),

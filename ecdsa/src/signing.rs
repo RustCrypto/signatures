@@ -145,8 +145,10 @@ where
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
-    fn try_sign_digest(&self, msg_digest: D) -> Result<Signature<C>> {
-        self.sign_prehash(&msg_digest.finalize_fixed())
+    fn try_sign_digest<F: Fn(&mut D) -> Result<()>>(&self, f: F) -> Result<Signature<C>> {
+        let mut digest = D::new();
+        f(&mut digest)?;
+        self.sign_prehash(&digest.finalize_fixed())
     }
 }
 
@@ -188,9 +190,10 @@ where
     SignatureSize<C>: ArraySize,
 {
     fn try_multipart_sign(&self, msg: &[&[u8]]) -> core::result::Result<Signature<C>, Error> {
-        let mut digest = C::Digest::new();
-        msg.iter().for_each(|slice| digest.update(slice));
-        self.try_sign_digest(digest)
+        self.try_sign_digest(|digest: &mut C::Digest| {
+            msg.iter().for_each(|slice| digest.update(slice));
+            Ok(())
+        })
     }
 }
 
@@ -201,12 +204,14 @@ where
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
-    fn try_sign_digest_with_rng<R: TryCryptoRng + ?Sized>(
+    fn try_sign_digest_with_rng<R: TryCryptoRng + ?Sized, F: Fn(&mut D) -> Result<()>>(
         &self,
         rng: &mut R,
-        msg_digest: D,
+        f: F,
     ) -> Result<Signature<C>> {
-        self.sign_prehash_with_rng(rng, &msg_digest.finalize_fixed())
+        let mut digest = D::new();
+        f(&mut digest)?;
+        self.sign_prehash_with_rng(rng, &digest.finalize_fixed())
     }
 }
 
@@ -264,9 +269,10 @@ where
         rng: &mut R,
         msg: &[&[u8]],
     ) -> Result<Signature<C>> {
-        let mut digest = C::Digest::new();
-        msg.iter().for_each(|slice| digest.update(slice));
-        self.try_sign_digest_with_rng(rng, digest)
+        self.try_sign_digest_with_rng(rng, |digest: &mut C::Digest| {
+            msg.iter().for_each(|slice| digest.update(slice));
+            Ok(())
+        })
     }
 }
 
@@ -277,8 +283,8 @@ where
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
-    fn try_sign_digest(&self, msg_digest: D) -> Result<SignatureWithOid<C>> {
-        let signature: Signature<C> = self.try_sign_digest(msg_digest)?;
+    fn try_sign_digest<F: Fn(&mut D) -> Result<()>>(&self, f: F) -> Result<SignatureWithOid<C>> {
+        let signature: Signature<C> = self.try_sign_digest(f)?;
         let oid = ecdsa_oid_for_digest(D::OID).ok_or_else(Error::new)?;
         SignatureWithOid::new(signature, oid)
     }
@@ -304,9 +310,10 @@ where
     SignatureSize<C>: ArraySize,
 {
     fn try_multipart_sign(&self, msg: &[&[u8]]) -> Result<SignatureWithOid<C>> {
-        let mut digest = C::Digest::new();
-        msg.iter().for_each(|slice| digest.update(slice));
-        self.try_sign_digest(digest)
+        self.try_sign_digest(|digest: &mut C::Digest| {
+            msg.iter().for_each(|slice| digest.update(slice));
+            Ok(())
+        })
     }
 }
 
@@ -348,12 +355,12 @@ where
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
 {
-    fn try_sign_digest_with_rng<R: TryCryptoRng + ?Sized>(
+    fn try_sign_digest_with_rng<R: TryCryptoRng + ?Sized, F: Fn(&mut D) -> Result<()>>(
         &self,
         rng: &mut R,
-        msg_digest: D,
+        f: F,
     ) -> Result<der::Signature<C>> {
-        RandomizedDigestSigner::<D, Signature<C>>::try_sign_digest_with_rng(self, rng, msg_digest)
+        RandomizedDigestSigner::<D, Signature<C>>::try_sign_digest_with_rng(self, rng, f)
             .map(Into::into)
     }
 }
@@ -387,8 +394,8 @@ where
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
 {
-    fn try_sign_digest(&self, msg_digest: D) -> Result<der::Signature<C>> {
-        DigestSigner::<D, Signature<C>>::try_sign_digest(self, msg_digest).map(Into::into)
+    fn try_sign_digest<F: Fn(&mut D) -> Result<()>>(&self, f: F) -> Result<der::Signature<C>> {
+        DigestSigner::<D, Signature<C>>::try_sign_digest(self, f).map(Into::into)
     }
 }
 

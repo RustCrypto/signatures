@@ -102,7 +102,7 @@ fn generate_signature<D>(signing_key: SigningKey, data: &[u8]) -> Signature
 where
     D: Digest + BlockSizeUser + FixedOutputReset,
 {
-    signing_key.sign_digest(<D as Digest>::new().chain_update(data))
+    signing_key.sign_digest(|digest: &mut D| Digest::update(digest, data))
 }
 
 /// Generate a signature using the 1024-bit DSA key

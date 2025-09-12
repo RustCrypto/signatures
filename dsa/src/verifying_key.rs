@@ -8,7 +8,7 @@ use crypto_bigint::{
     BoxedUint, NonZero, Resize,
     modular::{BoxedMontyForm, BoxedMontyParams},
 };
-use digest::Digest;
+use digest::{Digest, Update};
 use signature::{DigestVerifier, MultipartVerifier, Verifier, hazmat::PrehashVerifier};
 
 #[cfg(feature = "pkcs8")]
@@ -124,9 +124,13 @@ impl MultipartVerifier<Signature> for VerifyingKey {
         msg: &[&[u8]],
         signature: &Signature,
     ) -> Result<(), signature::Error> {
-        let mut digest = sha2::Sha256::new();
-        msg.iter().for_each(|slice| digest.update(slice));
-        self.verify_digest(digest, signature)
+        self.verify_digest(
+            |digest: &mut sha2::Sha256| {
+                msg.iter().for_each(|slice| Digest::update(digest, slice));
+                Ok(())
+            },
+            signature,
+        )
     }
 }
 
@@ -146,9 +150,15 @@ impl PrehashVerifier<Signature> for VerifyingKey {
 
 impl<D> DigestVerifier<D, Signature> for VerifyingKey
 where
-    D: Digest,
+    D: Digest + Update,
 {
-    fn verify_digest(&self, digest: D, signature: &Signature) -> Result<(), signature::Error> {
+    fn verify_digest<F: Fn(&mut D) -> Result<(), signature::Error>>(
+        &self,
+        f: F,
+        signature: &Signature,
+    ) -> Result<(), signature::Error> {
+        let mut digest = D::new();
+        f(&mut digest)?;
         let hash = digest.finalize();
 
         let is_valid = self
