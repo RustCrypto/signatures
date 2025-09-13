@@ -261,9 +261,9 @@ checksum = "43da5946c66ffcc7745f48db692ffbb10a83bfe0afd96235c5c2a4fb23994929"
 
 [[package]]
 name = "crypto-bigint"
-version = "0.7.0-rc.4"
+version = "0.7.0-rc.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c069823f41bdc75e99546bfd59eb1ed27d69dc720e5c949fe502b82926f8448"
+checksum = "19f2e3541e47d5e2c984b2832e8633b1443671eebba61f0d05e4d2bafba16b23"
 dependencies = [
  "hybrid-array",
  "num-traits",
@@ -284,9 +284,9 @@ dependencies = [
 
 [[package]]
 name = "crypto-primes"
-version = "0.7.0-pre.1"
+version = "0.7.0-pre.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae744b9f528151f8c440cf67498f24d2d1ac0ab536b5ce7b1f87a7a5961bd1c1"
+checksum = "6ad2e4e276b4f3cc222e2724cc94e147008ee0e4481c7a220c79e2ec3bdd2bba"
 dependencies = [
  "crypto-bigint",
  "libm",
