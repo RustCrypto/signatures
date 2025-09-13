@@ -331,7 +331,7 @@ dependencies = [
 
 [[package]]
 name = "dsa"
-version = "0.7.0-rc.5"
+version = "0.7.0-rc.6"
 dependencies = [
  "crypto-bigint",
  "crypto-primes",
@@ -352,7 +352,7 @@ dependencies = [
 
 [[package]]
 name = "ecdsa"
-version = "0.17.0-rc.6"
+version = "0.17.0-rc.7"
 dependencies = [
  "der",
  "digest",
@@ -368,7 +368,7 @@ dependencies = [
 
 [[package]]
 name = "ed25519"
-version = "3.0.0-rc.0"
+version = "3.0.0-rc.1"
 dependencies = [
  "bincode",
  "hex-literal",
@@ -382,7 +382,7 @@ dependencies = [
 
 [[package]]
 name = "ed448"
-version = "0.5.0-rc.0"
+version = "0.5.0-rc.1"
 dependencies = [
  "bincode",
  "hex-literal",
@@ -610,7 +610,7 @@ checksum = "cd945864f07fe9f5371a27ad7b52a172b4b499999f1d97574c9fa68373937e12"
 
 [[package]]
 name = "lms-signature"
-version = "0.1.0-pre"
+version = "0.1.0-rc.0"
 dependencies = [
  "digest",
  "hex",
@@ -639,7 +639,7 @@ checksum = "78ca9ab1a0babb1e7d5695e3530886289c18cf2f87ec19a575a0abdce112e3a3"
 
 [[package]]
 name = "ml-dsa"
-version = "0.1.0-pre.2"
+version = "0.1.0-rc.0"
 dependencies = [
  "const-oid",
  "criterion",
@@ -1114,7 +1114,7 @@ dependencies = [
 
 [[package]]
 name = "slh-dsa"
-version = "0.2.0-pre"
+version = "0.2.0-rc.0"
 dependencies = [
  "aes",
  "cipher",

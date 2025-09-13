@@ -1,7 +1,7 @@
 [package]
 name = "lms-signature"
 description = "Pure Rust implementation of Leighton-Micali Hash-Based Signatures (RFC 8554)"
-version = "0.1.0-pre"
+version = "0.1.0-rc.0"
 edition = "2024"
 license = "Apache-2.0 OR MIT"
 homepage = "https://github.com/RustCrypto/signatures/tree/master/lms"
