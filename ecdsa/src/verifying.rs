@@ -150,8 +150,14 @@ where
     D: Digest + FixedOutput,
     SignatureSize<C>: ArraySize,
 {
-    fn verify_digest(&self, msg_digest: D, signature: &Signature<C>) -> Result<()> {
-        self.verify_prehash(&msg_digest.finalize(), signature)
+    fn verify_digest<F: Fn(&mut D) -> Result<()>>(
+        &self,
+        f: F,
+        signature: &Signature<C>,
+    ) -> Result<()> {
+        let mut digest = D::new();
+        f(&mut digest)?;
+        self.verify_prehash(&digest.finalize(), signature)
     }
 }
 
@@ -189,9 +195,13 @@ where
     SignatureSize<C>: ArraySize,
 {
     fn multipart_verify(&self, msg: &[&[u8]], signature: &Signature<C>) -> Result<()> {
-        let mut digest = C::Digest::new();
-        msg.iter().for_each(|slice| digest.update(slice));
-        self.verify_digest(digest, signature)
+        self.verify_digest(
+            |digest: &mut C::Digest| {
+                msg.iter().for_each(|slice| digest.update(slice));
+                Ok(())
+            },
+            signature,
+        )
     }
 }
 
@@ -248,9 +258,13 @@ where
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
 {
-    fn verify_digest(&self, msg_digest: D, signature: &der::Signature<C>) -> Result<()> {
+    fn verify_digest<F: Fn(&mut D) -> Result<()>>(
+        &self,
+        f: F,
+        signature: &der::Signature<C>,
+    ) -> Result<()> {
         let signature = Signature::<C>::try_from(signature.clone())?;
-        DigestVerifier::<D, Signature<C>>::verify_digest(self, msg_digest, &signature)
+        DigestVerifier::<D, Signature<C>>::verify_digest(self, f, &signature)
     }
 }
 

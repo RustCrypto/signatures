@@ -8,7 +8,7 @@ use {
     elliptic_curve::{FieldBytes, subtle::CtOption},
     signature::{
         DigestSigner, MultipartSigner, RandomizedDigestSigner, Signer,
-        digest::FixedOutput,
+        digest::{FixedOutput, Update},
         hazmat::{PrehashSigner, RandomizedPrehashSigner},
         rand_core::TryCryptoRng,
     },
@@ -229,12 +229,17 @@ where
 impl<C, D> DigestSigner<D, (Signature<C>, RecoveryId)> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
-    D: Digest,
+    D: Digest + Update,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
-    fn try_sign_digest(&self, msg_digest: D) -> Result<(Signature<C>, RecoveryId)> {
-        self.sign_digest_recoverable(msg_digest)
+    fn try_sign_digest<F: Fn(&mut D) -> Result<()>>(
+        &self,
+        f: F,
+    ) -> Result<(Signature<C>, RecoveryId)> {
+        let mut digest = D::new();
+        f(&mut digest)?;
+        self.sign_digest_recoverable(digest)
     }
 }
 
@@ -262,12 +267,14 @@ where
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
-    fn try_sign_digest_with_rng<R: TryCryptoRng + ?Sized>(
+    fn try_sign_digest_with_rng<R: TryCryptoRng + ?Sized, F: Fn(&mut D) -> Result<()>>(
         &self,
         rng: &mut R,
-        msg_digest: D,
+        f: F,
     ) -> Result<(Signature<C>, RecoveryId)> {
-        self.sign_prehash_with_rng(rng, &msg_digest.finalize_fixed())
+        let mut digest = D::new();
+        f(&mut digest)?;
+        self.sign_prehash_with_rng(rng, &digest.finalize_fixed())
     }
 }
 
@@ -304,7 +311,8 @@ where
 {
     fn try_multipart_sign(&self, msg: &[&[u8]]) -> Result<(Signature<C>, RecoveryId)> {
         let mut digest = C::Digest::new();
-        msg.iter().for_each(|slice| digest.update(slice));
+        msg.iter()
+            .for_each(|slice| Digest::update(&mut digest, slice));
         self.sign_digest_recoverable(digest)
     }
 }

@@ -13,7 +13,7 @@ use crypto_bigint::{
     BoxedUint, NonZero, Resize,
     modular::{BoxedMontyForm, BoxedMontyParams},
 };
-use digest::{Digest, FixedOutputReset, block_api::BlockSizeUser};
+use digest::{Digest, FixedOutputReset, Update, block_api::BlockSizeUser};
 use signature::{
     DigestSigner, MultipartSigner, RandomizedDigestSigner, Signer,
     hazmat::{PrehashSigner, RandomizedPrehashSigner},
@@ -157,9 +157,10 @@ impl Signer<Signature> for SigningKey {
 
 impl MultipartSigner<Signature> for SigningKey {
     fn try_multipart_sign(&self, msg: &[&[u8]]) -> Result<Signature, signature::Error> {
-        let mut digest = sha2::Sha256::new();
-        msg.iter().for_each(|slice| digest.update(slice));
-        self.try_sign_digest(digest)
+        self.try_sign_digest(|digest: &mut sha2::Sha256| {
+            msg.iter().for_each(|slice| Digest::update(digest, slice));
+            Ok(())
+        })
     }
 }
 
@@ -191,7 +192,12 @@ impl<D> DigestSigner<D, Signature> for SigningKey
 where
     D: Digest + BlockSizeUser + FixedOutputReset,
 {
-    fn try_sign_digest(&self, digest: D) -> Result<Signature, signature::Error> {
+    fn try_sign_digest<F: Fn(&mut D) -> Result<(), signature::Error>>(
+        &self,
+        f: F,
+    ) -> Result<Signature, signature::Error> {
+        let mut digest = D::new();
+        f(&mut digest)?;
         let hash = digest.finalize_fixed();
         let ks = crate::generate::secret_number_rfc6979::<D>(self, &hash)?;
 
@@ -201,15 +207,20 @@ where
 
 impl<D> RandomizedDigestSigner<D, Signature> for SigningKey
 where
-    D: Digest,
+    D: Digest + Update,
 {
-    fn try_sign_digest_with_rng<R: TryCryptoRng + ?Sized>(
+    fn try_sign_digest_with_rng<
+        R: TryCryptoRng + ?Sized,
+        F: Fn(&mut D) -> Result<(), signature::Error>,
+    >(
         &self,
         rng: &mut R,
-        digest: D,
+        f: F,
     ) -> Result<Signature, signature::Error> {
         let ks = crate::generate::secret_number(rng, self.verifying_key().components())?
             .ok_or_else(signature::Error::new)?;
+        let mut digest = D::new();
+        f(&mut digest)?;
         let hash = digest.finalize();
 
         self.sign_prehashed(ks, &hash)

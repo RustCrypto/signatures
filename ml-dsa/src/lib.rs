@@ -51,10 +51,16 @@ use hybrid_array::{
         U75, U80, U88, Unsigned,
     },
 };
+use signature::digest::Update;
+use signature::{DigestSigner, DigestVerifier, MultipartSigner, MultipartVerifier, Signer};
+
+#[cfg(feature = "rand_core")]
+use signature::RandomizedDigestSigner;
 
 #[cfg(feature = "rand_core")]
 use rand_core::{CryptoRng, TryCryptoRng};
 
+use sha3::Shake256;
 #[cfg(feature = "zeroize")]
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
@@ -89,7 +95,7 @@ use core::fmt;
 
 pub use crate::param::{EncodedSignature, EncodedSigningKey, EncodedVerifyingKey, MlDsaParams};
 pub use crate::util::B32;
-pub use signature::{self, Error, MultipartSigner, MultipartVerifier};
+pub use signature::{self, Error};
 
 /// An ML-DSA signature
 #[derive(Clone, PartialEq, Debug)]
@@ -243,7 +249,7 @@ where
 
 /// The `Signer` implementation for `KeyPair` uses the optional deterministic variant of ML-DSA, and
 /// only supports signing with an empty context string.
-impl<P: MlDsaParams> signature::Signer<Signature<P>> for KeyPair<P> {
+impl<P: MlDsaParams> Signer<Signature<P>> for KeyPair<P> {
     fn try_sign(&self, msg: &[u8]) -> Result<Signature<P>, Error> {
         self.try_multipart_sign(&[msg])
     }
@@ -254,6 +260,17 @@ impl<P: MlDsaParams> signature::Signer<Signature<P>> for KeyPair<P> {
 impl<P: MlDsaParams> MultipartSigner<Signature<P>> for KeyPair<P> {
     fn try_multipart_sign(&self, msg: &[&[u8]]) -> Result<Signature<P>, Error> {
         self.signing_key.raw_sign_deterministic(msg, &[])
+    }
+}
+
+/// The `DigestSigner` implementation for `KeyPair` uses the optional deterministic variant of ML-DSA
+/// with a pre-computed μ, and only supports signing with an empty context string.
+impl<P: MlDsaParams> DigestSigner<Shake256, Signature<P>> for KeyPair<P> {
+    fn try_sign_digest<F: Fn(&mut Shake256) -> Result<(), Error>>(
+        &self,
+        f: F,
+    ) -> Result<Signature<P>, Error> {
+        self.signing_key.try_sign_digest(&f)
     }
 }
 
@@ -568,18 +585,34 @@ impl<P: MlDsaParams> SigningKey<P> {
 /// The `Signer` implementation for `SigningKey` uses the optional deterministic variant of ML-DSA, and
 /// only supports signing with an empty context string.  If you would like to include a context
 /// string, use the [`SigningKey::sign_deterministic`] method.
-impl<P: MlDsaParams> signature::Signer<Signature<P>> for SigningKey<P> {
+impl<P: MlDsaParams> Signer<Signature<P>> for SigningKey<P> {
     fn try_sign(&self, msg: &[u8]) -> Result<Signature<P>, Error> {
         self.try_multipart_sign(&[msg])
     }
 }
 
 /// The `Signer` implementation for `SigningKey` uses the optional deterministic variant of ML-DSA, and
-/// only supports signing with an empty context string.  If you would like to include a context
+/// only supports signing with an empty context string. If you would like to include a context
 /// string, use the [`SigningKey::sign_deterministic`] method.
 impl<P: MlDsaParams> MultipartSigner<Signature<P>> for SigningKey<P> {
     fn try_multipart_sign(&self, msg: &[&[u8]]) -> Result<Signature<P>, Error> {
         self.raw_sign_deterministic(msg, &[])
+    }
+}
+
+/// The `Signer` implementation for `SigningKey` uses the optional deterministic variant of ML-DSA
+/// with a pre-computed µ, and only supports signing with an empty context string. If you would
+/// like to include a context string, use the [`SigningKey::sign_mu_deterministic`] method.
+impl<P: MlDsaParams> DigestSigner<Shake256, Signature<P>> for SigningKey<P> {
+    fn try_sign_digest<F: Fn(&mut Shake256) -> Result<(), Error>>(
+        &self,
+        f: F,
+    ) -> Result<Signature<P>, Error> {
+        let mut digest = Shake256::default().chain(self.tr).chain([0, 0]);
+        f(&mut digest)?;
+        let mu = H::pre_digest(digest).squeeze_new();
+
+        Ok(self.sign_mu_deterministic(&mu))
     }
 }
 
@@ -604,8 +637,8 @@ impl<P: MlDsaParams> signature::Keypair for SigningKey<P> {
 }
 
 /// The `RandomizedSigner` implementation for `SigningKey` only supports signing with an empty
-/// context string. If you would like to include a context string, use the [`SigningKey::sign`]
-/// method.
+/// context string. If you would like to include a context string, use the
+/// [`SigningKey::sign_randomized`] method.
 #[cfg(feature = "rand_core")]
 impl<P: MlDsaParams> signature::RandomizedSigner<Signature<P>> for SigningKey<P> {
     fn try_sign_with_rng<R: TryCryptoRng + ?Sized>(
@@ -614,6 +647,27 @@ impl<P: MlDsaParams> signature::RandomizedSigner<Signature<P>> for SigningKey<P>
         msg: &[u8],
     ) -> Result<Signature<P>, Error> {
         self.sign_randomized(msg, &[], rng)
+    }
+}
+
+/// The `RandomizedSigner` implementation for `SigningKey` only supports signing with an empty
+/// context string. If you would like to include a context string, use the
+/// [`SigningKey::sign_mu_randomized`] method.
+#[cfg(feature = "rand_core")]
+impl<P: MlDsaParams> RandomizedDigestSigner<Shake256, Signature<P>> for SigningKey<P> {
+    fn try_sign_digest_with_rng<
+        R: TryCryptoRng + ?Sized,
+        F: Fn(&mut Shake256) -> Result<(), Error>,
+    >(
+        &self,
+        rng: &mut R,
+        f: F,
+    ) -> Result<Signature<P>, Error> {
+        let mut digest = Shake256::default().chain(self.tr).chain([0, 0]);
+        f(&mut digest)?;
+        let mu = H::pre_digest(digest).squeeze_new();
+
+        self.sign_mu_randomized(&mu, rng)
     }
 }
 
@@ -772,6 +826,22 @@ impl<P: MlDsaParams> signature::Verifier<Signature<P>> for VerifyingKey<P> {
 impl<P: MlDsaParams> MultipartVerifier<Signature<P>> for VerifyingKey<P> {
     fn multipart_verify(&self, msg: &[&[u8]], signature: &Signature<P>) -> Result<(), Error> {
         self.raw_verify_with_context(msg, &[], signature)
+            .then_some(())
+            .ok_or(Error::new())
+    }
+}
+
+impl<P: MlDsaParams> DigestVerifier<Shake256, Signature<P>> for VerifyingKey<P> {
+    fn verify_digest<F: Fn(&mut Shake256) -> Result<(), Error>>(
+        &self,
+        f: F,
+        signature: &Signature<P>,
+    ) -> Result<(), Error> {
+        let mut digest = Shake256::default().chain(self.tr).chain([0, 0]);
+        f(&mut digest)?;
+        let mu = H::pre_digest(digest).squeeze_new();
+
+        self.raw_verify_mu(&mu, signature)
             .then_some(())
             .ok_or(Error::new())
     }
@@ -1184,6 +1254,62 @@ mod test {
         sign_internal_verify_mu::<MlDsa44>();
         sign_internal_verify_mu::<MlDsa65>();
         sign_internal_verify_mu::<MlDsa87>();
+    }
+
+    #[test]
+    fn sign_digest_round_trip() {
+        fn sign_digest<P>()
+        where
+            P: MlDsaParams,
+        {
+            let kp = P::from_seed(&Array::default());
+            let sk = kp.signing_key;
+            let vk = kp.verifying_key;
+
+            let M = b"Hello world";
+            let sig = sk.sign_digest(|digest| digest.update(M));
+            assert_eq!(sig, sk.sign(M));
+
+            vk.verify_digest(
+                |digest| {
+                    digest.update(M);
+                    Ok(())
+                },
+                &sig,
+            )
+            .unwrap();
+        }
+        sign_digest::<MlDsa44>();
+        sign_digest::<MlDsa65>();
+        sign_digest::<MlDsa87>();
+    }
+
+    #[test]
+    #[cfg(feature = "rand_core")]
+    fn sign_randomized_digest_round_trip() {
+        fn sign_digest<P>()
+        where
+            P: MlDsaParams,
+        {
+            let kp = P::from_seed(&Array::default());
+            let sk = kp.signing_key;
+            let vk = kp.verifying_key;
+
+            let M = b"Hello world";
+            let sig = sk.sign_digest_with_rng(&mut rand::rng(), |digest| digest.update(M));
+
+            vk.verify_digest(
+                |digest| {
+                    digest.update(M);
+                    Ok(())
+                },
+                &sig,
+            )
+            .unwrap();
+        }
+        sign_digest::<MlDsa44>();
+        sign_digest::<MlDsa65>();
+        sign_digest::<MlDsa87>();
     }
 
     #[test]
