@@ -12,16 +12,16 @@ categories = ["cryptography"]
 keywords = ["crypto", "signature"]
 
 [dependencies]
-digest = "0.11.0-rc.0"
+digest = "0.11.0-rc.1"
 hybrid-array = { version = "0.4", features = ["extra-sizes", "zeroize"] }
 rand = "0.9.0"
-sha2 = "0.11.0-rc.0"
-static_assertions = "1.1.0"
-rand_core = "0.9.0"
+sha2 = "0.11.0-rc.2"
+static_assertions = "1.1"
+rand_core = "0.9"
 signature = { version = "3.0.0-rc.4", features = ["alloc", "digest", "rand_core"] }
-typenum = { version = "1.17.0", features = ["const-generics"] }
-zeroize = "1.8.1"
+typenum = { version = "1.17", features = ["const-generics"] }
+zeroize = "1.8"
 
 [dev-dependencies]
-hex = "0.4.3"
-hex-literal = "0.4.1"
+hex = "0.4"
+hex-literal = "1"
