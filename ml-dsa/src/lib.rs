@@ -772,6 +772,21 @@ impl<P: MlDsaParams> VerifyingKey<P> {
         }
     }
 
+    /// Computes µ according to FIPS 204 for use in ML-DSA.Sign and ML-DSA.Verify.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error`] if the given `Mp` returns one.
+    pub fn compute_mu<F: FnOnce(&mut Shake256) -> Result<(), Error>>(
+        &self,
+        Mp: F,
+        ctx: &[u8],
+    ) -> Result<B64, Error> {
+        let mut mu = MuBuilder::new(&self.tr, ctx);
+        Mp(mu.as_mut())?;
+        Ok(mu.finish())
+    }
+
     /// This algorithm reflects the ML-DSA.Verify_internal algorithm from FIPS 204.  It does not
     /// include the domain separator that distinguishes between the normal and pre-hashed cases,
     /// and it does not separate the context string from the rest of the message.
