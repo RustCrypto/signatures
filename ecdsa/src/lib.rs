@@ -65,9 +65,9 @@ pub mod der;
 pub mod dev;
 #[cfg(feature = "hazmat")]
 pub mod hazmat;
-#[cfg(feature = "signing")]
+#[cfg(feature = "algorithm")]
 mod signing;
-#[cfg(feature = "verifying")]
+#[cfg(feature = "algorithm")]
 mod verifying;
 
 pub use crate::recovery::RecoveryId;
@@ -79,9 +79,9 @@ pub use elliptic_curve::{self, PrimeCurve, sec1::EncodedPoint};
 pub use signature::{self, Error, Result, SignatureEncoding};
 use zeroize::Zeroize;
 
-#[cfg(feature = "signing")]
+#[cfg(feature = "algorithm")]
 pub use crate::signing::SigningKey;
-#[cfg(feature = "verifying")]
+#[cfg(feature = "algorithm")]
 pub use crate::verifying::VerifyingKey;
 
 use core::{fmt, ops::Add};

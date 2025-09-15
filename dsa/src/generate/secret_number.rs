@@ -6,7 +6,7 @@ use crate::{Components, signing_key::SigningKey};
 use alloc::vec;
 use core::cmp::min;
 use crypto_bigint::{BoxedUint, NonZero, RandomBits, Resize};
-use digest::{Digest, FixedOutputReset, block_api::BlockSizeUser};
+use rfc6979::hmac::EagerHash;
 use signature::rand_core::TryCryptoRng;
 use zeroize::Zeroizing;
 
@@ -25,7 +25,7 @@ pub fn secret_number_rfc6979<D>(
     hash: &[u8],
 ) -> Result<(BoxedUint, BoxedUint), signature::Error>
 where
-    D: Digest + BlockSizeUser + FixedOutputReset,
+    D: EagerHash,
 {
     let q = signing_key.verifying_key().components().q();
     let size = (q.bits() / 8) as usize;

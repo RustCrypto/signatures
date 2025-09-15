@@ -358,6 +358,7 @@ dependencies = [
  "digest",
  "elliptic-curve",
  "hex-literal",
+ "hmac",
  "rfc6979",
  "serdect",
  "sha2",
