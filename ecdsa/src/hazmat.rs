@@ -27,14 +27,14 @@ use {
     },
 };
 
-#[cfg(feature = "digest")]
-use signature::digest::{Digest, FixedOutput, FixedOutputReset, block_api::BlockSizeUser};
+#[cfg(feature = "arithmetic")]
+use crate::{
+    Signature,
+    elliptic_curve::{FieldBytesEncoding, array::ArraySize},
+};
 
-#[cfg(feature = "rfc6979")]
-use elliptic_curve::FieldBytesEncoding;
-
-#[cfg(any(feature = "arithmetic", feature = "rfc6979"))]
-use crate::{Signature, elliptic_curve::array::ArraySize};
+#[cfg(any(feature = "arithmetic", feature = "digest"))]
+use rfc6979::hmac::EagerHash;
 
 /// Bind a preferred [`Digest`] algorithm to an elliptic curve type.
 ///
@@ -44,7 +44,7 @@ use crate::{Signature, elliptic_curve::array::ArraySize};
 pub trait DigestAlgorithm: EcdsaCurve {
     /// Preferred digest to use when computing ECDSA signatures for this
     /// elliptic curve. This is typically a member of the SHA-2 family.
-    type Digest: BlockSizeUser + Digest + FixedOutput + FixedOutputReset;
+    type Digest: EagerHash + digest::Update;
 }
 
 /// Partial implementation of the `bits2int` function as defined in
@@ -159,7 +159,7 @@ where
 /// entropy `ad`.
 ///
 /// [RFC6979]: https://datatracker.ietf.org/doc/html/rfc6979
-#[cfg(feature = "rfc6979")]
+#[cfg(feature = "arithmetic")]
 pub fn sign_prehashed_rfc6979<C, D>(
     d: &NonZeroScalar<C>,
     z: &FieldBytes<C>,
@@ -167,7 +167,7 @@ pub fn sign_prehashed_rfc6979<C, D>(
 ) -> Result<(Signature<C>, RecoveryId)>
 where
     C: EcdsaCurve + CurveArithmetic,
-    D: Digest + BlockSizeUser + FixedOutput + FixedOutputReset,
+    D: EagerHash,
     SignatureSize<C>: ArraySize,
 {
     // From RFC6979 § 2.4:

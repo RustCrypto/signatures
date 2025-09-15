@@ -2,21 +2,12 @@
 
 use crate::{Error, Result};
 
-#[cfg(feature = "signing")]
+#[cfg(feature = "signature")]
 use {
-    crate::{SigningKey, hazmat::sign_prehashed_rfc6979},
-    elliptic_curve::{FieldBytes, subtle::CtOption},
-    signature::{
-        DigestSigner, MultipartSigner, RandomizedDigestSigner, Signer,
-        digest::{FixedOutput, Update},
-        hazmat::{PrehashSigner, RandomizedPrehashSigner},
-        rand_core::TryCryptoRng,
+    crate::{
+        EcdsaCurve, Signature, SignatureSize, SigningKey, VerifyingKey,
+        hazmat::{DigestAlgorithm, bits2field, sign_prehashed_rfc6979, verify_prehashed},
     },
-};
-
-#[cfg(feature = "verifying")]
-use {
-    crate::{VerifyingKey, hazmat::verify_prehashed},
     elliptic_curve::{
         AffinePoint, FieldBytesEncoding, FieldBytesSize, Group, PrimeField, ProjectivePoint,
         bigint::CheckedAdd,
@@ -24,16 +15,16 @@ use {
         point::DecompressPoint,
         sec1::{self, FromEncodedPoint, ToEncodedPoint},
     },
-};
-
-#[cfg(any(feature = "signing", feature = "verifying"))]
-use {
-    crate::{
-        EcdsaCurve, Signature, SignatureSize,
-        hazmat::{DigestAlgorithm, bits2field},
+    elliptic_curve::{
+        CurveArithmetic, FieldBytes, Scalar, array::ArraySize, ops::Invert, subtle::CtOption,
     },
-    elliptic_curve::{CurveArithmetic, Scalar, array::ArraySize, ops::Invert},
-    signature::digest::Digest,
+    rfc6979::hmac::EagerHash,
+    signature::{
+        DigestSigner, MultipartSigner, RandomizedDigestSigner, Signer,
+        digest::Digest,
+        hazmat::{PrehashSigner, RandomizedPrehashSigner},
+        rand_core::TryCryptoRng,
+    },
 };
 
 /// Recovery IDs, a.k.a. "recid".
@@ -89,7 +80,7 @@ impl RecoveryId {
     }
 }
 
-#[cfg(feature = "verifying")]
+#[cfg(feature = "signature")]
 impl RecoveryId {
     /// Given a public key, message, and signature, use trial recovery
     /// to determine if a suitable recovery ID exists, or return an error
@@ -118,7 +109,7 @@ impl RecoveryId {
     ) -> Result<Self>
     where
         C: EcdsaCurve + CurveArithmetic,
-        D: Digest,
+        D: EagerHash,
         AffinePoint<C>: DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C>,
         FieldBytesSize<C>: sec1::ModulusSize,
         SignatureSize<C>: ArraySize,
@@ -176,7 +167,7 @@ impl From<RecoveryId> for u8 {
     }
 }
 
-#[cfg(feature = "signing")]
+#[cfg(feature = "signature")]
 impl<C> SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
@@ -213,7 +204,7 @@ where
     /// Sign the given message digest, returning a signature and recovery ID.
     pub fn sign_digest_recoverable<D>(&self, msg_digest: D) -> Result<(Signature<C>, RecoveryId)>
     where
-        D: Digest,
+        D: EagerHash,
     {
         self.sign_prehash_recoverable(&msg_digest.finalize())
     }
@@ -225,11 +216,11 @@ where
     }
 }
 
-#[cfg(feature = "signing")]
+#[cfg(feature = "signature")]
 impl<C, D> DigestSigner<D, (Signature<C>, RecoveryId)> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
-    D: Digest + Update,
+    D: EagerHash + digest::Update,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
@@ -243,7 +234,7 @@ where
     }
 }
 
-#[cfg(feature = "signing")]
+#[cfg(feature = "signature")]
 impl<C> RandomizedPrehashSigner<(Signature<C>, RecoveryId)> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
@@ -259,11 +250,11 @@ where
     }
 }
 
-#[cfg(feature = "signing")]
+#[cfg(feature = "signature")]
 impl<C, D> RandomizedDigestSigner<D, (Signature<C>, RecoveryId)> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
-    D: Digest + FixedOutput,
+    D: EagerHash + digest::Update,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
@@ -274,11 +265,11 @@ where
     ) -> Result<(Signature<C>, RecoveryId)> {
         let mut digest = D::new();
         f(&mut digest)?;
-        self.sign_prehash_with_rng(rng, &digest.finalize_fixed())
+        self.sign_prehash_with_rng(rng, &digest.finalize())
     }
 }
 
-#[cfg(feature = "signing")]
+#[cfg(feature = "signature")]
 impl<C> PrehashSigner<(Signature<C>, RecoveryId)> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
@@ -290,7 +281,7 @@ where
     }
 }
 
-#[cfg(feature = "signing")]
+#[cfg(feature = "signature")]
 impl<C> Signer<(Signature<C>, RecoveryId)> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
@@ -302,7 +293,7 @@ where
     }
 }
 
-#[cfg(feature = "signing")]
+#[cfg(feature = "signature")]
 impl<C> MultipartSigner<(Signature<C>, RecoveryId)> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
@@ -311,13 +302,12 @@ where
 {
     fn try_multipart_sign(&self, msg: &[&[u8]]) -> Result<(Signature<C>, RecoveryId)> {
         let mut digest = C::Digest::new();
-        msg.iter()
-            .for_each(|slice| Digest::update(&mut digest, slice));
+        msg.iter().for_each(|slice| digest.update(slice));
         self.sign_digest_recoverable(digest)
     }
 }
 
-#[cfg(feature = "verifying")]
+#[cfg(feature = "signature")]
 impl<C> VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
@@ -348,7 +338,7 @@ where
         recovery_id: RecoveryId,
     ) -> Result<Self>
     where
-        D: Digest,
+        D: EagerHash,
     {
         Self::recover_from_prehash(&msg_digest.finalize(), signature, recovery_id)
     }

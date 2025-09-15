@@ -41,13 +41,12 @@ std = ["alloc", "elliptic-curve/std"]
 
 arithmetic = ["elliptic-curve/arithmetic"]
 dev = ["arithmetic", "digest", "elliptic-curve/dev", "hazmat"]
-digest = ["dep:digest", "elliptic-curve/digest", "signature/digest"]
+digest = ["dep:digest", "elliptic-curve/digest", "signature/digest", "rfc6979"]
 hazmat = []
 pkcs8 = ["digest", "elliptic-curve/pkcs8", "der"]
 pem = ["elliptic-curve/pem", "pkcs8"]
 serde = ["elliptic-curve/serde", "pkcs8", "serdect"]
-signing = ["arithmetic", "digest", "hazmat", "rfc6979"]
-verifying = ["arithmetic", "digest", "hazmat"]
+signature = ["arithmetic", "digest", "hazmat", "rfc6979"]
 
 [package.metadata.docs.rs]
 all-features = true

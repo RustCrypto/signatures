@@ -1,7 +1,8 @@
 #![cfg(feature = "hazmat")]
 use crypto_bigint::BoxedUint;
-use digest::{Digest, FixedOutputReset, block_api::BlockSizeUser};
+use digest::Update;
 use dsa::{Components, Signature, SigningKey, VerifyingKey};
+use rfc6979::hmac::EagerHash;
 use sha1::Sha1;
 use sha2::{Sha224, Sha256, Sha384, Sha512};
 use signature::DigestSigner;
@@ -100,15 +101,15 @@ fn dsa_2048_signing_key() -> SigningKey {
 /// Generate a signature given the unhashed message and a private key
 fn generate_signature<D>(signing_key: SigningKey, data: &[u8]) -> Signature
 where
-    D: Digest + BlockSizeUser + FixedOutputReset,
+    D: EagerHash + Update,
 {
-    signing_key.sign_digest(|digest: &mut D| Digest::update(digest, data))
+    signing_key.sign_digest(|digest: &mut D| Update::update(digest, data))
 }
 
 /// Generate a signature using the 1024-bit DSA key
 fn generate_1024_signature<D>(data: &[u8]) -> Signature
 where
-    D: Digest + BlockSizeUser + FixedOutputReset,
+    D: EagerHash + Update,
 {
     generate_signature::<D>(dsa_1024_signing_key(), data)
 }
@@ -116,7 +117,7 @@ where
 /// Generate a signature using the 2048-bit DSA key
 fn generate_2048_signature<D>(data: &[u8]) -> Signature
 where
-    D: Digest + BlockSizeUser + FixedOutputReset,
+    D: EagerHash + Update,
 {
     generate_signature::<D>(dsa_2048_signing_key(), data)
 }
