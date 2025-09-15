@@ -2,7 +2,7 @@
 
 use crate::{Error, Result};
 
-#[cfg(feature = "signature")]
+#[cfg(feature = "algorithm")]
 use {
     crate::{
         EcdsaCurve, Signature, SignatureSize, SigningKey, VerifyingKey,
@@ -80,7 +80,7 @@ impl RecoveryId {
     }
 }
 
-#[cfg(feature = "signature")]
+#[cfg(feature = "algorithm")]
 impl RecoveryId {
     /// Given a public key, message, and signature, use trial recovery
     /// to determine if a suitable recovery ID exists, or return an error
@@ -167,7 +167,7 @@ impl From<RecoveryId> for u8 {
     }
 }
 
-#[cfg(feature = "signature")]
+#[cfg(feature = "algorithm")]
 impl<C> SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
@@ -216,7 +216,7 @@ where
     }
 }
 
-#[cfg(feature = "signature")]
+#[cfg(feature = "algorithm")]
 impl<C, D> DigestSigner<D, (Signature<C>, RecoveryId)> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
@@ -234,7 +234,7 @@ where
     }
 }
 
-#[cfg(feature = "signature")]
+#[cfg(feature = "algorithm")]
 impl<C> RandomizedPrehashSigner<(Signature<C>, RecoveryId)> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
@@ -250,7 +250,7 @@ where
     }
 }
 
-#[cfg(feature = "signature")]
+#[cfg(feature = "algorithm")]
 impl<C, D> RandomizedDigestSigner<D, (Signature<C>, RecoveryId)> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
@@ -269,7 +269,7 @@ where
     }
 }
 
-#[cfg(feature = "signature")]
+#[cfg(feature = "algorithm")]
 impl<C> PrehashSigner<(Signature<C>, RecoveryId)> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
@@ -281,7 +281,7 @@ where
     }
 }
 
-#[cfg(feature = "signature")]
+#[cfg(feature = "algorithm")]
 impl<C> Signer<(Signature<C>, RecoveryId)> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
@@ -293,7 +293,7 @@ where
     }
 }
 
-#[cfg(feature = "signature")]
+#[cfg(feature = "algorithm")]
 impl<C> MultipartSigner<(Signature<C>, RecoveryId)> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
@@ -307,7 +307,7 @@ where
     }
 }
 
-#[cfg(feature = "signature")]
+#[cfg(feature = "algorithm")]
 impl<C> VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
