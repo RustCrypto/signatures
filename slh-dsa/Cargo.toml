@@ -21,7 +21,7 @@ typenum = { version = "1.17", features = ["const-generics"] }
 sha3 = { version = "0.11.0-rc.0", default-features = false }
 zerocopy = { version = "0.8", features = ["derive"] }
 rand_core = { version = "0.9" }
-signature = { version = "3.0.0-rc.4", features = ["rand_core"] }
+signature = { version = "3.0.0-rc.4", features = ["digest", "rand_core"] }
 hmac = "0.13.0-rc.1"
 sha2 = { version = "0.11.0-rc.2", default-features = false }
 digest = "0.11.0-rc.1"

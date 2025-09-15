@@ -3,17 +3,18 @@
 
 use core::fmt::Debug;
 
-use crate::hashes::HashSuite;
+use crate::hashes::{HashDigest, HashSuite};
 use crate::{
     ParameterSet, address::Address, fors::ForsParams, hypertree::HypertreeParams, wots::WotsParams,
     xmss::XmssParams,
 };
 use crate::{PkSeed, SkPrf, SkSeed};
 use const_oid::db::fips205;
-use digest::{Digest, KeyInit, Mac};
-use hmac::Hmac;
+use digest::{Digest, KeyInit, Mac, Output, OutputSizeUser, Update};
+use hmac::{EagerHash, Hmac};
 use hybrid_array::{Array, ArraySize};
 use sha2::{Sha256, Sha512};
+use signature::Result;
 use typenum::{Diff, Sum, U, U16, U24, U30, U32, U34, U39, U42, U47, U49, U64, U128};
 
 /// Implementation of the MGF1 XOF
@@ -44,6 +45,36 @@ pub struct Sha2L1<N, M> {
     _m: core::marker::PhantomData<M>,
 }
 
+/// `Digest` implementation [`Sha2L1`] and [`Sha2L35`].
+pub struct Sha2Digest<H: EagerHash>(Inner<H>);
+
+enum Inner<H: EagerHash> {
+    Hmac(Hmac<H>),
+    Hash(H),
+}
+
+impl<H: EagerHash> Update for Sha2Digest<H> {
+    fn update(&mut self, data: &[u8]) {
+        match &mut self.0 {
+            Inner::Hmac(hmac) => Mac::update(hmac, data),
+            Inner::Hash(hash) => Digest::update(hash, data),
+        }
+    }
+}
+
+impl<H: EagerHash<Core: OutputSizeUser<OutputSize = H::OutputSize>>> Sha2Digest<H> {
+    fn finalize(self) -> Output<H> {
+        match self.0 {
+            Inner::Hmac(hmac) => hmac.finalize().into_bytes(),
+            Inner::Hash(hash) => hash.finalize(),
+        }
+    }
+}
+
+impl<N: ArraySize, M: ArraySize> HashDigest for Sha2L1<N, M> {
+    type Digest = Sha2Digest<Sha256>;
+}
+
 impl<N: ArraySize, M: ArraySize> HashSuite for Sha2L1<N, M>
 where
     N: core::ops::Add<N>,
@@ -61,35 +92,31 @@ where
     fn prf_msg(
         sk_prf: &SkPrf<Self::N>,
         opt_rand: &Array<u8, Self::N>,
-        msg: &[&[impl AsRef<[u8]>]],
-    ) -> Array<u8, Self::N> {
-        let mut mac = Hmac::<Sha256>::new_from_slice(sk_prf.as_ref()).unwrap();
+        msg: &impl Fn(&mut Self::Digest) -> Result<()>,
+    ) -> Result<Array<u8, Self::N>> {
+        let mut mac = Sha2Digest(Inner::Hmac(
+            Hmac::<Sha256>::new_from_slice(sk_prf.as_ref()).unwrap(),
+        ));
         mac.update(opt_rand.as_slice());
-        msg.iter()
-            .copied()
-            .flatten()
-            .for_each(|msg_part| mac.update(msg_part.as_ref()));
-        let result = mac.finalize().into_bytes();
-        Array::clone_from_slice(&result[..Self::N::USIZE])
+        msg(&mut mac)?;
+        let result = mac.finalize();
+        Ok(Array::clone_from_slice(&result[..Self::N::USIZE]))
     }
 
     fn h_msg(
         rand: &Array<u8, Self::N>,
         pk_seed: &PkSeed<Self::N>,
         pk_root: &Array<u8, Self::N>,
-        msg: &[&[impl AsRef<[u8]>]],
-    ) -> Array<u8, Self::M> {
-        let mut h = Sha256::new();
+        msg: &impl Fn(&mut Self::Digest) -> Result<()>,
+    ) -> Result<Array<u8, Self::M>> {
+        let mut h = Sha2Digest(Inner::Hash(Sha256::new()));
         h.update(rand);
-        h.update(pk_seed);
+        h.update(pk_seed.as_ref());
         h.update(pk_root);
-        msg.iter()
-            .copied()
-            .flatten()
-            .for_each(|msg_part| h.update(msg_part.as_ref()));
+        msg(&mut h)?;
         let result = Array(h.finalize().into());
         let seed = rand.clone().concat(pk_seed.0.clone()).concat(result);
-        mgf1::<Sha256, Self::M>(&seed)
+        Ok(mgf1::<Sha256, Self::M>(&seed))
     }
 
     fn prf_sk(
@@ -117,7 +144,8 @@ where
             .chain_update(pk_seed)
             .chain_update(&zeroes)
             .chain_update(adrs.compressed());
-        m.iter().for_each(|x| sha.update(x.as_slice()));
+        m.iter()
+            .for_each(|x| Update::update(&mut sha, x.as_slice()));
         let hash = sha.finalize();
         Array::clone_from_slice(&hash[..Self::N::USIZE])
     }
@@ -210,6 +238,10 @@ pub struct Sha2L35<N, M> {
     _m: core::marker::PhantomData<M>,
 }
 
+impl<N: ArraySize, M: ArraySize> HashDigest for Sha2L35<N, M> {
+    type Digest = Sha2Digest<Sha512>;
+}
+
 impl<N: ArraySize, M: ArraySize> HashSuite for Sha2L35<N, M>
 where
     N: core::ops::Add<N>,
@@ -229,35 +261,31 @@ where
     fn prf_msg(
         sk_prf: &SkPrf<Self::N>,
         opt_rand: &Array<u8, Self::N>,
-        msg: &[&[impl AsRef<[u8]>]],
-    ) -> Array<u8, Self::N> {
-        let mut mac = Hmac::<Sha512>::new_from_slice(sk_prf.as_ref()).unwrap();
+        msg: &impl Fn(&mut Self::Digest) -> Result<()>,
+    ) -> Result<Array<u8, Self::N>> {
+        let mut mac = Sha2Digest(Inner::Hmac(
+            Hmac::<Sha512>::new_from_slice(sk_prf.as_ref()).unwrap(),
+        ));
         mac.update(opt_rand.as_slice());
-        msg.iter()
-            .copied()
-            .flatten()
-            .for_each(|msg_part| mac.update(msg_part.as_ref()));
-        let result = mac.finalize().into_bytes();
-        Array::clone_from_slice(&result[..Self::N::USIZE])
+        msg(&mut mac)?;
+        let result = mac.finalize();
+        Ok(Array::clone_from_slice(&result[..Self::N::USIZE]))
     }
 
     fn h_msg(
         rand: &Array<u8, Self::N>,
         pk_seed: &PkSeed<Self::N>,
         pk_root: &Array<u8, Self::N>,
-        msg: &[&[impl AsRef<[u8]>]],
-    ) -> Array<u8, Self::M> {
-        let mut h = Sha512::new();
+        msg: &impl Fn(&mut Self::Digest) -> Result<()>,
+    ) -> Result<Array<u8, Self::M>> {
+        let mut h = Sha2Digest(Inner::Hash(Sha512::new()));
         h.update(rand);
-        h.update(pk_seed);
+        h.update(pk_seed.as_ref());
         h.update(pk_root);
-        msg.iter()
-            .copied()
-            .flatten()
-            .for_each(|msg_part| h.update(msg_part.as_ref()));
+        msg(&mut h)?;
         let result = Array(h.finalize().into());
         let seed = rand.clone().concat(pk_seed.0.clone()).concat(result);
-        mgf1::<Sha512, Self::M>(&seed)
+        Ok(mgf1::<Sha512, Self::M>(&seed))
     }
 
     fn prf_sk(
@@ -285,7 +313,8 @@ where
             .chain_update(pk_seed)
             .chain_update(&zeroes)
             .chain_update(adrs.compressed());
-        m.iter().for_each(|x| sha.update(x.as_slice()));
+        m.iter()
+            .for_each(|x| Update::update(&mut sha, x.as_slice()));
         let hash = sha.finalize();
         Array::clone_from_slice(&hash[..Self::N::USIZE])
     }

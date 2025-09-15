@@ -4,9 +4,11 @@ use crate::util::split_digest;
 use crate::verifying_key::VerifyingKey;
 use crate::{ParameterSet, PkSeed, Sha2L1, Sha2L35, Shake, VerifyingKeyLen};
 use ::signature::{
-    Error, KeypairRef, MultipartSigner, RandomizedMultipartSigner, RandomizedSigner, Signer,
+    DigestSigner, Error, KeypairRef, MultipartSigner, RandomizedDigestSigner,
+    RandomizedMultipartSigner, RandomizedSigner, Signer,
     rand_core::{CryptoRng, TryCryptoRng},
 };
+use digest::Update;
 use hybrid_array::{Array, ArraySize};
 use pkcs8::{
     der::AnyRef,
@@ -133,10 +135,24 @@ impl<P: ParameterSet> SigningKey<P> {
     /// Published for KAT validation purposes but not intended for general use.
     /// opt_rand must be a P::N length slice, panics otherwise.
     pub fn slh_sign_internal(&self, msg: &[&[u8]], opt_rand: Option<&[u8]>) -> Signature<P> {
-        self.raw_slh_sign_internal(&[msg], opt_rand)
+        self.raw_slh_sign_internal(
+            |digest| {
+                for msg in msg {
+                    digest.update(msg);
+                }
+
+                Ok(())
+            },
+            opt_rand,
+        )
+        .unwrap()
     }
 
-    fn raw_slh_sign_internal(&self, msg: &[&[&[u8]]], opt_rand: Option<&[u8]>) -> Signature<P> {
+    fn raw_slh_sign_internal(
+        &self,
+        msg: impl Fn(&mut P::Digest) -> Result<(), Error>,
+        opt_rand: Option<&[u8]>,
+    ) -> Result<Signature<P>, Error> {
         let rand = opt_rand
             .unwrap_or(&self.verifying_key.pk_seed.0)
             .try_into()
@@ -145,9 +161,9 @@ impl<P: ParameterSet> SigningKey<P> {
         let sk_seed = &self.sk_seed;
         let pk_seed = &self.verifying_key.pk_seed;
 
-        let randomizer = P::prf_msg(&self.sk_prf, rand, msg);
+        let randomizer = P::prf_msg(&self.sk_prf, rand, &msg)?;
 
-        let digest = P::h_msg(&randomizer, pk_seed, &self.verifying_key.pk_root, msg);
+        let digest = P::h_msg(&randomizer, pk_seed, &self.verifying_key.pk_root, &msg)?;
         let (md, idx_tree, idx_leaf) = split_digest::<P>(&digest);
         let adrs = ForsTree::new(idx_tree, idx_leaf);
         let fors_sig = P::fors_sign(md, sk_seed, pk_seed, &adrs);
@@ -155,11 +171,11 @@ impl<P: ParameterSet> SigningKey<P> {
         let fors_pk = P::fors_pk_from_sig(&fors_sig, md, pk_seed, &adrs);
         let ht_sig = P::ht_sign(&fors_pk, sk_seed, pk_seed, idx_tree, idx_leaf);
 
-        Signature {
+        Ok(Signature {
             randomizer,
             fors_sig,
             ht_sig,
-        }
+        })
     }
 
     /// Implements [slh-sign] as defined in FIPS-205, using a context string.
@@ -172,20 +188,34 @@ impl<P: ParameterSet> SigningKey<P> {
         ctx: &[u8],
         opt_rand: Option<&[u8]>,
     ) -> Result<Signature<P>, Error> {
-        self.raw_try_sign_with_context(&[msg], ctx, opt_rand)
+        self.raw_try_sign_with_context(
+            |digest| {
+                digest.update(msg);
+                Ok(())
+            },
+            ctx,
+            opt_rand,
+        )
     }
 
     fn raw_try_sign_with_context(
         &self,
-        msg: &[&[u8]],
+        msg: impl Fn(&mut P::Digest) -> Result<(), Error>,
         ctx: &[u8],
         opt_rand: Option<&[u8]>,
     ) -> Result<Signature<P>, Error> {
         let ctx_len = u8::try_from(ctx.len()).map_err(|_| Error::new())?;
         let ctx_len_bytes = ctx_len.to_be_bytes();
 
-        let ctx_msg = [&[&[0], &ctx_len_bytes, ctx], msg];
-        Ok(self.raw_slh_sign_internal(&ctx_msg, opt_rand))
+        self.raw_slh_sign_internal(
+            |digest| {
+                digest.update(&[0]);
+                digest.update(&ctx_len_bytes);
+                digest.update(ctx);
+                msg(digest)
+            },
+            opt_rand,
+        )
     }
 
     /// Serialize the signing key to a new stack-allocated array
@@ -237,7 +267,26 @@ impl<P: ParameterSet> Signer<Signature<P>> for SigningKey<P> {
 
 impl<P: ParameterSet> MultipartSigner<Signature<P>> for SigningKey<P> {
     fn try_multipart_sign(&self, msg: &[&[u8]]) -> Result<Signature<P>, Error> {
-        self.raw_try_sign_with_context(msg, &[], None)
+        self.raw_try_sign_with_context(
+            |digest| {
+                for msg in msg {
+                    digest.update(msg);
+                }
+
+                Ok(())
+            },
+            &[],
+            None,
+        )
+    }
+}
+
+impl<P: ParameterSet> DigestSigner<P::Digest, Signature<P>> for SigningKey<P> {
+    fn try_sign_digest<F: Fn(&mut P::Digest) -> Result<(), Error>>(
+        &self,
+        f: F,
+    ) -> Result<Signature<P>, Error> {
+        self.raw_try_sign_with_context(f, &[], None)
     }
 }
 
@@ -260,7 +309,33 @@ impl<P: ParameterSet> RandomizedMultipartSigner<Signature<P>> for SigningKey<P> 
         let mut randomizer = Array::<u8, P::N>::default();
         rng.try_fill_bytes(randomizer.as_mut_slice())
             .map_err(|_| signature::Error::new())?;
-        self.raw_try_sign_with_context(msg, &[], Some(&randomizer))
+        self.raw_try_sign_with_context(
+            |digest| {
+                for msg in msg {
+                    digest.update(msg);
+                }
+
+                Ok(())
+            },
+            &[],
+            Some(&randomizer),
+        )
+    }
+}
+
+impl<P: ParameterSet> RandomizedDigestSigner<P::Digest, Signature<P>> for SigningKey<P> {
+    fn try_sign_digest_with_rng<
+        R: TryCryptoRng + ?Sized,
+        F: Fn(&mut P::Digest) -> Result<(), Error>,
+    >(
+        &self,
+        rng: &mut R,
+        f: F,
+    ) -> Result<Signature<P>, Error> {
+        let mut randomizer = Array::<u8, P::N>::default();
+        rng.try_fill_bytes(randomizer.as_mut_slice())
+            .map_err(|_| signature::Error::new())?;
+        self.raw_try_sign_with_context(f, &[], Some(&randomizer))
     }
 }
 
