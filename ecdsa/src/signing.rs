@@ -5,7 +5,7 @@ use crate::{
     hazmat::{DigestAlgorithm, bits2field, sign_prehashed_rfc6979},
 };
 use core::fmt::{self, Debug};
-use digest::{Update, const_oid::AssociatedOid};
+use digest::{Update, block_api::EagerHash, const_oid::AssociatedOid};
 use elliptic_curve::{
     CurveArithmetic, FieldBytes, NonZeroScalar, Scalar, SecretKey,
     array::ArraySize,
@@ -14,7 +14,6 @@ use elliptic_curve::{
     subtle::{Choice, ConstantTimeEq, CtOption},
     zeroize::{Zeroize, ZeroizeOnDrop},
 };
-use rfc6979::hmac::EagerHash;
 use signature::{
     DigestSigner, MultipartSigner, RandomizedDigestSigner, RandomizedMultipartSigner,
     RandomizedSigner, Signer,

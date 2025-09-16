@@ -13,8 +13,7 @@ use crypto_bigint::{
     BoxedUint, NonZero, Resize,
     modular::{BoxedMontyForm, BoxedMontyParams},
 };
-use digest::Update;
-use rfc6979::hmac::EagerHash;
+use digest::{Update, block_api::EagerHash};
 use signature::{
     DigestSigner, MultipartSigner, RandomizedDigestSigner, Signer,
     hazmat::{PrehashSigner, RandomizedPrehashSigner},

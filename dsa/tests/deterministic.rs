@@ -1,8 +1,7 @@
 #![cfg(feature = "hazmat")]
 use crypto_bigint::BoxedUint;
-use digest::Update;
+use digest::{Update, block_api::EagerHash};
 use dsa::{Components, Signature, SigningKey, VerifyingKey};
-use rfc6979::hmac::EagerHash;
 use sha1::Sha1;
 use sha2::{Sha224, Sha256, Sha384, Sha512};
 use signature::DigestSigner;

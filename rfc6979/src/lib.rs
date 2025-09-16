@@ -43,10 +43,11 @@ pub use hmac;
 pub use hmac::digest::array::typenum::consts;
 
 use hmac::{
-    EagerHash, HmacReset,
+    HmacReset,
     digest::{
         KeyInit, Mac, OutputSizeUser,
         array::{Array, ArraySize},
+        block_api::EagerHash,
     },
 };
 

@@ -34,7 +34,7 @@ use crate::{
 };
 
 #[cfg(any(feature = "arithmetic", feature = "digest"))]
-use hmac::EagerHash;
+use digest::block_api::EagerHash;
 
 /// Bind a preferred [`Digest`] algorithm to an elliptic curve type.
 ///
