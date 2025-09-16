@@ -14,8 +14,7 @@ pub(crate) type Int = <BaseField as Field>::Int;
 
 pub(crate) type Elem = algebra::Elem<BaseField>;
 pub(crate) type Polynomial = algebra::Polynomial<BaseField>;
-#[expect(unreachable_pub)]
-pub type Vector<K> = algebra::Vector<BaseField, K>;
+pub(crate) type Vector<K> = algebra::Vector<BaseField, K>;
 pub(crate) type NttPolynomial = algebra::NttPolynomial<BaseField>;
 pub(crate) type NttVector<K> = algebra::NttVector<BaseField, K>;
 pub(crate) type NttMatrix<K, L> = algebra::NttMatrix<BaseField, K, L>;
