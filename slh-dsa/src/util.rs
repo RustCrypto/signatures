@@ -95,12 +95,12 @@ mod tests {
     use typenum::U;
 
     fn test_base_2b<OutLen: ArraySize, B: Unsigned>(x: &[u8]) {
-        if x.len() < (OutLen::USIZE * B::USIZE).div_ceil(8) {
+        if x.len() < (OutLen::USIZE * B::USIZE + 7) / 8 {
             return; // TODO: enforce this at the prop level
         }
 
         let a = base_2b::<OutLen, B>(x);
-        let mut b = BigUint::from_bytes_be(&x[..(OutLen::USIZE * B::USIZE).div_ceil(8)]);
+        let mut b = BigUint::from_bytes_be(&x[..(OutLen::USIZE * B::USIZE + 7) / 8]);
 
         if (B::USIZE * OutLen::USIZE) % 8 != 0 {
             // Clear lower bits of b
