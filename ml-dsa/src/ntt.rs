@@ -45,7 +45,7 @@ const ZETA_POW_BITREV: [Elem; 256] = {
     pow_bitrev
 };
 
-pub trait Ntt {
+pub(crate) trait Ntt {
     type Output;
     fn ntt(&self) -> Self::Output;
 }
@@ -84,7 +84,7 @@ impl<K: ArraySize> Ntt for Vector<K> {
 }
 
 #[allow(clippy::module_name_repetitions)]
-pub trait NttInverse {
+pub(crate) trait NttInverse {
     type Output;
     fn ntt_inverse(&self) -> Self::Output;
 }

@@ -34,7 +34,7 @@ fn use_hint<TwoGamma2: Unsigned>(h: bool, r: Elem) -> Elem {
 }
 
 #[derive(Clone, PartialEq, Debug)]
-pub struct Hint<P>(pub Array<Array<bool, U256>, P::K>)
+pub(crate) struct Hint<P>(pub Array<Array<bool, U256>, P::K>)
 where
     P: SignatureParams;
 
@@ -51,7 +51,7 @@ impl<P> Hint<P>
 where
     P: SignatureParams,
 {
-    pub fn new(z: &Vector<P::K>, r: &Vector<P::K>) -> Self {
+    pub(crate) fn new(z: &Vector<P::K>, r: &Vector<P::K>) -> Self {
         let zi = z.0.iter();
         let ri = r.0.iter();
 
@@ -69,14 +69,14 @@ where
         )
     }
 
-    pub fn hamming_weight(&self) -> usize {
+    pub(crate) fn hamming_weight(&self) -> usize {
         self.0
             .iter()
             .map(|x| x.iter().filter(|x| **x).count())
             .sum()
     }
 
-    pub fn use_hint(&self, r: &Vector<P::K>) -> Vector<P::K> {
+    pub(crate) fn use_hint(&self, r: &Vector<P::K>) -> Vector<P::K> {
         let hi = self.0.iter();
         let ri = r.0.iter();
 
@@ -96,7 +96,7 @@ where
         )
     }
 
-    pub fn bit_pack(&self) -> EncodedHint<P> {
+    pub(crate) fn bit_pack(&self) -> EncodedHint<P> {
         let mut y: EncodedHint<P> = Array::default();
         let mut index = 0;
         let omega = P::Omega::USIZE;
@@ -119,7 +119,7 @@ where
         a.iter().enumerate().all(|(i, x)| i == 0 || a[i - 1] <= *x)
     }
 
-    pub fn bit_unpack(y: &EncodedHint<P>) -> Option<Self> {
+    pub(crate) fn bit_unpack(y: &EncodedHint<P>) -> Option<Self> {
         let (indices, cuts) = P::split_hint(y);
         let cuts: Array<usize, P::K> = cuts.iter().map(|x| usize::from(*x)).collect();
 

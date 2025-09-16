@@ -22,7 +22,7 @@ use {crate::Components, crypto_bigint::subtle::CtOption};
 /// # Returns
 ///
 /// Tuple of three `BoxedUint`s. Ordered like this `(p, q, g)`
-pub fn common<R: CryptoRng + ?Sized>(
+pub(crate) fn common<R: CryptoRng + ?Sized>(
     rng: &mut R,
     KeySize { l, n }: KeySize,
 ) -> (Odd<BoxedUint>, NonZero<BoxedUint>, NonZero<BoxedUint>) {
@@ -88,7 +88,10 @@ pub fn common<R: CryptoRng + ?Sized>(
 /// Calculate the public component from the common components and the private component
 #[cfg(feature = "hazmat")]
 #[inline]
-pub fn public(components: &Components, x: &NonZero<BoxedUint>) -> CtOption<NonZero<BoxedUint>> {
+pub(crate) fn public(
+    components: &Components,
+    x: &NonZero<BoxedUint>,
+) -> CtOption<NonZero<BoxedUint>> {
     let p = components.p();
     let g = components.g();
 

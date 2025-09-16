@@ -7,7 +7,7 @@ mod keypair;
 #[cfg(feature = "hazmat")]
 mod secret_number;
 
-pub use self::components::common as common_components;
+pub(crate) use self::components::common as common_components;
 #[cfg(feature = "hazmat")]
 pub use self::secret_number::{secret_number, secret_number_rfc6979};
 
