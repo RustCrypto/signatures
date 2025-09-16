@@ -10,4 +10,4 @@ pub trait Typecode {
 }
 
 /// The 16 byte identifier I from the LM-OTS algorithm.
-pub type Identifier = [u8; ID_LEN];
+pub(crate) type Identifier = [u8; ID_LEN];

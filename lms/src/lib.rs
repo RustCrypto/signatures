@@ -1,3 +1,5 @@
+#![warn(unreachable_pub)]
+
 //! LMS in Rust
 //!
 //! This is a strongly typed implementation of Leighton-Micali signatures. You
