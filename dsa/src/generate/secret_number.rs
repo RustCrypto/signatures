@@ -20,7 +20,7 @@ fn truncate_hash(hash: &[u8], desired_size: usize) -> &[u8] {
 ///
 /// Secret number k and its modular multiplicative inverse with q
 #[inline]
-pub fn secret_number_rfc6979<D>(
+pub(crate) fn secret_number_rfc6979<D>(
     signing_key: &SigningKey,
     hash: &[u8],
 ) -> Result<(BoxedUint, BoxedUint), signature::Error>
@@ -62,7 +62,7 @@ where
 ///
 /// Secret number k and its modular multiplicative inverse with q
 #[inline]
-pub fn secret_number<R: TryCryptoRng + ?Sized>(
+pub(crate) fn secret_number<R: TryCryptoRng + ?Sized>(
     rng: &mut R,
     components: &Components,
 ) -> Result<Option<(BoxedUint, BoxedUint)>, signature::Error> {
