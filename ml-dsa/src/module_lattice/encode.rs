@@ -23,8 +23,8 @@ pub trait EncodingSize: ArraySize {
 
 type EncodingUnit<D> = Quot<Prod<D, U8>, Gcf<D, U8>>;
 
-pub type EncodedPolynomialSize<D> = <D as EncodingSize>::EncodedPolynomialSize;
-pub type EncodedPolynomial<D> = Array<u8, EncodedPolynomialSize<D>>;
+pub(crate) type EncodedPolynomialSize<D> = <D as EncodingSize>::EncodedPolynomialSize;
+pub(crate) type EncodedPolynomial<D> = Array<u8, EncodedPolynomialSize<D>>;
 
 impl<D> EncodingSize for D
 where
@@ -53,8 +53,8 @@ where
     fn unflatten(vec: &EncodedVector<Self, K>) -> Array<&EncodedPolynomial<Self>, K>;
 }
 
-pub type EncodedVectorSize<D, K> = <D as VectorEncodingSize<K>>::EncodedVectorSize;
-pub type EncodedVector<D, K> = Array<u8, EncodedVectorSize<D, K>>;
+pub(crate) type EncodedVectorSize<D, K> = <D as VectorEncodingSize<K>>::EncodedVectorSize;
+pub(crate) type EncodedVector<D, K> = Array<u8, EncodedVectorSize<D, K>>;
 
 impl<D, K> VectorEncodingSize<K> for D
 where
@@ -129,7 +129,7 @@ fn byte_decode<F: Field, D: EncodingSize>(bytes: &EncodedPolynomial<D>) -> Decod
     vals
 }
 
-pub trait Encode<D: EncodingSize> {
+pub(crate) trait Encode<D: EncodingSize> {
     type EncodedSize: ArraySize;
     fn encode(&self) -> Array<u8, Self::EncodedSize>;
     fn decode(enc: &Array<u8, Self::EncodedSize>) -> Self;

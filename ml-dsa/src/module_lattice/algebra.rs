@@ -78,7 +78,7 @@ macro_rules! define_field {
 pub struct Elem<F: Field>(pub F::Int);
 
 impl<F: Field> Elem<F> {
-    pub const fn new(x: F::Int) -> Self {
+    pub(crate) const fn new(x: F::Int) -> Self {
         Self(x)
     }
 }
@@ -135,7 +135,7 @@ impl<F: Field> Mul<Elem<F>> for Elem<F> {
 pub struct Polynomial<F: Field>(pub Array<Elem<F>, U256>);
 
 impl<F: Field> Polynomial<F> {
-    pub const fn new(x: Array<Elem<F>, U256>) -> Self {
+    pub(crate) const fn new(x: Array<Elem<F>, U256>) -> Self {
         Self(x)
     }
 }
@@ -200,7 +200,7 @@ impl<F: Field> Neg for &Polynomial<F> {
 pub struct Vector<F: Field, K: ArraySize>(pub Array<Polynomial<F>, K>);
 
 impl<F: Field, K: ArraySize> Vector<F, K> {
-    pub const fn new(x: Array<Polynomial<F>, K>) -> Self {
+    pub(crate) const fn new(x: Array<Polynomial<F>, K>) -> Self {
         Self(x)
     }
 }
@@ -265,10 +265,10 @@ impl<F: Field, K: ArraySize> Neg for &Vector<F, K> {
 /// We do not define multiplication of NTT polynomials here.  We also do not define the
 /// mappings between normal polynomials and NTT polynomials (i.e., between `R_q` and `T_q`).
 #[derive(Clone, Default, Debug, PartialEq)]
-pub struct NttPolynomial<F: Field>(pub Array<Elem<F>, U256>);
+pub(crate) struct NttPolynomial<F: Field>(pub Array<Elem<F>, U256>);
 
 impl<F: Field> NttPolynomial<F> {
-    pub const fn new(x: Array<Elem<F>, U256>) -> Self {
+    pub(crate) const fn new(x: Array<Elem<F>, U256>) -> Self {
         Self(x)
     }
 }
@@ -332,10 +332,10 @@ impl<F: Field> Neg for &NttPolynomial<F> {
 /// can be multiplied by NTT polynomials, and "multiplied" with each other to produce a dot
 /// product.
 #[derive(Clone, Default, Debug, PartialEq)]
-pub struct NttVector<F: Field, K: ArraySize>(pub Array<NttPolynomial<F>, K>);
+pub(crate) struct NttVector<F: Field, K: ArraySize>(pub Array<NttPolynomial<F>, K>);
 
 impl<F: Field, K: ArraySize> NttVector<F, K> {
-    pub const fn new(x: Array<NttPolynomial<F>, K>) -> Self {
+    pub(crate) const fn new(x: Array<NttPolynomial<F>, K>) -> Self {
         Self(x)
     }
 }
@@ -409,10 +409,10 @@ where
 /// is the only defined operation, and is only defined when multiplication of NTT polynomials
 /// is defined.
 #[derive(Clone, Default, Debug, PartialEq)]
-pub struct NttMatrix<F: Field, K: ArraySize, L: ArraySize>(pub Array<NttVector<F, L>, K>);
+pub(crate) struct NttMatrix<F: Field, K: ArraySize, L: ArraySize>(pub Array<NttVector<F, L>, K>);
 
 impl<F: Field, K: ArraySize, L: ArraySize> NttMatrix<F, K, L> {
-    pub const fn new(x: Array<NttVector<F, L>, K>) -> Self {
+    pub(crate) const fn new(x: Array<NttVector<F, L>, K>) -> Self {
         Self(x)
     }
 }
