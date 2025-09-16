@@ -9,7 +9,7 @@ use crate::hypertree::HypertreeParams;
 use crate::util::base_2b;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct ForsMTSig<P: ForsParams> {
+pub(crate) struct ForsMTSig<P: ForsParams> {
     sk: Array<u8, P::N>,
     auth: Array<Array<u8, P::N>, P::A>,
 }
@@ -65,7 +65,7 @@ impl<P: ForsParams> TryFrom<&[u8]> for ForsMTSig<P> {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct ForsSignature<P: ForsParams>(Array<ForsMTSig<P>, P::K>);
+pub(crate) struct ForsSignature<P: ForsParams>(Array<ForsMTSig<P>, P::K>);
 
 impl<P: ForsParams> TryFrom<&[u8]> for ForsSignature<P> {
     // TODO - real error type
@@ -90,9 +90,9 @@ impl<P: ForsParams> Default for ForsSignature<P> {
 }
 
 impl<P: ForsParams> ForsSignature<P> {
-    pub const SIZE: usize = P::K::USIZE * (P::A::USIZE + 1) * P::N::USIZE;
+    pub(crate) const SIZE: usize = P::K::USIZE * (P::A::USIZE + 1) * P::N::USIZE;
 
-    pub fn write_to(&self, slice: &mut [u8]) {
+    pub(crate) fn write_to(&self, slice: &mut [u8]) {
         debug_assert!(
             slice.len() == Self::SIZE,
             "Writing FORS sig to slice of incorrect length"
@@ -105,7 +105,7 @@ impl<P: ForsParams> ForsSignature<P> {
     }
 
     #[cfg(feature = "alloc")]
-    pub fn to_vec(&self) -> alloc::vec::Vec<u8> {
+    pub(crate) fn to_vec(&self) -> alloc::vec::Vec<u8> {
         let mut v = alloc::vec![0u8; Self::SIZE];
         self.write_to(&mut v);
         v

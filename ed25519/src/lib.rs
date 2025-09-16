@@ -9,7 +9,8 @@
     missing_docs,
     rust_2018_idioms,
     unused_lifetimes,
-    unused_qualifications
+    unused_qualifications,
+    unreachable_pub
 )]
 
 //! # Using Ed25519 generically over algorithm implementations/providers

@@ -45,26 +45,26 @@ mod acvp {
     use serde::{Deserialize, Serialize};
 
     #[derive(Deserialize, Serialize)]
-    pub struct TestVectorFile {
+    pub(crate) struct TestVectorFile {
         #[serde(rename = "testGroups")]
-        pub test_groups: Vec<TestGroup>,
+        pub(crate) test_groups: Vec<TestGroup>,
     }
 
     #[derive(Deserialize, Serialize)]
-    pub struct TestGroup {
+    pub(crate) struct TestGroup {
         #[serde(rename = "tgId")]
-        pub id: usize,
+        pub(crate) id: usize,
 
         #[serde(rename = "parameterSet")]
-        pub parameter_set: ParameterSet,
+        pub(crate) parameter_set: ParameterSet,
 
-        pub deterministic: bool,
+        pub(crate) deterministic: bool,
 
-        pub tests: Vec<TestCase>,
+        pub(crate) tests: Vec<TestCase>,
     }
 
     #[derive(Deserialize, Serialize)]
-    pub enum ParameterSet {
+    pub(crate) enum ParameterSet {
         #[serde(rename = "ML-DSA-44")]
         MlDsa44,
 
@@ -76,20 +76,20 @@ mod acvp {
     }
 
     #[derive(Deserialize, Serialize)]
-    pub struct TestCase {
+    pub(crate) struct TestCase {
         #[serde(rename = "tcId")]
-        pub id: usize,
+        pub(crate) id: usize,
 
         #[serde(with = "hex::serde")]
-        pub sk: Vec<u8>,
+        pub(crate) sk: Vec<u8>,
 
         #[serde(with = "hex::serde")]
-        pub message: Vec<u8>,
+        pub(crate) message: Vec<u8>,
 
         #[serde(with = "hex::serde")]
-        pub signature: Vec<u8>,
+        pub(crate) signature: Vec<u8>,
 
         #[serde(default, with = "hex::serde")]
-        pub rnd: Vec<u8>,
+        pub(crate) rnd: Vec<u8>,
     }
 }

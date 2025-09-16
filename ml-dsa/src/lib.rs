@@ -13,6 +13,7 @@
 #![allow(clippy::many_single_char_names)] // Allow notation matching the spec
 #![allow(clippy::clone_on_copy)] // Be explicit about moving data
 #![deny(missing_docs)] // Require all public interfaces to be documented
+#![warn(unreachable_pub)] // Prevent unexpected interface changes
 
 //! # Quickstart
 //!

@@ -19,11 +19,11 @@
 
 /// Linear algebra with degree-256 polynomials over a prime-order field, vectors of such
 /// polynomials, and NTT polynomials / vectors
-pub mod algebra;
+pub(crate) mod algebra;
 
 /// Packing of polynomials into coefficients with a specified number of bits.
-pub mod encode;
+pub(crate) mod encode;
 
 /// Utility functions such as truncating integers, flattening arrays of arrays, and unflattening
 /// arrays into arrays of arrays.
-pub mod util;
+pub(crate) mod util;
