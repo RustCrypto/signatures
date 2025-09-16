@@ -393,7 +393,7 @@ fn find_scalar_range(outer: &[u8], inner: &[u8]) -> Result<Range<usize>> {
     Ok(Range { start, end })
 }
 
-#[cfg(all(test, feature = "arithmetic"))]
+#[cfg(all(test, feature = "algorithm"))]
 mod tests {
     use elliptic_curve::dev::MockCurve;
 

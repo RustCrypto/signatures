@@ -14,9 +14,12 @@ use crate::{EcdsaCurve, Error, Result};
 use core::cmp;
 use elliptic_curve::{FieldBytes, array::typenum::Unsigned};
 
-#[cfg(feature = "arithmetic")]
+#[cfg(feature = "algorithm")]
 use {
-    crate::{RecoveryId, SignatureSize},
+    crate::{
+        RecoveryId, Signature, SignatureSize,
+        elliptic_curve::{FieldBytesEncoding, array::ArraySize},
+    },
     elliptic_curve::{
         CurveArithmetic, NonZeroScalar, ProjectivePoint, Scalar,
         ff::PrimeField,
@@ -27,13 +30,7 @@ use {
     },
 };
 
-#[cfg(feature = "arithmetic")]
-use crate::{
-    Signature,
-    elliptic_curve::{FieldBytesEncoding, array::ArraySize},
-};
-
-#[cfg(any(feature = "arithmetic", feature = "digest"))]
+#[cfg(feature = "digest")]
 use digest::block_api::EagerHash;
 
 /// Bind a preferred [`Digest`] algorithm to an elliptic curve type.
@@ -102,7 +99,7 @@ pub fn bits2field<C: EcdsaCurve>(bits: &[u8]) -> Result<FieldBytes<C>> {
 ///
 /// This will return an error if a zero-scalar was generated. It can be tried again with a
 /// different `k`.
-#[cfg(feature = "arithmetic")]
+#[cfg(feature = "algorithm")]
 #[allow(non_snake_case)]
 pub fn sign_prehashed<C>(
     d: &NonZeroScalar<C>,
@@ -159,7 +156,7 @@ where
 /// entropy `ad`.
 ///
 /// [RFC6979]: https://datatracker.ietf.org/doc/html/rfc6979
-#[cfg(feature = "arithmetic")]
+#[cfg(feature = "algorithm")]
 pub fn sign_prehashed_rfc6979<C, D>(
     d: &NonZeroScalar<C>,
     z: &FieldBytes<C>,
@@ -201,7 +198,7 @@ where
 /// # Low-S Normalization
 ///
 /// This is a low-level function that does *NOT* apply the `EcdsaCurve::NORMALIZE_S` checks.
-#[cfg(feature = "arithmetic")]
+#[cfg(feature = "algorithm")]
 pub fn verify_prehashed<C>(
     q: &ProjectivePoint<C>,
     z: &FieldBytes<C>,
