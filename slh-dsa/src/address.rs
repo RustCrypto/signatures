@@ -18,8 +18,10 @@
 use hybrid_array::Array;
 use typenum::U22;
 
-use zerocopy::AsBytes;
-use zerocopy::byteorder::big_endian::{U32, U64};
+use zerocopy::{
+    Immutable, IntoBytes,
+    byteorder::big_endian::{U32, U64},
+};
 
 /// `Address` represents a hash address as defined by FIPS-205 section 4.2
 pub(crate) trait Address: AsRef<[u8]> {
@@ -39,7 +41,7 @@ pub(crate) trait Address: AsRef<[u8]> {
     }
 }
 
-#[derive(Clone, AsBytes)]
+#[derive(Clone, IntoBytes, Immutable)]
 #[repr(C)]
 pub(crate) struct WotsHash {
     pub(crate) layer_adrs: U32,
@@ -51,7 +53,7 @@ pub(crate) struct WotsHash {
     pub(crate) hash_adrs: U32,
 }
 
-#[derive(Clone, AsBytes)]
+#[derive(Clone, IntoBytes, Immutable)]
 #[repr(C)]
 pub(crate) struct WotsPk {
     pub(crate) layer_adrs: U32,
@@ -62,7 +64,7 @@ pub(crate) struct WotsPk {
     padding: U64, // 0
 }
 
-#[derive(Clone, AsBytes)]
+#[derive(Clone, IntoBytes, Immutable)]
 #[repr(C)]
 pub(crate) struct HashTree {
     pub(crate) layer_adrs: U32,
@@ -74,7 +76,7 @@ pub(crate) struct HashTree {
     pub(crate) tree_index: U32,
 }
 
-#[derive(Clone, AsBytes)]
+#[derive(Clone, IntoBytes, Immutable)]
 #[repr(C)]
 pub(crate) struct ForsTree {
     layer_adrs: U32, // 0
@@ -86,7 +88,7 @@ pub(crate) struct ForsTree {
     pub(crate) tree_index: U32,
 }
 
-#[derive(Clone, AsBytes)]
+#[derive(Clone, IntoBytes, Immutable)]
 #[repr(C)]
 pub(crate) struct ForsRoots {
     layer_adrs: U32, // 0
@@ -97,7 +99,7 @@ pub(crate) struct ForsRoots {
     padding: U64, // 0
 }
 
-#[derive(Clone, AsBytes)]
+#[derive(Clone, IntoBytes, Immutable)]
 #[repr(C)]
 pub(crate) struct WotsPrf {
     pub(crate) layer_adrs: U32,
@@ -109,7 +111,7 @@ pub(crate) struct WotsPrf {
     hash_adrs: U32, // 0
 }
 
-#[derive(Clone, AsBytes)]
+#[derive(Clone, IntoBytes, Immutable)]
 #[repr(C)]
 pub(crate) struct ForsPrf {
     layer_adrs: U32, // 0

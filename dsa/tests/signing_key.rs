@@ -49,12 +49,20 @@ fn sign_and_verify() {
     let signing_key = generate_keypair();
     let verifying_key = signing_key.verifying_key();
 
-    let signature =
-        signing_key.sign_digest_with_rng(&mut rand::thread_rng(), Sha1::new().chain_update(DATA));
+    let signature = signing_key
+        .sign_digest_with_rng(&mut rand::thread_rng(), |digest: &mut Sha1| {
+            digest.update(DATA)
+        });
 
     assert!(
         verifying_key
-            .verify_digest(Sha1::new().chain_update(DATA), &signature)
+            .verify_digest(
+                |digest: &mut Sha1| {
+                    digest.update(DATA);
+                    Ok(())
+                },
+                &signature
+            )
             .is_ok()
     );
 }
