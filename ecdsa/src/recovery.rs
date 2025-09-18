@@ -8,6 +8,7 @@ use {
         EcdsaCurve, Signature, SignatureSize, SigningKey, VerifyingKey,
         hazmat::{DigestAlgorithm, bits2field, sign_prehashed_rfc6979, verify_prehashed},
     },
+    digest::{Digest, block_api::EagerHash},
     elliptic_curve::{
         AffinePoint, FieldBytesEncoding, FieldBytesSize, Group, PrimeField, ProjectivePoint,
         bigint::CheckedAdd,
@@ -18,10 +19,8 @@ use {
     elliptic_curve::{
         CurveArithmetic, FieldBytes, Scalar, array::ArraySize, ops::Invert, subtle::CtOption,
     },
-    rfc6979::hmac::EagerHash,
     signature::{
         DigestSigner, MultipartSigner, RandomizedDigestSigner, Signer,
-        digest::Digest,
         hazmat::{PrehashSigner, RandomizedPrehashSigner},
         rand_core::TryCryptoRng,
     },

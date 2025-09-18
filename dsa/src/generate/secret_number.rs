@@ -6,7 +6,7 @@ use crate::{Components, signing_key::SigningKey};
 use alloc::vec;
 use core::cmp::min;
 use crypto_bigint::{BoxedUint, NonZero, RandomBits, Resize};
-use rfc6979::hmac::EagerHash;
+use digest::block_api::EagerHash;
 use signature::rand_core::TryCryptoRng;
 use zeroize::Zeroizing;
 

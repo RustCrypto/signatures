@@ -23,8 +23,7 @@ zeroize = { version = "1.5", default-features = false }
 
 # optional dependencies
 der = { version = "0.8.0-rc.8", optional = true }
-digest = { version = "0.11.0-rc.1", optional = true, default-features = false, features = ["oid"] }
-hmac = { version = "0.13.0-rc.1", default-features = false, optional = true }
+digest = { version = "0.11.0-rc.2", optional = true, default-features = false, features = ["oid"] }
 rfc6979 = { version = "0.5.0-rc.1", optional = true }
 serdect = { version = "0.4", optional = true, default-features = false, features = ["alloc"] }
 sha2 = { version = "0.11.0-rc.2", optional = true, default-features = false, features = ["oid"] }
@@ -40,11 +39,10 @@ default = ["digest"]
 alloc = ["elliptic-curve/alloc", "signature/alloc", "spki/alloc"]
 std = ["alloc", "elliptic-curve/std"]
 
-arithmetic = ["dep:hmac", "dep:rfc6979", "elliptic-curve/arithmetic"]
-algorithm = ["dep:rfc6979", "arithmetic", "digest", "hazmat"]
-dev = ["arithmetic", "digest", "elliptic-curve/dev", "hazmat"]
+algorithm = ["dep:rfc6979", "digest", "elliptic-curve/arithmetic", "hazmat"]
+dev = ["algorithm", "elliptic-curve/dev"]
 der = ["dep:der"]
-digest = ["dep:digest", "dep:hmac", "elliptic-curve/digest", "signature/digest"]
+digest = ["dep:digest", "elliptic-curve/digest", "signature/digest"]
 hazmat = []
 pkcs8 = ["der", "digest", "elliptic-curve/pkcs8"]
 pem = ["elliptic-curve/pem", "pkcs8"]

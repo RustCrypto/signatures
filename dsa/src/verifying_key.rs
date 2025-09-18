@@ -8,8 +8,7 @@ use crypto_bigint::{
     BoxedUint, NonZero, Resize,
     modular::{BoxedMontyForm, BoxedMontyParams},
 };
-use digest::Update;
-use rfc6979::hmac::EagerHash;
+use digest::{Update, block_api::EagerHash};
 use signature::{DigestVerifier, MultipartVerifier, Verifier, hazmat::PrehashVerifier};
 
 #[cfg(feature = "pkcs8")]

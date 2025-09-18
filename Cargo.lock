@@ -319,9 +319,9 @@ dependencies = [
 
 [[package]]
 name = "digest"
-version = "0.11.0-rc.1"
+version = "0.11.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3a4aae35a0fcbe22ff1be50fe96df72002d5a4a6fb4aae9193cf2da0daa36da2"
+checksum = "6749b668519cd7149ee3d11286a442a8a8bdc3a9d529605f579777bfccc5a4bc"
 dependencies = [
  "block-buffer",
  "const-oid",
@@ -358,7 +358,6 @@ dependencies = [
  "digest",
  "elliptic-curve",
  "hex-literal",
- "hmac",
  "rfc6979",
  "serdect",
  "sha2",
@@ -525,9 +524,9 @@ checksum = "bcaaec4551594c969335c98c903c1397853d4198408ea609190f420500f6be71"
 
 [[package]]
 name = "hmac"
-version = "0.13.0-rc.1"
+version = "0.13.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "49e206bca159aebaaed410f5e78b2fe56bfc0dd5b19ecae922813b8556b8b07e"
+checksum = "a3fd4dc94c318c1ede8a2a48341c250d6ddecd3ba793da2820301a9f92417ad9"
 dependencies = [
  "digest",
 ]

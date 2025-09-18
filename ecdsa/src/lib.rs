@@ -93,7 +93,7 @@ use elliptic_curve::{
 #[cfg(feature = "alloc")]
 use alloc::vec::Vec;
 
-#[cfg(feature = "arithmetic")]
+#[cfg(feature = "algorithm")]
 use {
     core::str,
     elliptic_curve::{
@@ -300,7 +300,7 @@ where
     }
 }
 
-#[cfg(feature = "arithmetic")]
+#[cfg(feature = "algorithm")]
 impl<C> Signature<C>
 where
     C: EcdsaCurve + CurveArithmetic,
@@ -423,7 +423,7 @@ where
     }
 }
 
-#[cfg(feature = "arithmetic")]
+#[cfg(feature = "algorithm")]
 impl<C> str::FromStr for Signature<C>
 where
     C: EcdsaCurve + CurveArithmetic,

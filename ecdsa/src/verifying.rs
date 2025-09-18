@@ -5,7 +5,7 @@ use crate::{
     hazmat::{self, DigestAlgorithm, bits2field},
 };
 use core::{cmp::Ordering, fmt::Debug};
-use digest::Update;
+use digest::{Update, block_api::EagerHash};
 use elliptic_curve::{
     AffinePoint, CurveArithmetic, FieldBytesSize, ProjectivePoint, PublicKey,
     array::ArraySize,
@@ -13,7 +13,6 @@ use elliptic_curve::{
     scalar::IsHigh,
     sec1::{self, CompressedPoint, EncodedPoint, FromEncodedPoint, ToEncodedPoint},
 };
-use rfc6979::hmac::EagerHash;
 use signature::{DigestVerifier, MultipartVerifier, Verifier, hazmat::PrehashVerifier};
 
 #[cfg(feature = "alloc")]
