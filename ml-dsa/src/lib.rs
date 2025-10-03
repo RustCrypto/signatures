@@ -221,7 +221,7 @@ pub struct KeyPair<P: MlDsaParams> {
     verifying_key: VerifyingKey<P>,
 
     /// The seed this signing key was derived from
-    #[cfg(feature = "pkcs8")]
+    #[cfg(all(feature = "alloc", feature = "pkcs8"))]
     seed: B32,
 }
 
@@ -1082,7 +1082,7 @@ where
         KeyPair {
             signing_key,
             verifying_key,
-            #[cfg(feature = "pkcs8")]
+            #[cfg(all(feature = "alloc", feature = "pkcs8"))]
             seed: xi.clone(),
         }
     }
