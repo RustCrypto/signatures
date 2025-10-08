@@ -40,7 +40,7 @@ alloc = ["elliptic-curve/alloc", "signature/alloc", "spki/alloc"]
 std = ["alloc", "elliptic-curve/std"]
 
 algorithm = ["dep:rfc6979", "digest", "elliptic-curve/arithmetic", "hazmat"]
-dev = ["algorithm", "elliptic-curve/dev"]
+dev = ["algorithm", "digest/dev", "elliptic-curve/dev"]
 der = ["dep:der"]
 digest = ["dep:digest", "elliptic-curve/digest", "signature/digest"]
 hazmat = []
