@@ -150,7 +150,7 @@ macro_rules! new_wycheproof_test {
     ($name:ident, $test_name: expr, $curve:path) => {
         use $crate::{
             Signature,
-            elliptic_curve::{sec1::EncodedPoint},
+            elliptic_curve::sec1::EncodedPoint,
             signature::Verifier,
         };
 
