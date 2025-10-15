@@ -83,6 +83,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1b8e56985ec62d17e9c1001dc89c88ecd7dc08e47eba5ec7c29c7b5eeecde967"
 
 [[package]]
+name = "blobby"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "89af0b093cc13baa4e51e64e65ec2422f7e73aea0e612e5ad3872986671622f1"
+
+[[package]]
 name = "block-buffer"
 version = "0.11.0-rc.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -323,6 +329,7 @@ version = "0.11.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6749b668519cd7149ee3d11286a442a8a8bdc3a9d529605f579777bfccc5a4bc"
 dependencies = [
+ "blobby",
  "block-buffer",
  "const-oid",
  "crypto-common",
