@@ -7,15 +7,15 @@ mod keypair;
 #[cfg(feature = "hazmat")]
 mod secret_number;
 
-pub use self::components::common as common_components;
+pub(crate) use self::components::common as common_components;
 #[cfg(feature = "hazmat")]
-pub use self::secret_number::{secret_number, secret_number_rfc6979};
+pub(crate) use self::secret_number::{secret_number, secret_number_rfc6979};
 
 #[cfg(feature = "hazmat")]
-pub use self::keypair::keypair;
+pub(crate) use self::keypair::keypair;
 
 #[cfg(all(feature = "hazmat", feature = "pkcs8"))]
-pub use self::components::public as public_component;
+pub(crate) use self::components::public as public_component;
 
 /// Calculate the upper and lower bounds for generating values like p or q
 #[inline]

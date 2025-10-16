@@ -224,7 +224,7 @@ macro_rules! new_wycheproof_test {
             }
 
             impl TestVector {
-                pub fn pass(&self) -> bool {
+                pub(crate) fn pass(&self) -> bool {
                     match self.pass_ {
                         &[0] => false,
                         &[1] => true,

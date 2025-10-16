@@ -15,12 +15,12 @@ const W: u32 = 16;
 const CK_LEN: usize = 3; // Length of a checksum in chunks
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct WotsSig<P: WotsParams>(Array<Array<u8, P::N>, P::WotsSigLen>);
+pub(crate) struct WotsSig<P: WotsParams>(Array<Array<u8, P::N>, P::WotsSigLen>);
 
 impl<P: WotsParams> WotsSig<P> {
-    pub const SIZE: usize = P::N::USIZE * P::WotsSigLen::USIZE;
+    pub(crate) const SIZE: usize = P::N::USIZE * P::WotsSigLen::USIZE;
 
-    pub fn write_to(&self, buf: &mut [u8]) {
+    pub(crate) fn write_to(&self, buf: &mut [u8]) {
         debug_assert!(buf.len() == Self::SIZE, "WOTS+ serialize length mismatch");
 
         buf.chunks_exact_mut(P::N::USIZE)
@@ -30,7 +30,7 @@ impl<P: WotsParams> WotsSig<P> {
 
     #[cfg(feature = "alloc")]
     #[cfg(test)]
-    pub fn to_vec(&self) -> alloc::vec::Vec<u8> {
+    pub(crate) fn to_vec(&self) -> alloc::vec::Vec<u8> {
         let mut vec = alloc::vec![0u8; Self::SIZE];
         self.write_to(&mut vec);
         vec

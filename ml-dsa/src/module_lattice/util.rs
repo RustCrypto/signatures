@@ -7,6 +7,7 @@ use hybrid_array::{
 };
 
 /// Safely truncate an unsigned integer value to shorter representation
+#[expect(unreachable_pub)]
 pub trait Truncate<T> {
     fn truncate(x: T) -> Self;
 }
@@ -31,7 +32,7 @@ define_truncate!(usize, u8);
 define_truncate!(usize, u16);
 
 /// Defines a sequence of sequences that can be merged into a bigger overall seequence
-pub trait Flatten<T, M: ArraySize> {
+pub(crate) trait Flatten<T, M: ArraySize> {
     type OutputSize: ArraySize;
 
     fn flatten(self) -> Array<T, Self::OutputSize>;
@@ -54,7 +55,7 @@ where
 }
 
 /// Defines a sequence that can be split into a sequence of smaller sequences of uniform size
-pub trait Unflatten<M>
+pub(crate) trait Unflatten<M>
 where
     M: ArraySize,
 {

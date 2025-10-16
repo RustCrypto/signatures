@@ -6,7 +6,7 @@ use sha3::{
 
 use crate::module_lattice::encode::ArraySize;
 
-pub enum ShakeState<Shake: ExtendableOutput> {
+pub(crate) enum ShakeState<Shake: ExtendableOutput> {
     Absorbing(Shake),
     Squeezing(Shake::Reader),
 }
@@ -18,14 +18,14 @@ impl<Shake: ExtendableOutput + Default> Default for ShakeState<Shake> {
 }
 
 impl<Shake: ExtendableOutput + Default + Clone> ShakeState<Shake> {
-    pub fn updatable(&mut self) -> &mut Shake {
+    pub(crate) fn updatable(&mut self) -> &mut Shake {
         match self {
             Self::Absorbing(sponge) => sponge,
             Self::Squeezing(_) => unreachable!(),
         }
     }
 
-    pub fn absorb(mut self, input: &[u8]) -> Self {
+    pub(crate) fn absorb(mut self, input: &[u8]) -> Self {
         match &mut self {
             Self::Absorbing(sponge) => sponge.update(input),
             Self::Squeezing(_) => unreachable!(),
@@ -34,7 +34,7 @@ impl<Shake: ExtendableOutput + Default + Clone> ShakeState<Shake> {
         self
     }
 
-    pub fn squeeze(&mut self, output: &mut [u8]) -> &mut Self {
+    pub(crate) fn squeeze(&mut self, output: &mut [u8]) -> &mut Self {
         match self {
             Self::Absorbing(sponge) => {
                 // Clone required to satisfy borrow checker
@@ -50,15 +50,15 @@ impl<Shake: ExtendableOutput + Default + Clone> ShakeState<Shake> {
         self
     }
 
-    pub fn squeeze_new<N: ArraySize>(&mut self) -> Array<u8, N> {
+    pub(crate) fn squeeze_new<N: ArraySize>(&mut self) -> Array<u8, N> {
         let mut v = Array::default();
         self.squeeze(&mut v);
         v
     }
 }
 
-pub type G = ShakeState<Shake128>;
-pub type H = ShakeState<Shake256>;
+pub(crate) type G = ShakeState<Shake128>;
+pub(crate) type H = ShakeState<Shake256>;
 
 #[cfg(test)]
 mod test {

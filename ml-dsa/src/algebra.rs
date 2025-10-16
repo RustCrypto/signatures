@@ -1,5 +1,5 @@
-pub use crate::module_lattice::algebra::Field;
-pub use crate::module_lattice::util::Truncate;
+pub(crate) use crate::module_lattice::algebra::Field;
+pub(crate) use crate::module_lattice::util::Truncate;
 use hybrid_array::{
     ArraySize,
     typenum::{Shleft, U1, U13, Unsigned},
@@ -10,19 +10,19 @@ use crate::module_lattice::algebra;
 
 define_field!(BaseField, u32, u64, u128, 8_380_417);
 
-pub type Int = <BaseField as Field>::Int;
+pub(crate) type Int = <BaseField as Field>::Int;
 
-pub type Elem = algebra::Elem<BaseField>;
-pub type Polynomial = algebra::Polynomial<BaseField>;
-pub type Vector<K> = algebra::Vector<BaseField, K>;
-pub type NttPolynomial = algebra::NttPolynomial<BaseField>;
-pub type NttVector<K> = algebra::NttVector<BaseField, K>;
-pub type NttMatrix<K, L> = algebra::NttMatrix<BaseField, K, L>;
+pub(crate) type Elem = algebra::Elem<BaseField>;
+pub(crate) type Polynomial = algebra::Polynomial<BaseField>;
+pub(crate) type Vector<K> = algebra::Vector<BaseField, K>;
+pub(crate) type NttPolynomial = algebra::NttPolynomial<BaseField>;
+pub(crate) type NttVector<K> = algebra::NttVector<BaseField, K>;
+pub(crate) type NttMatrix<K, L> = algebra::NttMatrix<BaseField, K, L>;
 
 // We require modular reduction for three moduli: q, 2^d, and 2 * gamma2.  All three of these are
 // greater than sqrt(q), which means that a number reduced mod q will always be less than M^2,
 // which means that barrett reduction will work.
-pub trait BarrettReduce: Unsigned {
+pub(crate) trait BarrettReduce: Unsigned {
     const SHIFT: usize;
     const MULTIPLIER: u64;
 
@@ -50,7 +50,7 @@ where
     const MULTIPLIER: u64 = (1 << Self::SHIFT) / M::U64;
 }
 
-pub trait Decompose {
+pub(crate) trait Decompose {
     fn decompose<TwoGamma2: Unsigned>(self) -> (Elem, Elem);
 }
 
@@ -71,7 +71,7 @@ impl Decompose for Elem {
 }
 
 #[allow(clippy::module_name_repetitions)] // I can't think of a better name
-pub trait AlgebraExt: Sized {
+pub(crate) trait AlgebraExt: Sized {
     fn mod_plus_minus<M: Unsigned>(&self) -> Self;
     fn infinity_norm(&self) -> Int;
     fn power2round(&self) -> (Self, Self);

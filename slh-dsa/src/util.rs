@@ -2,7 +2,7 @@ use crate::fors::ForsParams;
 use hybrid_array::{Array, ArraySize, typenum::Unsigned};
 
 // Algorithm 3
-pub fn base_2b<OutLen: ArraySize, B: Unsigned>(x: &[u8]) -> Array<u16, OutLen> {
+pub(crate) fn base_2b<OutLen: ArraySize, B: Unsigned>(x: &[u8]) -> Array<u16, OutLen> {
     debug_assert!(x.len() >= (OutLen::USIZE * B::USIZE).div_ceil(8));
     debug_assert!(B::USIZE <= 16);
 
@@ -24,7 +24,9 @@ pub fn base_2b<OutLen: ArraySize, B: Unsigned>(x: &[u8]) -> Array<u16, OutLen> {
 }
 
 /// Separates the digest into the FORS message, the Xmss tree index, and the Xmss leaf index.
-pub fn split_digest<P: ForsParams>(digest: &Array<u8, P::M>) -> (&Array<u8, P::MD>, u64, u32) {
+pub(crate) fn split_digest<P: ForsParams>(
+    digest: &Array<u8, P::M>,
+) -> (&Array<u8, P::MD>, u64, u32) {
     #[allow(deprecated)]
     let m = Array::from_slice(&digest[..P::MD::USIZE]);
     let idx_tree_size = (P::H::USIZE - P::HPrime::USIZE).div_ceil(8);
@@ -48,7 +50,7 @@ pub fn split_digest<P: ForsParams>(digest: &Array<u8, P::M>) -> (&Array<u8, P::M
 }
 
 #[cfg(test)]
-pub mod macros {
+pub(crate) mod macros {
     /// Generate a test case
     #[macro_export]
     macro_rules! gen_test {
@@ -98,7 +100,7 @@ mod tests {
         }
 
         let a = base_2b::<OutLen, B>(x);
-        let mut b = BigUint::from_bytes_be(&x[..((OutLen::USIZE * B::USIZE + 7) / 8)]);
+        let mut b = BigUint::from_bytes_be(&x[..(OutLen::USIZE * B::USIZE + 7) / 8]);
 
         if (B::USIZE * OutLen::USIZE) % 8 != 0 {
             // Clear lower bits of b
