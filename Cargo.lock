@@ -949,7 +949,7 @@ checksum = "7a2d987857b319362043e95f5353c0535c1f58eec5336fdfcf626430af7def58"
 
 [[package]]
 name = "rfc6979"
-version = "0.5.0-rc.1"
+version = "0.5.0-rc.2"
 dependencies = [
  "hex-literal",
  "hmac",
