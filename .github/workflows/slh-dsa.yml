@@ -103,7 +103,7 @@ jobs:
       - run: mkdir -p ~/.cargo/bin
       - uses: taiki-e/install-action@nextest
       - name: Download test archive
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: nextest-archive-${{ matrix.rust }}-${{ matrix.test_config }}
           path: slh-dsa
