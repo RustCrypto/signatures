@@ -73,7 +73,7 @@ jobs:
           fi
           cargo nextest archive --archive-file nextest-archive-${{ matrix.rust }}-${{ matrix.test_config }}.tar.zst $PROFILE
       - name: Upload archive to workflow
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: nextest-archive-${{ matrix.rust }}-${{ matrix.test_config }}
           # NOTE: upload-artifact does not respect the working directory, we need to prefix it.
