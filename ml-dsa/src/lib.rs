@@ -189,7 +189,6 @@ pub struct KeyPair<P: MlDsaParams> {
     verifying_key: VerifyingKey<P>,
 
     /// The seed this signing key was derived from
-    #[cfg(all(feature = "alloc", feature = "pkcs8"))]
     seed: B32,
 }
 
@@ -202,6 +201,17 @@ impl<P: MlDsaParams> KeyPair<P> {
     /// The verifying key of the key pair
     pub fn verifying_key(&self) -> &VerifyingKey<P> {
         &self.verifying_key
+    }
+
+    /// Serialize the [`Seed`] value: 32-bytes which can be used to reconstruct the
+    /// [`KeyPair`].
+    ///
+    /// # ⚠️ Warning!
+    ///
+    /// This value is key material. Please treat it with care.
+    #[inline]
+    pub fn to_seed(&self) -> Seed {
+        self.seed
     }
 }
 
@@ -906,7 +916,6 @@ where
         KeyPair {
             signing_key,
             verifying_key,
-            #[cfg(all(feature = "alloc", feature = "pkcs8"))]
             seed: xi.clone(),
         }
     }
@@ -941,7 +950,10 @@ mod test {
     where
         P: MlDsaParams + PartialEq,
     {
-        let kp = P::from_seed(&Array::default());
+        let seed = Array::default();
+        let kp = P::from_seed(&seed);
+        assert_eq!(kp.to_seed(), seed);
+
         let sk = kp.signing_key;
         let vk = kp.verifying_key;
 
