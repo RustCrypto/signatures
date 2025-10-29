@@ -37,15 +37,15 @@ fn private_key_serialization() {
     }
 
     test_roundtrip::<MlDsa44>(
-        include_str!("examples/ML-DSA-44.priv"),
+        include_str!("examples/ML-DSA-44-seed.priv"),
         include_str!("examples/ML-DSA-44.pub"),
     );
     test_roundtrip::<MlDsa65>(
-        include_str!("examples/ML-DSA-65.priv"),
+        include_str!("examples/ML-DSA-65-seed.priv"),
         include_str!("examples/ML-DSA-65.pub"),
     );
     test_roundtrip::<MlDsa87>(
-        include_str!("examples/ML-DSA-87.priv"),
+        include_str!("examples/ML-DSA-87-seed.priv"),
         include_str!("examples/ML-DSA-87.pub"),
     );
 }
