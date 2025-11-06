@@ -27,7 +27,6 @@ rfc6979 = { path = "./rfc6979" }
 slh-dsa = { path = "./slh-dsa" }
 
 elliptic-curve = { git = "https://github.com/RustCrypto/traits" }
-crypto-bigint = { git = "https://github.com/RustCrypto/crypto-bigint", branch = "rand_core/v0.10.0-rc-2" }
 crypto-primes = { git = "https://github.com/baloo/crypto-primes.git", branch = "baloo/rand_core/0.10.0-rc.2" }
 ff = { git = "https://github.com/tarcieri/ff", branch = "rand_core/v0.10.0-rc-2" }
 group = { git = "https://github.com/tarcieri/group", branch = "rand_core/v0.10.0-rc-2" }
