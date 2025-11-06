@@ -295,7 +295,7 @@ dependencies = [
 [[package]]
 name = "crypto-primes"
 version = "0.7.0-pre.3"
-source = "git+https://github.com/baloo/crypto-primes.git?branch=baloo%2Frand_core%2F0.10.0-rc.2#54ba25dd7f14370991b75702356e4380fd535e45"
+source = "git+https://github.com/baloo/crypto-primes.git?branch=baloo%2Frand_core%2F0.10.0-rc.2#c56754db8d956e012f57380039453179a38b6cf3"
 dependencies = [
  "crypto-bigint",
  "libm",
