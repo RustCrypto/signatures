@@ -1,12 +1,12 @@
 #![cfg(all(feature = "hazmat", feature = "pkcs8"))]
 //! Property-based tests.
 
+use chacha20::ChaCha8Rng;
 use der::{Decode, Encode, Sequence, asn1::Uint};
 use dsa::{Components, KeySize, Signature, SigningKey, VerifyingKey, signature::Verifier};
 use pkcs8::DecodePublicKey;
 use proptest::prelude::*;
 use rand::SeedableRng;
-use rand_chacha::ChaCha8Rng;
 
 #[derive(Sequence)]
 struct MockSignature {

@@ -1,12 +1,12 @@
 #![cfg(feature = "hazmat")]
 #![allow(deprecated)]
 
+use chacha20::ChaCha8Rng;
 use digest::Digest;
 use dsa::{Components, KeySize, Signature, SigningKey};
 use hex_literal::hex;
 use pkcs8::der::{Decode, Encode};
 use rand::{CryptoRng, SeedableRng};
-use rand_chacha::ChaCha8Rng;
 use sha2::Sha256;
 use signature::{
     DigestVerifier, RandomizedDigestSigner, Signer, Verifier,
