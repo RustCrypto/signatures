@@ -18,14 +18,14 @@ exclude = ["tests"]
 [dependencies]
 hybrid-array = { version = "0.4", features = ["extra-sizes"] }
 typenum = { version = "1.17", features = ["const-generics"] }
-sha3 = { version = "0.11.0-rc.0", default-features = false }
+sha3 = { version = "0.11.0-rc.3", default-features = false }
 zerocopy = { version = "0.8", features = ["derive"] }
-rand_core = { version = "0.9" }
-signature = { version = "3.0.0-rc.4", features = ["rand_core"] }
-hmac = "0.13.0-rc.1"
-sha2 = { version = "0.11.0-rc.2", default-features = false }
-digest = "0.11.0-rc.1"
-pkcs8 = { version = "0.11.0-rc.6", default-features = false }
+rand_core = { version = "0.10.0-rc-2" }
+signature = { version = "3.0.0-rc.5", features = ["rand_core"] }
+hmac = "0.13.0-rc.3"
+sha2 = { version = "0.11.0-rc.3", default-features = false }
+digest = "0.11.0-rc.4"
+pkcs8 = { version = "0.11.0-rc.7", default-features = false }
 const-oid = { version = "0.10", features = ["db"] }
 zeroize = { version = "1.8.1", optional = true, default-features = false }
 
@@ -37,15 +37,15 @@ quickcheck = "1"
 quickcheck_macros = "1"
 proptest = "1.4.0"
 criterion = "0.7"
-aes = "0.9.0-rc.1"
-cipher = "0.5.0-rc.1"
-ctr = "0.10.0-rc.1"
-rand_core = "0.9.2"
+aes = "0.9.0-rc.2"
+cipher = "0.5.0-rc.2"
+ctr = "0.10.0-rc.2"
+rand_core = "0.10.0-rc-2"
 paste = "1.0.15"
-rand = "0.9"
+rand = "0.10.0-rc.1"
 serde_json = "1.0.124"
 serde = { version = "1.0.207", features = ["derive"] }
-pkcs8 = { version = "0.11.0-rc.6", features = ["pem"] }
+pkcs8 = { version = "0.11.0-rc.7", features = ["pem"] }
 
 [lib]
 bench = false
