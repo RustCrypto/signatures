@@ -386,7 +386,7 @@ dependencies = [
 
 [[package]]
 name = "ed25519"
-version = "3.0.0-rc.1"
+version = "3.0.0-rc.2"
 dependencies = [
  "bincode",
  "hex-literal",
@@ -400,7 +400,7 @@ dependencies = [
 
 [[package]]
 name = "ed448"
-version = "0.5.0-rc.1"
+version = "0.5.0-rc.2"
 dependencies = [
  "bincode",
  "hex-literal",
