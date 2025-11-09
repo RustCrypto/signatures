@@ -18,7 +18,7 @@ use signature::{
     DigestSigner, MultipartSigner, RandomizedDigestSigner, RandomizedMultipartSigner,
     RandomizedSigner, Signer,
     hazmat::{PrehashSigner, RandomizedPrehashSigner},
-    rand_core::{CryptoRng, TryCryptoRng},
+    rand_core::TryCryptoRng,
 };
 
 #[cfg(feature = "der")]
@@ -85,11 +85,16 @@ where
     SignatureSize<C>: ArraySize,
 {
     /// Generate a cryptographically random [`SigningKey`].
-    pub fn random<R: CryptoRng + ?Sized>(rng: &mut R) -> Self {
-        NonZeroScalar::<C>::random(rng).into()
+    ///
+    /// # Panics
+    ///
+    /// If the system's cryptographically secure RNG has an internal error.
+    #[cfg(feature = "getrandom")]
+    pub fn generate() -> Self {
+        NonZeroScalar::<C>::generate().into()
     }
 
-    /// Generate a cryptographically random [`SigningKey`].
+    /// Generate a cryptographically random [`SigningKey`], returning underlying RNG errors.
     pub fn try_from_rng<R: TryCryptoRng + ?Sized>(
         rng: &mut R,
     ) -> core::result::Result<Self, R::Error> {
