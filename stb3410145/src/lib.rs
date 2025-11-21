@@ -34,7 +34,12 @@
 //!     hex!("829614D8 411DBBC4 E1F2471A 40045864 40FD8C95 53FAB6A1 A45CE417 AE97111E");
 //!
 //! let h = BeltHash::digest(STB3410145_MSG);
-//! let k = stb3410145::generate_k::<BeltHash, BeltBlock, U32>(&STB3410145_KEY.into(), &STB3410145_BIGNP256_MODULUS.into(), &h, &[]);
+//! let k = stb3410145::generate_k::<BeltHash, BeltBlock, U32>(
+//!     &STB3410145_KEY.into(),
+//!     &STB3410145_BIGNP256_MODULUS.into(),
+//!     &h,
+//!     &[],
+//! );
 //! assert_eq!(k.as_slice(), &STB3410145_EXPECTED_K);
 //! ```
 
