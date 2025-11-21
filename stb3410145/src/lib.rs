@@ -17,9 +17,9 @@
 //! use belt_hash::{Digest, BeltHash};
 //! use belt_block::BeltBlock;
 //!
-//! // BIGN P-256 field modulus little endian
+//! // BIGN P-256 field modulus
 //! const STB3410145_BIGNP256_MODULUS: [u8; 32] =
-//!     hex!("07663D26 99BF5A7E FC4DFB0D D68E5CD9 FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF");
+//!     hex!("FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF C95E2EAB 40309C49 56129C2E F129D6CC");
 //!
 //! // Public key for STB 34.101.45 Bign P256/BeltHash test case
 //! const STB3410145_KEY: [u8; 32] =
@@ -34,7 +34,6 @@
 //!     hex!("829614D8 411DBBC4 E1F2471A 40045864 40FD8C95 53FAB6A1 A45CE417 AE97111E");
 //!
 //! let h = BeltHash::digest(STB3410145_MSG);
-//! let aad = b"";
 //! let k = stb3410145::generate_k::<BeltHash, BeltBlock, U32>(&STB3410145_KEY.into(), &STB3410145_BIGNP256_MODULUS.into(), &h, &[]);
 //! assert_eq!(k.as_slice(), &STB3410145_EXPECTED_K);
 //! ```
@@ -212,42 +211,16 @@ mod tests {
     use belt_hash::BeltHash;
     use hex_literal::hex;
 
-    /// Table 6 appendix G STB 34.101.45
-    #[test]
-    fn stb_table_g6() {
-        let d = hex!("1F66B5B8 4B733967 4533F032 9C74F218 34281FED 0732429E 0C79235F C273E269");
-        let q = hex!("FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF C95E2EAB 40309C49 56129C2E F129D6CC");
-        let h = hex!("ABEF9725 D4C5A835 97A367D1 4494CC25 42F20F65 9DDFECC9 61A3EC55 0CBA8C75");
-
-        let expected_k =
-            hex!("829614D8 411DBBC4 E1F2471A 40045864 40FD8C95 53FAB6A1 A45CE417 AE97111E");
-
-        let k = generate_k::<BeltHash, BeltBlock, U32>(&d.into(), &q.into(), &h.into(), &[]);
-
-        assert_eq!(k.as_slice(), &expected_k);
-    }
-
     /// Table 7 appendix G STB 34.101.45
     #[test]
     fn stb_table_g7() {
-        let d = hex!(
-            "1F66B5B8 4B733967 4533F032 9C74F218"
-            "34281FED 0732429E 0C79235F C273E269"
-        );
-        let q = hex!(
-            "FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF"
-            "C95E2EAB 40309C49 56129C2E F129D6CC"
-        );
-        let h = hex!(
-            "9D02EE44 6FB6A29F E5C982D4 B13AF9D3"
-            "E90861BC 4CEF27CF 306BFB0B 174A154A"
-        );
+        let d = hex!("1F66B5B8 4B733967 4533F032 9C74F218 34281FED 0732429E 0C79235F C273E269");
+        let q = hex!("FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF C95E2EAB 40309C49 56129C2E F129D6CC");
+        let h = hex!("9D02EE44 6FB6A29F E5C982D4 B13AF9D3 E90861BC 4CEF27CF 306BFB0B 174A154A");
         let t = hex!("BE329713 43FC9A48 A02A885F 194B09A1 7ECDA4D0 1544AF");
 
-        let expected_k = hex!(
-            "7ADC8713 283EBFA5 47A2AD9C DFB245AE"
-            "0F7B968D F0F91CB7 85D1F932 A3583107"
-        );
+        let expected_k =
+            hex!("7ADC8713 283EBFA5 47A2AD9C DFB245AE 0F7B968D F0F91CB7 85D1F932 A3583107");
 
         let k = generate_k::<BeltHash, BeltBlock, U32>(&d.into(), &q.into(), &h.into(), &t);
 
