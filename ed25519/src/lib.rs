@@ -1,5 +1,5 @@
 #![no_std]
-#![cfg_attr(docsrs, feature(doc_auto_cfg))]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![doc = include_str!("../README.md")]
 #![doc(html_logo_url = "https://raw.githubusercontent.com/RustCrypto/meta/master/logo_small.png")]
 #![allow(non_snake_case)]
@@ -9,7 +9,8 @@
     missing_docs,
     rust_2018_idioms,
     unused_lifetimes,
-    unused_qualifications
+    unused_qualifications,
+    unreachable_pub
 )]
 
 //! # Using Ed25519 generically over algorithm implementations/providers

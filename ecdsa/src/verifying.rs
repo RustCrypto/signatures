@@ -5,6 +5,7 @@ use crate::{
     hazmat::{self, DigestAlgorithm, bits2field},
 };
 use core::{cmp::Ordering, fmt::Debug};
+use digest::{Update, block_api::EagerHash};
 use elliptic_curve::{
     AffinePoint, CurveArithmetic, FieldBytesSize, ProjectivePoint, PublicKey,
     array::ArraySize,
@@ -12,11 +13,7 @@ use elliptic_curve::{
     scalar::IsHigh,
     sec1::{self, CompressedPoint, EncodedPoint, FromEncodedPoint, ToEncodedPoint},
 };
-use signature::{
-    DigestVerifier, MultipartVerifier, Verifier,
-    digest::{Digest, FixedOutput},
-    hazmat::PrehashVerifier,
-};
+use signature::{DigestVerifier, MultipartVerifier, Verifier, hazmat::PrehashVerifier};
 
 #[cfg(feature = "alloc")]
 use alloc::boxed::Box;
@@ -147,7 +144,7 @@ where
 impl<C, D> DigestVerifier<D, Signature<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    D: Digest + FixedOutput,
+    D: EagerHash + Update,
     SignatureSize<C>: ArraySize,
 {
     fn verify_digest<F: Fn(&mut D) -> Result<()>>(
@@ -223,26 +220,28 @@ where
     SignatureSize<C>: ArraySize,
 {
     fn multipart_verify(&self, msg: &[&[u8]], sig: &SignatureWithOid<C>) -> Result<()> {
+        use digest::FixedOutput;
+
         match sig.oid() {
             ECDSA_SHA224_OID => {
-                let mut digest = Sha224::new();
+                let mut digest = Sha224::default();
                 msg.iter().for_each(|slice| digest.update(slice));
-                self.verify_prehash(&digest.finalize(), sig.signature())
+                self.verify_prehash(&digest.finalize_fixed(), sig.signature())
             }
             ECDSA_SHA256_OID => {
-                let mut digest = Sha256::new();
+                let mut digest = Sha256::default();
                 msg.iter().for_each(|slice| digest.update(slice));
-                self.verify_prehash(&digest.finalize(), sig.signature())
+                self.verify_prehash(&digest.finalize_fixed(), sig.signature())
             }
             ECDSA_SHA384_OID => {
-                let mut digest = Sha384::new();
+                let mut digest = Sha384::default();
                 msg.iter().for_each(|slice| digest.update(slice));
-                self.verify_prehash(&digest.finalize(), sig.signature())
+                self.verify_prehash(&digest.finalize_fixed(), sig.signature())
             }
             ECDSA_SHA512_OID => {
-                let mut digest = Sha512::new();
+                let mut digest = Sha512::default();
                 msg.iter().for_each(|slice| digest.update(slice));
-                self.verify_prehash(&digest.finalize(), sig.signature())
+                self.verify_prehash(&digest.finalize_fixed(), sig.signature())
             }
             _ => Err(Error::new()),
         }
@@ -253,7 +252,7 @@ where
 impl<C, D> DigestVerifier<D, der::Signature<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    D: Digest + FixedOutput,
+    D: EagerHash + Update,
     SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,

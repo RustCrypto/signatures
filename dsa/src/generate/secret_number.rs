@@ -6,7 +6,7 @@ use crate::{Components, signing_key::SigningKey};
 use alloc::vec;
 use core::cmp::min;
 use crypto_bigint::{BoxedUint, NonZero, RandomBits, Resize};
-use digest::{Digest, FixedOutputReset, block_api::BlockSizeUser};
+use digest::block_api::EagerHash;
 use signature::rand_core::TryCryptoRng;
 use zeroize::Zeroizing;
 
@@ -20,12 +20,12 @@ fn truncate_hash(hash: &[u8], desired_size: usize) -> &[u8] {
 ///
 /// Secret number k and its modular multiplicative inverse with q
 #[inline]
-pub fn secret_number_rfc6979<D>(
+pub(crate) fn secret_number_rfc6979<D>(
     signing_key: &SigningKey,
     hash: &[u8],
 ) -> Result<(BoxedUint, BoxedUint), signature::Error>
 where
-    D: Digest + BlockSizeUser + FixedOutputReset,
+    D: EagerHash,
 {
     let q = signing_key.verifying_key().components().q();
     let size = (q.bits() / 8) as usize;
@@ -62,7 +62,7 @@ where
 ///
 /// Secret number k and its modular multiplicative inverse with q
 #[inline]
-pub fn secret_number<R: TryCryptoRng + ?Sized>(
+pub(crate) fn secret_number<R: TryCryptoRng + ?Sized>(
     rng: &mut R,
     components: &Components,
 ) -> Result<Option<(BoxedUint, BoxedUint)>, signature::Error> {

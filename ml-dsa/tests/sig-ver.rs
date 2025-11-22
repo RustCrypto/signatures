@@ -35,7 +35,7 @@ fn verify<P: MlDsaParams>(tg: &acvp::TestGroup, tc: &acvp::TestCase) {
 
     // Verify the signature if it successfully decoded
     let test_passed = sig
-        .map(|sig| vk.verify_internal(&[&tc.message], &sig))
+        .map(|sig| vk.verify_internal(&tc.message, &sig))
         .unwrap_or_default();
     assert_eq!(test_passed, tc.test_passed);
 }
@@ -44,27 +44,27 @@ mod acvp {
     use serde::{Deserialize, Serialize};
 
     #[derive(Deserialize, Serialize)]
-    pub struct TestVectorFile {
+    pub(crate) struct TestVectorFile {
         #[serde(rename = "testGroups")]
-        pub test_groups: Vec<TestGroup>,
+        pub(crate) test_groups: Vec<TestGroup>,
     }
 
     #[derive(Deserialize, Serialize)]
-    pub struct TestGroup {
+    pub(crate) struct TestGroup {
         #[serde(rename = "tgId")]
-        pub id: usize,
+        pub(crate) id: usize,
 
         #[serde(rename = "parameterSet")]
-        pub parameter_set: ParameterSet,
+        pub(crate) parameter_set: ParameterSet,
 
         #[serde(with = "hex::serde")]
-        pub pk: Vec<u8>,
+        pub(crate) pk: Vec<u8>,
 
-        pub tests: Vec<TestCase>,
+        pub(crate) tests: Vec<TestCase>,
     }
 
     #[derive(Deserialize, Serialize)]
-    pub enum ParameterSet {
+    pub(crate) enum ParameterSet {
         #[serde(rename = "ML-DSA-44")]
         MlDsa44,
 
@@ -76,19 +76,19 @@ mod acvp {
     }
 
     #[derive(Deserialize, Serialize)]
-    pub struct TestCase {
+    pub(crate) struct TestCase {
         #[serde(rename = "tcId")]
-        pub id: usize,
+        pub(crate) id: usize,
 
         #[serde(rename = "testPassed")]
-        pub test_passed: bool,
+        pub(crate) test_passed: bool,
 
-        pub reason: String,
-
-        #[serde(with = "hex::serde")]
-        pub message: Vec<u8>,
+        pub(crate) reason: String,
 
         #[serde(with = "hex::serde")]
-        pub signature: Vec<u8>,
+        pub(crate) message: Vec<u8>,
+
+        #[serde(with = "hex::serde")]
+        pub(crate) signature: Vec<u8>,
     }
 }

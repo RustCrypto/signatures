@@ -1,7 +1,7 @@
 #![no_std]
 #![doc = include_str!("../README.md")]
 #![forbid(unsafe_code, clippy::unwrap_used)]
-#![warn(missing_docs, rust_2018_idioms)]
+#![warn(missing_docs, rust_2018_idioms, unreachable_pub)]
 #![doc(
     html_logo_url = "https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg",
     html_favicon_url = "https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg"
@@ -39,14 +39,15 @@
 
 mod ct;
 
+pub use hmac;
 pub use hmac::digest::array::typenum::consts;
 
 use hmac::{
-    SimpleHmacReset,
+    HmacReset,
     digest::{
-        Digest, FixedOutput, FixedOutputReset, KeyInit, Mac,
+        KeyInit, Mac, OutputSizeUser,
         array::{Array, ArraySize},
-        block_api::BlockSizeUser,
+        block_api::EagerHash,
     },
 };
 
@@ -66,7 +67,7 @@ pub fn generate_k<D, N>(
     data: &[u8],
 ) -> Array<u8, N>
 where
-    D: Digest + BlockSizeUser + FixedOutput + FixedOutputReset,
+    D: EagerHash,
     N: ArraySize,
 {
     let mut k = Array::default();
@@ -88,7 +89,7 @@ where
 #[inline]
 pub fn generate_k_mut<D>(x: &[u8], q: &[u8], h: &[u8], data: &[u8], k: &mut [u8])
 where
-    D: Digest + BlockSizeUser + FixedOutput + FixedOutputReset,
+    D: EagerHash,
 {
     let k_len = k.len();
     assert_eq!(k_len, x.len());
@@ -121,22 +122,22 @@ where
 /// deterministic ephemeral scalar `k`.
 pub struct HmacDrbg<D>
 where
-    D: Digest + BlockSizeUser + FixedOutputReset,
+    D: EagerHash,
 {
     /// HMAC key `K` (see RFC 6979 Section 3.2.c)
-    k: SimpleHmacReset<D>,
+    k: HmacReset<D>,
 
     /// Chaining value `V` (see RFC 6979 Section 3.2.c)
-    v: Array<u8, D::OutputSize>,
+    v: Array<u8, <D::Core as OutputSizeUser>::OutputSize>,
 }
 
 impl<D> HmacDrbg<D>
 where
-    D: Digest + BlockSizeUser + FixedOutputReset,
+    D: EagerHash,
 {
     /// Initialize `HMAC_DRBG`
     pub fn new(entropy_input: &[u8], nonce: &[u8], personalization_string: &[u8]) -> Self {
-        let mut k = SimpleHmacReset::new(&Default::default());
+        let mut k = HmacReset::new(&Default::default());
         let mut v = Array::default();
 
         v.fill(0x01);
@@ -147,7 +148,7 @@ where
             k.update(entropy_input);
             k.update(nonce);
             k.update(personalization_string);
-            k = SimpleHmacReset::new_from_slice(&k.finalize().into_bytes()).expect("HMAC error");
+            k = HmacReset::new_from_slice(&k.finalize().into_bytes()).expect("HMAC error");
 
             // Steps 3.2.e,g: v = HMAC_k(v)
             k.update(&v);
@@ -176,8 +177,8 @@ where
 
         self.k.update(&self.v);
         self.k.update(&[0x00]);
-        self.k = SimpleHmacReset::new_from_slice(&self.k.finalize_reset().into_bytes())
-            .expect("HMAC error");
+        self.k =
+            HmacReset::new_from_slice(&self.k.finalize_reset().into_bytes()).expect("HMAC error");
         self.k.update(&self.v);
         self.v = self.k.finalize_reset().into_bytes();
     }

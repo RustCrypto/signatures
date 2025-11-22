@@ -1,6 +1,6 @@
 [package]
 name = "ed448"
-version = "0.5.0-rc.1"
+version = "0.5.0-rc.2"
 edition = "2024"
 authors = ["RustCrypto Developers"]
 license = "Apache-2.0 OR MIT"
@@ -18,10 +18,10 @@ keywords = ["crypto", "curve448", "ecc", "signature", "signing"]
 rust-version = "1.85"
 
 [dependencies]
-signature = { version = "3.0.0-rc.4", default-features = false }
+signature = { version = "3.0.0-rc.5", default-features = false }
 
 # optional dependencies
-pkcs8 = { version = "0.11.0-rc.6", optional = true }
+pkcs8 = { version = "0.11.0-rc.8", optional = true }
 serde = { version = "1", optional = true, default-features = false }
 serde_bytes = { version = "0.11", optional = true, default-features = false }
 zeroize = { version = "1", optional = true, default-features = false }

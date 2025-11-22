@@ -1,5 +1,5 @@
 #![no_std]
-#![cfg_attr(docsrs, feature(doc_auto_cfg))]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![doc = include_str!("../README.md")]
 #![doc(
     html_logo_url = "https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg",
@@ -20,7 +20,8 @@
     missing_docs,
     rust_2018_idioms,
     unused_lifetimes,
-    unused_qualifications
+    unused_qualifications,
+    unreachable_pub
 )]
 
 //! ## `serde` support
@@ -65,9 +66,9 @@ pub mod der;
 pub mod dev;
 #[cfg(feature = "hazmat")]
 pub mod hazmat;
-#[cfg(feature = "signing")]
+#[cfg(feature = "algorithm")]
 mod signing;
-#[cfg(feature = "verifying")]
+#[cfg(feature = "algorithm")]
 mod verifying;
 
 pub use crate::recovery::RecoveryId;
@@ -79,9 +80,9 @@ pub use elliptic_curve::{self, PrimeCurve, sec1::EncodedPoint};
 pub use signature::{self, Error, Result, SignatureEncoding};
 use zeroize::Zeroize;
 
-#[cfg(feature = "signing")]
+#[cfg(feature = "algorithm")]
 pub use crate::signing::SigningKey;
-#[cfg(feature = "verifying")]
+#[cfg(feature = "algorithm")]
 pub use crate::verifying::VerifyingKey;
 
 use core::{fmt, ops::Add};
@@ -93,7 +94,7 @@ use elliptic_curve::{
 #[cfg(feature = "alloc")]
 use alloc::vec::Vec;
 
-#[cfg(feature = "arithmetic")]
+#[cfg(feature = "algorithm")]
 use {
     core::str,
     elliptic_curve::{
@@ -300,7 +301,7 @@ where
     }
 }
 
-#[cfg(feature = "arithmetic")]
+#[cfg(feature = "algorithm")]
 impl<C> Signature<C>
 where
     C: EcdsaCurve + CurveArithmetic,
@@ -423,7 +424,7 @@ where
     }
 }
 
-#[cfg(feature = "arithmetic")]
+#[cfg(feature = "algorithm")]
 impl<C> str::FromStr for Signature<C>
 where
     C: EcdsaCurve + CurveArithmetic,

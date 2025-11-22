@@ -9,12 +9,12 @@ use crate::{
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct HypertreeSig<P: HypertreeParams>(Array<XmssSig<P>, P::D>);
+pub(crate) struct HypertreeSig<P: HypertreeParams>(Array<XmssSig<P>, P::D>);
 
 impl<P: HypertreeParams> HypertreeSig<P> {
-    pub const SIZE: usize = XmssSig::<P>::SIZE * P::D::USIZE;
+    pub(crate) const SIZE: usize = XmssSig::<P>::SIZE * P::D::USIZE;
 
-    pub fn write_to(&self, buf: &mut [u8]) {
+    pub(crate) fn write_to(&self, buf: &mut [u8]) {
         debug_assert!(
             buf.len() == Self::SIZE,
             "HT serialize length mismatch: {}, {}",
@@ -28,7 +28,7 @@ impl<P: HypertreeParams> HypertreeSig<P> {
     }
 
     #[cfg(feature = "alloc")]
-    pub fn to_vec(&self) -> alloc::vec::Vec<u8> {
+    pub(crate) fn to_vec(&self) -> alloc::vec::Vec<u8> {
         let mut buf = alloc::vec![0u8; Self::SIZE];
         self.write_to(&mut buf);
         buf
@@ -50,7 +50,7 @@ impl<P: HypertreeParams> TryFrom<&[u8]> for HypertreeSig<P> {
     }
 }
 
-pub trait HypertreeParams: XmssParams + Sized {
+pub(crate) trait HypertreeParams: XmssParams + Sized {
     type D: ArraySize + Debug + Eq;
     type H: ArraySize; // HPrime * D
 

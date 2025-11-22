@@ -5,7 +5,7 @@ use crate::{
     hazmat::{DigestAlgorithm, bits2field, sign_prehashed_rfc6979},
 };
 use core::fmt::{self, Debug};
-use digest::{Digest, FixedOutput, const_oid::AssociatedOid};
+use digest::{Update, block_api::EagerHash, const_oid::AssociatedOid};
 use elliptic_curve::{
     CurveArithmetic, FieldBytes, NonZeroScalar, Scalar, SecretKey,
     array::ArraySize,
@@ -18,14 +18,17 @@ use signature::{
     DigestSigner, MultipartSigner, RandomizedDigestSigner, RandomizedMultipartSigner,
     RandomizedSigner, Signer,
     hazmat::{PrehashSigner, RandomizedPrehashSigner},
-    rand_core::{CryptoRng, TryCryptoRng},
+    rand_core::TryCryptoRng,
 };
 
 #[cfg(feature = "der")]
-use {crate::der, core::ops::Add, elliptic_curve::FieldBytesSize};
+use {crate::der, core::ops::Add};
 
 #[cfg(feature = "pem")]
 use {core::str::FromStr, elliptic_curve::pkcs8::DecodePrivateKey};
+
+#[cfg(any(feature = "der", feature = "pem"))]
+use elliptic_curve::FieldBytesSize;
 
 #[cfg(feature = "pkcs8")]
 use crate::elliptic_curve::{
@@ -38,7 +41,7 @@ use crate::elliptic_curve::{
     sec1::{self, FromEncodedPoint, ToEncodedPoint},
 };
 
-#[cfg(feature = "verifying")]
+#[cfg(feature = "algorithm")]
 use {crate::VerifyingKey, elliptic_curve::PublicKey, signature::KeypairRef};
 
 #[cfg(all(feature = "alloc", feature = "pkcs8"))]
@@ -71,7 +74,7 @@ where
     secret_scalar: NonZeroScalar<C>,
 
     /// Verifying key which corresponds to this signing key.
-    #[cfg(feature = "verifying")]
+    #[cfg(feature = "algorithm")]
     verifying_key: VerifyingKey<C>,
 }
 
@@ -82,11 +85,16 @@ where
     SignatureSize<C>: ArraySize,
 {
     /// Generate a cryptographically random [`SigningKey`].
-    pub fn random<R: CryptoRng + ?Sized>(rng: &mut R) -> Self {
-        NonZeroScalar::<C>::random(rng).into()
+    ///
+    /// # Panics
+    ///
+    /// If the system's cryptographically secure RNG has an internal error.
+    #[cfg(feature = "getrandom")]
+    pub fn generate() -> Self {
+        NonZeroScalar::<C>::generate().into()
     }
 
-    /// Generate a cryptographically random [`SigningKey`].
+    /// Generate a cryptographically random [`SigningKey`], returning underlying RNG errors.
     pub fn try_from_rng<R: TryCryptoRng + ?Sized>(
         rng: &mut R,
     ) -> core::result::Result<Self, R::Error> {
@@ -124,7 +132,7 @@ where
     }
 
     /// Get the [`VerifyingKey`] which corresponds to this [`SigningKey`].
-    #[cfg(feature = "verifying")]
+    #[cfg(feature = "algorithm")]
     pub fn verifying_key(&self) -> &VerifyingKey<C> {
         &self.verifying_key
     }
@@ -141,14 +149,14 @@ where
 impl<C, D> DigestSigner<D, Signature<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
-    D: Digest + FixedOutput,
+    D: EagerHash + Update,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     fn try_sign_digest<F: Fn(&mut D) -> Result<()>>(&self, f: F) -> Result<Signature<C>> {
         let mut digest = D::new();
         f(&mut digest)?;
-        self.sign_prehash(&digest.finalize_fixed())
+        self.sign_prehash(&digest.finalize())
     }
 }
 
@@ -200,7 +208,7 @@ where
 impl<C, D> RandomizedDigestSigner<D, Signature<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
-    D: Digest + FixedOutput,
+    D: EagerHash + Update,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
@@ -211,7 +219,7 @@ where
     ) -> Result<Signature<C>> {
         let mut digest = D::new();
         f(&mut digest)?;
-        self.sign_prehash_with_rng(rng, &digest.finalize_fixed())
+        self.sign_prehash_with_rng(rng, &digest.finalize())
     }
 }
 
@@ -279,7 +287,7 @@ where
 impl<C, D> DigestSigner<D, SignatureWithOid<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
-    D: AssociatedOid + Digest + FixedOutput,
+    D: AssociatedOid + EagerHash + Update,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
@@ -349,7 +357,7 @@ where
 impl<C, D> RandomizedDigestSigner<D, der::Signature<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
-    D: Digest + FixedOutput,
+    D: EagerHash + Update,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,
@@ -388,7 +396,7 @@ where
 impl<D, C> DigestSigner<D, der::Signature<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
-    D: Digest + FixedOutput,
+    D: EagerHash + Update,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,
@@ -440,7 +448,7 @@ where
 // Other trait impls
 //
 
-#[cfg(feature = "verifying")]
+#[cfg(feature = "algorithm")]
 impl<C> AsRef<VerifyingKey<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
@@ -511,12 +519,12 @@ where
     SignatureSize<C>: ArraySize,
 {
     fn from(secret_scalar: NonZeroScalar<C>) -> Self {
-        #[cfg(feature = "verifying")]
+        #[cfg(feature = "algorithm")]
         let public_key = PublicKey::from_secret_scalar(&secret_scalar);
 
         Self {
             secret_scalar,
-            #[cfg(feature = "verifying")]
+            #[cfg(feature = "algorithm")]
             verifying_key: public_key.into(),
         }
     }
@@ -587,7 +595,7 @@ where
 {
 }
 
-#[cfg(feature = "verifying")]
+#[cfg(feature = "algorithm")]
 impl<C> From<SigningKey<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
@@ -599,7 +607,7 @@ where
     }
 }
 
-#[cfg(feature = "verifying")]
+#[cfg(feature = "algorithm")]
 impl<C> From<&SigningKey<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
@@ -611,7 +619,7 @@ where
     }
 }
 
-#[cfg(feature = "verifying")]
+#[cfg(feature = "algorithm")]
 impl<C> KeypairRef for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,

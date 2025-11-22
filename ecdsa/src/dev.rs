@@ -6,6 +6,8 @@
 use crate::EcdsaCurve;
 use elliptic_curve::dev::MockCurve;
 
+pub use digest::dev::blobby;
+
 impl EcdsaCurve for MockCurve {
     const NORMALIZE_S: bool = false;
 }
@@ -148,14 +150,13 @@ macro_rules! new_wycheproof_test {
     ($name:ident, $test_name: expr, $curve:path) => {
         use $crate::{
             Signature,
-            elliptic_curve::{bigint::Integer, sec1::EncodedPoint},
+            elliptic_curve::sec1::EncodedPoint,
             signature::Verifier,
         };
 
         #[test]
         fn $name() {
-            use blobby::Blob5Iterator;
-            use elliptic_curve::{array::typenum::Unsigned, bigint::Encoding as _};
+            use $crate::elliptic_curve::{self, array::typenum::Unsigned};
 
             // Build a field element but allow for too-short input (left pad with zeros)
             // or too-long input (check excess leftmost bytes are zeros).
@@ -208,16 +209,48 @@ macro_rules! new_wycheproof_test {
                 }
             }
 
-            let data = include_bytes!(concat!("test_vectors/data/", $test_name, ".blb"));
+            #[derive(Debug,Clone,Copy)]
+            struct TestVector {
+                /// X coordinates of the public key
+                pub wx: &'static [u8],
+                /// Y coordinates of the public key
+                pub wy: &'static [u8],
+                /// Payload to verify
+                pub msg: &'static [u8],
+                /// Der encoding of the signature
+                pub sig: &'static [u8],
+                /// Whether the signature should verify (`[1]`) or fail (`[0]`)
+                pub pass_: &'static [u8],
+            }
 
-            for (i, row) in Blob5Iterator::new(data).unwrap().enumerate() {
-                let [wx, wy, msg, sig, status] = row.unwrap();
-                let pass = match status[0] {
-                    0 => false,
-                    1 => true,
-                    _ => panic!("invalid value for pass flag"),
-                };
-                if let Some(desc) = run_test(wx, wy, msg, sig, pass) {
+            impl TestVector {
+                pub(crate) fn pass(&self) -> bool {
+                    match self.pass_ {
+                        &[0] => false,
+                        &[1] => true,
+                        other => panic!(
+                            concat!(
+                                "Unsupported value for pass in `",
+                                $test_name,
+                                "`.\n",
+                                "found=`{other:?}`,\n",
+                                "expected=[0] or [1]"
+                            ),
+                            other=other
+                        ),
+                    }
+                }
+            }
+
+            $crate::dev::blobby::parse_into_structs!(
+                include_bytes!(concat!("test_vectors/data/", $test_name, ".blb"));
+                static TEST_VECTORS: &[
+                    TestVector { wx, wy, msg, sig, pass_ }
+                ];
+            );
+
+            for (i, tv) in TEST_VECTORS.iter().enumerate() {
+                if let Some(desc) = run_test(tv.wx, tv.wy, tv.msg, tv.sig, tv.pass()) {
                     panic!(
                         "\n\
                                  Failed test №{}: {}\n\
@@ -226,10 +259,21 @@ macro_rules! new_wycheproof_test {
                                  msg:\t{:?}\n\
                                  sig:\t{:?}\n\
                                  pass:\t{}\n",
-                        i, desc, wx, wy, msg, sig, pass,
+                        i, desc, tv.wx, tv.wy, tv.msg, tv.sig, tv.pass(),
                     );
                 }
             }
         }
     };
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    impl crate::hazmat::DigestAlgorithm for MockCurve {
+        type Digest = sha2::Sha256;
+    }
+
+    new_wycheproof_test!(wycheproof_mock, "wycheproof-mock", MockCurve);
 }
