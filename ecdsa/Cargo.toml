@@ -17,7 +17,7 @@ edition = "2024"
 rust-version = "1.85"
 
 [dependencies]
-elliptic-curve = { version = "0.14.0-rc.16", default-features = false, features = ["sec1"] }
+elliptic-curve = { version = "0.14.0-rc.17", default-features = false, features = ["sec1"] }
 signature = { version = "3.0.0-rc.5", default-features = false, features = ["rand_core"] }
 zeroize = { version = "1.5", default-features = false }
 
