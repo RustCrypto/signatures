@@ -1,9 +1,7 @@
 //! This module encapsulates all of the compile-time logic related to parameter-set dependent sizes
 //! of objects.  `ParameterSet` captures the parameters in the form described by the ML-KEM
 //! specification.  `EncodingSize`, `VectorEncodingSize`, and `CbdSamplingSize` are "upstream" of
-//! `ParameterSet`; they provide basic logic about the size of encoded objects.  `PkeParams` and
-//! `KemParams` are "downstream" of `ParameterSet`; they define derived parameters relevant to
-//! K-PKE and ML-KEM.
+//! `ParameterSet`; they provide basic logic about the size of encoded objects.
 //!
 //! While the primary purpose of these traits is to describe the sizes of objects, in order to
 //! avoid leakage of complicated trait bounds, they also need to provide any logic that needs to
