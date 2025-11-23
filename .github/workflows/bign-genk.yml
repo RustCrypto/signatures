@@ -1,15 +1,15 @@
-name: stb3410145
+name: bign-genk
 on:
   pull_request:
     paths:
-      - "stb3410145/**"
+      - "bign-genk/**"
       - "Cargo.*"
   push:
     branches: master
 
 defaults:
   run:
-    working-directory: stb3410145
+    working-directory: bign-genk
 
 env:
   CARGO_INCREMENTAL: 0
