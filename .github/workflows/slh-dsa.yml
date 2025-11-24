@@ -35,7 +35,7 @@ jobs:
           - 1.85.0 # MSRV
           - stable
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
@@ -58,7 +58,7 @@ jobs:
           - --all-features
           - default
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
@@ -99,7 +99,7 @@ jobs:
           - --all-features
           - "default"
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - run: mkdir -p ~/.cargo/bin
       - uses: taiki-e/install-action@nextest
       - name: Download test archive
