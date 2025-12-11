@@ -50,28 +50,46 @@ pub(crate) trait Ntt {
     fn ntt(&self) -> Self::Output;
 }
 
+/// Constant-time NTT butterfly layer.
+///
+/// Uses const generics to ensure loop bounds are compile-time constants,
+/// avoiding UDIV instructions from runtime `step_by` calculations.
+#[allow(clippy::inline_always)] // Required for constant-time guarantees in crypto code
+#[inline(always)]
+fn ntt_layer<const LEN: usize, const ITERATIONS: usize>(w: &mut [Elem; 256], m: &mut usize) {
+    for i in 0..ITERATIONS {
+        let start = i * 2 * LEN;
+        *m += 1;
+        let z = ZETA_POW_BITREV[*m];
+        for j in start..(start + LEN) {
+            let t = z * w[j + LEN];
+            w[j + LEN] = w[j] - t;
+            w[j] = w[j] + t;
+        }
+    }
+}
+
 impl Ntt for Polynomial {
     type Output = NttPolynomial;
 
     // Algorithm 41 NTT
+    //
+    // This implementation uses const-generic helper functions to ensure all loop
+    // bounds are compile-time constants, avoiding potential UDIV instructions.
     fn ntt(&self) -> Self::Output {
-        let mut w = self.0.clone();
-
+        let mut w: [Elem; 256] = self.0.clone().into();
         let mut m = 0;
-        for len in [128, 64, 32, 16, 8, 4, 2, 1] {
-            for start in (0..256).step_by(2 * len) {
-                m += 1;
-                let z = ZETA_POW_BITREV[m];
 
-                for j in start..(start + len) {
-                    let t = z * w[j + len];
-                    w[j + len] = w[j] - t;
-                    w[j] = w[j] + t;
-                }
-            }
-        }
+        ntt_layer::<128, 1>(&mut w, &mut m);
+        ntt_layer::<64, 2>(&mut w, &mut m);
+        ntt_layer::<32, 4>(&mut w, &mut m);
+        ntt_layer::<16, 8>(&mut w, &mut m);
+        ntt_layer::<8, 16>(&mut w, &mut m);
+        ntt_layer::<4, 32>(&mut w, &mut m);
+        ntt_layer::<2, 64>(&mut w, &mut m);
+        ntt_layer::<1, 128>(&mut w, &mut m);
 
-        NttPolynomial::new(w)
+        NttPolynomial::new(w.into())
     }
 }
 
@@ -89,30 +107,51 @@ pub(crate) trait NttInverse {
     fn ntt_inverse(&self) -> Self::Output;
 }
 
+/// Constant-time inverse NTT butterfly layer.
+///
+/// Uses const generics to ensure loop bounds are compile-time constants,
+/// avoiding UDIV instructions from runtime `step_by` calculations.
+#[allow(clippy::inline_always)] // Required for constant-time guarantees in crypto code
+#[inline(always)]
+fn ntt_inverse_layer<const LEN: usize, const ITERATIONS: usize>(
+    w: &mut [Elem; 256],
+    m: &mut usize,
+) {
+    for i in 0..ITERATIONS {
+        let start = i * 2 * LEN;
+        *m -= 1;
+        let z = -ZETA_POW_BITREV[*m];
+        for j in start..(start + LEN) {
+            let t = w[j];
+            w[j] = t + w[j + LEN];
+            w[j + LEN] = z * (t - w[j + LEN]);
+        }
+    }
+}
+
 impl NttInverse for NttPolynomial {
     type Output = Polynomial;
 
     // Algorithm 42 NTT^{−1}
+    //
+    // This implementation uses const-generic helper functions to ensure all loop
+    // bounds are compile-time constants, avoiding potential UDIV instructions.
     fn ntt_inverse(&self) -> Self::Output {
         const INVERSE_256: Elem = Elem::new(8_347_681);
 
-        let mut w = self.0.clone();
-
+        let mut w: [Elem; 256] = self.0.clone().into();
         let mut m = 256;
-        for len in [1, 2, 4, 8, 16, 32, 64, 128] {
-            for start in (0..256).step_by(2 * len) {
-                m -= 1;
-                let z = -ZETA_POW_BITREV[m];
 
-                for j in start..(start + len) {
-                    let t = w[j];
-                    w[j] = t + w[j + len];
-                    w[j + len] = z * (t - w[j + len]);
-                }
-            }
-        }
+        ntt_inverse_layer::<1, 128>(&mut w, &mut m);
+        ntt_inverse_layer::<2, 64>(&mut w, &mut m);
+        ntt_inverse_layer::<4, 32>(&mut w, &mut m);
+        ntt_inverse_layer::<8, 16>(&mut w, &mut m);
+        ntt_inverse_layer::<16, 8>(&mut w, &mut m);
+        ntt_inverse_layer::<32, 4>(&mut w, &mut m);
+        ntt_inverse_layer::<64, 2>(&mut w, &mut m);
+        ntt_inverse_layer::<128, 1>(&mut w, &mut m);
 
-        INVERSE_256 * &Polynomial::new(w)
+        INVERSE_256 * &Polynomial::new(w.into())
     }
 }
 
