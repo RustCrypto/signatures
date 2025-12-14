@@ -105,8 +105,9 @@ impl<P: ParameterSet> SigningKey<P> {
     fn from_seed(sk_seed: SkSeed<P::N>, sk_prf: SkPrf<P::N>, pk_seed: PkSeed<P::N>) -> Self {
         let mut adrs = WotsHash::default();
         adrs.layer_adrs.set(P::D::U32 - 1);
+        let xmss = P::new_from_pk_seed(&pk_seed);
 
-        let pk_root = P::xmss_node(&sk_seed, 0, P::HPrime::U32, &pk_seed, &adrs);
+        let pk_root = xmss.xmss_node(&sk_seed, 0, P::HPrime::U32, &adrs);
         let verifying_key = VerifyingKey { pk_seed, pk_root };
         SigningKey {
             sk_seed,
@@ -144,16 +145,17 @@ impl<P: ParameterSet> SigningKey<P> {
 
         let sk_seed = &self.sk_seed;
         let pk_seed = &self.verifying_key.pk_seed;
+        let ht = P::new_from_pk_seed(pk_seed);
 
         let randomizer = P::prf_msg(&self.sk_prf, rand, msg);
 
         let digest = P::h_msg(&randomizer, pk_seed, &self.verifying_key.pk_root, msg);
         let (md, idx_tree, idx_leaf) = split_digest::<P>(&digest);
         let adrs = ForsTree::new(idx_tree, idx_leaf);
-        let fors_sig = P::fors_sign(md, sk_seed, pk_seed, &adrs);
+        let fors_sig = ht.fors_sign(md, sk_seed, &adrs);
 
-        let fors_pk = P::fors_pk_from_sig(&fors_sig, md, pk_seed, &adrs);
-        let ht_sig = P::ht_sign(&fors_pk, sk_seed, pk_seed, idx_tree, idx_leaf);
+        let fors_pk = ht.fors_pk_from_sig(&fors_sig, md, &adrs);
+        let ht_sig = ht.ht_sign(&fors_pk, sk_seed, idx_tree, idx_leaf);
 
         Signature {
             randomizer,

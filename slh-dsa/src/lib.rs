@@ -72,9 +72,7 @@ pub use hashes::*;
 
 /// Specific parameters for each of the 12 FIPS parameter sets
 #[allow(private_bounds)] // Intentionally un-usable type
-pub trait ParameterSet:
-    ForsParams + SigningKeyLen + VerifyingKeyLen + SignatureLen + PartialEq + Eq
-{
+pub trait ParameterSet: ForsParams + SigningKeyLen + VerifyingKeyLen + SignatureLen {
     /// Human-readable name for parameter set, matching the FIPS-205 designations
     const NAME: &'static str;
 
