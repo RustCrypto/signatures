@@ -28,7 +28,6 @@ zeroize = { version = "1", optional = true, default-features = false }
 
 [dev-dependencies]
 hex-literal = "1"
-bincode = "1"
 
 [features]
 default = ["alloc"]
