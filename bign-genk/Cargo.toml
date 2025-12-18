@@ -1,0 +1,26 @@
+[package]
+name = "bign-genk"
+version = "0.5.0-rc.3"
+description = """
+Pure Rust implementation of bign-genk algorithm from STB 34.101.45: Deterministic Usage of the
+Digital Signature Algorithm (DSA) and Elliptic Curve Digital Signature Algorithm (ECDSA)
+"""
+authors = ["RustCrypto Developers"]
+license = "Apache-2.0 OR MIT"
+homepage = "https://github.com/RustCrypto/signatures/tree/master/bign-genk"
+repository = "https://github.com/RustCrypto/signatures"
+readme = "README.md"
+categories = ["cryptography", "no-std"]
+keywords = ["dsa", "ecdsa", "signature", "bign"]
+edition = "2024"
+rust-version = "1.85"
+
+[dependencies]
+cipher = { version = "0.5.0-rc.2", default-features = false }
+digest = { version = "0.11.0-rc.4", default-features = false, features = ["oid"] }
+subtle = { version = "2", default-features = false }
+
+[dev-dependencies]
+hex-literal = "1"
+belt-block = "0.2.0-rc.2"
+belt-hash = "0.2.0-rc.2"

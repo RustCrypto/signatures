@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
+    "bign-genk",
     "dsa",
     "ecdsa",
     "ed448",
@@ -25,3 +26,4 @@ lms-signature = { path = "./lms" }
 ml-dsa = { path = "./ml-dsa" }
 rfc6979 = { path = "./rfc6979" }
 slh-dsa = { path = "./slh-dsa" }
+bign-genk = { path = "./bign-genk" }
