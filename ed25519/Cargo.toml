@@ -27,7 +27,6 @@ serde_bytes = { version = "0.11", optional = true, default-features = false }
 zeroize = { version = "1", optional = true, default-features = false }
 
 [dev-dependencies]
-bincode = "1"
 #ed25519-dalek = { version = "2", features = ["rand_core"] }
 hex-literal = "1"
 #ring-compat = { version = "0.8", default-features = false, features = ["signature"] }
