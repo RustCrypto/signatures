@@ -7,15 +7,26 @@ mod shake;
 
 use core::fmt::Debug;
 
+use digest::Update;
 use hybrid_array::{Array, ArraySize};
+use signature::Result;
 
 pub use sha2::*;
 pub use shake::*;
 
 use crate::{PkSeed, SkPrf, SkSeed, address::Address};
 
+/// `Digest` parameter for [`DigestSigner`] and [`DigestVerifier`].
+///
+/// [`DigestSigner`]: signature::DigestSigner
+/// [`DigestVerifier`]: signature::DigestVerifier
+pub trait HashDigest {
+    /// The associated `Digest` type.
+    type Digest: Update;
+}
+
 /// A trait specifying the hash functions described in FIPS-205 section 10
-pub(crate) trait HashSuite: Sized + Clone + Debug + PartialEq + Eq {
+pub(crate) trait HashSuite: HashDigest + Sized + Clone + Debug + PartialEq + Eq {
     type N: ArraySize + Debug + Clone + PartialEq + Eq;
     type M: ArraySize + Debug + Clone + PartialEq + Eq;
 
@@ -23,16 +34,16 @@ pub(crate) trait HashSuite: Sized + Clone + Debug + PartialEq + Eq {
     fn prf_msg(
         sk_prf: &SkPrf<Self::N>,
         opt_rand: &Array<u8, Self::N>,
-        msg: &[&[impl AsRef<[u8]>]],
-    ) -> Array<u8, Self::N>;
+        msg: &impl Fn(&mut Self::Digest) -> Result<()>,
+    ) -> Result<Array<u8, Self::N>>;
 
     /// Hashes a message using a given randomizer
     fn h_msg(
         rand: &Array<u8, Self::N>,
         pk_seed: &PkSeed<Self::N>,
         pk_root: &Array<u8, Self::N>,
-        msg: &[&[impl AsRef<[u8]>]],
-    ) -> Array<u8, Self::M>;
+        msg: &impl Fn(&mut Self::Digest) -> Result<()>,
+    ) -> Result<Array<u8, Self::M>>;
 
     /// PRF that is used to generate the secret values in WOTS+ and FORS private keys.
     fn prf_sk(
@@ -76,7 +87,11 @@ mod tests {
         let opt_rand = Array::<u8, H::N>::from_fn(|_| 1);
         let msg = [2u8; 32];
 
-        let result = H::prf_msg(&sk_prf, &opt_rand, &[&[msg]]);
+        let result = H::prf_msg(&sk_prf, &opt_rand, &|digest| {
+            digest.update(&msg);
+            Ok(())
+        })
+        .unwrap();
 
         assert_eq!(result.as_slice(), expected);
     }
@@ -87,7 +102,11 @@ mod tests {
         let pk_root = Array::<u8, H::N>::from_fn(|_| 2);
         let msg = [3u8; 32];
 
-        let result = H::h_msg(&rand, &pk_seed, &pk_root, &[&[msg]]);
+        let result = H::h_msg(&rand, &pk_seed, &pk_root, &|digest| {
+            digest.update(&msg);
+            Ok(())
+        })
+        .unwrap();
 
         assert_eq!(result.as_slice(), expected);
     }

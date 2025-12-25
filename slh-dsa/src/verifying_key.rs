@@ -5,7 +5,8 @@ use crate::Shake;
 use crate::address::ForsTree;
 use crate::signature_encoding::Signature;
 use crate::util::split_digest;
-use ::signature::{Error, MultipartVerifier, Verifier};
+use ::signature::{DigestVerifier, Error, MultipartVerifier, Verifier};
+use digest::Update;
 use hybrid_array::{Array, ArraySize};
 use pkcs8::{der, spki};
 use rand_core::CryptoRng;
@@ -60,12 +61,21 @@ impl<P: ParameterSet + VerifyingKeyLen> VerifyingKey<P> {
         msg: &[&[u8]],
         signature: &Signature<P>,
     ) -> Result<(), Error> {
-        self.raw_slh_verify_internal(&[msg], signature)
+        self.raw_slh_verify_internal(
+            |digest| {
+                for msg in msg {
+                    digest.update(msg);
+                }
+
+                Ok(())
+            },
+            signature,
+        )
     }
 
     fn raw_slh_verify_internal(
         &self,
-        msg: &[&[&[u8]]],
+        msg: impl Fn(&mut P::Digest) -> Result<(), Error>,
         signature: &Signature<P>,
     ) -> Result<(), Error> {
         let pk_seed = &self.pk_seed;
@@ -73,7 +83,7 @@ impl<P: ParameterSet + VerifyingKeyLen> VerifyingKey<P> {
         let fors_sig = &signature.fors_sig;
         let ht_sig = &signature.ht_sig;
 
-        let digest = P::h_msg(randomizer, pk_seed, &self.pk_root, msg);
+        let digest = P::h_msg(randomizer, pk_seed, &self.pk_root, &msg)?;
         let (md, idx_tree, idx_leaf) = split_digest::<P>(&digest);
 
         let adrs = ForsTree::new(idx_tree, idx_leaf);
@@ -93,20 +103,34 @@ impl<P: ParameterSet + VerifyingKeyLen> VerifyingKey<P> {
         ctx: &[u8],
         signature: &Signature<P>,
     ) -> Result<(), Error> {
-        self.raw_try_verify_with_context(&[msg], ctx, signature)
+        self.raw_try_verify_with_context(
+            |digest| {
+                digest.update(msg);
+                Ok(())
+            },
+            ctx,
+            signature,
+        )
     }
 
     fn raw_try_verify_with_context(
         &self,
-        msg: &[&[u8]],
+        msg: impl Fn(&mut P::Digest) -> Result<(), Error>,
         ctx: &[u8],
         signature: &Signature<P>,
     ) -> Result<(), Error> {
         let ctx_len = u8::try_from(ctx.len()).map_err(|_| Error::new())?;
         let ctx_len_bytes = ctx_len.to_be_bytes();
 
-        let ctx_msg = [&[&[0], &ctx_len_bytes, ctx], msg];
-        self.raw_slh_verify_internal(&ctx_msg, signature) // TODO - context processing
+        self.raw_slh_verify_internal(
+            |digest| {
+                digest.update(&[0]);
+                digest.update(&ctx_len_bytes);
+                digest.update(ctx);
+                msg(digest)
+            },
+            signature,
+        ) // TODO - context processing
     }
 
     /// Serialize the verifying key to a new stack-allocated array
@@ -174,7 +198,27 @@ impl<P: ParameterSet> Verifier<Signature<P>> for VerifyingKey<P> {
 
 impl<P: ParameterSet> MultipartVerifier<Signature<P>> for VerifyingKey<P> {
     fn multipart_verify(&self, msg: &[&[u8]], signature: &Signature<P>) -> Result<(), Error> {
-        self.raw_try_verify_with_context(msg, &[], signature) // TODO - context processing
+        self.raw_try_verify_with_context(
+            |digest| {
+                for msg in msg {
+                    digest.update(msg);
+                }
+
+                Ok(())
+            },
+            &[],
+            signature,
+        ) // TODO - context processing
+    }
+}
+
+impl<P: ParameterSet> DigestVerifier<P::Digest, Signature<P>> for VerifyingKey<P> {
+    fn verify_digest<F: Fn(&mut P::Digest) -> Result<(), Error>>(
+        &self,
+        f: F,
+        signature: &Signature<P>,
+    ) -> Result<(), Error> {
+        self.raw_try_verify_with_context(f, &[], signature)
     }
 }
 

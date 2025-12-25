@@ -2,7 +2,7 @@ use core::fmt::Debug;
 
 use crate::address::Address;
 use crate::fors::ForsParams;
-use crate::hashes::HashSuite;
+use crate::hashes::{HashDigest, HashSuite};
 use crate::hypertree::HypertreeParams;
 use crate::wots::WotsParams;
 use crate::xmss::XmssParams;
@@ -13,6 +13,7 @@ use hybrid_array::typenum::consts::{U16, U30, U32};
 use hybrid_array::typenum::{U24, U34, U39, U42, U47, U49};
 use hybrid_array::{Array, ArraySize};
 use sha3::Shake256;
+use signature::Result;
 use typenum::U;
 
 /// Implementation of the component hash functions using SHAKE256
@@ -22,6 +23,10 @@ use typenum::U;
 pub struct Shake<N, M> {
     _n: core::marker::PhantomData<N>,
     _m: core::marker::PhantomData<M>,
+}
+
+impl<N: ArraySize, M: ArraySize> HashDigest for Shake<N, M> {
+    type Digest = Shake256;
 }
 
 impl<N: ArraySize, M: ArraySize> HashSuite for Shake<N, M>
@@ -35,37 +40,31 @@ where
     fn prf_msg(
         sk_prf: &SkPrf<Self::N>,
         opt_rand: &Array<u8, Self::N>,
-        msg: &[&[impl AsRef<[u8]>]],
-    ) -> Array<u8, Self::N> {
+        msg: &impl Fn(&mut Self::Digest) -> Result<()>,
+    ) -> Result<Array<u8, Self::N>> {
         let mut hasher = Shake256::default();
         hasher.update(sk_prf.as_ref());
         hasher.update(opt_rand.as_slice());
-        msg.iter()
-            .copied()
-            .flatten()
-            .for_each(|msg_part| hasher.update(msg_part.as_ref()));
+        msg(&mut hasher)?;
         let mut output = Array::<u8, Self::N>::default();
         hasher.finalize_xof_into(&mut output);
-        output
+        Ok(output)
     }
 
     fn h_msg(
         rand: &Array<u8, Self::N>,
         pk_seed: &PkSeed<Self::N>,
         pk_root: &Array<u8, Self::N>,
-        msg: &[&[impl AsRef<[u8]>]],
-    ) -> Array<u8, Self::M> {
+        msg: &impl Fn(&mut Self::Digest) -> Result<()>,
+    ) -> Result<Array<u8, Self::M>> {
         let mut hasher = Shake256::default();
         hasher.update(rand.as_slice());
         hasher.update(pk_seed.as_ref());
         hasher.update(pk_root.as_ref());
-        msg.iter()
-            .copied()
-            .flatten()
-            .for_each(|msg_part| hasher.update(msg_part.as_ref()));
+        msg(&mut hasher)?;
         let mut output = Array::<u8, Self::M>::default();
         hasher.finalize_xof_into(&mut output);
-        output
+        Ok(output)
     }
 
     fn prf_sk(
@@ -280,7 +279,11 @@ mod tests {
 
         let expected = hex!("bc5c062307df0a41aeeae19ad655f7b2");
 
-        let result = H::prf_msg(&sk_prf, &opt_rand, &[&[msg]]);
+        let result = H::prf_msg(&sk_prf, &opt_rand, &|digest| {
+            digest.update(&msg);
+            Ok(())
+        })
+        .unwrap();
 
         assert_eq!(result.as_slice(), expected);
     }
