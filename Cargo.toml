@@ -26,6 +26,4 @@ ml-dsa = { path = "./ml-dsa" }
 rfc6979 = { path = "./rfc6979" }
 slh-dsa = { path = "./slh-dsa" }
 
-# https://github.com/rust-random/rand/pull/1697
-rand = { git = "https://github.com/rust-random/rand", rev = "99ae06fb348e5c5fee0fe41d2201bd4cbb107635" }
-getrandom = { git = "https://github.com/rust-random/getrandom.git", rev = "f67c70110f706f80d7dd6fa52e38d0920754fe2c" }
+rand = { git = "https://github.com/rust-random/rand" }
