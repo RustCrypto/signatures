@@ -416,7 +416,7 @@ dependencies = [
  "base16ct",
  "crypto-bigint",
  "digest",
- "getrandom",
+ "getrandom 0.3.4",
  "hex-literal",
  "hybrid-array",
  "once_cell",
@@ -456,7 +456,20 @@ checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 [[package]]
 name = "getrandom"
 version = "0.3.4"
-source = "git+https://github.com/rust-random/getrandom.git?rev=f67c70110f706f80d7dd6fa52e38d0920754fe2c#f67c70110f706f80d7dd6fa52e38d0920754fe2c"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "899def5c37c4fd7b2664648c28120ecec138e4d395b459e5ca34f9cce2dd77fd"
+dependencies = [
+ "cfg-if",
+ "libc",
+ "r-efi",
+ "wasip2",
+]
+
+[[package]]
+name = "getrandom"
+version = "0.4.0-rc.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3b99f0d993a2b9b97b9a201193aa8ad21305cde06a3be9a7e1f8f4201e5cc27e"
 dependencies = [
  "cfg-if",
  "libc",
@@ -793,10 +806,10 @@ dependencies = [
 [[package]]
 name = "rand"
 version = "0.10.0-rc.5"
-source = "git+https://github.com/rust-random/rand?rev=99ae06fb348e5c5fee0fe41d2201bd4cbb107635#99ae06fb348e5c5fee0fe41d2201bd4cbb107635"
+source = "git+https://github.com/rust-random/rand#ff07ec205347dd749a586aaee7218cb21590ea4c"
 dependencies = [
  "chacha20",
- "getrandom",
+ "getrandom 0.4.0-rc.0",
  "rand_core 0.10.0-rc-3",
 ]
 
@@ -816,7 +829,7 @@ version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "99d9a13982dcf210057a8a78572b2217b667c3beacbf3a0d8b454f6f82837d38"
 dependencies = [
- "getrandom",
+ "getrandom 0.3.4",
 ]
 
 [[package]]
@@ -1149,7 +1162,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2d31c77bdf42a745371d260a26ca7163f1e0924b64afa0b688e61b5a9fa02f16"
 dependencies = [
  "fastrand",
- "getrandom",
+ "getrandom 0.3.4",
  "once_cell",
  "rustix",
  "windows-sys",
