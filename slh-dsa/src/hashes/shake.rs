@@ -17,11 +17,12 @@ use typenum::U;
 
 /// Implementation of the component hash functions using SHAKE256
 ///
-/// Follows section 10.1 of FIPS-205
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Follows section 11.1 of FIPS-205
+#[derive(Debug, Clone)]
 pub struct Shake<N, M> {
     _n: core::marker::PhantomData<N>,
     _m: core::marker::PhantomData<M>,
+    cached_hasher: Shake256,
 }
 
 impl<N: ArraySize, M: ArraySize> HashSuite for Shake<N, M>
@@ -32,14 +33,22 @@ where
     type N = N;
     type M = M;
 
+    fn new_from_pk_seed(pk_seed: &PkSeed<Self::N>) -> Self {
+        Self {
+            _n: core::marker::PhantomData,
+            _m: core::marker::PhantomData,
+            cached_hasher: Shake256::default().chain(pk_seed.as_ref()),
+        }
+    }
+
     fn prf_msg(
         sk_prf: &SkPrf<Self::N>,
         opt_rand: &Array<u8, Self::N>,
         msg: &[&[impl AsRef<[u8]>]],
     ) -> Array<u8, Self::N> {
-        let mut hasher = Shake256::default();
-        hasher.update(sk_prf.as_ref());
-        hasher.update(opt_rand.as_slice());
+        let mut hasher = Shake256::default()
+            .chain(sk_prf.as_ref())
+            .chain(opt_rand.as_slice());
         msg.iter()
             .copied()
             .flatten()
@@ -55,10 +64,10 @@ where
         pk_root: &Array<u8, Self::N>,
         msg: &[&[impl AsRef<[u8]>]],
     ) -> Array<u8, Self::M> {
-        let mut hasher = Shake256::default();
-        hasher.update(rand.as_slice());
-        hasher.update(pk_seed.as_ref());
-        hasher.update(pk_root.as_ref());
+        let mut hasher = Shake256::default()
+            .chain(rand.as_slice())
+            .chain(pk_seed.as_ref())
+            .chain(<Array<u8, N> as AsRef<[u8]>>::as_ref(pk_root));
         msg.iter()
             .copied()
             .flatten()
@@ -68,61 +77,52 @@ where
         output
     }
 
-    fn prf_sk(
-        pk_seed: &PkSeed<Self::N>,
-        sk_seed: &SkSeed<Self::N>,
-        adrs: &impl Address,
-    ) -> Array<u8, Self::N> {
-        let mut hasher = Shake256::default();
-        hasher.update(pk_seed.as_ref());
-        hasher.update(adrs.as_ref());
-        hasher.update(sk_seed.as_ref());
+    fn prf_sk(&self, sk_seed: &SkSeed<Self::N>, adrs: &impl Address) -> Array<u8, Self::N> {
+        let hasher = self
+            .cached_hasher
+            .clone()
+            .chain(adrs.as_ref())
+            .chain(sk_seed.as_ref());
         let mut output = Array::<u8, Self::N>::default();
         hasher.finalize_xof_into(&mut output);
         output
     }
 
     fn t<L: ArraySize>(
-        pk_seed: &PkSeed<Self::N>,
+        &self,
         adrs: &impl Address,
         m: &Array<Array<u8, Self::N>, L>,
     ) -> Array<u8, Self::N> {
-        let mut hasher = Shake256::default();
-        hasher.update(pk_seed.as_ref());
-        hasher.update(adrs.as_ref());
-        for i in 0..L::USIZE {
-            hasher.update(m[i].as_slice());
-        }
+        let mut hasher = self.cached_hasher.clone().chain(adrs.as_ref());
+        m.iter().for_each(|x| hasher.update(x.as_slice()));
         let mut output = Array::<u8, Self::N>::default();
         hasher.finalize_xof_into(&mut output);
         output
     }
 
     fn h(
-        pk_seed: &PkSeed<Self::N>,
+        &self,
         adrs: &impl Address,
         m1: &Array<u8, Self::N>,
         m2: &Array<u8, Self::N>,
     ) -> Array<u8, Self::N> {
-        let mut hasher = Shake256::default();
-        hasher.update(pk_seed.as_ref());
-        hasher.update(adrs.as_ref());
-        hasher.update(m1.as_slice());
-        hasher.update(m2.as_slice());
+        let hasher = self
+            .cached_hasher
+            .clone()
+            .chain(adrs.as_ref())
+            .chain(m1.as_slice())
+            .chain(m2.as_slice());
         let mut output = Array::<u8, Self::N>::default();
         hasher.finalize_xof_into(&mut output);
         output
     }
 
-    fn f(
-        pk_seed: &PkSeed<Self::N>,
-        adrs: &impl Address,
-        m: &Array<u8, Self::N>,
-    ) -> Array<u8, Self::N> {
-        let mut hasher = Shake256::default();
-        hasher.update(pk_seed.as_ref());
-        hasher.update(adrs.as_ref());
-        hasher.update(m.as_slice());
+    fn f(&self, adrs: &impl Address, m: &Array<u8, Self::N>) -> Array<u8, Self::N> {
+        let hasher = self
+            .cached_hasher
+            .clone()
+            .chain(adrs.as_ref())
+            .chain(m.as_slice());
         let mut output = Array::<u8, Self::N>::default();
         hasher.finalize_xof_into(&mut output);
         output

@@ -37,11 +37,12 @@ fn mgf1<H: Digest, L: ArraySize>(seed: &[u8]) -> Array<u8, L> {
 
 /// Implementation of the component hash functions using SHA2 at Security Category 1
 ///
-/// Follows section 10.2 of FIPS-205
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Follows section 11.2 of FIPS-205
+#[derive(Debug, Clone)]
 pub struct Sha2L1<N, M> {
     _n: core::marker::PhantomData<N>,
     _m: core::marker::PhantomData<M>,
+    cached_hasher: Sha256,
 }
 
 impl<N: ArraySize, M: ArraySize> HashSuite for Sha2L1<N, M>
@@ -57,6 +58,16 @@ where
 {
     type N = N;
     type M = M;
+
+    fn new_from_pk_seed(pk_seed: &PkSeed<Self::N>) -> Self {
+        Self {
+            _n: core::marker::PhantomData,
+            _m: core::marker::PhantomData,
+            cached_hasher: Sha256::new_with_prefix(pk_seed.as_ref())
+                // Pad with zeroes, according to section 11.2.1 of FIPS-205.
+                .chain_update(Array::<u8, Diff<U64, N>>::default()),
+        }
+    }
 
     fn prf_msg(
         sk_prf: &SkPrf<Self::N>,
@@ -92,15 +103,10 @@ where
         mgf1::<Sha256, Self::M>(&seed)
     }
 
-    fn prf_sk(
-        pk_seed: &PkSeed<Self::N>,
-        sk_seed: &SkSeed<Self::N>,
-        adrs: &impl Address,
-    ) -> Array<u8, Self::N> {
-        let zeroes = Array::<u8, Diff<U64, N>>::default();
-        let hash = Sha256::new()
-            .chain_update(pk_seed)
-            .chain_update(&zeroes)
+    fn prf_sk(&self, sk_seed: &SkSeed<Self::N>, adrs: &impl Address) -> Array<u8, Self::N> {
+        let hash = self
+            .cached_hasher
+            .clone()
             .chain_update(adrs.compressed())
             .chain_update(sk_seed)
             .finalize();
@@ -108,30 +114,25 @@ where
     }
 
     fn t<L: ArraySize>(
-        pk_seed: &PkSeed<Self::N>,
+        &self,
         adrs: &impl Address,
         m: &Array<Array<u8, Self::N>, L>,
     ) -> Array<u8, Self::N> {
-        let zeroes = Array::<u8, Diff<U64, N>>::default();
-        let mut sha = Sha256::new()
-            .chain_update(pk_seed)
-            .chain_update(&zeroes)
-            .chain_update(adrs.compressed());
-        m.iter().for_each(|x| sha.update(x.as_slice()));
-        let hash = sha.finalize();
+        let mut hasher = self.cached_hasher.clone().chain_update(adrs.compressed());
+        m.iter().for_each(|x| hasher.update(x.as_slice()));
+        let hash = hasher.finalize();
         Array::clone_from_slice(&hash[..Self::N::USIZE])
     }
 
     fn h(
-        pk_seed: &PkSeed<Self::N>,
+        &self,
         adrs: &impl Address,
         m1: &Array<u8, Self::N>,
         m2: &Array<u8, Self::N>,
     ) -> Array<u8, Self::N> {
-        let zeroes = Array::<u8, Diff<U64, N>>::default();
-        let hash = Sha256::new()
-            .chain_update(pk_seed)
-            .chain_update(&zeroes)
+        let hash = self
+            .cached_hasher
+            .clone()
             .chain_update(adrs.compressed())
             .chain_update(m1)
             .chain_update(m2)
@@ -139,15 +140,10 @@ where
         Array::clone_from_slice(&hash[..Self::N::USIZE])
     }
 
-    fn f(
-        pk_seed: &PkSeed<Self::N>,
-        adrs: &impl Address,
-        m: &Array<u8, Self::N>,
-    ) -> Array<u8, Self::N> {
-        let zeroes = Array::<u8, Diff<U64, N>>::default();
-        let hash = Sha256::new()
-            .chain_update(pk_seed)
-            .chain_update(&zeroes)
+    fn f(&self, adrs: &impl Address, m: &Array<u8, Self::N>) -> Array<u8, Self::N> {
+        let hash = self
+            .cached_hasher
+            .clone()
             .chain_update(adrs.compressed())
             .chain_update(m)
             .finalize();
@@ -204,10 +200,12 @@ impl ParameterSet for Sha2_128f {
 /// Implementation of the component hash functions using SHA2 at Security Category 3 and 5
 ///
 /// Follows section 10.2 of FIPS-205
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct Sha2L35<N, M> {
     _n: core::marker::PhantomData<N>,
     _m: core::marker::PhantomData<M>,
+    cached_hasher_256: Sha256,
+    cached_hasher_512: Sha512,
 }
 
 impl<N: ArraySize, M: ArraySize> HashSuite for Sha2L35<N, M>
@@ -225,6 +223,19 @@ where
 {
     type N = N;
     type M = M;
+
+    fn new_from_pk_seed(pk_seed: &PkSeed<Self::N>) -> Self {
+        Self {
+            _n: core::marker::PhantomData,
+            _m: core::marker::PhantomData,
+            cached_hasher_256: Sha256::new_with_prefix(pk_seed.as_ref())
+                // Pad with zeroes, according to section 11.2.1 of FIPS-205.
+                .chain_update(Array::<u8, Diff<U64, N>>::default()),
+            cached_hasher_512: Sha512::new_with_prefix(pk_seed.as_ref())
+                // Pad with zeroes, according to section 11.2.1 of FIPS-205.
+                .chain_update(Array::<u8, Diff<U128, N>>::default()),
+        }
+    }
 
     fn prf_msg(
         sk_prf: &SkPrf<Self::N>,
@@ -260,15 +271,10 @@ where
         mgf1::<Sha512, Self::M>(&seed)
     }
 
-    fn prf_sk(
-        pk_seed: &PkSeed<Self::N>,
-        sk_seed: &SkSeed<Self::N>,
-        adrs: &impl Address,
-    ) -> Array<u8, Self::N> {
-        let zeroes = Array::<u8, Diff<U64, N>>::default();
-        let hash = Sha256::new()
-            .chain_update(pk_seed)
-            .chain_update(&zeroes)
+    fn prf_sk(&self, sk_seed: &SkSeed<Self::N>, adrs: &impl Address) -> Array<u8, Self::N> {
+        let hash = self
+            .cached_hasher_256
+            .clone()
             .chain_update(adrs.compressed())
             .chain_update(sk_seed)
             .finalize();
@@ -276,30 +282,28 @@ where
     }
 
     fn t<L: ArraySize>(
-        pk_seed: &PkSeed<Self::N>,
+        &self,
         adrs: &impl Address,
         m: &Array<Array<u8, Self::N>, L>,
     ) -> Array<u8, Self::N> {
-        let zeroes = Array::<u8, Diff<U128, N>>::default();
-        let mut sha = Sha512::new()
-            .chain_update(pk_seed)
-            .chain_update(&zeroes)
+        let mut hasher = self
+            .cached_hasher_512
+            .clone()
             .chain_update(adrs.compressed());
-        m.iter().for_each(|x| sha.update(x.as_slice()));
-        let hash = sha.finalize();
+        m.iter().for_each(|x| hasher.update(x.as_slice()));
+        let hash = hasher.finalize();
         Array::clone_from_slice(&hash[..Self::N::USIZE])
     }
 
     fn h(
-        pk_seed: &PkSeed<Self::N>,
+        &self,
         adrs: &impl Address,
         m1: &Array<u8, Self::N>,
         m2: &Array<u8, Self::N>,
     ) -> Array<u8, Self::N> {
-        let zeroes = Array::<u8, Diff<U128, N>>::default();
-        let hash = Sha512::new()
-            .chain_update(pk_seed)
-            .chain_update(&zeroes)
+        let hash = self
+            .cached_hasher_512
+            .clone()
             .chain_update(adrs.compressed())
             .chain_update(m1)
             .chain_update(m2)
@@ -307,15 +311,10 @@ where
         Array::clone_from_slice(&hash[..Self::N::USIZE])
     }
 
-    fn f(
-        pk_seed: &PkSeed<Self::N>,
-        adrs: &impl Address,
-        m: &Array<u8, Self::N>,
-    ) -> Array<u8, Self::N> {
-        let zeroes = Array::<u8, Diff<U64, N>>::default();
-        let hash = Sha256::new()
-            .chain_update(pk_seed)
-            .chain_update(&zeroes)
+    fn f(&self, adrs: &impl Address, m: &Array<u8, Self::N>) -> Array<u8, Self::N> {
+        let hash = self
+            .cached_hasher_256
+            .clone()
             .chain_update(adrs.compressed())
             .chain_update(m)
             .finalize();

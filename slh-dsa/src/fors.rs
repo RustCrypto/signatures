@@ -3,16 +3,24 @@ use core::fmt::Debug;
 use hybrid_array::{Array, ArraySize};
 use typenum::Unsigned;
 
-use crate::{PkSeed, SkSeed, address};
+use crate::{SkSeed, address};
 
 use crate::hypertree::HypertreeParams;
 use crate::util::base_2b;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 pub(crate) struct ForsMTSig<P: ForsParams> {
     sk: Array<u8, P::N>,
     auth: Array<Array<u8, P::N>, P::A>,
 }
+
+impl<P: ForsParams> PartialEq for ForsMTSig<P> {
+    fn eq(&self, other: &Self) -> bool {
+        self.sk == other.sk && self.auth == other.auth
+    }
+}
+
+impl<P: ForsParams> Eq for ForsMTSig<P> {}
 
 impl<P: ForsParams> ForsMTSig<P> {
     const SIZE: usize = P::N::USIZE + P::A::USIZE * P::N::USIZE;
@@ -64,8 +72,16 @@ impl<P: ForsParams> TryFrom<&[u8]> for ForsMTSig<P> {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 pub(crate) struct ForsSignature<P: ForsParams>(Array<ForsMTSig<P>, P::K>);
+
+impl<P: ForsParams> PartialEq for ForsSignature<P> {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
+}
+
+impl<P: ForsParams> Eq for ForsSignature<P> {}
 
 impl<P: ForsParams> TryFrom<&[u8]> for ForsSignature<P> {
     // TODO - real error type
@@ -118,73 +134,67 @@ pub(crate) trait ForsParams: HypertreeParams {
     type MD: ArraySize; // ceil(K*A/8)
 
     fn fors_sk_gen(
+        &self,
         sk_seed: &SkSeed<Self::N>,
-        pk_seed: &PkSeed<Self::N>,
         adrs: &address::ForsTree,
         idx: u32,
     ) -> Array<u8, Self::N> {
         let mut adrs = adrs.prf_adrs();
         adrs.tree_index.set(idx);
-        Self::prf_sk(pk_seed, sk_seed, &adrs)
+        self.prf_sk(sk_seed, &adrs)
     }
 
     fn fors_node(
+        &self,
         sk_seed: &SkSeed<Self::N>,
         i: u32,
         z: u32,
-        pk_seed: &PkSeed<Self::N>,
         adrs: &address::ForsTree,
     ) -> Array<u8, Self::N> {
         debug_assert!(z <= Self::A::U32);
         debug_assert!(i < (Self::K::U32 << (Self::A::U32 - z)));
         let mut adrs = adrs.clone(); // TODO: do we really need clone or should we take mut ref?
         if z == 0 {
-            let sk = Self::fors_sk_gen(sk_seed, pk_seed, &adrs, i);
+            let sk = self.fors_sk_gen(sk_seed, &adrs, i);
             adrs.tree_height.set(0);
             adrs.tree_index.set(i);
-            Self::f(pk_seed, &adrs, &sk)
+            self.f(&adrs, &sk)
         } else {
-            let lnode = Self::fors_node(sk_seed, 2 * i, z - 1, pk_seed, &adrs);
-            let rnode = Self::fors_node(sk_seed, 2 * i + 1, z - 1, pk_seed, &adrs);
+            let lnode = self.fors_node(sk_seed, 2 * i, z - 1, &adrs);
+            let rnode = self.fors_node(sk_seed, 2 * i + 1, z - 1, &adrs);
             adrs.tree_height.set(z);
             adrs.tree_index.set(i);
-            Self::h(pk_seed, &adrs, &lnode, &rnode)
+            self.h(&adrs, &lnode, &rnode)
         }
     }
 
     fn fors_sign(
+        &self,
         md: &Array<u8, Self::MD>,
         sk_seed: &SkSeed<Self::N>,
-        pk_seed: &PkSeed<Self::N>,
         adrs: &address::ForsTree,
     ) -> ForsSignature<Self> {
         let mut sig = ForsSignature::<Self>::default();
         let indices = base_2b::<Self::K, Self::A>(md);
         for i in 0..Self::K::U32 {
-            sig.0[i as usize].sk = Self::fors_sk_gen(
+            sig.0[i as usize].sk = self.fors_sk_gen(
                 sk_seed,
-                pk_seed,
                 adrs,
                 (i << Self::A::U32) + u32::from(indices[i as usize]),
             );
             for j in 0..Self::A::U32 {
                 let s = (indices[i as usize] >> j) ^ 1;
-                sig.0[i as usize].auth[j as usize] = Self::fors_node(
-                    sk_seed,
-                    (i << (Self::A::U32 - j)) + u32::from(s),
-                    j,
-                    pk_seed,
-                    adrs,
-                );
+                sig.0[i as usize].auth[j as usize] =
+                    self.fors_node(sk_seed, (i << (Self::A::U32 - j)) + u32::from(s), j, adrs);
             }
         }
         sig
     }
 
     fn fors_pk_from_sig(
+        &self,
         sig: &ForsSignature<Self>,
         md: &Array<u8, Self::MD>,
-        pk_seed: &PkSeed<Self::N>,
         adrs: &address::ForsTree,
     ) -> Array<u8, Self::N> {
         let mut adrs = adrs.clone();
@@ -195,27 +205,27 @@ pub(crate) trait ForsParams: HypertreeParams {
             adrs.tree_height.set(0);
             adrs.tree_index
                 .set((i << Self::A::U32) + u32::from(indices[i as usize]));
-            let mut node = Self::f(pk_seed, &adrs, sk);
+            let mut node = self.f(&adrs, sk);
             for j in 0..Self::A::U32 {
                 adrs.tree_height.set(j + 1);
                 adrs.tree_index.set(adrs.tree_index.get() >> 1);
                 if (indices[i as usize] >> j) & 1 == 0 {
-                    node = Self::h(pk_seed, &adrs, &node, &sig.0[i as usize].auth[j as usize]);
+                    node = self.h(&adrs, &node, &sig.0[i as usize].auth[j as usize]);
                 } else {
-                    node = Self::h(pk_seed, &adrs, &sig.0[i as usize].auth[j as usize], &node);
+                    node = self.h(&adrs, &sig.0[i as usize].auth[j as usize], &node);
                 }
             }
             roots[i as usize] = node;
         }
-        Self::t(pk_seed, &adrs.fors_roots(), &roots)
+        self.t(&adrs.fors_roots(), &roots)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use self::address::ForsTree;
-    use crate::Shake128f;
     use crate::util::macros::test_parameter_sets;
+    use crate::{PkSeed, Shake128f};
 
     use rand::{Rng, RngCore, rng};
 
@@ -229,9 +239,10 @@ mod tests {
 
         let sk_seed = SkSeed(Array([1; 16]));
         let pk_seed = PkSeed(Array([2; 16]));
+        let fors = Shake128f::new_from_pk_seed(&pk_seed);
         let adrs = ForsTree::new(3, 5);
         let md = Array([3; 25]);
-        let sig = <Shake128f as ForsParams>::fors_sign(&md, &sk_seed, &pk_seed, &adrs);
+        let sig = fors.fors_sign(&md, &sk_seed, &&adrs);
 
         let expected = hex!(
             "2cac88fad4eeae791048fe07aa3544a9
@@ -478,6 +489,8 @@ mod tests {
 
         let pk_seed = PkSeed::new(&mut rng);
 
+        let fors = Fors::new_from_pk_seed(&pk_seed);
+
         let mut msg = Array::<u8, Fors::MD>::default();
         rng.fill_bytes(msg.as_mut_slice());
 
@@ -492,12 +505,12 @@ mod tests {
         let mut pks = Array::<Array<u8, Fors::N>, Fors::K>::default();
         for i in 0..Fors::K::U32 {
             adrs.tree_index.set(i);
-            pks[i as usize] = Fors::fors_node(&sk_seed, i, Fors::A::U32, &pk_seed, &adrs);
+            pks[i as usize] = fors.fors_node(&sk_seed, i, Fors::A::U32, &adrs);
         }
-        let pk = Fors::t(&pk_seed, &adrs.fors_roots(), &pks);
+        let pk = fors.t(&adrs.fors_roots(), &pks);
 
-        let sig = Fors::fors_sign(&msg, &sk_seed, &pk_seed, &adrs);
-        let pk_recovered = Fors::fors_pk_from_sig(&sig, &msg, &pk_seed, &adrs);
+        let sig = fors.fors_sign(&msg, &sk_seed, &adrs);
+        let pk_recovered = fors.fors_pk_from_sig(&sig, &msg, &adrs);
         assert_eq!(pk, pk_recovered);
     }
 
@@ -511,6 +524,8 @@ mod tests {
 
         let pk_seed = PkSeed::new(&mut rng);
 
+        let fors = Fors::new_from_pk_seed(&pk_seed);
+
         let mut msg = Array::<u8, Fors::MD>::default();
         rng.fill_bytes(msg.as_mut_slice());
 
@@ -525,16 +540,16 @@ mod tests {
         let mut pks = Array::<Array<u8, Fors::N>, Fors::K>::default();
         for i in 0..Fors::K::U32 {
             adrs.tree_index.set(i);
-            pks[i as usize] = Fors::fors_node(&sk_seed, i, Fors::A::U32, &pk_seed, &adrs);
+            pks[i as usize] = fors.fors_node(&sk_seed, i, Fors::A::U32, &adrs);
         }
-        let pk = Fors::t(&pk_seed, &adrs.fors_roots(), &pks);
+        let pk = fors.t(&adrs.fors_roots(), &pks);
 
-        let sig = Fors::fors_sign(&msg, &sk_seed, &pk_seed, &adrs);
+        let sig = fors.fors_sign(&msg, &sk_seed, &adrs);
 
         // Modify the message
         msg[0] ^= 0xff; // Invert the first byte of the message
 
-        let pk_recovered = Fors::fors_pk_from_sig(&sig, &msg, &pk_seed, &adrs);
+        let pk_recovered = fors.fors_pk_from_sig(&sig, &msg, &adrs);
         assert_ne!(
             pk, pk_recovered,
             "Signature verification should fail with a modified message"
