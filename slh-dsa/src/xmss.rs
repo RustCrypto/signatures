@@ -6,11 +6,19 @@ use crate::wots::WotsSig;
 use crate::{address, wots::WotsParams};
 use core::fmt::Debug;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 pub(crate) struct XmssSig<P: XmssParams> {
     pub(crate) sig: WotsSig<P>,
     pub(crate) auth: Array<Array<u8, P::N>, P::HPrime>,
 }
+
+impl<P: XmssParams> PartialEq for XmssSig<P> {
+    fn eq(&self, other: &Self) -> bool {
+        self.sig == other.sig && self.auth == other.auth
+    }
+}
+
+impl<P: XmssParams> Eq for XmssSig<P> {}
 
 impl<P: XmssParams> XmssSig<P> {
     pub(crate) const SIZE: usize = WotsSig::<P>::SIZE + P::HPrime::USIZE * P::N::USIZE;

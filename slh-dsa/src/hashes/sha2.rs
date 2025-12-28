@@ -45,14 +45,6 @@ pub struct Sha2L1<N, M> {
     cached_hasher: Sha256,
 }
 
-impl<N: ArraySize, M: ArraySize> PartialEq for Sha2L1<N, M> {
-    fn eq(&self, _other: &Self) -> bool {
-        unreachable!("This should never be actually called and is just required for derive macros");
-    }
-}
-
-impl<N: ArraySize, M: ArraySize> Eq for Sha2L1<N, M> {}
-
 impl<N: ArraySize, M: ArraySize> HashSuite for Sha2L1<N, M>
 where
     N: core::ops::Add<N>,
@@ -215,14 +207,6 @@ pub struct Sha2L35<N, M> {
     cached_hasher_256: Sha256,
     cached_hasher_512: Sha512,
 }
-
-impl<N: ArraySize, M: ArraySize> PartialEq for Sha2L35<N, M> {
-    fn eq(&self, _other: &Self) -> bool {
-        unreachable!("This should never be actually called and is just required for derive macros");
-    }
-}
-
-impl<N: ArraySize, M: ArraySize> Eq for Sha2L35<N, M> {}
 
 impl<N: ArraySize, M: ArraySize> HashSuite for Sha2L35<N, M>
 where

@@ -14,8 +14,16 @@ const LOG_W: usize = 4;
 const W: u32 = 16;
 const CK_LEN: usize = 3; // Length of a checksum in chunks
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug)]
 pub(crate) struct WotsSig<P: WotsParams>(Array<Array<u8, P::N>, P::WotsSigLen>);
+
+impl<P: WotsParams> PartialEq for WotsSig<P> {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
+}
+
+impl<P: WotsParams> Eq for WotsSig<P> {}
 
 impl<P: WotsParams> WotsSig<P> {
     pub(crate) const SIZE: usize = P::N::USIZE * P::WotsSigLen::USIZE;

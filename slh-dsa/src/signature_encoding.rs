@@ -17,7 +17,7 @@ use pkcs8::{
     spki::SignatureBitStringEncoding,
 };
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 /// A parsed SLH-DSA signature for a given parameter set
 ///
 /// Note that this is a large stack-allocated value and may overflow the stack on
@@ -29,6 +29,16 @@ pub struct Signature<P: ParameterSet> {
     pub(crate) fors_sig: ForsSignature<P>,
     pub(crate) ht_sig: HypertreeSig<P>,
 }
+
+impl<P: ParameterSet> PartialEq for Signature<P> {
+    fn eq(&self, other: &Self) -> bool {
+        self.randomizer == other.randomizer
+            && self.fors_sig == other.fors_sig
+            && self.ht_sig == other.ht_sig
+    }
+}
+
+impl<P: ParameterSet> Eq for Signature<P> {}
 
 impl<P: ParameterSet> Signature<P> {
     #[cfg(feature = "alloc")]

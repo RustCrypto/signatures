@@ -8,8 +8,16 @@ use crate::{
     xmss::{XmssParams, XmssSig},
 };
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 pub(crate) struct HypertreeSig<P: HypertreeParams>(Array<XmssSig<P>, P::D>);
+
+impl<P: HypertreeParams> PartialEq for HypertreeSig<P> {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
+}
+
+impl<P: HypertreeParams> Eq for HypertreeSig<P> {}
 
 impl<P: HypertreeParams> HypertreeSig<P> {
     pub(crate) const SIZE: usize = XmssSig::<P>::SIZE * P::D::USIZE;

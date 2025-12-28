@@ -25,14 +25,6 @@ pub struct Shake<N, M> {
     cached_hasher: Shake256,
 }
 
-impl<N: ArraySize, M: ArraySize> PartialEq for Shake<N, M> {
-    fn eq(&self, _other: &Self) -> bool {
-        unreachable!("This should never be actually called and is just required for derive macros");
-    }
-}
-
-impl<N: ArraySize, M: ArraySize> Eq for Shake<N, M> {}
-
 impl<N: ArraySize, M: ArraySize> HashSuite for Shake<N, M>
 where
     N: Debug + Clone + PartialEq + Eq,

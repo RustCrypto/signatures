@@ -8,11 +8,19 @@ use crate::{SkSeed, address};
 use crate::hypertree::HypertreeParams;
 use crate::util::base_2b;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 pub(crate) struct ForsMTSig<P: ForsParams> {
     sk: Array<u8, P::N>,
     auth: Array<Array<u8, P::N>, P::A>,
 }
+
+impl<P: ForsParams> PartialEq for ForsMTSig<P> {
+    fn eq(&self, other: &Self) -> bool {
+        self.sk == other.sk && self.auth == other.auth
+    }
+}
+
+impl<P: ForsParams> Eq for ForsMTSig<P> {}
 
 impl<P: ForsParams> ForsMTSig<P> {
     const SIZE: usize = P::N::USIZE + P::A::USIZE * P::N::USIZE;
@@ -64,8 +72,16 @@ impl<P: ForsParams> TryFrom<&[u8]> for ForsMTSig<P> {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 pub(crate) struct ForsSignature<P: ForsParams>(Array<ForsMTSig<P>, P::K>);
+
+impl<P: ForsParams> PartialEq for ForsSignature<P> {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
+}
+
+impl<P: ForsParams> Eq for ForsSignature<P> {}
 
 impl<P: ForsParams> TryFrom<&[u8]> for ForsSignature<P> {
     // TODO - real error type

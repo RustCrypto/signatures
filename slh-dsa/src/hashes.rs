@@ -15,7 +15,7 @@ pub use shake::*;
 use crate::{PkSeed, SkPrf, SkSeed, address::Address};
 
 /// A trait specifying the hash functions described in FIPS-205 section 10
-pub(crate) trait HashSuite: Sized + Clone + Debug + PartialEq + Eq {
+pub(crate) trait HashSuite: Sized + Clone + Debug {
     type N: ArraySize + Debug + Clone + PartialEq + Eq;
     type M: ArraySize + Debug + Clone + PartialEq + Eq;
 

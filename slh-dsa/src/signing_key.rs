@@ -69,12 +69,22 @@ impl<N: ArraySize> SkPrf<N> {
 }
 
 /// A `SigningKey` allows signing messages with a fixed parameter set
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, Debug)]
 pub struct SigningKey<P: ParameterSet> {
     pub(crate) sk_seed: SkSeed<P::N>,
     pub(crate) sk_prf: SkPrf<P::N>,
     pub(crate) verifying_key: VerifyingKey<P>,
 }
+
+impl<P: ParameterSet> PartialEq for SigningKey<P> {
+    fn eq(&self, other: &Self) -> bool {
+        self.sk_seed == other.sk_seed
+            && self.sk_prf == other.sk_prf
+            && self.verifying_key == other.verifying_key
+    }
+}
+
+impl<P: ParameterSet> Eq for SigningKey<P> {}
 
 #[cfg(feature = "zeroize")]
 impl<P: ParameterSet> Drop for SigningKey<P> {
