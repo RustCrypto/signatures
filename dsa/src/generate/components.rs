@@ -15,7 +15,7 @@ use crypto_primes::{Flavor, is_prime};
 use signature::rand_core::CryptoRng;
 
 #[cfg(feature = "hazmat")]
-use {crate::Components, crypto_bigint::subtle::CtOption};
+use {crate::Components, crypto_bigint::CtOption};
 
 /// Generate the common components p, q, and g
 ///
