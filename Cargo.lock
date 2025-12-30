@@ -268,11 +268,12 @@ checksum = "460fbee9c2c2f33933d720630a6a0bac33ba7053db5344fac858d4b8952d77d5"
 
 [[package]]
 name = "crypto-bigint"
-version = "0.7.0-rc.12"
+version = "0.7.0-rc.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a7ddf7876857d903765f30de7c789044ea2e49a4f611fe96416827175cef6b34"
+checksum = "b2bb4138de6db76c8155b4423e967049fbef2cf84ad6af7f552f73a161941b72"
 dependencies = [
  "ctutils",
+ "getrandom 0.4.0-rc.0",
  "hybrid-array",
  "num-traits",
  "rand_core 0.10.0-rc-3",
@@ -293,7 +294,7 @@ dependencies = [
 [[package]]
 name = "crypto-primes"
 version = "0.7.0-dev"
-source = "git+https://github.com/tarcieri/crypto-primes?branch=crypto-bigint%2Fv0.7.0-rc.12#a96b3c9e40db97dfd3df73d9368ff096292fcb16"
+source = "git+https://github.com/tarcieri/crypto-primes?branch=crypto-bigint%2Fv0.7.0-rc.13#f98697886371aa15446ca53ef5b9e9e44efbabf8"
 dependencies = [
  "crypto-bigint",
  "libm",
@@ -311,9 +312,9 @@ dependencies = [
 
 [[package]]
 name = "ctutils"
-version = "0.2.2"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "925ebe186f09a7894817213f89eae07c39374f5c934613605af7accc8aea6414"
+checksum = "130ffe18bdf7a4926e57ed19d404995244e6c8d6a97abf4eddde1f892bf1ce0c"
 dependencies = [
  "cmov",
  "subtle",
@@ -425,8 +426,9 @@ checksum = "48c757948c5ede0e46177b7add2e67155f70e33c07fea8284df6576da70b3719"
 
 [[package]]
 name = "elliptic-curve"
-version = "0.14.0-rc.17"
-source = "git+https://github.com/RustCrypto/traits#28bb5d487421f35eed714810a7f10fb091179e6f"
+version = "0.14.0-rc.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c8119dc256cd897f759f5b9d45dfd9b066af1c79e71688b7f0a6be989e8fbfbf"
 dependencies = [
  "base16ct",
  "crypto-bigint",
