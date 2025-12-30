@@ -379,7 +379,7 @@ dependencies = [
 
 [[package]]
 name = "ecdsa"
-version = "0.17.0-rc.9"
+version = "0.17.0-rc.10"
 dependencies = [
  "der",
  "digest",
