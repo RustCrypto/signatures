@@ -1,7 +1,7 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use hybrid_array::{Array, ArraySize};
 use ml_dsa::{B32, KeyGen, MlDsa65, Signature, SigningKey, VerifyingKey};
-use rand::CryptoRng;
+use rand_core::{CryptoRng, TryRngCore};
 
 pub fn rand<L: ArraySize, R: CryptoRng + ?Sized>(rng: &mut R) -> Array<u8, L> {
     let mut val = Array::<u8, L>::default();
@@ -10,7 +10,7 @@ pub fn rand<L: ArraySize, R: CryptoRng + ?Sized>(rng: &mut R) -> Array<u8, L> {
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
-    let mut rng = rand::rng();
+    let mut rng = getrandom::SysRng.unwrap_err();
     let xi: B32 = rand(&mut rng);
     let m: B32 = rand(&mut rng);
     let ctx: B32 = rand(&mut rng);

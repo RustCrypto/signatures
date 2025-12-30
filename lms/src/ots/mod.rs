@@ -17,21 +17,22 @@ pub use signature::Signature;
 
 #[cfg(test)]
 pub mod tests {
-    use crate::constants::ID_LEN;
-    use crate::ots::modes::{
-        LmsOtsMode, LmsOtsSha256N32W1, LmsOtsSha256N32W2, LmsOtsSha256N32W4, LmsOtsSha256N32W8,
+    use crate::{
+        constants::ID_LEN,
+        ots::{
+            modes::{
+                LmsOtsMode, LmsOtsSha256N32W1, LmsOtsSha256N32W2, LmsOtsSha256N32W4,
+                LmsOtsSha256N32W8,
+            },
+            private::SigningKey,
+        },
     };
-    use crate::ots::private::SigningKey;
-    use digest::Digest;
-    use digest::OutputSizeUser;
+    use digest::{Digest, OutputSizeUser};
     use hex_literal::hex;
     use hybrid_array::{Array, ArraySize};
-    use rand::rng;
-    use rand_core::{CryptoRng, RngCore};
-    use signature::RandomizedSignerMut;
-    use signature::Verifier;
-    use std::matches;
-    use std::ops::Add;
+    use rand_core::{CryptoRng, RngCore, TryRngCore};
+    use signature::{RandomizedSignerMut, Verifier};
+    use std::{matches, ops::Add};
     use typenum::{Sum, U2};
 
     // tests that a signature signed with a private key verifies under
@@ -41,7 +42,7 @@ pub mod tests {
         <Mode::Hasher as OutputSizeUser>::OutputSize: Add<U2>,
         Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U2>: ArraySize,
     {
-        let mut rng = rng();
+        let mut rng = getrandom::SysRng.unwrap_err();
         let mut sk = SigningKey::<Mode>::new(0, [0xcc; ID_LEN], &mut rng);
         let pk = sk.public();
         let msg = "this is a test message".as_bytes();
@@ -65,7 +66,7 @@ pub mod tests {
         <Mode::Hasher as OutputSizeUser>::OutputSize: Add<U2>,
         Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U2>: ArraySize,
     {
-        let mut rng = rng();
+        let mut rng = getrandom::SysRng.unwrap_err();
         let mut sk = SigningKey::<Mode>::new(0, [0xcc; ID_LEN], &mut rng);
         let mut pk = sk.public();
         let msg = "this is a test message".as_bytes();

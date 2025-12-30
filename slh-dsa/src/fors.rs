@@ -1,12 +1,7 @@
+use crate::{SkSeed, address, hypertree::HypertreeParams, util::base_2b};
 use core::fmt::Debug;
-
 use hybrid_array::{Array, ArraySize};
 use typenum::Unsigned;
-
-use crate::{SkSeed, address};
-
-use crate::hypertree::HypertreeParams;
-use crate::util::base_2b;
 
 #[derive(Clone, Debug)]
 pub(crate) struct ForsMTSig<P: ForsParams> {
@@ -224,12 +219,9 @@ pub(crate) trait ForsParams: HypertreeParams {
 #[cfg(test)]
 mod tests {
     use self::address::ForsTree;
-    use crate::util::macros::test_parameter_sets;
-    use crate::{PkSeed, Shake128f};
-
-    use rand::{Rng, RngCore, rng};
-
     use super::*;
+    use crate::{PkSeed, Shake128f, util::macros::test_parameter_sets};
+    use rand::{Rng, TryRngCore, rngs::SysRng};
 
     #[test]
     #[cfg(feature = "alloc")]
@@ -483,16 +475,14 @@ mod tests {
 
     fn test_sign_verify<Fors: ForsParams>() {
         // Generate random sk_seed, pk_seed, message, index, address
-        let mut rng = rng();
+        let mut rng = SysRng.unwrap_err();
 
         let sk_seed = SkSeed::new(&mut rng);
-
         let pk_seed = PkSeed::new(&mut rng);
-
         let fors = Fors::new_from_pk_seed(&pk_seed);
 
         let mut msg = Array::<u8, Fors::MD>::default();
-        rng.fill_bytes(msg.as_mut_slice());
+        rng.fill(msg.as_mut_slice());
 
         let idx_tree = rng.random_range(
             0..=(1u64
@@ -518,16 +508,14 @@ mod tests {
 
     fn test_sign_verify_failure<Fors: ForsParams>() {
         // Generate random sk_seed, pk_seed, message, index, address
-        let mut rng = rng();
+        let mut rng = SysRng.unwrap_err();
 
         let sk_seed = SkSeed::new(&mut rng);
-
         let pk_seed = PkSeed::new(&mut rng);
-
         let fors = Fors::new_from_pk_seed(&pk_seed);
 
         let mut msg = Array::<u8, Fors::MD>::default();
-        rng.fill_bytes(msg.as_mut_slice());
+        rng.fill(msg.as_mut_slice());
 
         let idx_tree = rng.random_range(
             0..=(1u64

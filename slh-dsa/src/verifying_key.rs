@@ -246,10 +246,12 @@ impl<M> VerifyingKeyLen for Shake<U32, M> {
 mod tests {
     use crate::*;
     use hybrid_array::Array;
+    use rand::{TryRngCore, rngs::SysRng};
     use signature::*;
+
     #[test]
     fn test_vk_serialize_deserialize() {
-        let mut rng = rand::rng();
+        let mut rng = SysRng.unwrap_err();
         let sk = SigningKey::<Shake128f>::new(&mut rng);
         let vk = sk.verifying_key();
         let vk_bytes: Array<u8, _> = (&vk).into();

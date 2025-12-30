@@ -1,10 +1,11 @@
 use criterion::{Criterion, criterion_group, criterion_main};
+use rand::{TryRngCore, rngs::SysRng};
 use signature::{Keypair, Signer, Verifier};
 use slh_dsa::*;
 use std::hint::black_box;
 
 pub fn sign_benchmark<P: ParameterSet>(c: &mut Criterion) {
-    let mut rng = rand::rng();
+    let mut rng = SysRng.unwrap_err();
     let sk = SigningKey::<P>::new(&mut rng);
     c.bench_function(&format!("sign: {}", P::NAME), |b| {
         b.iter(|| {
@@ -16,7 +17,7 @@ pub fn sign_benchmark<P: ParameterSet>(c: &mut Criterion) {
 }
 
 pub fn verify_benchmark<P: ParameterSet>(c: &mut Criterion) {
-    let mut rng = rand::rng();
+    let mut rng = SysRng.unwrap_err();
     let sk = SigningKey::<P>::new(&mut rng);
     let msg = b"Hello, world!";
     let sig = sk.try_sign(msg).unwrap();
