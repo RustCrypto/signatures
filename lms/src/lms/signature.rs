@@ -134,15 +134,15 @@ impl<Mode: LmsMode> TryFrom<&[u8]> for Signature<Mode> {
 
 #[cfg(test)]
 mod tests {
-    use std::ops::{Add, Mul};
-
-    use crate::lms::modes::*;
-    use crate::lms::{Signature, SigningKey, VerifyingKey};
-    use crate::ots::modes::*;
+    use crate::{
+        lms::{Signature, SigningKey, VerifyingKey, modes::*},
+        ots::modes::*,
+    };
+    use getrandom::rand_core::TryRngCore;
     use hex_literal::hex;
     use hybrid_array::ArraySize;
-    use rand::rng;
     use signature::{RandomizedSignerMut, Verifier};
+    use std::ops::{Add, Mul};
     use typenum::{Prod, Sum, U1, U4};
 
     #[test]
@@ -268,7 +268,7 @@ mod tests {
             U4,
         >: ArraySize,
     {
-        let mut rng = rng();
+        let mut rng = getrandom::SysRng.unwrap_err();
         let mut sk = SigningKey::<Mode>::new(&mut rng);
         let pk = sk.public();
         let msg = b"Hello, world!";

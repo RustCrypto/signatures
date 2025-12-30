@@ -1,19 +1,19 @@
 use digest::Digest;
 use dsa::{Components, KeySize, SigningKey};
+use getrandom::rand_core::TryRngCore;
 use pkcs8::{EncodePrivateKey, EncodePublicKey, LineEnding};
 use sha1::Sha1;
 use signature::{RandomizedDigestSigner, SignatureEncoding};
 use std::{fs::File, io::Write};
 
 fn main() {
-    let mut rng = rand::rng();
+    let mut rng = getrandom::SysRng.unwrap_err();
     let components = Components::generate(&mut rng, KeySize::DSA_2048_256);
     let signing_key = SigningKey::generate(&mut rng, components);
     let verifying_key = signing_key.verifying_key();
 
-    let signature = signing_key.sign_digest_with_rng(&mut rand::rng(), |digest: &mut Sha1| {
-        digest.update(b"hello world")
-    });
+    let signature = signing_key
+        .sign_digest_with_rng(&mut rng, |digest: &mut Sha1| digest.update(b"hello world"));
 
     let signing_key_bytes = signing_key.to_pkcs8_pem(LineEnding::LF).unwrap();
     let verifying_key_bytes = verifying_key.to_public_key_pem(LineEnding::LF).unwrap();

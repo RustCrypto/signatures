@@ -1,10 +1,7 @@
+use crate::{SkSeed, address, wots::WotsParams, wots::WotsSig};
+use core::fmt::Debug;
 use hybrid_array::{Array, ArraySize};
 use typenum::Unsigned;
-
-use crate::SkSeed;
-use crate::wots::WotsSig;
-use crate::{address, wots::WotsParams};
-use core::fmt::Debug;
 
 #[derive(Clone, Debug)]
 pub(crate) struct XmssSig<P: XmssParams> {
@@ -145,18 +142,14 @@ where {
 #[cfg(test)]
 mod tests {
 
-    use crate::PkSeed;
-    use crate::SkSeed;
-    use crate::util::macros::test_parameter_sets;
+    use crate::{
+        PkSeed, SkSeed, address::WotsHash, hashes::Shake128f, util::macros::test_parameter_sets,
+        xmss::XmssParams,
+    };
     use hex_literal::hex;
     use hybrid_array::Array;
-    use rand::Rng;
-    use rand::RngCore;
-    use rand::rng;
-
+    use rand::{Rng, RngCore, TryRngCore, rngs::SysRng};
     use typenum::Unsigned;
-
-    use crate::{address::WotsHash, hashes::Shake128f, xmss::XmssParams};
 
     #[test]
     fn test_xmss_node_shake128f_kat() {
@@ -210,23 +203,19 @@ mod tests {
 
     fn test_sign_verify<Xmss: XmssParams>() {
         // Generate random sk_seed, pk_seed, message, index, address
-        let mut rng = rng();
+        let mut rng = SysRng.unwrap_err();
 
         let sk_seed = SkSeed::new(&mut rng);
-
         let pk_seed = PkSeed::new(&mut rng);
-
         let xmss = Xmss::new_from_pk_seed(&pk_seed);
 
         let mut msg = Array::<u8, _>::default();
         rng.fill_bytes(msg.as_mut_slice());
 
         let idx = rng.random_range(0..(1 << Xmss::HPrime::U32));
-
         let adrs = WotsHash::default();
 
         let pk = xmss.xmss_node(&sk_seed, 0, Xmss::HPrime::U32, &adrs);
-
         let sig = xmss.xmss_sign(&msg, &sk_seed, idx, &adrs);
         let pk_recovered = xmss.xmss_pk_from_sig(idx, &sig, &msg, &adrs);
 
@@ -237,30 +226,25 @@ mod tests {
 
     fn test_sign_verify_fail<Xmss: XmssParams>() {
         // Generate random sk_seed, pk_seed, message, index, address
-        let mut rng = rng();
+        let mut rng = SysRng.unwrap_err();
 
         let sk_seed = SkSeed::new(&mut rng);
-
         let pk_seed = PkSeed::new(&mut rng);
-
         let xmss = Xmss::new_from_pk_seed(&pk_seed);
 
         let mut msg = Array::<u8, _>::default();
         rng.fill_bytes(msg.as_mut_slice());
 
         let idx = rng.random_range(0..(1 << Xmss::HPrime::U32));
-
         let adrs = WotsHash::default();
 
         let pk = xmss.xmss_node(&sk_seed, 0, Xmss::HPrime::U32, &adrs);
-
         let sig = xmss.xmss_sign(&msg, &sk_seed, idx, &adrs);
 
         // Tweak message
         msg[0] ^= 0xff;
 
         let pk_recovered = xmss.xmss_pk_from_sig(idx, &sig, &msg, &adrs);
-
         assert_ne!(pk, pk_recovered);
     }
 

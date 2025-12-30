@@ -1,12 +1,11 @@
 use crate::signing_key::SkSeed;
-use core::fmt::Debug;
-use hybrid_array::{Array, ArraySize};
-use typenum::Unsigned;
-
 use crate::{
     address::WotsHash,
     xmss::{XmssParams, XmssSig},
 };
+use core::fmt::Debug;
+use hybrid_array::{Array, ArraySize};
+use typenum::Unsigned;
 
 #[derive(Clone, Debug)]
 pub(crate) struct HypertreeSig<P: HypertreeParams>(Array<XmssSig<P>, P::D>);
@@ -138,15 +137,13 @@ mod tests {
     use super::*;
     use crate::{PkSeed, hashes::Shake128f, util::macros::test_parameter_sets};
     use hybrid_array::Array;
-    use rand::{Rng, rng};
+    use rand::{Rng, TryRngCore, rngs::SysRng};
 
     fn test_ht_sign_verify<HTMode: HypertreeParams>() {
-        let mut rng = rng();
+        let mut rng = SysRng.unwrap_err();
 
         let sk_seed = SkSeed::new(&mut rng);
-
         let pk_seed = PkSeed::new(&mut rng);
-
         let htmode = HTMode::new_from_pk_seed(&pk_seed);
 
         let mut m = Array::<u8, HTMode::N>::default();
@@ -173,12 +170,10 @@ mod tests {
     test_parameter_sets!(test_ht_sign_verify);
 
     fn test_ht_sign_verify_fail<HTMode: HypertreeParams>() {
-        let mut rng = rng();
+        let mut rng = SysRng.unwrap_err();
 
         let sk_seed = SkSeed::new(&mut rng);
-
         let pk_seed = PkSeed::new(&mut rng);
-
         let htmode = HTMode::new_from_pk_seed(&pk_seed);
 
         let mut m = Array::<u8, HTMode::N>::default();

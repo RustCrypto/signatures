@@ -20,9 +20,13 @@
 //! ```
 //! # #[cfg(feature = "rand_core")]
 //! # {
-//! use ml_dsa::{MlDsa65, KeyGen, signature::{Keypair, Signer, Verifier}};
+//! use ml_dsa::{
+//!     signature::{Keypair, Signer, Verifier},
+//!     MlDsa65, KeyGen,
+//! };
+//! use getrandom::rand_core::TryRngCore;
 //!
-//! let mut rng = rand::rng();
+//! let mut rng = getrandom::SysRng.unwrap_err();
 //! let kp = MlDsa65::key_gen(&mut rng);
 //!
 //! let msg = b"Hello world";
@@ -925,6 +929,7 @@ where
 mod test {
     use super::*;
     use crate::param::*;
+    use getrandom::rand_core::{RngCore, TryRngCore};
     use signature::digest::Update;
 
     #[test]
@@ -1025,16 +1030,14 @@ mod test {
     where
         P: MlDsaParams,
     {
-        use rand::Rng;
-
         const ITERATIONS: usize = 1000;
 
-        let mut rng = rand::rng();
+        let mut rng = getrandom::SysRng.unwrap_err();
         let mut seed = B32::default();
 
         for _i in 0..ITERATIONS {
             let seed_data: &mut [u8] = seed.as_mut();
-            rng.fill(seed_data);
+            rng.fill_bytes(seed_data);
 
             let kp = P::from_seed(&seed);
             let sk = kp.signing_key;
@@ -1165,7 +1168,8 @@ mod test {
             let vk = kp.verifying_key;
 
             let M = b"Hello world";
-            let sig = sk.sign_digest_with_rng(&mut rand::rng(), |digest| digest.update(M));
+            let mut rng = getrandom::SysRng.unwrap_err();
+            let sig = sk.sign_digest_with_rng(&mut rng, |digest| digest.update(M));
 
             vk.verify_digest(
                 |digest| {

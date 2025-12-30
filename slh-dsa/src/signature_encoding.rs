@@ -1,13 +1,18 @@
 use crate::ParameterSet;
-use crate::hashes::{
-    Sha2_128f, Sha2_128s, Sha2_192f, Sha2_192s, Sha2_256f, Sha2_256s, Shake128f, Shake192f,
-    Shake192s, Shake256f, Shake256s,
+use crate::{
+    Shake128s,
+    fors::ForsSignature,
+    hashes::{
+        Sha2_128f, Sha2_128s, Sha2_192f, Sha2_192s, Sha2_256f, Sha2_256s, Shake128f, Shake192f,
+        Shake192s, Shake256f, Shake256s,
+    },
+    hypertree::HypertreeSig,
 };
-use crate::hypertree::HypertreeSig;
-use crate::{Shake128s, fors::ForsSignature};
 use ::signature::{Error, SignatureEncoding};
-use hybrid_array::sizes::{U7856, U16224, U17088, U29792, U35664, U49856};
-use hybrid_array::{Array, ArraySize};
+use hybrid_array::{
+    Array, ArraySize,
+    sizes::{U7856, U16224, U17088, U29792, U35664, U49856},
+};
 use pkcs8::{AlgorithmIdentifierRef, der::AnyRef, spki::AssociatedAlgorithmIdentifier};
 use typenum::Unsigned;
 
@@ -189,15 +194,16 @@ impl SignatureLen for Sha2_256f {
 
 #[cfg(test)]
 mod tests {
-    use crate::SigningKey;
-    use crate::signature_encoding::Signature;
-    use crate::util::macros::test_parameter_sets;
-    use crate::{ParameterSet, hashes::*};
+    use crate::{
+        ParameterSet, SigningKey, hashes::*, signature_encoding::Signature,
+        util::macros::test_parameter_sets,
+    };
     use hybrid_array::Array;
+    use rand::{TryRngCore, rngs::SysRng};
     use signature::{SignatureEncoding, Signer};
 
     fn test_serialize_deserialize<P: ParameterSet>() {
-        let mut rng = rand::rng();
+        let mut rng = SysRng.unwrap_err();
         let sk = SigningKey::<P>::new(&mut rng);
         let msg = b"Hello, world!";
         let sig = sk.try_sign(msg).unwrap();
@@ -215,7 +221,7 @@ mod tests {
 
     #[cfg(feature = "alloc")]
     fn test_serialize_deserialize_vec<P: ParameterSet>() {
-        let mut rng = rand::rng();
+        let mut rng = SysRng.unwrap_err();
         let sk = SigningKey::<P>::new(&mut rng);
         let msg = b"Hello, world!";
         let sig = sk.try_sign(msg).unwrap();
@@ -234,7 +240,7 @@ mod tests {
 
     #[test]
     fn test_deserialize_fail_on_incorrect_length() {
-        let mut rng = rand::rng();
+        let mut rng = SysRng.unwrap_err();
         let sk = SigningKey::<Shake128f>::new(&mut rng);
         let msg = b"Hello, world!";
         let sig = sk.try_sign(msg).unwrap();
