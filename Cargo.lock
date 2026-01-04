@@ -823,8 +823,9 @@ dependencies = [
 
 [[package]]
 name = "rand"
-version = "0.10.0-rc.5"
-source = "git+https://github.com/rust-random/rand#ff07ec205347dd749a586aaee7218cb21590ea4c"
+version = "0.10.0-rc.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bccc05ac8fad6ee391f3cc6725171817eed960345e2fb42ad229d486c1ca2d98"
 dependencies = [
  "chacha20",
  "getrandom 0.4.0-rc.0",
@@ -1129,7 +1130,7 @@ dependencies = [
  "paste",
  "pkcs8",
  "proptest",
- "rand 0.10.0-rc.5",
+ "rand 0.10.0-rc.6",
  "rand_core 0.10.0-rc-3",
  "serde",
  "serde_json",
