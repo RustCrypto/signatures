@@ -4,7 +4,7 @@ description = """
 Pure Rust implementation of SLH-DSA (aka SPHINCS+) as described in the
 FIPS-205 standard
 """
-version = "0.2.0-rc.1"
+version = "0.2.0-rc.2"
 edition = "2024"
 rust-version = "1.85"
 license = "Apache-2.0 OR MIT"
