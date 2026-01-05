@@ -404,6 +404,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "signature",
+ "zerocopy",
  "zeroize",
 ]
 
