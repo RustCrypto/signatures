@@ -1,6 +1,6 @@
 use hybrid_array::AsArrayRef;
 use ml_dsa::{
-    KeyGen, KeyPair, MlDsa44, MlDsa65, MlDsa87, Signature,
+    EncodedSigningKey, KeyGen, KeyPair, MlDsa44, MlDsa65, MlDsa87, Signature, SigningKey,
     signature::{Signer, Verifier},
 };
 use proptest::prelude::*;
@@ -17,6 +17,11 @@ prop_compose! {
 prop_compose! {
     fn mldsa65_keypair()(seed_bytes in any::<[u8; 32]>()) -> KeyPair<MlDsa65> {
        MlDsa65::from_seed(seed_bytes.as_array_ref())
+    }
+}
+prop_compose! {
+    fn mldsa65_encoded_signing_key()(bytes in any::<[u8; 4032]>()) -> EncodedSigningKey<MlDsa65> {
+        EncodedSigningKey::<MlDsa65>::try_from(bytes.as_slice()).unwrap()
     }
 }
 prop_compose! {
@@ -43,6 +48,11 @@ proptest! {
     #[test]
     fn mldsa44_round_trip(keypair in mldsa44_keypair()) {
         round_trip_test!(MlDsa44, keypair);
+    }
+
+    #[test]
+    fn mldsa64_decode(encoded_signing_key in mldsa65_encoded_signing_key()) {
+        let _sk = SigningKey::<MlDsa65>::decode(&encoded_signing_key);
     }
 
     #[test]
