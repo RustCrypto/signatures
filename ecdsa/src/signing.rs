@@ -7,10 +7,11 @@ use crate::{
 use core::fmt::{self, Debug};
 use digest::{Update, block_api::EagerHash, const_oid::AssociatedOid};
 use elliptic_curve::{
-    CurveArithmetic, FieldBytes, NonZeroScalar, Scalar, SecretKey,
+    CurveArithmetic, FieldBytes, Generate, NonZeroScalar, Scalar, SecretKey,
     array::ArraySize,
     group::ff::PrimeField,
     ops::Invert,
+    rand_core::CryptoRng,
     subtle::{Choice, ConstantTimeEq, CtOption},
     zeroize::{Zeroize, ZeroizeOnDrop},
 };
@@ -67,8 +68,6 @@ use elliptic_curve::pkcs8::{EncodePrivateKey, SecretDocument};
 pub struct SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
-    SignatureSize<C>: ArraySize,
 {
     /// ECDSA signing keys are non-zero elements of a given curve's scalar field.
     secret_scalar: NonZeroScalar<C>,
@@ -81,26 +80,7 @@ where
 impl<C> SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
-    SignatureSize<C>: ArraySize,
 {
-    /// Generate a cryptographically random [`SigningKey`].
-    ///
-    /// # Panics
-    ///
-    /// If the system's cryptographically secure RNG has an internal error.
-    #[cfg(feature = "getrandom")]
-    pub fn generate() -> Self {
-        NonZeroScalar::<C>::generate().into()
-    }
-
-    /// Generate a cryptographically random [`SigningKey`], returning underlying RNG errors.
-    pub fn try_from_rng<R: TryCryptoRng + ?Sized>(
-        rng: &mut R,
-    ) -> core::result::Result<Self, R::Error> {
-        Ok(NonZeroScalar::<C>::try_from_rng(rng)?.into())
-    }
-
     /// Initialize signing key from a raw scalar serialized as a byte array.
     pub fn from_bytes(bytes: &FieldBytes<C>) -> Result<Self> {
         SecretKey::<C>::from_bytes(bytes)
@@ -135,6 +115,23 @@ where
     #[cfg(feature = "algorithm")]
     pub fn verifying_key(&self) -> &VerifyingKey<C> {
         &self.verifying_key
+    }
+
+    /// DEPRECATED: Generate a cryptographically random [`SigningKey`].
+    #[deprecated(since = "0.17.0", note = "use the `Generate` trait instead")]
+    pub fn random<R: CryptoRng + ?Sized>(rng: &mut R) -> Self {
+        Self::generate_from_rng(rng)
+    }
+}
+
+impl<C> Generate for SigningKey<C>
+where
+    C: EcdsaCurve + CurveArithmetic,
+{
+    fn try_generate_from_rng<R: TryCryptoRng + ?Sized>(
+        rng: &mut R,
+    ) -> core::result::Result<Self, R::Error> {
+        Ok(NonZeroScalar::<C>::try_generate_from_rng(rng)?.into())
     }
 }
 
@@ -474,8 +471,6 @@ where
 impl<C> Debug for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
-    SignatureSize<C>: ArraySize,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("SigningKey").finish_non_exhaustive()
@@ -485,8 +480,6 @@ where
 impl<C> Drop for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
-    SignatureSize<C>: ArraySize,
 {
     fn drop(&mut self) {
         self.secret_scalar.zeroize();
@@ -515,8 +508,6 @@ where
 impl<C> From<NonZeroScalar<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
-    SignatureSize<C>: ArraySize,
 {
     fn from(secret_scalar: NonZeroScalar<C>) -> Self {
         #[cfg(feature = "algorithm")]
@@ -533,8 +524,6 @@ where
 impl<C> From<SecretKey<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
-    SignatureSize<C>: ArraySize,
 {
     fn from(secret_key: SecretKey<C>) -> Self {
         Self::from(&secret_key)
@@ -544,8 +533,6 @@ where
 impl<C> From<&SecretKey<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
-    SignatureSize<C>: ArraySize,
 {
     fn from(secret_key: &SecretKey<C>) -> Self {
         secret_key.to_nonzero_scalar().into()
@@ -566,8 +553,6 @@ where
 impl<C> From<&SigningKey<C>> for SecretKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
-    SignatureSize<C>: ArraySize,
 {
     fn from(secret_key: &SigningKey<C>) -> Self {
         secret_key.secret_scalar.into()
@@ -577,8 +562,6 @@ where
 impl<C> TryFrom<&[u8]> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
-    SignatureSize<C>: ArraySize,
 {
     type Error = Error;
 
@@ -587,13 +570,7 @@ where
     }
 }
 
-impl<C> ZeroizeOnDrop for SigningKey<C>
-where
-    C: EcdsaCurve + CurveArithmetic,
-    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
-    SignatureSize<C>: ArraySize,
-{
-}
+impl<C> ZeroizeOnDrop for SigningKey<C> where C: EcdsaCurve + CurveArithmetic {}
 
 #[cfg(feature = "algorithm")]
 impl<C> From<SigningKey<C>> for VerifyingKey<C>
