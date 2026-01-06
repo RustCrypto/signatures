@@ -152,7 +152,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "155e4a260750fa4f7754649f049748aacc31db238a358d85fd721002f230f92f"
 dependencies = [
  "block-buffer",
- "crypto-common",
+ "crypto-common 0.2.0-rc.8",
  "inout",
 ]
 
@@ -268,9 +268,9 @@ checksum = "460fbee9c2c2f33933d720630a6a0bac33ba7053db5344fac858d4b8952d77d5"
 
 [[package]]
 name = "crypto-bigint"
-version = "0.7.0-rc.14"
+version = "0.7.0-rc.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c9c6daa2049db6a5fad90a981b8c63f023dbaf75a0fae73db4dcf234556fc957"
+checksum = "1a9e36ac79ac44866b74e08a0b4925f97b984e3fff17680d2c6fbce8317ab0f6"
 dependencies = [
  "ctutils",
  "getrandom 0.4.0-rc.0",
@@ -289,6 +289,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e6165b8029cdc3e765b74d3548f85999ee799d5124877ce45c2c85ca78e4d4aa"
 dependencies = [
  "hybrid-array",
+]
+
+[[package]]
+name = "crypto-common"
+version = "0.2.0-rc.9"
+source = "git+https://github.com/RustCrypto/traits#ded0d2297fba206939bfb5f47b4fd823c4bccae8"
+dependencies = [
+ "getrandom 0.4.0-rc.0",
+ "hybrid-array",
+ "rand_core 0.10.0-rc-3",
 ]
 
 [[package]]
@@ -353,7 +363,7 @@ dependencies = [
  "blobby",
  "block-buffer",
  "const-oid",
- "crypto-common",
+ "crypto-common 0.2.0-rc.8",
  "subtle",
 ]
 
@@ -429,11 +439,11 @@ checksum = "48c757948c5ede0e46177b7add2e67155f70e33c07fea8284df6576da70b3719"
 [[package]]
 name = "elliptic-curve"
 version = "0.14.0-rc.20"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f4874d0de0bf58704a6917f26154afcdd49ebc11cae10b6d53950217aee9408"
+source = "git+https://github.com/RustCrypto/traits#ded0d2297fba206939bfb5f47b4fd823c4bccae8"
 dependencies = [
  "base16ct",
  "crypto-bigint",
+ "crypto-common 0.2.0-rc.9",
  "digest",
  "getrandom 0.4.0-rc.0",
  "hex-literal",
