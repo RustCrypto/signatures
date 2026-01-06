@@ -371,6 +371,7 @@ dependencies = [
  "hex-literal",
  "pkcs8",
  "proptest",
+ "rand_core 0.10.0-rc-3",
  "rfc6979",
  "sha1",
  "sha2",

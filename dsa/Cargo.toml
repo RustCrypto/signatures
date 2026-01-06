@@ -37,6 +37,7 @@ proptest = "1"
 getrandom = { version = "0.4.0-rc.0", features = ["sys_rng"] }
 sha1 = "0.11.0-rc.2"
 der = { version = "0.8.0-rc.10", features = ["derive"] }
+rand_core = "0.10.0-rc-3"
 
 [features]
 default = ["pkcs8"]
