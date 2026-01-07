@@ -8,6 +8,44 @@ pub use digest::dev::blobby;
 use crate::EcdsaCurve;
 use elliptic_curve::dev::mock_curve::MockCurve;
 
+/// Write a series of `criterion`-based benchmarks for ECDSA signing and verification.
+#[macro_export]
+macro_rules! bench_ecdsa {
+    ($name:ident, $desc:expr, $signing_key:expr, $signature:ty) => {
+        fn bench_sign<M: ::criterion::measurement::Measurement>(
+            group: &mut ::criterion::BenchmarkGroup<'_, M>,
+        ) {
+            use $crate::signature::Signer as _;
+            let sk = core::hint::black_box($signing_key);
+            let msg = core::hint::black_box(b"example message");
+            group.bench_function("sign", |b| {
+                b.iter(|| {
+                    let sig: Signature = sk.sign(msg);
+                    core::hint::black_box(sig)
+                })
+            });
+        }
+
+        fn bench_verify<M: ::criterion::measurement::Measurement>(
+            group: &mut ::criterion::BenchmarkGroup<'_, M>,
+        ) {
+            use $crate::signature::{Signer as _, Verifier as _};
+            let sk = $signing_key;
+            let vk = sk.verifying_key();
+            let msg = core::hint::black_box(b"example message");
+            let sig: Signature = core::hint::black_box(sk.sign(msg));
+            group.bench_function("verify", |b| b.iter(|| vk.verify(msg, &sig)));
+        }
+
+        fn $name(c: &mut ::criterion::Criterion) {
+            let mut group = c.benchmark_group($desc);
+            bench_sign(&mut group);
+            bench_verify(&mut group);
+            group.finish();
+        }
+    };
+}
+
 /// Define ECDSA signing test.
 #[macro_export]
 macro_rules! new_signing_test {
