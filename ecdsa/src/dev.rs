@@ -3,38 +3,10 @@
 // TODO(tarcieri): implement full set of tests from ECDSA2VS
 // <https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/dss2/ecdsa2vs.pdf>
 
-use crate::EcdsaCurve;
-use elliptic_curve::dev::MockCurve;
-
 pub use digest::dev::blobby;
 
-impl EcdsaCurve for MockCurve {
-    const NORMALIZE_S: bool = false;
-}
-
-/// ECDSA test vector
-pub struct TestVector {
-    /// Private scalar
-    pub d: &'static [u8],
-
-    /// Public key x-coordinate (`Qx`)
-    pub q_x: &'static [u8],
-
-    /// Public key y-coordinate (`Qy`)
-    pub q_y: &'static [u8],
-
-    /// Ephemeral scalar (a.k.a. nonce)
-    pub k: &'static [u8],
-
-    /// Message digest (prehashed)
-    pub m: &'static [u8],
-
-    /// Signature `r` component
-    pub r: &'static [u8],
-
-    /// Signature `s` component
-    pub s: &'static [u8],
-}
+use crate::EcdsaCurve;
+use elliptic_curve::dev::mock_curve::MockCurve;
 
 /// Define ECDSA signing test.
 #[macro_export]
@@ -265,6 +237,34 @@ macro_rules! new_wycheproof_test {
             }
         }
     };
+}
+
+impl EcdsaCurve for MockCurve {
+    const NORMALIZE_S: bool = false;
+}
+
+/// ECDSA test vector
+pub struct TestVector {
+    /// Private scalar
+    pub d: &'static [u8],
+
+    /// Public key x-coordinate (`Qx`)
+    pub q_x: &'static [u8],
+
+    /// Public key y-coordinate (`Qy`)
+    pub q_y: &'static [u8],
+
+    /// Ephemeral scalar (a.k.a. nonce)
+    pub k: &'static [u8],
+
+    /// Message digest (prehashed)
+    pub m: &'static [u8],
+
+    /// Signature `r` component
+    pub r: &'static [u8],
+
+    /// Signature `s` component
+    pub s: &'static [u8],
 }
 
 #[cfg(test)]
