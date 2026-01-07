@@ -131,7 +131,7 @@ where
     fn try_generate_from_rng<R: TryCryptoRng + ?Sized>(
         rng: &mut R,
     ) -> core::result::Result<Self, R::Error> {
-        Ok(NonZeroScalar::<C>::try_generate_from_rng(rng)?.into())
+        NonZeroScalar::<C>::try_generate_from_rng(rng).map(Into::into)
     }
 }
 
