@@ -25,5 +25,3 @@ lms-signature = { path = "./lms" }
 ml-dsa = { path = "./ml-dsa" }
 rfc6979 = { path = "./rfc6979" }
 slh-dsa = { path = "./slh-dsa" }
-
-elliptic-curve = { git = "https://github.com/RustCrypto/traits" }
