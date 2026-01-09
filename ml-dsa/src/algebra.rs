@@ -54,8 +54,55 @@ pub(crate) trait Decompose {
     fn decompose<TwoGamma2: Unsigned>(self) -> (Elem, Elem);
 }
 
+/// Constant-time division by a compile-time constant divisor.
+///
+/// This trait provides a constant-time alternative to the hardware division
+/// instruction, which has variable timing based on operand values.
+/// Uses Barrett reduction to compute `x / M` where M is a compile-time constant.
+pub(crate) trait ConstantTimeDiv: Unsigned {
+    /// Bit shift for Barrett reduction, chosen to provide sufficient precision
+    const CT_DIV_SHIFT: usize;
+    /// Precomputed multiplier: ceil(2^SHIFT / M)
+    const CT_DIV_MULTIPLIER: u64;
+
+    /// Perform constant-time division of x by `Self::U32`
+    /// Requires: x < Q (the field modulus, ~2^23)
+    #[allow(clippy::inline_always)] // Required for constant-time guarantees in crypto code
+    #[inline(always)]
+    fn ct_div(x: u32) -> u32 {
+        // Barrett reduction: q = (x * MULTIPLIER) >> SHIFT
+        // This gives us floor(x / M) for x < 2^SHIFT / MULTIPLIER * M
+        let x64 = u64::from(x);
+        let quotient = (x64 * Self::CT_DIV_MULTIPLIER) >> Self::CT_DIV_SHIFT;
+        // SAFETY: quotient is guaranteed to fit in u32 because:
+        // - x < Q (~2^23), so quotient = x / M < x < 2^23 < 2^32
+        #[allow(clippy::cast_possible_truncation, clippy::as_conversions)]
+        let result = quotient as u32;
+        result
+    }
+}
+
+impl<M> ConstantTimeDiv for M
+where
+    M: Unsigned,
+{
+    // Use a shift that provides enough precision for the ML-DSA field (Q ~ 2^23)
+    // We need SHIFT > log2(Q) + log2(M) to ensure accuracy
+    // With Q < 2^24 and M < 2^20, SHIFT = 48 is sufficient
+    const CT_DIV_SHIFT: usize = 48;
+
+    // Precompute the multiplier at compile time
+    // We add (M-1) before dividing to get ceiling division, ensuring we never underestimate
+    #[allow(clippy::integer_division_remainder_used)]
+    const CT_DIV_MULTIPLIER: u64 = (1u64 << Self::CT_DIV_SHIFT).div_ceil(M::U64);
+}
+
 impl Decompose for Elem {
     // Algorithm 36 Decompose
+    //
+    // This implementation uses constant-time division to avoid timing side-channels.
+    // The original algorithm used hardware division which has variable timing based
+    // on operand values, potentially leaking secret information during signing.
     fn decompose<TwoGamma2: Unsigned>(self) -> (Elem, Elem) {
         let r_plus = self.clone();
         let r0 = r_plus.mod_plus_minus::<TwoGamma2>();
@@ -63,8 +110,9 @@ impl Decompose for Elem {
         if r_plus - r0 == Elem::new(BaseField::Q - 1) {
             (Elem::new(0), r0 - Elem::new(1))
         } else {
-            let mut r1 = r_plus - r0;
-            r1.0 /= TwoGamma2::U32;
+            let diff = r_plus - r0;
+            // Use constant-time division instead of hardware division
+            let r1 = Elem::new(TwoGamma2::ct_div(diff.0));
             (r1, r0)
         }
     }
