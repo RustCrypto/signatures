@@ -296,6 +296,9 @@ use pkcs8::spki::{
 #[cfg(feature = "zeroize")]
 use zeroize::Zeroize;
 
+#[cfg(feature = "zerocopy")]
+use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout, Unaligned};
+
 /// Size of a single component of an Ed25519 signature.
 const COMPONENT_SIZE: usize = 32;
 
@@ -314,6 +317,10 @@ pub type SignatureBytes = [u8; Signature::BYTE_SIZE];
 /// Signature verification libraries are expected to reject invalid field
 /// elements at the time a signature is verified.
 #[derive(Copy, Clone, Eq, PartialEq)]
+#[cfg_attr(
+    feature = "zerocopy",
+    derive(FromBytes, IntoBytes, Immutable, KnownLayout, Unaligned)
+)]
 #[repr(C)]
 pub struct Signature {
     R: ComponentBytes,
