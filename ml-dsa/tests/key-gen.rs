@@ -29,19 +29,21 @@ fn verify<P: MlDsaParams>(tc: &acvp::TestCase) {
     // Import test data into the relevant array structures
     let seed = Array::try_from(tc.seed.as_slice()).unwrap();
     let vk_bytes = EncodedVerifyingKey::<P>::try_from(tc.pk.as_slice()).unwrap();
-    let sk_bytes = EncodedSigningKey::<P>::try_from(tc.sk.as_slice()).unwrap();
+    let sk_bytes = ExpandedSigningKey::<P>::try_from(tc.sk.as_slice()).unwrap();
 
     let kp = P::from_seed(&seed);
     let sk = kp.signing_key().clone();
     let vk = kp.verifying_key().clone();
 
-    // Verify correctness via serialization
-    assert_eq!(sk.encode(), sk_bytes);
     assert_eq!(vk.encode(), vk_bytes);
+    assert!(vk == VerifyingKey::<P>::decode(&vk_bytes));
 
     // Verify correctness via deserialization
-    assert!(sk == SigningKey::<P>::decode(&sk_bytes));
-    assert!(vk == VerifyingKey::<P>::decode(&vk_bytes));
+    #[allow(deprecated)]
+    {
+        assert_eq!(sk.to_expanded(), sk_bytes);
+        assert!(sk == SigningKey::<P>::from_expanded(&sk_bytes));
+    }
 }
 
 mod acvp {

@@ -9,6 +9,7 @@ pub fn rand<L: ArraySize, R: CryptoRng + ?Sized>(rng: &mut R) -> Array<u8, L> {
     val
 }
 
+#[allow(deprecated)] // TODO(tarcieri): stop using expanded signing keys
 fn criterion_benchmark(c: &mut Criterion) {
     let mut rng = getrandom::SysRng.unwrap_err();
     let xi: B32 = rand(&mut rng);
@@ -20,7 +21,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     let vk = kp.verifying_key();
     let sig = sk.sign_deterministic(&m, &ctx).unwrap();
 
-    let sk_bytes = sk.encode();
+    let sk_bytes = sk.to_expanded();
     let vk_bytes = vk.encode();
     let sig_bytes = sig.encode();
 
@@ -28,7 +29,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("keygen", |b| {
         b.iter(|| {
             let kp = MlDsa65::from_seed(&xi);
-            let _sk_bytes = kp.signing_key().encode();
+            let _sk_bytes = kp.signing_key().to_expanded();
             let _vk_bytes = kp.verifying_key().encode();
         })
     });
@@ -36,7 +37,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     // Signing
     c.bench_function("sign", |b| {
         b.iter(|| {
-            let sk = SigningKey::<MlDsa65>::decode(&sk_bytes);
+            let sk = SigningKey::<MlDsa65>::from_expanded(&sk_bytes);
             let _sig = sk.sign_deterministic(&m, &ctx);
         })
     });

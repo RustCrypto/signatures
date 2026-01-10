@@ -137,9 +137,9 @@ pub trait SigningKeyParams: ParameterSet {
         s1: EncodedS1<Self>,
         s2: EncodedS2<Self>,
         t0: EncodedT0<Self>,
-    ) -> EncodedSigningKey<Self>;
+    ) -> ExpandedSigningKey<Self>;
     fn split_sk(
-        enc: &EncodedSigningKey<Self>,
+        enc: &ExpandedSigningKey<Self>,
     ) -> (
         &B32,
         &B32,
@@ -157,7 +157,7 @@ pub(crate) type EncodedT0<P> = Array<u8, <P as SigningKeyParams>::T0Size>;
 pub(crate) type SigningKeySize<P> = <P as SigningKeyParams>::SigningKeySize;
 
 /// A signing key encoded as a byte array
-pub type EncodedSigningKey<P> = Array<u8, SigningKeySize<P>>;
+pub type ExpandedSigningKey<P> = Array<u8, SigningKeySize<P>>;
 
 impl<P> SigningKeyParams for P
 where
@@ -250,12 +250,12 @@ where
         s1: EncodedS1<Self>,
         s2: EncodedS2<Self>,
         t0: EncodedT0<Self>,
-    ) -> EncodedSigningKey<Self> {
+    ) -> ExpandedSigningKey<Self> {
         rho.concat(K).concat(tr).concat(s1).concat(s2).concat(t0)
     }
 
     fn split_sk(
-        enc: &EncodedSigningKey<Self>,
+        enc: &ExpandedSigningKey<Self>,
     ) -> (
         &B32,
         &B32,
