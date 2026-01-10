@@ -26,8 +26,10 @@ fn acvp_sig_gen() {
 
 fn verify<P: MlDsaParams>(tc: &acvp::TestCase, deterministic: bool) {
     // Import the signing key
-    let sk_bytes = EncodedSigningKey::<P>::try_from(tc.sk.as_slice()).unwrap();
-    let sk = SigningKey::<P>::decode(&sk_bytes);
+    let sk_bytes = ExpandedSigningKey::<P>::try_from(tc.sk.as_slice()).unwrap();
+
+    #[allow(deprecated)]
+    let sk = SigningKey::<P>::from_expanded(&sk_bytes);
 
     // Verify correctness
     let rnd = if deterministic {

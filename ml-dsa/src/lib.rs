@@ -78,7 +78,7 @@ use crate::sampling::{expand_a, expand_mask, expand_s, sample_in_ball};
 use crate::util::B64;
 use core::fmt;
 
-pub use crate::param::{EncodedSignature, EncodedSigningKey, EncodedVerifyingKey, MlDsaParams};
+pub use crate::param::{EncodedSignature, EncodedVerifyingKey, ExpandedSigningKey, MlDsaParams};
 pub use crate::util::B32;
 pub use signature::{self, Error};
 
@@ -488,28 +488,37 @@ impl<P: MlDsaParams> SigningKey<P> {
         Ok(self.sign_mu_deterministic(&mu))
     }
 
-    /// Encode the key in a fixed-size byte array.
-    // Algorithm 24 skEncode
-    pub fn encode(&self) -> EncodedSigningKey<P>
-    where
-        P: MlDsaParams,
-    {
-        let s1_enc = P::encode_s1(&self.s1);
-        let s2_enc = P::encode_s2(&self.s2);
-        let t0_enc = P::encode_t0(&self.t0);
-        P::concat_sk(
-            self.rho.clone(),
-            self.K.clone(),
-            self.tr.clone(),
-            s1_enc,
-            s2_enc,
-            t0_enc,
-        )
+    /// This auxiliary function derives a `VerifyingKey` from a bare
+    /// `SigningKey` (even in the absence of the original seed).
+    ///
+    /// This is a utility function that is useful when importing the private key
+    /// from an external source which does not export the seed and does not
+    /// provide the precomputed public key associated with the private key
+    /// itself.
+    ///
+    /// `SigningKey` implements `signature::Keypair`: this inherent method is
+    /// retained for convenience, so it is available for callers even when the
+    /// `signature::Keypair` trait is out-of-scope.
+    pub fn verifying_key(&self) -> VerifyingKey<P> {
+        let kp: &dyn signature::Keypair<VerifyingKey = VerifyingKey<P>> = self;
+        kp.verifying_key()
     }
 
-    /// Decode the key from an appropriately sized byte array.
+    /// DEPRECATED: decode the key from an appropriately sized byte array.
+    ///
+    /// Note that this form is deprecated in practice; prefer to use [`SigningKey::from_seed`].
+    ///
+    /// <div class="warning">
+    /// <b>Panics</b>
+    ///
+    /// This API does not validate expanded signing keys and can potentially panic if keys are
+    /// malformed or maliciously generated.
+    ///
+    /// To avoid panics, use [`SigningKey::from_seed`] instead.
+    /// </div>
     // Algorithm 25 skDecode
-    pub fn decode(enc: &EncodedSigningKey<P>) -> Self
+    #[deprecated(since = "0.1.0", note = "use `SigningKey::from_seed` instead")]
+    pub fn from_expanded(enc: &ExpandedSigningKey<P>) -> Self
     where
         P: MlDsaParams,
     {
@@ -525,21 +534,26 @@ impl<P: MlDsaParams> SigningKey<P> {
         )
     }
 
-    /// This auxiliary function derives a `VerifyingKey` from a bare
-    /// `SigningKey` (even in the absence of the original seed).
+    /// DEPRECATED: encode the key in a fixed-size byte array.
     ///
-    /// This is a utility function that is useful when importing the private key
-    /// from an external source which does not export the seed and does not
-    /// provide the precomputed public key associated with the private key
-    /// itself.
-    ///
-    /// `SigningKey` implements `signature::Keypair`: this inherent method is
-    /// retained for convenience, so it is available for callers even when the
-    /// `signature::Keypair` trait is out-of-scope.
-    pub fn verifying_key(&self) -> VerifyingKey<P> {
-        let kp: &dyn signature::Keypair<VerifyingKey = VerifyingKey<P>> = self;
-
-        kp.verifying_key()
+    /// Note that this form is deprecated in practice; prefer to use [`KeyPair::to_seed`].
+    // Algorithm 24 skEncode
+    #[deprecated(since = "0.1.0", note = "use `KeyPair::to_seed` instead")]
+    pub fn to_expanded(&self) -> ExpandedSigningKey<P>
+    where
+        P: MlDsaParams,
+    {
+        let s1_enc = P::encode_s1(&self.s1);
+        let s2_enc = P::encode_s2(&self.s2);
+        let t0_enc = P::encode_t0(&self.t0);
+        P::concat_sk(
+            self.rho.clone(),
+            self.K.clone(),
+            self.tr.clone(),
+            s1_enc,
+            s2_enc,
+            t0_enc,
+        )
     }
 }
 
@@ -966,16 +980,19 @@ mod test {
         let vk2 = VerifyingKey::<P>::decode(&vk_bytes);
         assert!(vk == vk2);
 
-        let sk_bytes = sk.encode();
-        let sk2 = SigningKey::<P>::decode(&sk_bytes);
-        assert!(sk == sk2);
+        #[allow(deprecated)]
+        {
+            let sk_bytes = sk.to_expanded();
+            let sk2 = SigningKey::<P>::from_expanded(&sk_bytes);
+            assert!(sk == sk2);
 
-        let M = b"Hello world";
-        let rnd = Array([0u8; 32]);
-        let sig = sk.sign_internal(&[M], &rnd);
-        let sig_bytes = sig.encode();
-        let sig2 = Signature::<P>::decode(&sig_bytes).unwrap();
-        assert!(sig == sig2);
+            let M = b"Hello world";
+            let rnd = Array([0u8; 32]);
+            let sig = sk.sign_internal(&[M], &rnd);
+            let sig_bytes = sig.encode();
+            let sig2 = Signature::<P>::decode(&sig_bytes).unwrap();
+            assert!(sig == sig2);
+        }
     }
 
     #[test]
