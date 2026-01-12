@@ -73,7 +73,7 @@ fn verify_validity() {
     let components = signing_key.verifying_key().components();
 
     let params = BoxedMontyParams::new(Odd::new((**components.p()).clone()).unwrap());
-    let form = BoxedMontyForm::new((**components.g()).clone(), params);
+    let form = BoxedMontyForm::new((**components.g()).clone(), &params);
 
     assert!(
         BoxedUint::zero() < **signing_key.x() && signing_key.x() < components.q(),
