@@ -68,7 +68,7 @@ pub(crate) fn common<R: CryptoRng + ?Sized>(
     let mut h = BoxedUint::one().resize(l);
     let g = loop {
         let params = BoxedMontyParams::new_vartime(p.clone());
-        let form = BoxedMontyForm::new(h.clone(), params);
+        let form = BoxedMontyForm::new(h.clone(), &params);
         let g = form.pow(&e).retrieve();
 
         if !bool::from(g.is_one()) {
@@ -96,7 +96,7 @@ pub(crate) fn public(
     let g = components.g();
 
     let params = BoxedMontyParams::new_vartime(p.clone());
-    let form = BoxedMontyForm::new((**g).clone(), params);
+    let form = BoxedMontyForm::new((**g).clone(), &params);
 
     NonZero::new(form.pow(x).retrieve())
 }

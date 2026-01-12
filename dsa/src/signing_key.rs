@@ -120,7 +120,7 @@ impl SigningKey {
         let inv_k = inv_k.resize(p.bits_precision());
 
         let params = BoxedMontyParams::new(p.clone());
-        let form = BoxedMontyForm::new((**g).clone(), params);
+        let form = BoxedMontyForm::new((**g).clone(), &params);
         let r = form.pow(&k).retrieve() % q.resize(p.bits_precision());
         debug_assert_eq!(key_size.l_aligned(), r.bits_precision());
 

@@ -38,16 +38,16 @@ pub struct VerifyingKey {
 impl VerifyingKey {
     /// Construct a new public key from the common components and the public component
     pub fn from_components(components: Components, y: BoxedUint) -> signature::Result<Self> {
+        let params = BoxedMontyParams::new_vartime(components.p().clone());
+        let form = BoxedMontyForm::new(y.clone(), &params);
+
+        if y < two() || form.pow(components.q()).retrieve() != BoxedUint::one() {
+            return Err(signature::Error::new());
+        }
+
         let y = NonZero::new(y)
             .into_option()
             .ok_or_else(signature::Error::new)?;
-
-        let params = BoxedMontyParams::new_vartime(components.p().clone());
-        let form = BoxedMontyForm::new((*y).clone(), params);
-
-        if *y < two() || form.pow(components.q()).retrieve() != BoxedUint::one() {
-            return Err(signature::Error::new());
-        }
 
         Ok(Self { components, y })
     }
@@ -97,8 +97,8 @@ impl VerifyingKey {
         let p1_params = BoxedMontyParams::new(p.clone());
         let p2_params = BoxedMontyParams::new(p.clone());
 
-        let g_form = BoxedMontyForm::new((**g).clone(), p1_params);
-        let y_form = BoxedMontyForm::new((**y).clone(), p2_params);
+        let g_form = BoxedMontyForm::new((**g).clone(), &p1_params);
+        let y_form = BoxedMontyForm::new((**y).clone(), &p2_params);
 
         let v1 = g_form.pow(&u1).retrieve();
         let v2 = y_form.pow(&u2).retrieve();
