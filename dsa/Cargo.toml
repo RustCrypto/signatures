@@ -29,7 +29,7 @@ zeroize = { version = "1", default-features = false, features = ["alloc"] }
 pkcs8 = { version = "0.11.0-rc.8", optional = true, default-features = false, features = ["alloc"] }
 
 [dev-dependencies]
-chacha20 = { version = "0.10.0-rc.6", features = ["rng"] }
+chacha20 = { version = "0.10.0-rc.7", features = ["rng"] }
 hex = "0.4"
 hex-literal = "1"
 pkcs8 = { version = "0.11.0-rc.8", default-features = false, features = ["pem"] }
@@ -37,7 +37,7 @@ proptest = "1"
 getrandom = { version = "0.4.0-rc.0", features = ["sys_rng"] }
 sha1 = "0.11.0-rc.2"
 der = { version = "0.8.0-rc.10", features = ["derive"] }
-rand_core = "0.10.0-rc-3"
+rand_core = "0.10.0-rc-5"
 
 [features]
 default = ["pkcs8"]

@@ -21,7 +21,7 @@ digest = "0.11.0-rc.5"
 hmac = "0.13.0-rc.3"
 hybrid-array = { version = "0.4", features = ["extra-sizes"] }
 pkcs8 = { version = "0.11.0-rc.8", default-features = false }
-rand_core = { version = "0.10.0-rc-3" }
+rand_core = "0.10.0-rc-5"
 sha2 = { version = "0.11.0-rc.3", default-features = false }
 sha3 = { version = "0.11.0-rc.3", default-features = false }
 signature = { version = "3.0.0-rc.6", features = ["rand_core"] }
