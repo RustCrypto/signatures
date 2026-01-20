@@ -25,6 +25,3 @@ lms-signature = { path = "./lms" }
 ml-dsa = { path = "./ml-dsa" }
 rfc6979 = { path = "./rfc6979" }
 slh-dsa = { path = "./slh-dsa" }
-
-crypto-primes = { git = "https://github.com/baloo/crypto-primes.git", branch = "baloo/push-zlqkpkvxqksw" }
-rand = { git = "https://github.com/rust-random/rand.git", branch = "push-nzsxxkozrnpy" }
