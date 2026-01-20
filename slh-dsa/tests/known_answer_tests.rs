@@ -8,9 +8,9 @@ use std::{array::from_fn, fmt::Write};
 
 use aes::Aes256;
 use cipher::{KeyIvInit, StreamCipher};
-use core::{error, fmt};
+use core::{convert::Infallible, error, fmt};
 use ctr::Ctr128BE;
-use rand_core::{CryptoRng, RngCore, TryCryptoRng, TryRngCore};
+use rand_core::{RngCore, TryCryptoRng, TryRngCore};
 use sha2::Digest;
 use signature::Keypair;
 use signature::SignatureEncoding;
@@ -38,26 +38,29 @@ impl KatRng {
     }
 }
 
-impl RngCore for KatRng {
-    fn fill_bytes(&mut self, dest: &mut [u8]) {
+impl TryRngCore for KatRng {
+    type Error = Infallible;
+
+    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Self::Error> {
         dest.fill(0);
         self.0.apply_keystream(dest);
         // Discard up to end of block if not a multiple of 16
         let pad = (16 - (dest.len() % 16)) % 16;
         self.0.apply_keystream(&mut [0; 16][..pad]);
         self.update(None);
+        Ok(())
     }
 
-    fn next_u32(&mut self) -> u32 {
+    fn try_next_u32(&mut self) -> Result<u32, Self::Error> {
         rand_core::utils::next_word_via_fill(self)
     }
 
-    fn next_u64(&mut self) -> u64 {
+    fn try_next_u64(&mut self) -> Result<u64, Self::Error> {
         rand_core::utils::next_word_via_fill(self)
     }
 }
 
-impl CryptoRng for KatRng {}
+impl TryCryptoRng for KatRng {}
 
 // Mock RNG that just returns a pre-determined bytestring
 struct ConstRng(Vec<u8>);
@@ -131,9 +134,9 @@ where
 
         let mut seed = vec![0; (P::VkLen::USIZE * 3) / 2];
         rng.fill_bytes(&mut seed);
-        let mut seed_rng = ConstRng(seed);
+        let seed_rng = ConstRng(seed);
 
-        let sk = SigningKey::<P>::new(&mut seed_rng.unwrap_mut());
+        let sk = SigningKey::<P>::new(&mut seed_rng.unwrap_err());
         let pk = sk.verifying_key();
 
         writeln!(resp, "pk = {}", hex::encode_upper(pk.to_bytes())).unwrap();

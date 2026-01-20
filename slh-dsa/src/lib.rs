@@ -14,7 +14,7 @@
 //! to be resistant to quantum computers.
 //!
 //! While the API exposed by SLH-DSA is the same as conventional signature schemes, it is important
-//! to note that the signatures produced by the algorithm are much larger than classical schemes like EdDSA,
+//! to note that the signatures produced by the algorithm are much larger than classical schemes like `EdDSA`,
 //! ranging from over 7KB for the smallest parameter set to nearly 50KB at the largest
 //!
 //! This crate currently allocates signatures and intermediate values on the stack, which may cause problems for

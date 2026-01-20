@@ -27,10 +27,11 @@ pub mod tests {
             private::SigningKey,
         },
     };
+    use core::convert::Infallible;
     use digest::{Digest, OutputSizeUser};
     use hex_literal::hex;
     use hybrid_array::{Array, ArraySize};
-    use rand_core::{CryptoRng, RngCore, TryRngCore};
+    use rand_core::{TryCryptoRng, TryRngCore};
     use signature::{RandomizedSignerMut, Verifier};
     use std::{matches, ops::Add};
     use typenum::{Sum, U2};
@@ -128,28 +129,31 @@ pub mod tests {
     /// Constant RNG for testing purposes only.
     pub struct ConstantRng<'a>(pub &'a [u8]);
 
-    impl RngCore for ConstantRng<'_> {
-        fn next_u32(&mut self) -> u32 {
+    impl TryRngCore for ConstantRng<'_> {
+        type Error = Infallible;
+
+        fn try_next_u32(&mut self) -> Result<u32, Self::Error> {
             let (head, tail) = self.0.split_at(4);
             self.0 = tail;
-            u32::from_be_bytes(head.try_into().unwrap())
+            Ok(u32::from_be_bytes(head.try_into().unwrap()))
         }
 
-        fn next_u64(&mut self) -> u64 {
+        fn try_next_u64(&mut self) -> Result<u64, Self::Error> {
             let (head, tail) = self.0.split_at(8);
             self.0 = tail;
-            u64::from_be_bytes(head.try_into().unwrap())
+            Ok(u64::from_be_bytes(head.try_into().unwrap()))
         }
 
-        fn fill_bytes(&mut self, dest: &mut [u8]) {
+        fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Self::Error> {
             let (hd, tl) = self.0.split_at(dest.len());
             dest.copy_from_slice(hd);
             self.0 = tl;
+            Ok(())
         }
     }
 
     /// WARNING: This is not a secure cryptographic RNG. It is only used for testing.
-    impl CryptoRng for ConstantRng<'_> {}
+    impl TryCryptoRng for ConstantRng<'_> {}
 
     #[test]
     /// Test Case 2, Appendix F. LMS level 2. https://datatracker.ietf.org/doc/html/rfc8554#appendix-F
