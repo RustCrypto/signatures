@@ -147,9 +147,9 @@ dependencies = [
 
 [[package]]
 name = "cipher"
-version = "0.5.0-rc.4"
+version = "0.5.0-rc.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "118a99a35f72e30b718e8eb5ea6ba24652d08415260a4a32b838f76aa4e3284a"
+checksum = "b557bad79bc426785757001b5d732f323ae965363983d758295c1a1935496880"
 dependencies = [
  "block-buffer",
  "crypto-common",
