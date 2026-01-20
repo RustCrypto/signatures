@@ -18,7 +18,7 @@ getrandom = { version = "0.4.0-rc.0", features = ["sys_rng"] }
 sha2 = "0.11.0-rc.3"
 static_assertions = "1.1"
 rand_core = "0.10.0-rc-5"
-signature = { version = "3.0.0-rc.6", features = ["alloc", "digest", "rand_core"] }
+signature = { version = "3.0.0-rc.7", features = ["alloc", "digest", "rand_core"] }
 typenum = { version = "1.17", features = ["const-generics"] }
 zeroize = "1.8"
 
