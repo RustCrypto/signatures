@@ -361,7 +361,7 @@ dependencies = [
 
 [[package]]
 name = "dsa"
-version = "0.7.0-rc.9"
+version = "0.7.0-rc.10"
 dependencies = [
  "chacha20",
  "crypto-bigint",
