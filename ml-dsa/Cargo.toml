@@ -44,7 +44,7 @@ rand_core = { version = "0.10.0-rc-6", optional = true }
 zeroize = { version = "1.8.1", optional = true, default-features = false }
 
 [dev-dependencies]
-criterion = "0.7"
+criterion = "0.8"
 hex = { version = "0.4", features = ["serde"] }
 hex-literal = "1"
 pkcs8 = { version = "0.11.0-rc.8", features = ["pem"] }
