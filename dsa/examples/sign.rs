@@ -1,13 +1,13 @@
 use digest::Digest;
 use dsa::{Components, KeySize, SigningKey};
-use getrandom::rand_core::TryRngCore;
+use getrandom::{SysRng, rand_core::UnwrapErr};
 use pkcs8::{EncodePrivateKey, EncodePublicKey, LineEnding};
 use sha1::Sha1;
 use signature::{RandomizedDigestSigner, SignatureEncoding};
 use std::{fs::File, io::Write};
 
 fn main() {
-    let mut rng = getrandom::SysRng.unwrap_err();
+    let mut rng = UnwrapErr(SysRng);
     let components = Components::generate(&mut rng, KeySize::DSA_2048_256);
     let signing_key = SigningKey::generate(&mut rng, components);
     let verifying_key = signing_key.verifying_key();

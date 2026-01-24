@@ -110,7 +110,10 @@ pub(crate) mod test {
     use super::*;
     use crate::{algebra::*, module_lattice::encode::*};
     use core::ops::Rem;
-    use getrandom::rand_core::{RngCore, TryRngCore};
+    use getrandom::{
+        SysRng,
+        rand_core::{Rng, UnwrapErr},
+    };
     use hybrid_array::typenum::{
         U1, U2, U3, U4, U6, U7, U8, U9, U10, U13, U17, U19,
         marker_traits::Zero,
@@ -148,7 +151,7 @@ pub(crate) mod test {
         assert_eq!(actual_decoded, *decoded);
 
         // Test random decode/encode and encode/decode round trips
-        let mut rng = getrandom::SysRng.unwrap_err();
+        let mut rng = UnwrapErr(SysRng);
         let decoded = Polynomial::new(Array::from_fn(|_| {
             let x = rng.next_u32();
             Elem::new(x % (b + 1))
@@ -221,7 +224,7 @@ pub(crate) mod test {
         assert_eq!(actual_decoded, *decoded);
 
         // Test random decode/encode and encode/decode round trips
-        let mut rng = getrandom::SysRng.unwrap_err();
+        let mut rng = UnwrapErr(SysRng);
         let decoded = Polynomial::new(Array::from_fn(|_| {
             let mut x = rng.next_u32();
             x %= a.0 + b.0;

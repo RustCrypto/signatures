@@ -351,10 +351,9 @@ impl<M> SigningKeyLen for Shake<U32, M> {
 #[cfg(test)]
 mod tests {
     use crate::{ParameterSet, SigningKey, util::macros::test_parameter_sets};
-    use rand::{TryRngCore, rngs::SysRng};
 
     fn test_serialize_deserialize<P: ParameterSet>() {
-        let mut rng = SysRng.unwrap_err();
+        let mut rng = rand::rng();
         let sk = SigningKey::<P>::new(&mut rng);
         let bytes = sk.to_bytes();
         let sk2 = SigningKey::<P>::try_from(bytes.as_slice()).unwrap();
@@ -364,7 +363,7 @@ mod tests {
 
     #[cfg(feature = "alloc")]
     fn test_serialize_deserialize_vec<P: ParameterSet>() {
-        let mut rng = SysRng.unwrap_err();
+        let mut rng = rand::rng();
         let sk = SigningKey::<P>::new(&mut rng);
         let vec = sk.to_vec();
         let sk2 = SigningKey::<P>::try_from(vec.as_slice()).unwrap();
@@ -375,7 +374,7 @@ mod tests {
 
     #[test]
     fn test_deserialize_fail_on_incorrect_length() {
-        let mut rng = SysRng.unwrap_err();
+        let mut rng = rand::rng();
         let sk = SigningKey::<Shake128f>::new(&mut rng);
         let bytes = sk.to_bytes();
         let incorrect_bytes = &bytes[..bytes.len() - 1];

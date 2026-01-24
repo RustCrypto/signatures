@@ -29,9 +29,10 @@ pub mod tests {
     };
     use core::convert::Infallible;
     use digest::{Digest, OutputSizeUser};
+    use getrandom::SysRng;
     use hex_literal::hex;
     use hybrid_array::{Array, ArraySize};
-    use rand_core::{TryCryptoRng, TryRngCore};
+    use rand_core::{TryCryptoRng, TryRng, UnwrapErr};
     use signature::{RandomizedSignerMut, Verifier};
     use std::{matches, ops::Add};
     use typenum::{Sum, U2};
@@ -43,7 +44,7 @@ pub mod tests {
         <Mode::Hasher as OutputSizeUser>::OutputSize: Add<U2>,
         Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U2>: ArraySize,
     {
-        let mut rng = getrandom::SysRng.unwrap_err();
+        let mut rng = UnwrapErr(SysRng);
         let mut sk = SigningKey::<Mode>::new(0, [0xcc; ID_LEN], &mut rng);
         let pk = sk.public();
         let msg = "this is a test message".as_bytes();
@@ -67,7 +68,7 @@ pub mod tests {
         <Mode::Hasher as OutputSizeUser>::OutputSize: Add<U2>,
         Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U2>: ArraySize,
     {
-        let mut rng = getrandom::SysRng.unwrap_err();
+        let mut rng = UnwrapErr(SysRng);
         let mut sk = SigningKey::<Mode>::new(0, [0xcc; ID_LEN], &mut rng);
         let mut pk = sk.public();
         let msg = "this is a test message".as_bytes();
@@ -129,7 +130,7 @@ pub mod tests {
     /// Constant RNG for testing purposes only.
     pub struct ConstantRng<'a>(pub &'a [u8]);
 
-    impl TryRngCore for ConstantRng<'_> {
+    impl TryRng for ConstantRng<'_> {
         type Error = Infallible;
 
         fn try_next_u32(&mut self) -> Result<u32, Self::Error> {

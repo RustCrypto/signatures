@@ -24,9 +24,9 @@
 //!     signature::{Keypair, Signer, Verifier},
 //!     MlDsa65, KeyGen,
 //! };
-//! use getrandom::rand_core::TryRngCore;
+//! use getrandom::{SysRng, rand_core::UnwrapErr};
 //!
-//! let mut rng = getrandom::SysRng.unwrap_err();
+//! let mut rng = UnwrapErr(SysRng);
 //! let kp = MlDsa65::key_gen(&mut rng);
 //!
 //! let msg = b"Hello world";
@@ -943,7 +943,10 @@ where
 mod test {
     use super::*;
     use crate::param::*;
-    use getrandom::rand_core::{RngCore, TryRngCore};
+    use getrandom::{
+        SysRng,
+        rand_core::{Rng, UnwrapErr},
+    };
     use signature::digest::Update;
 
     #[test]
@@ -1049,7 +1052,7 @@ mod test {
     {
         const ITERATIONS: usize = 1000;
 
-        let mut rng = getrandom::SysRng.unwrap_err();
+        let mut rng = UnwrapErr(SysRng);
         let mut seed = B32::default();
 
         for _i in 0..ITERATIONS {
@@ -1185,7 +1188,7 @@ mod test {
             let vk = kp.verifying_key;
 
             let M = b"Hello world";
-            let mut rng = getrandom::SysRng.unwrap_err();
+            let mut rng = UnwrapErr(SysRng);
             let sig = sk.sign_digest_with_rng(&mut rng, |digest| digest.update(M));
 
             vk.verify_digest(

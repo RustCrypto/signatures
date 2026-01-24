@@ -19,10 +19,10 @@ mod tests {
     use super::*;
     use crate::{lms::SigningKey, ots::LmsOtsSha256N32W4};
     use ::signature::{RandomizedSignerMut, Verifier};
-    use getrandom::rand_core::TryRngCore;
+    use getrandom::{SysRng, rand_core::UnwrapErr};
 
     fn test_sign_and_verify<Mode: LmsMode>() {
-        let mut rng = getrandom::SysRng.unwrap_err();
+        let mut rng = UnwrapErr(SysRng);
 
         // Generate a fresh keypair
         let mut sk = SigningKey::<Mode>::new(&mut rng);

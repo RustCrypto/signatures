@@ -10,7 +10,7 @@ use aes::Aes256;
 use cipher::{KeyIvInit, StreamCipher};
 use core::{convert::Infallible, error, fmt};
 use ctr::Ctr128BE;
-use rand_core::{RngCore, TryCryptoRng, TryRngCore};
+use rand_core::{Rng, TryCryptoRng, TryRng, UnwrapErr};
 use sha2::Digest;
 use signature::Keypair;
 use signature::SignatureEncoding;
@@ -38,7 +38,7 @@ impl KatRng {
     }
 }
 
-impl TryRngCore for KatRng {
+impl TryRng for KatRng {
     type Error = Infallible;
 
     fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Self::Error> {
@@ -65,7 +65,7 @@ impl TryCryptoRng for KatRng {}
 // Mock RNG that just returns a pre-determined bytestring
 struct ConstRng(Vec<u8>);
 
-impl TryRngCore for ConstRng {
+impl TryRng for ConstRng {
     type Error = RandError;
     fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), RandError> {
         let len = dest.len();
@@ -136,7 +136,7 @@ where
         rng.fill_bytes(&mut seed);
         let seed_rng = ConstRng(seed);
 
-        let sk = SigningKey::<P>::new(&mut seed_rng.unwrap_err());
+        let sk = SigningKey::<P>::new(&mut UnwrapErr(seed_rng));
         let pk = sk.verifying_key();
 
         writeln!(resp, "pk = {}", hex::encode_upper(pk.to_bytes())).unwrap();

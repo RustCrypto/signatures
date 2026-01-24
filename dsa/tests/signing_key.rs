@@ -9,7 +9,7 @@ use crypto_bigint::{
 };
 use digest::Digest;
 use dsa::{Components, KeySize, SigningKey};
-use getrandom::rand_core::TryRngCore;
+use getrandom::{SysRng, rand_core::UnwrapErr};
 use pkcs8::{DecodePrivateKey, EncodePrivateKey, LineEnding};
 use sha1::Sha1;
 use signature::{DigestVerifier, RandomizedDigestSigner};
@@ -17,7 +17,7 @@ use signature::{DigestVerifier, RandomizedDigestSigner};
 const OPENSSL_PEM_PRIVATE_KEY: &str = include_str!("pems/private.pem");
 
 fn generate_keypair() -> SigningKey {
-    let mut rng = getrandom::SysRng.unwrap_err();
+    let mut rng = UnwrapErr(SysRng);
     let components = Components::generate(&mut rng, KeySize::DSA_1024_160);
     SigningKey::generate(&mut rng, components)
 }
@@ -49,7 +49,7 @@ fn sign_and_verify() {
 
     let signing_key = generate_keypair();
     let verifying_key = signing_key.verifying_key();
-    let mut rng = getrandom::SysRng.unwrap_err();
+    let mut rng = UnwrapErr(SysRng);
 
     let signature =
         signing_key.sign_digest_with_rng(&mut rng, |digest: &mut Sha1| digest.update(DATA));

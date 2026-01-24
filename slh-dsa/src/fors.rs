@@ -221,7 +221,7 @@ mod tests {
     use self::address::ForsTree;
     use super::*;
     use crate::{PkSeed, Shake128f, util::macros::test_parameter_sets};
-    use rand::{Rng, TryRngCore, rngs::SysRng};
+    use rand::RngExt;
 
     #[test]
     #[cfg(feature = "alloc")]
@@ -475,7 +475,7 @@ mod tests {
 
     fn test_sign_verify<Fors: ForsParams>() {
         // Generate random sk_seed, pk_seed, message, index, address
-        let mut rng = SysRng.unwrap_err();
+        let mut rng = rand::rng();
 
         let sk_seed = SkSeed::new(&mut rng);
         let pk_seed = PkSeed::new(&mut rng);
@@ -508,7 +508,7 @@ mod tests {
 
     fn test_sign_verify_failure<Fors: ForsParams>() {
         // Generate random sk_seed, pk_seed, message, index, address
-        let mut rng = SysRng.unwrap_err();
+        let mut rng = rand::rng();
 
         let sk_seed = SkSeed::new(&mut rng);
         let pk_seed = PkSeed::new(&mut rng);

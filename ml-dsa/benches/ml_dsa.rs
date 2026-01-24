@@ -1,7 +1,8 @@
 use criterion::{Criterion, criterion_group, criterion_main};
+use getrandom::SysRng;
 use hybrid_array::{Array, ArraySize};
 use ml_dsa::{B32, KeyGen, MlDsa65, Signature, SigningKey, VerifyingKey};
-use rand_core::{CryptoRng, TryRngCore};
+use rand_core::{CryptoRng, UnwrapErr};
 
 pub fn rand<L: ArraySize, R: CryptoRng + ?Sized>(rng: &mut R) -> Array<u8, L> {
     let mut val = Array::<u8, L>::default();
@@ -11,7 +12,7 @@ pub fn rand<L: ArraySize, R: CryptoRng + ?Sized>(rng: &mut R) -> Array<u8, L> {
 
 #[allow(deprecated)] // TODO(tarcieri): stop using expanded signing keys
 fn criterion_benchmark(c: &mut Criterion) {
-    let mut rng = getrandom::SysRng.unwrap_err();
+    let mut rng = UnwrapErr(SysRng);
     let xi: B32 = rand(&mut rng);
     let m: B32 = rand(&mut rng);
     let ctx: B32 = rand(&mut rng);

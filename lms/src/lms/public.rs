@@ -171,7 +171,7 @@ mod tests {
         ots::{LmsOtsSha256N32W4, LmsOtsSha256N32W8},
     };
     use digest::OutputSizeUser;
-    use getrandom::rand_core::TryRngCore;
+    use getrandom::SysRng;
     use hex_literal::hex;
     use hybrid_array::{Array, ArraySize};
     use typenum::{Sum, U24};
@@ -265,7 +265,7 @@ mod tests {
         <Mode::Hasher as OutputSizeUser>::OutputSize: Add<U24>,
         Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U24>: ArraySize,
     {
-        let mut rng = getrandom::SysRng.unwrap_err();
+        let mut rng = rand_core::UnwrapErr(SysRng);
         let lms_priv = SigningKey::<Mode>::new(&mut rng);
         let lms_pub = lms_priv.public();
         let lms_pub_serialized: Array<u8, Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U24>> =
