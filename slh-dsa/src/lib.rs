@@ -25,7 +25,7 @@
 //! use slh_dsa::*;
 //! use signature::*;
 //!
-//! let mut rng = SysRng;
+//! let mut rng = rand::rng();
 //!
 //! // Generate a signing key using the SHAKE128f parameter set
 //! let sk = SigningKey::<Shake128f>::new(&mut rng);
@@ -83,12 +83,12 @@ pub trait ParameterSet: ForsParams + SigningKeyLen + VerifyingKeyLen + Signature
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rand::{Rng, TryRngCore, rngs::SysRng};
+    use rand::RngExt;
     use signature::*;
     use util::macros::test_parameter_sets;
 
     fn test_sign_verify<P: ParameterSet>() {
-        let mut rng = SysRng.unwrap_err();
+        let mut rng = rand::rng();
         let sk = SigningKey::<P>::new(&mut rng);
         let vk = sk.verifying_key();
         let msg = b"Hello, world!";
@@ -100,7 +100,7 @@ mod tests {
     // Check signature fails on modified message
     #[test]
     fn test_sign_verify_shake_128f_fail_on_modified_message() {
-        let mut rng = SysRng.unwrap_err();
+        let mut rng = rand::rng();
         let sk = SigningKey::<Shake128f>::new(&mut rng);
         let msg = b"Hello, world!";
         let modified_msg = b"Goodbye, world!";
@@ -113,7 +113,7 @@ mod tests {
 
     #[test]
     fn test_sign_verify_fail_with_wrong_verifying_key() {
-        let mut rng = SysRng.unwrap_err();
+        let mut rng = rand::rng();
         let sk = SigningKey::<Shake128f>::new(&mut rng);
         let wrong_sk = SigningKey::<Shake128f>::new(&mut rng); // Generate a different signing key
         let msg = b"Hello, world!";
@@ -127,7 +127,7 @@ mod tests {
 
     #[test]
     fn test_sign_verify_fail_on_modified_signature() {
-        let mut rng = SysRng.unwrap_err();
+        let mut rng = rand::rng();
         let sk = SigningKey::<Shake128f>::new(&mut rng);
         let msg = b"Hello, world!";
 
@@ -147,7 +147,7 @@ mod tests {
 
     #[test]
     fn test_successive_signatures_not_equal() {
-        let mut rng = SysRng.unwrap_err();
+        let mut rng = rand::rng();
         let sk = SigningKey::<Shake128f>::new(&mut rng);
         let msg = b"Hello, world!";
 
@@ -162,7 +162,7 @@ mod tests {
 
     #[test]
     fn test_sign_verify_nonempty_context() {
-        let mut rng = SysRng.unwrap_err();
+        let mut rng = rand::rng();
         let sk = SigningKey::<Shake128f>::new(&mut rng);
         let vk = sk.verifying_key();
         let msg = b"Hello, world!";
@@ -173,7 +173,7 @@ mod tests {
 
     #[test]
     fn test_sign_verify_wrong_context() {
-        let mut rng = SysRng.unwrap_err();
+        let mut rng = rand::rng();
         let sk = SigningKey::<Shake128f>::new(&mut rng);
         let vk = sk.verifying_key();
         let msg = b"Hello, world!";

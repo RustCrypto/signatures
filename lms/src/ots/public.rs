@@ -138,12 +138,12 @@ mod tests {
             public::VerifyingKey,
         },
     };
-    use getrandom::rand_core::TryRngCore;
+    use getrandom::SysRng;
     use hybrid_array::Array;
 
     #[test]
     fn test_serde() {
-        let mut rng = getrandom::SysRng.unwrap_err();
+        let mut rng = rand_core::UnwrapErr(SysRng);
 
         let pk = SigningKey::<LmsOtsSha256N32W8>::new(0, [0xbb; ID_LEN], &mut rng).public();
         let pk_serialized: Array<u8, _> = pk.clone().into();

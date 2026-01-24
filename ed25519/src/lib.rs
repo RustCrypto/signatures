@@ -200,7 +200,7 @@
 //! # fn format_message(person: &str) -> String {
 //! #     format!("Hello, {}!", person)
 //! # }
-//! use rand_core::{OsRng, RngCore}; // Requires the `std` feature of `rand_core`
+//! use rand_core::{OsRng, Rng}; // Requires the `std` feature of `rand_core`
 //!
 //! /// `HelloSigner` defined above instantiated with *ring* as
 //! /// the signing provider.

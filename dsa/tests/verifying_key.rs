@@ -13,14 +13,14 @@ use {
         modular::{BoxedMontyForm, BoxedMontyParams},
     },
     dsa::{Components, KeySize, SigningKey},
-    getrandom::rand_core::TryRngCore,
+    getrandom::SysRng,
 };
 
 const OPENSSL_PEM_PUBLIC_KEY: &str = include_str!("pems/public.pem");
 
 #[cfg(feature = "hazmat")]
 fn generate_verifying_key() -> VerifyingKey {
-    let mut rng = getrandom::SysRng.unwrap_err();
+    let mut rng = rand_core::UnwrapErr(SysRng);
     let components = Components::generate(&mut rng, KeySize::DSA_1024_160);
     let signing_key = SigningKey::generate(&mut rng, components);
 

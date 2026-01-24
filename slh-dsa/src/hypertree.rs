@@ -137,10 +137,10 @@ mod tests {
     use super::*;
     use crate::{PkSeed, hashes::Shake128f, util::macros::test_parameter_sets};
     use hybrid_array::Array;
-    use rand::{Rng, TryRngCore, rngs::SysRng};
+    use rand::RngExt;
 
     fn test_ht_sign_verify<HTMode: HypertreeParams>() {
-        let mut rng = SysRng.unwrap_err();
+        let mut rng = rand::rng();
 
         let sk_seed = SkSeed::new(&mut rng);
         let pk_seed = PkSeed::new(&mut rng);
@@ -170,7 +170,7 @@ mod tests {
     test_parameter_sets!(test_ht_sign_verify);
 
     fn test_ht_sign_verify_fail<HTMode: HypertreeParams>() {
-        let mut rng = SysRng.unwrap_err();
+        let mut rng = rand::rng();
 
         let sk_seed = SkSeed::new(&mut rng);
         let pk_seed = PkSeed::new(&mut rng);

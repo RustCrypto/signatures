@@ -141,14 +141,13 @@ where {
 
 #[cfg(test)]
 mod tests {
-
     use crate::{
         PkSeed, SkSeed, address::WotsHash, hashes::Shake128f, util::macros::test_parameter_sets,
         xmss::XmssParams,
     };
     use hex_literal::hex;
     use hybrid_array::Array;
-    use rand::{Rng, RngCore, TryRngCore, rngs::SysRng};
+    use rand::{Rng, RngExt};
     use typenum::Unsigned;
 
     #[test]
@@ -203,7 +202,7 @@ mod tests {
 
     fn test_sign_verify<Xmss: XmssParams>() {
         // Generate random sk_seed, pk_seed, message, index, address
-        let mut rng = SysRng.unwrap_err();
+        let mut rng = rand::rng();
 
         let sk_seed = SkSeed::new(&mut rng);
         let pk_seed = PkSeed::new(&mut rng);
@@ -226,7 +225,7 @@ mod tests {
 
     fn test_sign_verify_fail<Xmss: XmssParams>() {
         // Generate random sk_seed, pk_seed, message, index, address
-        let mut rng = SysRng.unwrap_err();
+        let mut rng = rand::rng();
 
         let sk_seed = SkSeed::new(&mut rng);
         let pk_seed = PkSeed::new(&mut rng);

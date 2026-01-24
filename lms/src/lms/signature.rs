@@ -138,7 +138,7 @@ mod tests {
         lms::{Signature, SigningKey, VerifyingKey, modes::*},
         ots::modes::*,
     };
-    use getrandom::rand_core::TryRngCore;
+    use getrandom::SysRng;
     use hex_literal::hex;
     use hybrid_array::ArraySize;
     use signature::{RandomizedSignerMut, Verifier};
@@ -268,7 +268,7 @@ mod tests {
             U4,
         >: ArraySize,
     {
-        let mut rng = getrandom::SysRng.unwrap_err();
+        let mut rng = rand_core::UnwrapErr(SysRng);
         let mut sk = SigningKey::<Mode>::new(&mut rng);
         let pk = sk.public();
         let msg = b"Hello, world!";

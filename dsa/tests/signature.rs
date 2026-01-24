@@ -3,9 +3,9 @@
 
 use digest::Digest;
 use dsa::{Components, KeySize, Signature, SigningKey};
+use getrandom::{SysRng, rand_core::UnwrapErr};
 use hex_literal::hex;
 use pkcs8::der::{Decode, Encode};
-use rand_core::TryRngCore;
 use sha2::Sha256;
 use signature::{
     DigestVerifier, RandomizedDigestSigner, Signer, Verifier,
@@ -33,7 +33,7 @@ const MESSAGE_SIGNATURE_OPENSSL_ASN1: &[u8] = &hex!(
 
 /// Generate a random DSA keypair
 fn generate_random_keypair() -> SigningKey {
-    let mut rng = getrandom::SysRng.unwrap_err();
+    let mut rng = UnwrapErr(SysRng);
     let components = Components::generate(&mut rng, KeySize::DSA_1024_160);
     SigningKey::generate(&mut rng, components)
 }
@@ -60,7 +60,7 @@ fn decode_encode_signature() {
 #[test]
 fn sign_verify_message() {
     let signing_key = generate_random_keypair();
-    let mut rng = getrandom::SysRng.unwrap_err();
+    let mut rng = UnwrapErr(SysRng);
     let generated_signature =
         signing_key.sign_digest_with_rng(&mut rng, |digest: &mut Sha256| digest.update(MESSAGE));
 
