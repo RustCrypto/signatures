@@ -26,9 +26,6 @@ ml-dsa = { path = "./ml-dsa" }
 rfc6979 = { path = "./rfc6979" }
 slh-dsa = { path = "./slh-dsa" }
 
-[patch.crates-io.crypto-primes]
-git = "https://github.com/entropyxyz/crypto-primes"
-
 [patch.crates-io.rand]
 git = "https://github.com/rust-random/rand"
 branch = "rand_core/v0.10.0-rc-6"
