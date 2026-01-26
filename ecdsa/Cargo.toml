@@ -23,7 +23,7 @@ zeroize = { version = "1.5", default-features = false }
 
 # optional dependencies
 der = { version = "0.8.0-rc.10", optional = true }
-digest = { version = "0.11.0-rc.8", optional = true, default-features = false, features = ["oid"] }
+digest = { version = "0.11.0-rc.9", optional = true, default-features = false, features = ["oid"] }
 rfc6979 = { version = "0.5.0-rc.3", optional = true }
 serdect = { version = "0.4", optional = true, default-features = false, features = ["alloc"] }
 sha2 = { version = "0.11.0-rc.4", optional = true, default-features = false, features = ["oid"] }
