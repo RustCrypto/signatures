@@ -23,7 +23,7 @@ hybrid-array = { version = "0.4", features = ["extra-sizes"] }
 pkcs8 = { version = "0.11.0-rc.8", default-features = false }
 rand_core = "0.10.0-rc-6"
 sha2 = { version = "0.11.0-rc.3", default-features = false }
-sha3 = { version = "0.11.0-rc.3", default-features = false }
+sha3 = { version = "0.11.0-rc.6", default-features = false }
 signature = { version = "3.0.0-rc.8", features = ["rand_core"] }
 typenum = { version = "1.17", features = ["const-generics"] }
 zerocopy = { version = "0.8", features = ["derive"] }
