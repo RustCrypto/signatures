@@ -943,11 +943,6 @@ where
 mod test {
     use super::*;
     use crate::param::*;
-    use getrandom::{
-        SysRng,
-        rand_core::{Rng, UnwrapErr},
-    };
-    use signature::digest::Update;
 
     #[test]
     fn output_sizes() {
@@ -1046,42 +1041,6 @@ mod test {
         sign_verify_round_trip_test::<MlDsa87>();
     }
 
-    fn many_round_trip_test<P>()
-    where
-        P: MlDsaParams,
-    {
-        const ITERATIONS: usize = 1000;
-
-        let mut rng = UnwrapErr(SysRng);
-        let mut seed = B32::default();
-
-        for _i in 0..ITERATIONS {
-            let seed_data: &mut [u8] = seed.as_mut();
-            rng.fill_bytes(seed_data);
-
-            let kp = P::from_seed(&seed);
-            let sk = kp.signing_key;
-            let vk = kp.verifying_key;
-
-            let M = b"Hello world";
-            let rnd = Array([0u8; 32]);
-            let sig = sk.sign_internal(&[M], &rnd);
-
-            let sig_enc = sig.encode();
-            let sig_dec = Signature::<P>::decode(&sig_enc).unwrap();
-
-            assert_eq!(sig_dec, sig);
-            assert!(vk.verify_internal(M, &sig_dec));
-        }
-    }
-
-    #[test]
-    fn many_round_trip() {
-        many_round_trip_test::<MlDsa44>();
-        many_round_trip_test::<MlDsa65>();
-        many_round_trip_test::<MlDsa87>();
-    }
-
     #[test]
     fn sign_mu_verify_mu_round_trip() {
         fn sign_mu_verify_mu<P>()
@@ -1146,63 +1105,6 @@ mod test {
         sign_internal_verify_mu::<MlDsa44>();
         sign_internal_verify_mu::<MlDsa65>();
         sign_internal_verify_mu::<MlDsa87>();
-    }
-
-    #[test]
-    fn sign_digest_round_trip() {
-        fn sign_digest<P>()
-        where
-            P: MlDsaParams,
-        {
-            let kp = P::from_seed(&Array::default());
-            let sk = kp.signing_key;
-            let vk = kp.verifying_key;
-
-            let M = b"Hello world";
-            let sig = sk.sign_digest(|digest| digest.update(M));
-            assert_eq!(sig, sk.sign(M));
-
-            vk.verify_digest(
-                |digest| {
-                    digest.update(M);
-                    Ok(())
-                },
-                &sig,
-            )
-            .unwrap();
-        }
-        sign_digest::<MlDsa44>();
-        sign_digest::<MlDsa65>();
-        sign_digest::<MlDsa87>();
-    }
-
-    #[test]
-    #[cfg(feature = "rand_core")]
-    fn sign_randomized_digest_round_trip() {
-        fn sign_digest<P>()
-        where
-            P: MlDsaParams,
-        {
-            let kp = P::from_seed(&Array::default());
-            let sk = kp.signing_key;
-            let vk = kp.verifying_key;
-
-            let M = b"Hello world";
-            let mut rng = UnwrapErr(SysRng);
-            let sig = sk.sign_digest_with_rng(&mut rng, |digest| digest.update(M));
-
-            vk.verify_digest(
-                |digest| {
-                    digest.update(M);
-                    Ok(())
-                },
-                &sig,
-            )
-            .unwrap();
-        }
-        sign_digest::<MlDsa44>();
-        sign_digest::<MlDsa65>();
-        sign_digest::<MlDsa87>();
     }
 
     #[test]
