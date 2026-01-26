@@ -1108,6 +1108,29 @@ mod test {
     }
 
     #[test]
+    fn sign_internal_repeat_hint_regression_test() {
+        use hex_literal::hex;
+        const SEED: [u8; 32] =
+            hex!("fa9f6c4d8fc0722c0dce5dbdf304da290c90eb9bb8b7d14bbb30870c78fef8d8");
+        const MSG: &[u8] = &hex!(
+            "f0a31bf33dd70cc121d13ad8f080f4b2ba1339112ce465eb8066c1b9d417ac17ee67c7314904486afe667ab369cfd88785b382413f4990271bfd4afddeebe239d697a55f5d109cdea407e107ed3ab05de590f6cce0091b78612d3a80f8e0d8c564c6eab78432cf6338ec8fe7cb11ad54f324d7eb223b29f6fe5ab1265569a66da73789236c4a32dabe9a1c6e9adba23ba383e70d3b04bb03c81e1ebfa63c79ba95c3e219a817ddf418d78f31388d1afaf194fca716a125d2928a4e65c187a48f7a5787dad01ae597c6dc801084b472a18161a6c40426b9d5cc845e52a9fd64b6893b"
+        );
+        const RND: [u8; 32] =
+            hex!("6f00571d19e63f29170c3024b59520a09b12dd0314d61807d59a3875e5d8998b");
+
+        let kp = MlDsa65::from_seed(&SEED.into());
+        let sig = kp.signing_key().sign_internal(&[MSG], &RND.into());
+        let encoded_hint = sig.h.bit_pack();
+        let (_indices, hint_cuts) = MlDsa65::split_hint(&encoded_hint);
+
+        assert!(
+            hint_cuts.windows(2).all(|w| w[0] < w[1]),
+            "repeat hints: {:?}",
+            hint_cuts.0
+        );
+    }
+
+    #[test]
     fn from_seed_implementations_match() {
         fn assert_from_seed_equality<P>()
         where
