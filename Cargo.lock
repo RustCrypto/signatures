@@ -153,9 +153,9 @@ dependencies = [
 
 [[package]]
 name = "cipher"
-version = "0.5.0-rc.5"
+version = "0.5.0-rc.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b557bad79bc426785757001b5d732f323ae965363983d758295c1a1935496880"
+checksum = "eba4d87abf4032a6d927f84b71af5086128a3349b929b4501c51a0fe0981a937"
 dependencies = [
  "block-buffer",
  "crypto-common",
@@ -354,9 +354,9 @@ dependencies = [
 
 [[package]]
 name = "digest"
-version = "0.11.0-rc.8"
+version = "0.11.0-rc.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2fc1408b7a9f59a7b933faff3e9e7fc15a05a524effd3b3d1601156944c8077f"
+checksum = "bff8de092798697546237a3a701e4174fe021579faec9b854379af9bf1e31962"
 dependencies = [
  "blobby",
  "block-buffer",
@@ -569,9 +569,9 @@ checksum = "e712f64ec3850b98572bffac52e2c6f282b29fe6c5fa6d42334b30be438d95c1"
 
 [[package]]
 name = "hmac"
-version = "0.13.0-rc.3"
+version = "0.13.0-rc.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f1c597ac7d6cc8143e30e83ef70915e7f883b18d8bec2e2b2bce47f5bbb06d57"
+checksum = "d9956e202a691c5c86c60303a421f66f93f44b29433407b7c43cf2bebadc750e"
 dependencies = [
  "digest",
 ]
@@ -641,9 +641,9 @@ dependencies = [
 
 [[package]]
 name = "keccak"
-version = "0.2.0-rc.0"
+version = "0.2.0-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d546793a04a1d3049bd192856f804cfe96356e2cf36b54b4e575155babe9f41"
+checksum = "5a412fe37705d515cba9dbf1448291a717e187e2351df908cfc0137cbec3d480"
 dependencies = [
  "cpufeatures",
 ]
@@ -662,9 +662,9 @@ checksum = "bcc35a38544a891a5f7c865aca548a982ccb3b8650a5b06d0fd33a10283c56fc"
 
 [[package]]
 name = "libm"
-version = "0.2.15"
+version = "0.2.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f9fbbcab51052fe104eb5e5d351cf728d30a5be1fe14d9be8a3b097481fb97de"
+checksum = "b6d2cec3eae94f9f509c767b45932f1ada8350c4bdb85af2fcab4a3c14807981"
 
 [[package]]
 name = "linux-raw-sys"
@@ -836,9 +836,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.105"
+version = "1.0.106"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "535d180e0ecab6268a3e718bb9fd44db66bbbc256257165fc699dadf70d16fe7"
+checksum = "8fd00f0bb2e90d81d1044c2b32617f68fcb9fa3bb7640c23e9c748e53fb30934"
 dependencies = [
  "unicode-ident",
 ]
@@ -870,9 +870,9 @@ checksum = "a1d01941d82fa2ab50be1e79e6714289dd7cde78eba4c074bc5a4374f650dfe0"
 
 [[package]]
 name = "quote"
-version = "1.0.43"
+version = "1.0.44"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc74d9a594b72ae6656596548f56f667211f8a97b3d4c3d467150794690dc40a"
+checksum = "21b2ebcf727b7760c461f091f9f0f539b77b8e87f2fd88131e7f1b433b3cece4"
 dependencies = [
  "proc-macro2",
 ]
@@ -1166,9 +1166,9 @@ dependencies = [
 
 [[package]]
 name = "sha3"
-version = "0.11.0-rc.3"
+version = "0.11.0-rc.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2103ca0e6f4e9505eae906de5e5883e06fc3b2232fb5d6914890c7bbcb62f478"
+checksum = "1deee7fbcdd62fbcffc9dc2f5f17f96adac881ec7e1506e1eedee1644d0cc535"
 dependencies = [
  "digest",
  "keccak",
@@ -1540,18 +1540,18 @@ dependencies = [
 
 [[package]]
 name = "zerocopy"
-version = "0.8.33"
+version = "0.8.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "668f5168d10b9ee831de31933dc111a459c97ec93225beb307aed970d1372dfd"
+checksum = "71ddd76bcebeed25db614f82bf31a9f4222d3fbba300e6fb6c00afa26cbd4d9d"
 dependencies = [
  "zerocopy-derive",
 ]
 
 [[package]]
 name = "zerocopy-derive"
-version = "0.8.33"
+version = "0.8.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2c7962b26b0a8685668b671ee4b54d007a67d4eaf05fda79ac0ecf41e32270f1"
+checksum = "d8187381b52e32220d50b255276aa16a084ec0a9017a0ca2152a1f55c539758d"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1566,6 +1566,6 @@ checksum = "b97154e67e32c85465826e8bcc1c59429aaaf107c1e4a9e53c8d8ccd5eff88d0"
 
 [[package]]
 name = "zmij"
-version = "1.0.16"
+version = "1.0.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dfcd145825aace48cff44a8844de64bf75feec3080e0aa5cdbde72961ae51a65"
+checksum = "02aae0f83f69aafc94776e879363e9771d7ecbffe2c7fbb6c14c5e00dfe88439"

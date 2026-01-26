@@ -17,14 +17,14 @@ exclude = ["tests"]
 
 [dependencies]
 const-oid = { version = "0.10", features = ["db"] }
-digest = "0.11.0-rc.7"
-hmac = "0.13.0-rc.3"
+digest = "0.11.0-rc.9"
+hmac = "0.13.0-rc.4"
 hybrid-array = { version = "0.4", features = ["extra-sizes"] }
-pkcs8 = { version = "0.11.0-rc.8", default-features = false }
+pkcs8 = { version = "0.11.0-rc.10", default-features = false }
 rand_core = "0.10.0-rc-6"
-sha2 = { version = "0.11.0-rc.3", default-features = false }
-sha3 = { version = "0.11.0-rc.3", default-features = false }
-signature = { version = "3.0.0-rc.8", features = ["rand_core"] }
+sha2 = { version = "0.11.0-rc.4", default-features = false }
+sha3 = { version = "0.11.0-rc.6", default-features = false }
+signature = { version = "3.0.0-rc.9", features = ["rand_core"] }
 typenum = { version = "1.17", features = ["const-generics"] }
 zerocopy = { version = "0.8", features = ["derive"] }
 
@@ -34,13 +34,13 @@ zeroize = { version = "1.8.1", optional = true, default-features = false }
 [dev-dependencies]
 aes = "0.9.0-rc.2"
 criterion = "0.7"
-cipher = "0.5.0-rc.2"
+cipher = "0.5.0-rc.6"
 ctr = "0.10.0-rc.2"
 hex = { version = "0.4.1", features = ["serde"] }
 hex-literal = "1"
 num-bigint = "0.4.4"
 paste = "1.0.15"
-pkcs8 = { version = "0.11.0-rc.8", features = ["pem"] }
+pkcs8 = { version = "0.11.0-rc.10", features = ["pem"] }
 proptest = "1.4.0"
 rand = "0.10.0-rc.8"
 serde_json = "1.0.124"

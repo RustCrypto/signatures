@@ -34,12 +34,12 @@ pkcs8 = ["dep:const-oid", "dep:pkcs8"]
 [dependencies]
 hybrid-array = { version = "0.4", features = ["extra-sizes"] }
 num-traits = { version = "0.2", default-features = false }
-sha3 = { version = "0.11.0-rc.3", default-features = false }
-signature = { version = "3.0.0-rc.8", default-features = false, features = ["digest"] }
+sha3 = { version = "0.11.0-rc.6", default-features = false }
+signature = { version = "3.0.0-rc.9", default-features = false, features = ["digest"] }
 
 # optional dependencies
 const-oid = { version = "0.10", features = ["db"], optional = true }
-pkcs8 = { version = "0.11.0-rc.8", default-features = false, optional = true }
+pkcs8 = { version = "0.11.0-rc.10", default-features = false, optional = true }
 rand_core = { version = "0.10.0-rc-6", optional = true }
 zeroize = { version = "1.8.1", optional = true, default-features = false }
 
@@ -48,7 +48,7 @@ criterion = "0.7"
 getrandom = { version = "0.4.0-rc.0", features = ["sys_rng"] }
 hex = { version = "0.4", features = ["serde"] }
 hex-literal = "1"
-pkcs8 = { version = "0.11.0-rc.8", features = ["pem"] }
+pkcs8 = { version = "0.11.0-rc.10", features = ["pem"] }
 proptest = "1"
 serde = { version = "1.0.215", features = ["derive"] }
 serde_json = "1.0.132"
