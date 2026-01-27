@@ -405,7 +405,7 @@ dependencies = [
 
 [[package]]
 name = "ed25519"
-version = "3.0.0-rc.2"
+version = "3.0.0-rc.3"
 dependencies = [
  "hex-literal",
  "pkcs8",
@@ -419,7 +419,7 @@ dependencies = [
 
 [[package]]
 name = "ed448"
-version = "0.5.0-rc.2"
+version = "0.5.0-rc.3"
 dependencies = [
  "hex-literal",
  "pkcs8",
@@ -674,7 +674,7 @@ checksum = "df1d3c3b53da64cf5760482273a98e575c651a67eec7f77df96b5b642de8f039"
 
 [[package]]
 name = "lms-signature"
-version = "0.1.0-rc.0"
+version = "0.1.0-rc.1"
 dependencies = [
  "digest",
  "getrandom 0.4.0-rc.1",
@@ -703,7 +703,7 @@ checksum = "f52b00d39961fc5b2736ea853c9cc86238e165017a493d1d5c8eac6bdc4cc273"
 
 [[package]]
 name = "ml-dsa"
-version = "0.1.0-rc.3"
+version = "0.1.0-rc.4"
 dependencies = [
  "const-oid",
  "criterion",
@@ -989,7 +989,7 @@ checksum = "7a2d987857b319362043e95f5353c0535c1f58eec5336fdfcf626430af7def58"
 
 [[package]]
 name = "rfc6979"
-version = "0.5.0-rc.3"
+version = "0.5.0-rc.4"
 dependencies = [
  "hex-literal",
  "hmac",
@@ -1186,7 +1186,7 @@ dependencies = [
 
 [[package]]
 name = "slh-dsa"
-version = "0.2.0-rc.2"
+version = "0.2.0-rc.3"
 dependencies = [
  "aes",
  "cipher",
