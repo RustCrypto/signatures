@@ -1,12 +1,10 @@
-pub(crate) use crate::module_lattice::algebra::Field;
-pub(crate) use crate::module_lattice::util::Truncate;
 use hybrid_array::{
     ArraySize,
     typenum::{Shleft, U1, U13, Unsigned},
 };
+pub(crate) use module_lattice::{algebra::Field, util::Truncate};
 
-use crate::define_field;
-use crate::module_lattice::algebra;
+use module_lattice::{algebra, define_field};
 
 define_field!(BaseField, u32, u64, u128, 8_380_417);
 

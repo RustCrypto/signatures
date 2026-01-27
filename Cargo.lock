@@ -711,7 +711,7 @@ dependencies = [
  "hex",
  "hex-literal",
  "hybrid-array",
- "num-traits",
+ "module-lattice",
  "pkcs8",
  "proptest",
  "rand_core 0.10.0-rc-6",
@@ -719,6 +719,17 @@ dependencies = [
  "serde_json",
  "sha3",
  "signature",
+ "zeroize",
+]
+
+[[package]]
+name = "module-lattice"
+version = "0.1.0-pre.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f95b02843c605c5c6d4747f07a1171645be22ce1fb42629e2cf0c5ba199ed640"
+dependencies = [
+ "hybrid-array",
+ "num-traits",
  "zeroize",
 ]
 
