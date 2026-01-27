@@ -103,9 +103,6 @@ macro_rules! mldsa_sign_seed_test {
 
 macro_rules! mldsa_verify_test {
     ($name:ident, $json_file:expr, $keypair:ident) => {
-        mldsa_verify_test!($name, $json_file, $keypair, []);
-    };
-    ($name:ident, $json_file:expr, $keypair:ident, $skip:expr) => {
         #[test]
         fn $name() {
             let tests = load_json_file!($json_file);
@@ -115,11 +112,6 @@ macro_rules! mldsa_verify_test {
                     let vk = VerifyingKey::<MlDsa44>::decode(&encoded_vk);
                     for test in &group.tests {
                         println!("Test #{}: {} ({:?})", test.id, &test.comment, &test.result);
-
-                        if $skip.contains(&test.id) {
-                            println!("Test #{} is in skip list, skipping!", test.id);
-                            continue;
-                        }
 
                         if let Some(sig) = test
                             .sig
@@ -150,10 +142,6 @@ macro_rules! mldsa_verify_test {
     };
 }
 
-// TODO(tarcieri): debug these test failures
-const SIGNATURE_WITH_A_REPEATED_HINT_TEST_ID: usize = 18;
-const PUBLIC_KEY_WITH_T1_COMPONENT_SET_TO_ZERO_TEST_ID: usize = 68;
-
 mldsa_sign_seed_test!(
     mldsa_44_sign_seed_test,
     "mldsa_44_sign_seed_test.json",
@@ -169,14 +157,6 @@ mldsa_sign_seed_test!(
     "mldsa_87_sign_seed_test.json",
     MlDsa87
 );
-mldsa_verify_test!(
-    mldsa_44_verify_test,
-    "mldsa_44_verify_test.json",
-    MlDsa44,
-    [
-        SIGNATURE_WITH_A_REPEATED_HINT_TEST_ID,
-        PUBLIC_KEY_WITH_T1_COMPONENT_SET_TO_ZERO_TEST_ID
-    ]
-);
+mldsa_verify_test!(mldsa_44_verify_test, "mldsa_44_verify_test.json", MlDsa44);
 mldsa_verify_test!(mldsa_65_verify_test, "mldsa_65_verify_test.json", MlDsa65);
 mldsa_verify_test!(mldsa_87_verify_test, "mldsa_87_verify_test.json", MlDsa87);
