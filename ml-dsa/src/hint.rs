@@ -121,6 +121,8 @@ where
 
         let indices: Array<usize, P::Omega> = indices.iter().map(|x| usize::from(*x)).collect();
         let max_cut: usize = cuts.iter().copied().max().unwrap();
+
+        // cuts must be monotonic but can repeat
         if !cuts.windows(2).all(|w| w[0] <= w[1])
             || max_cut > indices.len()
             || indices[max_cut..].iter().copied().max().unwrap_or(0) > 0
@@ -133,6 +135,7 @@ where
         for (i, &end) in cuts.iter().enumerate() {
             let indices = &indices[start..end];
 
+            // indices must be strictly increasing
             if !indices.windows(2).all(|w| w[0] < w[1]) {
                 return None;
             }
