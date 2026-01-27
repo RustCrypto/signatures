@@ -46,9 +46,6 @@ mod pkcs8;
 mod sampling;
 mod util;
 
-// TODO(RLB) Move module to an independent crate shared with ml_kem
-mod module_lattice;
-
 use core::convert::{AsRef, TryFrom, TryInto};
 use hybrid_array::{
     Array,

@@ -8,11 +8,14 @@
 //! know any details about object sizes.  For example, `VectorEncodingSize::flatten` needs to know
 //! that the size of an encoded vector is `K` times the size of an encoded polynomial.
 
-use core::fmt::Debug;
-use core::ops::{Add, Div, Mul, Rem, Sub};
-
-use crate::module_lattice::encode::{
-    ArraySize, Encode, EncodedPolynomialSize, EncodedVectorSize, EncodingSize,
+use crate::{
+    algebra::{Polynomial, Vector},
+    encode::{BitPack, RangeEncodedPolynomialSize, RangeEncodedVectorSize, RangeEncodingSize},
+    util::{B32, B64},
+};
+use core::{
+    fmt::Debug,
+    ops::{Add, Div, Mul, Rem, Sub},
 };
 use hybrid_array::{
     Array,
@@ -21,12 +24,9 @@ use hybrid_array::{
         Unsigned,
     },
 };
-
-use crate::algebra::{Polynomial, Vector};
-use crate::encode::{
-    BitPack, RangeEncodedPolynomialSize, RangeEncodedVectorSize, RangeEncodingSize,
+use module_lattice::encode::{
+    ArraySize, Encode, EncodedPolynomialSize, EncodedVectorSize, EncodingSize,
 };
-use crate::util::{B32, B64};
 
 /// Some useful compile-time constants
 pub(crate) type SpecQ = Sum<Diff<Shleft<U1, U23>, Shleft<U1, U13>>, U1>;

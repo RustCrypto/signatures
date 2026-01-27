@@ -1,6 +1,4 @@
-use crate::module_lattice::algebra::Field;
-use crate::module_lattice::encode::ArraySize;
-use core::ops::Mul;
+use module_lattice::{algebra::Field, encode::ArraySize};
 
 use crate::algebra::{BaseField, Elem, NttPolynomial, NttVector, Polynomial, Vector};
 
@@ -163,21 +161,6 @@ impl<K: ArraySize> NttInverse for NttVector<K> {
     }
 }
 
-impl Mul<&NttPolynomial> for &NttPolynomial {
-    type Output = NttPolynomial;
-
-    // Algorithm 45 MultiplyNTT
-    fn mul(self, rhs: &NttPolynomial) -> NttPolynomial {
-        NttPolynomial::new(
-            self.0
-                .iter()
-                .zip(rhs.0.iter())
-                .map(|(&x, &y)| x * y)
-                .collect(),
-        )
-    }
-}
-
 #[cfg(test)]
 #[allow(clippy::as_conversions)]
 #[allow(clippy::cast_possible_truncation)]
@@ -191,24 +174,20 @@ mod test {
     use crate::algebra::*;
 
     // Multiplication in R_q, modulo X^256 + 1
-    impl Mul<&Polynomial> for &Polynomial {
-        type Output = Polynomial;
+    fn poly_mul(lhs: &Polynomial, rhs: &Polynomial) -> Polynomial {
+        let mut out = Polynomial::default();
+        for (i, x) in lhs.0.iter().enumerate() {
+            for (j, y) in rhs.0.iter().enumerate() {
+                let (sign, index) = if i + j < 256 {
+                    (Elem::new(1), i + j)
+                } else {
+                    (Elem::new(BaseField::Q - 1), i + j - 256)
+                };
 
-        fn mul(self, rhs: &Polynomial) -> Self::Output {
-            let mut out = Self::Output::default();
-            for (i, x) in self.0.iter().enumerate() {
-                for (j, y) in rhs.0.iter().enumerate() {
-                    let (sign, index) = if i + j < 256 {
-                        (Elem::new(1), i + j)
-                    } else {
-                        (Elem::new(BaseField::Q - 1), i + j - 256)
-                    };
-
-                    out.0[index] = out.0[index] + (sign * *x * *y);
-                }
+                out.0[index] = out.0[index] + (sign * *x * *y);
             }
-            out
         }
+        out
     }
 
     // A polynomial with only a scalar component, to make simple test cases
@@ -236,7 +215,7 @@ mod test {
         assert_eq!(fg, fg_unhat);
 
         // Verify that NTT is a homomorphism with regard to multiplication
-        let fg = &f * &g;
+        let fg = poly_mul(&f, &g);
         let f_hat_g_hat = &f_hat * &g_hat;
         let fg_unhat = f_hat_g_hat.ntt_inverse();
         assert_eq!(fg, fg_unhat);

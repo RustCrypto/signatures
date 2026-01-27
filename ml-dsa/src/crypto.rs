@@ -4,7 +4,7 @@ use sha3::{
     digest::{ExtendableOutput, XofReader},
 };
 
-use crate::module_lattice::encode::ArraySize;
+use module_lattice::encode::ArraySize;
 
 pub(crate) enum ShakeState<Shake: ExtendableOutput> {
     Absorbing(Shake),

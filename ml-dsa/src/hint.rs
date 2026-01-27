@@ -1,8 +1,8 @@
-use crate::module_lattice::util::Truncate;
 use hybrid_array::{
     Array,
     typenum::{U256, Unsigned},
 };
+use module_lattice::util::Truncate;
 
 use crate::algebra::{AlgebraExt, BaseField, Decompose, Elem, Field, Polynomial, Vector};
 use crate::param::{EncodedHint, SignatureParams};
