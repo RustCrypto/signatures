@@ -725,7 +725,7 @@ dependencies = [
 [[package]]
 name = "module-lattice"
 version = "0.1.0-pre.0"
-source = "git+https://github.com/RustCrypto/KEMs#5a2b2ae2003bd6c6f5ff5944ef07b3cd84a4d252"
+source = "git+https://github.com/RustCrypto/KEMs#c3b485d4a6e4ea70b60b18bccca038772ef1981b"
 dependencies = [
  "hybrid-array",
  "num-traits",

@@ -9,9 +9,9 @@
 //! that the size of an encoded vector is `K` times the size of an encoded polynomial.
 
 use crate::{
+    B32, B64,
     algebra::{Polynomial, Vector},
     encode::{BitPack, RangeEncodedPolynomialSize, RangeEncodedVectorSize, RangeEncodingSize},
-    util::{B32, B64},
 };
 use core::{
     fmt::Debug,
@@ -24,7 +24,7 @@ use hybrid_array::{
         Unsigned,
     },
 };
-use module_lattice::encode::{
+use module_lattice::encoding::{
     ArraySize, Encode, EncodedPolynomialSize, EncodedVectorSize, EncodingSize,
 };
 

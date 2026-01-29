@@ -87,7 +87,10 @@ macro_rules! mldsa_sign_seed_test {
 
                         match test.result {
                             ExpectedResult::Valid => {
-                                assert_eq!(&*result.unwrap().to_bytes(), test.sig.as_slice())
+                                assert_eq!(
+                                    &*result.expect("should be valid").to_bytes(),
+                                    test.sig.as_slice()
+                                )
                             }
                             ExpectedResult::Invalid => {
                                 assert!(result.is_err())
