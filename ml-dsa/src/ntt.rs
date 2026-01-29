@@ -1,4 +1,7 @@
-use module_lattice::{algebra::Field, encode::ArraySize};
+use module_lattice::{
+    algebra::{Field, MultiplyNtt},
+    encode::ArraySize,
+};
 
 use crate::algebra::{BaseField, Elem, NttPolynomial, NttVector, Polynomial, Vector};
 
@@ -158,6 +161,19 @@ impl<K: ArraySize> NttInverse for NttVector<K> {
 
     fn ntt_inverse(&self) -> Self::Output {
         Vector::new(self.0.iter().map(NttPolynomial::ntt_inverse).collect())
+    }
+}
+
+impl MultiplyNtt for BaseField {
+    // Algorithm 45 MultiplyNTT
+    fn multiply_ntt(lhs: &NttPolynomial, rhs: &NttPolynomial) -> NttPolynomial {
+        NttPolynomial::new(
+            lhs.0
+                .iter()
+                .zip(rhs.0.iter())
+                .map(|(&x, &y)| x * y)
+                .collect(),
+        )
     }
 }
 
