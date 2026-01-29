@@ -1,12 +1,12 @@
 use module_lattice::{
     algebra::{Field, MultiplyNtt},
-    encode::ArraySize,
+    encoding::ArraySize,
 };
 
 use crate::algebra::{BaseField, Elem, NttPolynomial, NttVector, Polynomial, Vector};
 
 // Since the powers of zeta used in the NTT and MultiplyNTTs are fixed, we use pre-computed tables
-// to avoid the need to compute the exponetiations at runtime.
+// to avoid the need to compute the exponentiations at runtime.
 //
 //   ZETA_POW_BITREV[i] = zeta^{BitRev_8(i)}
 //

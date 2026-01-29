@@ -6,7 +6,7 @@ use crate::{
     param::{Eta, MaskSamplingSize},
 };
 use hybrid_array::Array;
-use module_lattice::{encode::ArraySize, util::Truncate};
+use module_lattice::{encoding::ArraySize, utils::Truncate};
 
 // Algorithm 13 BytesToBits
 fn bit_set(z: &[u8], i: usize) -> bool {

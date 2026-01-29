@@ -2,7 +2,7 @@ use hybrid_array::{
     Array,
     typenum::{U256, Unsigned},
 };
-use module_lattice::util::Truncate;
+use module_lattice::utils::Truncate;
 
 use crate::algebra::{AlgebraExt, BaseField, Decompose, Elem, Field, Polynomial, Vector};
 use crate::param::{EncodedHint, SignatureParams};

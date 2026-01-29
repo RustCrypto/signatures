@@ -2,7 +2,7 @@ use hybrid_array::{
     ArraySize,
     typenum::{Shleft, U1, U13, Unsigned},
 };
-pub(crate) use module_lattice::{algebra::Field, util::Truncate};
+pub(crate) use module_lattice::{algebra::Field, utils::Truncate};
 
 use module_lattice::{algebra, define_field};
 

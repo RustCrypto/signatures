@@ -44,7 +44,9 @@ mod ntt;
 mod param;
 mod pkcs8;
 mod sampling;
-mod util;
+
+pub use crate::param::{EncodedSignature, EncodedVerifyingKey, ExpandedSigningKey, MlDsaParams};
+pub use signature::{self, Error};
 
 use core::convert::{AsRef, TryFrom, TryInto};
 use hybrid_array::{
@@ -57,6 +59,14 @@ use hybrid_array::{
 use sha3::Shake256;
 use signature::{DigestSigner, DigestVerifier, MultipartSigner, MultipartVerifier, Signer};
 
+use crate::algebra::{AlgebraExt, Elem, NttMatrix, NttVector, Truncate, Vector};
+use crate::crypto::H;
+use crate::hint::Hint;
+use crate::ntt::{Ntt, NttInverse};
+use crate::param::{ParameterSet, QMinus1, SamplingSize, SpecQ};
+use crate::sampling::{expand_a, expand_mask, expand_s, sample_in_ball};
+use core::fmt;
+
 #[cfg(feature = "rand_core")]
 use {
     rand_core::{CryptoRng, TryCryptoRng},
@@ -66,18 +76,11 @@ use {
 #[cfg(feature = "zeroize")]
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
-use crate::algebra::{AlgebraExt, Elem, NttMatrix, NttVector, Truncate, Vector};
-use crate::crypto::H;
-use crate::hint::Hint;
-use crate::ntt::{Ntt, NttInverse};
-use crate::param::{ParameterSet, QMinus1, SamplingSize, SpecQ};
-use crate::sampling::{expand_a, expand_mask, expand_s, sample_in_ball};
-use crate::util::B64;
-use core::fmt;
+/// A 32-byte array, defined here for brevity because it is used several times
+pub type B32 = Array<u8, U32>;
 
-pub use crate::param::{EncodedSignature, EncodedVerifyingKey, ExpandedSigningKey, MlDsaParams};
-pub use crate::util::B32;
-pub use signature::{self, Error};
+/// A 64-byte array, defined here for brevity because it is used several times
+pub(crate) type B64 = Array<u8, U64>;
 
 /// ML-DSA seeds are signing (private) keys, which are consistently 32-bytes across all security
 /// levels, and are the preferred serialization for representing such keys.

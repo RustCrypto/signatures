@@ -4,7 +4,7 @@ use sha3::{
     digest::{ExtendableOutput, XofReader},
 };
 
-use module_lattice::encode::ArraySize;
+use module_lattice::encoding::ArraySize;
 
 pub(crate) enum ShakeState<Shake: ExtendableOutput> {
     Absorbing(Shake),
@@ -63,7 +63,7 @@ pub(crate) type H = ShakeState<Shake256>;
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::util::B32;
+    use crate::B32;
     use hex_literal::hex;
 
     #[test]
