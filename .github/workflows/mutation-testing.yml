@@ -1,0 +1,100 @@
+name: Mutation Testing
+
+# Minimal permissions for security
+permissions:
+  contents: read
+
+on:
+  # Run weekly on Sundays at 3 AM UTC (offset from KEMs to avoid resource contention)
+  schedule:
+    - cron: "0 3 * * 0"
+  # Allow manual triggering
+  workflow_dispatch:
+    inputs:
+      package:
+        description: "Package to test (select 'all' for all packages)"
+        required: false
+        default: "all"
+        type: choice
+        options:
+          - all
+          - ml-dsa
+          - slh-dsa
+          - ecdsa
+          - dsa
+
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_TERM_COLOR: always
+  RUST_MIN_STACK: 6291456
+
+# Only run one mutation test at a time
+concurrency:
+  group: mutation-testing
+  cancel-in-progress: false
+
+jobs:
+  mutants:
+    name: ${{ matrix.package }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - ml-dsa
+          - slh-dsa
+        # Only filter if a specific package was requested via workflow_dispatch
+        exclude:
+          - package: ${{ github.event.inputs.package != 'all' && github.event.inputs.package != 'ml-dsa' && 'ml-dsa' || 'NONE' }}
+          - package: ${{ github.event.inputs.package != 'all' && github.event.inputs.package != 'slh-dsa' && 'slh-dsa' || 'NONE' }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - uses: dtolnay/rust-toolchain@56f84321dbccf38fb67ce29ab63e4754056677e0  # stable
+        with:
+          toolchain: stable
+
+      - uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6  # v2.7.8
+        with:
+          prefix-key: mutants-${{ matrix.package }}
+
+      - name: Install cargo-mutants
+        run: cargo install cargo-mutants@26.1.2 --locked
+
+      - name: Run mutation testing
+        run: |
+          cargo mutants --package "${{ matrix.package }}" --all-features -j 2 --timeout 300 2>&1 | tee mutants-output.txt
+          # Extract summary for job summary
+          {
+            echo "## Mutation Testing Results: ${{ matrix.package }}"
+            echo ""
+            echo '```'
+            tail -20 mutants-output.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload mutation results
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        if: always()
+        with:
+          name: mutants-${{ matrix.package }}
+          path: |
+            mutants.out/
+            mutants-output.txt
+          retention-days: 30
+
+      - name: Check for missed mutants
+        if: always()
+        run: |
+          if [ -f mutants.out/missed.txt ] && [ -s mutants.out/missed.txt ]; then
+            echo "::warning::Some mutations were not caught by tests"
+            {
+              echo "### Missed Mutations"
+              echo '```'
+              cat mutants.out/missed.txt
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
