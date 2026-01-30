@@ -33,7 +33,7 @@ pkcs8 = ["dep:const-oid", "dep:pkcs8"]
 
 [dependencies]
 hybrid-array = { version = "0.4", features = ["extra-sizes"] }
-module-lattice = "=0.1.0-pre.0"
+module-lattice = "0.1.0-rc.0"
 sha3 = { version = "0.11.0-rc.6", default-features = false }
 signature = { version = "3.0.0-rc.9", default-features = false, features = ["digest"] }
 

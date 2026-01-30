@@ -724,8 +724,9 @@ dependencies = [
 
 [[package]]
 name = "module-lattice"
-version = "0.1.0-pre.0"
-source = "git+https://github.com/RustCrypto/KEMs#c3b485d4a6e4ea70b60b18bccca038772ef1981b"
+version = "0.1.0-rc.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4b58fe0672f0701f5c1180c3e5c3d00b08dd9b207e545a38f3174d5363e2ae9e"
 dependencies = [
  "hybrid-array",
  "num-traits",
