@@ -1124,4 +1124,119 @@ mod test {
         assert_from_seed_equality::<MlDsa65>();
         assert_from_seed_equality::<MlDsa87>();
     }
+
+    #[test]
+    fn to_seed_returns_correct_seed() {
+        fn test_to_seed<P: MlDsaParams>() {
+            let seed = Array([
+                1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
+                24, 25, 26, 27, 28, 29, 30, 31, 32,
+            ]);
+            let kp = P::from_seed(&seed);
+            assert_eq!(kp.to_seed(), seed);
+        }
+        test_to_seed::<MlDsa44>();
+        test_to_seed::<MlDsa65>();
+        test_to_seed::<MlDsa87>();
+    }
+
+    #[test]
+    fn verification_rejects_invalid_signature() {
+        fn test_invalid_sig<P: MlDsaParams>() {
+            let kp = P::from_seed(&Array::default());
+            let vk = kp.verifying_key();
+
+            let msg = b"Hello world";
+            let rnd = Array([0u8; 32]);
+            let mut sig = kp.signing_key().sign_internal(&[msg], &rnd);
+            sig.c_tilde[0] ^= 0xFF;
+
+            assert!(!vk.verify_with_context(msg, &[], &sig));
+        }
+        test_invalid_sig::<MlDsa44>();
+        test_invalid_sig::<MlDsa65>();
+        test_invalid_sig::<MlDsa87>();
+    }
+
+    #[test]
+    fn verification_rejects_wrong_message() {
+        fn test_wrong_msg<P: MlDsaParams>() {
+            let kp = P::from_seed(&Array::default());
+            let vk = kp.verifying_key();
+
+            let msg1 = b"Hello world";
+            let msg2 = b"Wrong message";
+            let rnd = Array([0u8; 32]);
+            let sig = kp.signing_key().sign_internal(&[msg1], &rnd);
+
+            assert!(!vk.verify_with_context(msg2, &[], &sig));
+        }
+        test_wrong_msg::<MlDsa44>();
+        test_wrong_msg::<MlDsa65>();
+        test_wrong_msg::<MlDsa87>();
+    }
+
+    #[test]
+    fn context_length_validation() {
+        fn test_ctx_length<P: MlDsaParams>() {
+            let kp = P::from_seed(&Array::default());
+            let sk = kp.signing_key();
+            let vk = kp.verifying_key();
+
+            let msg = b"Hello world";
+            let long_ctx = [0u8; 256];
+            let short_ctx = [0u8; 255];
+
+            assert!(sk.sign_deterministic(msg, &long_ctx).is_err());
+
+            let sig = sk.sign_deterministic(msg, &short_ctx).unwrap();
+            assert!(!vk.verify_with_context(msg, &long_ctx, &sig));
+            assert!(vk.verify_with_context(msg, &short_ctx, &sig));
+        }
+        test_ctx_length::<MlDsa44>();
+        test_ctx_length::<MlDsa65>();
+        test_ctx_length::<MlDsa87>();
+    }
+
+    #[test]
+    fn derived_verifying_key_validates_signatures() {
+        fn test_derived_vk<P: MlDsaParams>() {
+            let seed = Array([42u8; 32]);
+            let kp = P::from_seed(&seed);
+            let sk = kp.signing_key();
+            let derived_vk = sk.verifying_key();
+
+            let msg = b"Test message for derived key";
+            let rnd = Array([0u8; 32]);
+            let sig = sk.sign_internal(&[msg], &rnd);
+
+            assert!(derived_vk.verify_internal(msg, &sig));
+            assert_eq!(derived_vk.encode(), kp.verifying_key().encode());
+        }
+        test_derived_vk::<MlDsa44>();
+        test_derived_vk::<MlDsa65>();
+        test_derived_vk::<MlDsa87>();
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn debug_implementations() {
+        extern crate alloc;
+        use core::fmt::Write;
+
+        fn test_debug<P: MlDsaParams>() {
+            let kp = P::from_seed(&Array::default());
+
+            let mut kp_debug = alloc::string::String::new();
+            write!(&mut kp_debug, "{:?}", kp).unwrap();
+            assert!(kp_debug.contains("KeyPair"));
+
+            let mut sk_debug = alloc::string::String::new();
+            write!(&mut sk_debug, "{:?}", kp.signing_key()).unwrap();
+            assert!(sk_debug.contains("SigningKey"));
+        }
+        test_debug::<MlDsa44>();
+        test_debug::<MlDsa65>();
+        test_debug::<MlDsa87>();
+    }
 }

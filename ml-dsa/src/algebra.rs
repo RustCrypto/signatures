@@ -306,4 +306,42 @@ mod test {
             assert_eq!(xx, x.0);
         }
     }
+
+    #[test]
+    fn barrett_reduce_boundary() {
+        let m_minus_1 = Mod::U32 - 1;
+        assert_eq!(Mod::reduce(m_minus_1), m_minus_1);
+        assert_eq!(Mod::reduce(Mod::U32), 0);
+        assert_eq!(Mod::reduce(Mod::U32 + 1), 1);
+        assert_eq!(Mod::reduce(2 * Mod::U32 - 1), m_minus_1);
+        assert_eq!(Mod::reduce(2 * Mod::U32), 0);
+    }
+
+    #[test]
+    fn constant_time_div_accuracy() {
+        for x in 0..1000 {
+            assert_eq!(Mod::ct_div(x), x / Mod::U32);
+        }
+        for x in (BaseField::Q - 1000)..BaseField::Q {
+            assert_eq!(Mod::ct_div(x), x / Mod::U32);
+        }
+    }
+
+    #[test]
+    fn decompose_edge_case() {
+        let q_minus_1 = Elem::new(BaseField::Q - 1);
+        let (r1, r0) = q_minus_1.decompose::<Mod>();
+        let reconstructed = (MOD * r1.0 + r0.0) % BaseField::Q;
+        assert_eq!(reconstructed, q_minus_1.0);
+    }
+
+    #[test]
+    fn high_low_bits_consistency() {
+        for x in [0, 1, MOD / 2, MOD - 1, MOD, MOD + 1, BaseField::Q - 1] {
+            let elem = Elem::new(x);
+            let (decomp_high, decomp_low) = elem.decompose::<Mod>();
+            assert_eq!(elem.high_bits::<Mod>(), decomp_high);
+            assert_eq!(elem.low_bits::<Mod>(), decomp_low);
+        }
+    }
 }
