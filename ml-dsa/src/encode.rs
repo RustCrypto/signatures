@@ -106,7 +106,8 @@ where
 }
 
 #[cfg(test)]
-pub(crate) mod test {
+#[allow(clippy::integer_division_remainder_used, reason = "tests")]
+pub(crate) mod tests {
     use super::*;
     use crate::algebra::*;
     use core::ops::Rem;
@@ -133,13 +134,11 @@ pub(crate) mod test {
         D: ArraySize + Rem<N>,
         Mod<D, N>: Zero,
     {
-        #[allow(clippy::integer_division_remainder_used)]
         fn repeat(&self) -> Array<T, D> {
             Array::from_fn(|i| self[i % N::USIZE].clone())
         }
     }
 
-    #[allow(clippy::integer_division_remainder_used)]
     fn simple_bit_pack_test<D>(b: u32, decoded: &Polynomial, encoded: &EncodedPolynomial<D>)
     where
         D: EncodingSize,
@@ -207,7 +206,6 @@ pub(crate) mod test {
         simple_bit_pack_test::<U6>(b, &decoded, &encoded);
     }
 
-    #[allow(clippy::integer_division_remainder_used)]
     fn bit_pack_test<A, B>(decoded: &Polynomial, encoded: &RangeEncodedPolynomial<A, B>)
     where
         A: Unsigned,

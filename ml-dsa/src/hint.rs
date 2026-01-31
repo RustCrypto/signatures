@@ -156,7 +156,7 @@ where
 }
 
 #[cfg(test)]
-#[allow(clippy::integer_division_remainder_used)]
+#[allow(clippy::integer_division_remainder_used, reason = "tests")]
 mod test {
     use super::*;
     use crate::{MlDsa44, MlDsa65, ParameterSet};

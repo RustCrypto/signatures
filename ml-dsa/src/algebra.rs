@@ -44,7 +44,7 @@ where
 {
     #[allow(clippy::as_conversions)]
     const SHIFT: usize = 2 * (M::U64.ilog2() + 1) as usize;
-    #[allow(clippy::integer_division_remainder_used)]
+    #[allow(clippy::integer_division_remainder_used, reason = "constant")]
     const MULTIPLIER: u64 = (1 << Self::SHIFT) / M::U64;
 }
 
@@ -91,7 +91,7 @@ where
 
     // Precompute the multiplier at compile time
     // We add (M-1) before dividing to get ceiling division, ensuring we never underestimate
-    #[allow(clippy::integer_division_remainder_used)]
+    #[allow(clippy::integer_division_remainder_used, reason = "constant")]
     const CT_DIV_MULTIPLIER: u64 = (1u64 << Self::CT_DIV_SHIFT).div_ceil(M::U64);
 }
 
@@ -258,7 +258,7 @@ impl<K: ArraySize> AlgebraExt for Vector<K> {
 }
 
 #[cfg(test)]
-#[allow(clippy::integer_division_remainder_used)]
+#[allow(clippy::integer_division_remainder_used, reason = "tests")]
 mod test {
     use super::*;
 
