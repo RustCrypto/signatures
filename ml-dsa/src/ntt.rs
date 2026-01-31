@@ -17,7 +17,7 @@ use crate::algebra::{BaseField, Elem, NttPolynomial, NttVector, Polynomial, Vect
 // The values computed here match those provided in Appendix B of FIPS 204.
 #[allow(clippy::cast_possible_truncation)]
 #[allow(clippy::as_conversions)]
-#[allow(clippy::integer_division_remainder_used)]
+#[allow(clippy::integer_division_remainder_used, reason = "constant")]
 const ZETA_POW_BITREV: [Elem; 256] = {
     const ZETA: u64 = 1753;
     const fn bitrev8(x: usize) -> usize {
