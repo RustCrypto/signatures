@@ -1,6 +1,6 @@
 [package]
 name = "ed25519"
-version = "3.0.0-rc.3"
+version = "3.0.0-rc.4"
 authors = ["RustCrypto Developers"]
 license = "Apache-2.0 OR MIT"
 description = """

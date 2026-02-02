@@ -39,7 +39,7 @@ use crate::elliptic_curve::{
         der::AnyRef,
         spki::{AlgorithmIdentifier, AssociatedAlgorithmIdentifier, SignatureAlgorithmIdentifier},
     },
-    sec1::{self, FromEncodedPoint, ToEncodedPoint},
+    sec1::{self, FromSec1Point, ToSec1Point},
 };
 
 #[cfg(feature = "algorithm")]
@@ -637,7 +637,7 @@ where
 impl<C> TryFrom<pkcs8::PrivateKeyInfoRef<'_>> for SigningKey<C>
 where
     C: EcdsaCurve + AssociatedOid + CurveArithmetic,
-    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    AffinePoint<C>: FromSec1Point<C> + ToSec1Point<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
@@ -653,7 +653,7 @@ where
 impl<C> EncodePrivateKey for SigningKey<C>
 where
     C: EcdsaCurve + AssociatedOid + CurveArithmetic,
-    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    AffinePoint<C>: FromSec1Point<C> + ToSec1Point<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
@@ -667,7 +667,7 @@ where
 impl<C> FromStr for SigningKey<C>
 where
     C: EcdsaCurve + AssociatedOid + CurveArithmetic,
-    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    AffinePoint<C>: FromSec1Point<C> + ToSec1Point<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,

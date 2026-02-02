@@ -11,7 +11,7 @@ use elliptic_curve::{
     array::ArraySize,
     point::PointCompression,
     scalar::IsHigh,
-    sec1::{self, CompressedPoint, EncodedPoint, FromEncodedPoint, ToEncodedPoint},
+    sec1::{self, CompressedPoint, FromSec1Point, Sec1Point, ToSec1Point},
 };
 use signature::{DigestVerifier, MultipartVerifier, Verifier, hazmat::PrehashVerifier};
 
@@ -83,7 +83,7 @@ where
 impl<C> VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    AffinePoint<C>: FromSec1Point<C> + ToSec1Point<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
     /// Initialize [`VerifyingKey`] from a SEC1-encoded public key.
@@ -103,18 +103,18 @@ where
         })
     }
 
-    /// Initialize [`VerifyingKey`] from an [`EncodedPoint`].
-    pub fn from_encoded_point(public_key: &EncodedPoint<C>) -> Result<Self> {
-        PublicKey::<C>::from_encoded_point(public_key)
+    /// Initialize [`VerifyingKey`] from an [`Sec1Point`].
+    pub fn from_sec1_point(public_key: &Sec1Point<C>) -> Result<Self> {
+        PublicKey::<C>::from_sec1_point(public_key)
             .into_option()
             .map(|public_key| Self { inner: public_key })
             .ok_or_else(Error::new)
     }
 
-    /// Serialize this [`VerifyingKey`] as a SEC1 [`EncodedPoint`], optionally
+    /// Serialize this [`VerifyingKey`] as a SEC1 [`Sec1Point`], optionally
     /// applying point compression.
-    pub fn to_encoded_point(&self, compress: bool) -> EncodedPoint<C> {
-        self.inner.to_encoded_point(compress)
+    pub fn to_sec1_point(&self, compress: bool) -> Sec1Point<C> {
+        self.inner.to_sec1_point(compress)
     }
 
     /// Convert this [`VerifyingKey`] into the
@@ -316,7 +316,7 @@ where
 impl<C> AsRef<AffinePoint<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    AffinePoint<C>: FromSec1Point<C> + ToSec1Point<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
     fn as_ref(&self) -> &AffinePoint<C> {
@@ -329,7 +329,7 @@ impl<C> Copy for VerifyingKey<C> where C: EcdsaCurve + CurveArithmetic {}
 impl<C> From<VerifyingKey<C>> for CompressedPoint<C>
 where
     C: EcdsaCurve + CurveArithmetic + PointCompression,
-    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    AffinePoint<C>: FromSec1Point<C> + ToSec1Point<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
     fn from(verifying_key: VerifyingKey<C>) -> CompressedPoint<C> {
@@ -340,7 +340,7 @@ where
 impl<C> From<&VerifyingKey<C>> for CompressedPoint<C>
 where
     C: EcdsaCurve + CurveArithmetic + PointCompression,
-    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    AffinePoint<C>: FromSec1Point<C> + ToSec1Point<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
     fn from(verifying_key: &VerifyingKey<C>) -> CompressedPoint<C> {
@@ -348,24 +348,24 @@ where
     }
 }
 
-impl<C> From<VerifyingKey<C>> for EncodedPoint<C>
+impl<C> From<VerifyingKey<C>> for Sec1Point<C>
 where
     C: EcdsaCurve + CurveArithmetic + PointCompression,
-    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    AffinePoint<C>: FromSec1Point<C> + ToSec1Point<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
-    fn from(verifying_key: VerifyingKey<C>) -> EncodedPoint<C> {
+    fn from(verifying_key: VerifyingKey<C>) -> Sec1Point<C> {
         verifying_key.inner.into()
     }
 }
 
-impl<C> From<&VerifyingKey<C>> for EncodedPoint<C>
+impl<C> From<&VerifyingKey<C>> for Sec1Point<C>
 where
     C: EcdsaCurve + CurveArithmetic + PointCompression,
-    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    AffinePoint<C>: FromSec1Point<C> + ToSec1Point<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
-    fn from(verifying_key: &VerifyingKey<C>) -> EncodedPoint<C> {
+    fn from(verifying_key: &VerifyingKey<C>) -> Sec1Point<C> {
         verifying_key.inner.into()
     }
 }
@@ -420,7 +420,7 @@ where
 impl<C> PartialOrd for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    AffinePoint<C>: FromSec1Point<C> + ToSec1Point<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
@@ -431,7 +431,7 @@ where
 impl<C> Ord for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    AffinePoint<C>: FromSec1Point<C> + ToSec1Point<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
     fn cmp(&self, other: &Self) -> Ordering {
@@ -442,7 +442,7 @@ where
 impl<C> TryFrom<&[u8]> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    AffinePoint<C>: FromSec1Point<C> + ToSec1Point<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
     type Error = Error;
@@ -456,7 +456,7 @@ where
 impl<C> AssociatedAlgorithmIdentifier for VerifyingKey<C>
 where
     C: EcdsaCurve + AssociatedOid + CurveArithmetic,
-    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    AffinePoint<C>: FromSec1Point<C> + ToSec1Point<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
     type Params = ObjectIdentifier;
@@ -469,7 +469,7 @@ where
 impl<C> SignatureAlgorithmIdentifier for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    AffinePoint<C>: FromSec1Point<C> + ToSec1Point<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
     Signature<C>: AssociatedAlgorithmIdentifier<Params = AnyRef<'static>>,
 {
@@ -483,7 +483,7 @@ where
 impl<C> TryFrom<pkcs8::SubjectPublicKeyInfoRef<'_>> for VerifyingKey<C>
 where
     C: EcdsaCurve + AssociatedOid + CurveArithmetic + PointCompression,
-    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    AffinePoint<C>: FromSec1Point<C> + ToSec1Point<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
     type Error = spki::Error;
@@ -497,7 +497,7 @@ where
 impl<C> EncodePublicKey for VerifyingKey<C>
 where
     C: EcdsaCurve + AssociatedOid + CurveArithmetic + PointCompression,
-    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    AffinePoint<C>: FromSec1Point<C> + ToSec1Point<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
     fn to_public_key_der(&self) -> spki::Result<pkcs8::Document> {
@@ -509,7 +509,7 @@ where
 impl<C> FromStr for VerifyingKey<C>
 where
     C: EcdsaCurve + AssociatedOid + CurveArithmetic + PointCompression,
-    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    AffinePoint<C>: FromSec1Point<C> + ToSec1Point<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
     type Err = Error;
@@ -523,7 +523,7 @@ where
 impl<C> Serialize for VerifyingKey<C>
 where
     C: EcdsaCurve + AssociatedOid + CurveArithmetic + PointCompression,
-    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    AffinePoint<C>: FromSec1Point<C> + ToSec1Point<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
     fn serialize<S>(&self, serializer: S) -> core::result::Result<S::Ok, S::Error>
@@ -538,7 +538,7 @@ where
 impl<'de, C> Deserialize<'de> for VerifyingKey<C>
 where
     C: EcdsaCurve + AssociatedOid + CurveArithmetic + PointCompression,
-    AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
+    AffinePoint<C>: FromSec1Point<C> + ToSec1Point<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
     fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>

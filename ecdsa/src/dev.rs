@@ -101,7 +101,7 @@ macro_rules! new_verification_test {
                 AffinePoint, CurveArithmetic, Scalar,
                 array::Array,
                 group::ff::PrimeField,
-                sec1::{EncodedPoint, FromEncodedPoint},
+                sec1::{FromSec1Point, Sec1Point},
             },
             signature::hazmat::PrehashVerifier,
         };
@@ -109,13 +109,13 @@ macro_rules! new_verification_test {
         #[test]
         fn ecdsa_verify_success() {
             for vector in $vectors {
-                let q_encoded = EncodedPoint::<$curve>::from_affine_coordinates(
+                let q_encoded = Sec1Point::<$curve>::from_affine_coordinates(
                     &Array::try_from(vector.q_x).unwrap(),
                     &Array::try_from(vector.q_y).unwrap(),
                     false,
                 );
 
-                let q = VerifyingKey::<$curve>::from_encoded_point(&q_encoded).unwrap();
+                let q = VerifyingKey::<$curve>::from_sec1_point(&q_encoded).unwrap();
 
                 let sig = Signature::from_scalars(
                     Array::try_from(vector.r).unwrap(),
@@ -131,13 +131,13 @@ macro_rules! new_verification_test {
         #[test]
         fn ecdsa_verify_invalid_s() {
             for vector in $vectors {
-                let q_encoded = EncodedPoint::<$curve>::from_affine_coordinates(
+                let q_encoded = Sec1Point::<$curve>::from_affine_coordinates(
                     &Array::try_from(vector.q_x).unwrap(),
                     &Array::try_from(vector.q_y).unwrap(),
                     false,
                 );
 
-                let q = VerifyingKey::<$curve>::from_encoded_point(&q_encoded).unwrap();
+                let q = VerifyingKey::<$curve>::from_sec1_point(&q_encoded).unwrap();
                 let r = Array::try_from(vector.r).unwrap();
 
                 // Flip a bit in `s`
@@ -160,7 +160,7 @@ macro_rules! new_wycheproof_test {
     ($name:ident, $test_name: expr, $curve:path) => {
         use $crate::{
             Signature,
-            elliptic_curve::sec1::EncodedPoint,
+            elliptic_curve::sec1::Sec1Point,
             signature::Verifier,
         };
 
@@ -199,11 +199,11 @@ macro_rules! new_wycheproof_test {
             ) -> Option<&'static str> {
                 let x = element_from_padded_slice::<$curve>(wx);
                 let y = element_from_padded_slice::<$curve>(wy);
-                let q_encoded = EncodedPoint::<$curve>::from_affine_coordinates(
+                let q_encoded = Sec1Point::<$curve>::from_affine_coordinates(
                     &x, &y, /* compress= */ false,
                 );
                 let verifying_key =
-                    $crate::VerifyingKey::<$curve>::from_encoded_point(&q_encoded).unwrap();
+                    $crate::VerifyingKey::<$curve>::from_sec1_point(&q_encoded).unwrap();
 
                 let sig = match Signature::from_der(sig) {
                     Ok(s) => s,

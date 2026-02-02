@@ -8,9 +8,8 @@ members = [
     "lms",
     "ml-dsa",
     "rfc6979",
-    #"slh-dsa", waiting for `rand` update
+    "slh-dsa",
 ]
-exclude = ["slh-dsa"]
 
 [profile.dev]
 opt-level = 2
@@ -25,4 +24,6 @@ ed25519 = { path = "./ed25519" }
 lms-signature = { path = "./lms" }
 ml-dsa = { path = "./ml-dsa" }
 rfc6979 = { path = "./rfc6979" }
-#slh-dsa = { path = "./slh-dsa" }
+slh-dsa = { path = "./slh-dsa" }
+
+rand = { git = "https://github.com/rust-random/rand" }
