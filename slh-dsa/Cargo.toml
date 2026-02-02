@@ -57,3 +57,6 @@ harness = false
 alloc = []
 default = ["alloc", "pkcs8/alloc"]
 zeroize = ["dep:zeroize", "hybrid-array/zeroize"]
+
+[profile.dev]
+opt-level = 2
