@@ -35,7 +35,7 @@ pkcs8 = ["dep:const-oid", "dep:pkcs8"]
 hybrid-array = { version = "0.4", features = ["extra-sizes"] }
 module-lattice = "0.1.0-rc.0"
 sha3 = { version = "0.11.0-rc.6", default-features = false }
-signature = { version = "3.0.0-rc.9", default-features = false, features = ["digest"] }
+signature = { version = "3.0.0-rc.10", default-features = false, features = ["digest"] }
 
 # optional dependencies
 const-oid = { version = "0.10", features = ["db"], optional = true }
