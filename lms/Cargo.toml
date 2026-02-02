@@ -14,7 +14,7 @@ keywords = ["crypto", "signature"]
 [dependencies]
 digest = "0.11.0-rc.10"
 hybrid-array = { version = "0.4", features = ["extra-sizes", "zeroize"] }
-getrandom = { version = "0.4.0-rc.1", features = ["sys_rng"] }
+getrandom = { version = "0.4", features = ["sys_rng"] }
 sha2 = "0.11.0-rc.4"
 static_assertions = "1.1"
 rand_core = "0.10.0-rc-6"
