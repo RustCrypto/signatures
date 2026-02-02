@@ -1,6 +1,6 @@
 [package]
 name = "dsa"
-version = "0.7.0-rc.11"
+version = "0.7.0-rc.12"
 description = """
 Pure Rust implementation of the Digital Signature Algorithm (DSA) as specified
 in FIPS 186-4 (Digital Signature Standard), providing RFC6979 deterministic
@@ -17,11 +17,11 @@ rust-version = "1.85"
 
 [dependencies]
 der = { version = "0.8.0-rc.10", features = ["alloc"] }
-digest = "0.11.0-rc.10"
-crypto-bigint = { version = "0.7.0-rc.24", default-features = false, features = ["alloc", "zeroize"] }
+digest = "0.11.0-rc.11"
+crypto-bigint = { version = "0.7.0-rc.25", default-features = false, features = ["alloc", "zeroize"] }
 crypto-primes = { version = "0.7.0-pre.8", default-features = false }
-rfc6979 = { version = "0.5.0-rc.4" }
-sha2 = { version = "0.11.0-rc.4", default-features = false }
+rfc6979 = { version = "0.5.0-rc.5" }
+sha2 = { version = "0.11.0-rc.5", default-features = false }
 signature = { version = "3.0.0-rc.10", default-features = false, features = ["alloc", "digest", "rand_core"] }
 zeroize = { version = "1", default-features = false, features = ["alloc"] }
 
@@ -35,9 +35,9 @@ hex-literal = "1"
 pkcs8 = { version = "0.11.0-rc.10", default-features = false, features = ["pem"] }
 proptest = "1"
 getrandom = { version = "0.4", features = ["sys_rng"] }
-sha1 = "0.11.0-rc.4"
+sha1 = "0.11.0-rc.5"
 der = { version = "0.8.0-rc.10", features = ["derive"] }
-rand_core = "0.10.0-rc-6"
+rand_core = "0.10"
 
 [features]
 default = ["pkcs8"]
