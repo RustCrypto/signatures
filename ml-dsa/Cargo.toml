@@ -45,7 +45,7 @@ zeroize = { version = "1.8.1", optional = true, default-features = false }
 
 [dev-dependencies]
 criterion = "0.7"
-getrandom = { version = "0.4.0-rc.1", features = ["sys_rng"] }
+getrandom = { version = "0.4", features = ["sys_rng"] }
 hex = { version = "0.4", features = ["serde"] }
 hex-literal = "1"
 pkcs8 = { version = "0.11.0-rc.10", features = ["pem"] }
