@@ -24,9 +24,7 @@ use hybrid_array::{
         Unsigned,
     },
 };
-use module_lattice::encoding::{
-    ArraySize, Encode, EncodedPolynomialSize, EncodedVectorSize, EncodingSize,
-};
+use module_lattice::{ArraySize, Encode, EncodedPolynomialSize, EncodedVectorSize, EncodingSize};
 
 /// Some useful compile-time constants
 pub(crate) type SpecQ = Sum<Diff<Shleft<U1, U23>, Shleft<U1, U13>>, U1>;

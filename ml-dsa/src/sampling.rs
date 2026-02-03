@@ -1,12 +1,10 @@
 use crate::{
-    algebra::{
-        BaseField, Elem, Field, Int, NttMatrix, NttPolynomial, NttVector, Polynomial, Vector,
-    },
+    algebra::{BaseField, Elem, Int, NttMatrix, NttPolynomial, NttVector, Polynomial, Vector},
     crypto::{G, H},
     param::{Eta, MaskSamplingSize},
 };
 use hybrid_array::Array;
-use module_lattice::{encoding::ArraySize, utils::Truncate};
+use module_lattice::{ArraySize, Field, Truncate};
 
 // Algorithm 13 BytesToBits
 fn bit_set(z: &[u8], i: usize) -> bool {

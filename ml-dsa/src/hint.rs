@@ -1,11 +1,12 @@
+use crate::{
+    algebra::{AlgebraExt, BaseField, Decompose, Elem, Polynomial, Vector},
+    param::{EncodedHint, SignatureParams},
+};
 use hybrid_array::{
     Array,
     typenum::{U256, Unsigned},
 };
-use module_lattice::utils::Truncate;
-
-use crate::algebra::{AlgebraExt, BaseField, Decompose, Elem, Field, Polynomial, Vector};
-use crate::param::{EncodedHint, SignatureParams};
+use module_lattice::{Field, Truncate};
 
 /// Algorithm 39 `MakeHint`: computes hint bit indicating whether adding `z` to `r` alters the high
 /// bits of `r`.

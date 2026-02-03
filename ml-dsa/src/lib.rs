@@ -48,7 +48,14 @@ mod sampling;
 pub use crate::param::{EncodedSignature, EncodedVerifyingKey, ExpandedSigningKey, MlDsaParams};
 pub use signature::{self, Error};
 
+use crate::algebra::{AlgebraExt, Elem, NttMatrix, NttVector, Vector};
+use crate::crypto::H;
+use crate::hint::Hint;
+use crate::ntt::{Ntt, NttInverse};
+use crate::param::{ParameterSet, QMinus1, SamplingSize, SpecQ};
+use crate::sampling::{expand_a, expand_mask, expand_s, sample_in_ball};
 use core::convert::{AsRef, TryFrom, TryInto};
+use core::fmt;
 use hybrid_array::{
     Array,
     typenum::{
@@ -56,16 +63,9 @@ use hybrid_array::{
         U75, U80, U88, Unsigned,
     },
 };
+use module_lattice::Truncate;
 use sha3::Shake256;
 use signature::{DigestSigner, DigestVerifier, MultipartSigner, MultipartVerifier, Signer};
-
-use crate::algebra::{AlgebraExt, Elem, NttMatrix, NttVector, Truncate, Vector};
-use crate::crypto::H;
-use crate::hint::Hint;
-use crate::ntt::{Ntt, NttInverse};
-use crate::param::{ParameterSet, QMinus1, SamplingSize, SpecQ};
-use crate::sampling::{expand_a, expand_mask, expand_s, sample_in_ball};
-use core::fmt;
 
 #[cfg(feature = "rand_core")]
 use {
