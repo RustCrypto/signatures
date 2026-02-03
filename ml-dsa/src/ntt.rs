@@ -1,9 +1,5 @@
-use module_lattice::{
-    algebra::{Field, MultiplyNtt},
-    encoding::ArraySize,
-};
-
 use crate::algebra::{BaseField, Elem, NttPolynomial, NttVector, Polynomial, Vector};
+use module_lattice::{ArraySize, Field, MultiplyNtt};
 
 // Since the powers of zeta used in the NTT and MultiplyNTTs are fixed, we use pre-computed tables
 // to avoid the need to compute the exponentiations at runtime.

@@ -3,7 +3,7 @@ use hybrid_array::{
     Array,
     typenum::{Len, Length, Sum, Unsigned},
 };
-use module_lattice::encoding::{ArraySize, Encode, EncodingSize, VectorEncodingSize};
+use module_lattice::{ArraySize, Encode, EncodingSize, VectorEncodingSize};
 
 use crate::algebra::{Elem, Polynomial, Vector};
 
@@ -120,7 +120,7 @@ pub(crate) mod tests {
         marker_traits::Zero,
         operator_aliases::{Diff, Mod, Shleft},
     };
-    use module_lattice::encoding::*;
+    use module_lattice::{EncodedPolynomial, Field};
 
     // A helper trait to construct larger arrays by repeating smaller ones
     trait Repeat<T: Clone, D: ArraySize> {

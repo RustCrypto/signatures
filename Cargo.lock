@@ -584,9 +584,9 @@ dependencies = [
 
 [[package]]
 name = "hybrid-array"
-version = "0.4.6"
+version = "0.4.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b41fb3dc24fe72c2e3a4685eed55917c2fb228851257f4a8f2d985da9443c3e5"
+checksum = "e1b229d73f5803b562cc26e4da0396c8610a4ee209f4fac8fa4f8d709166dc45"
 dependencies = [
  "subtle",
  "typenum",
@@ -731,8 +731,7 @@ dependencies = [
 [[package]]
 name = "module-lattice"
 version = "0.1.0-rc.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4b58fe0672f0701f5c1180c3e5c3d00b08dd9b207e545a38f3174d5363e2ae9e"
+source = "git+https://github.com/RustCrypto/KEMs#9404362c9180fd142c251502ca32dffe1ff0a4e4"
 dependencies = [
  "hybrid-array",
  "num-traits",

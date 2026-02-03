@@ -2,20 +2,18 @@ use hybrid_array::{
     ArraySize,
     typenum::{Shleft, U1, U13, Unsigned},
 };
-pub(crate) use module_lattice::{algebra::Field, utils::Truncate};
+use module_lattice::{Field, Truncate};
 
-use module_lattice::{algebra, define_field};
-
-define_field!(BaseField, u32, u64, u128, 8_380_417);
+module_lattice::define_field!(BaseField, u32, u64, u128, 8_380_417);
 
 pub(crate) type Int = <BaseField as Field>::Int;
 
-pub(crate) type Elem = algebra::Elem<BaseField>;
-pub(crate) type Polynomial = algebra::Polynomial<BaseField>;
-pub(crate) type Vector<K> = algebra::Vector<BaseField, K>;
-pub(crate) type NttPolynomial = algebra::NttPolynomial<BaseField>;
-pub(crate) type NttVector<K> = algebra::NttVector<BaseField, K>;
-pub(crate) type NttMatrix<K, L> = algebra::NttMatrix<BaseField, K, L>;
+pub(crate) type Elem = module_lattice::Elem<BaseField>;
+pub(crate) type Polynomial = module_lattice::Polynomial<BaseField>;
+pub(crate) type Vector<K> = module_lattice::Vector<BaseField, K>;
+pub(crate) type NttPolynomial = module_lattice::NttPolynomial<BaseField>;
+pub(crate) type NttVector<K> = module_lattice::NttVector<BaseField, K>;
+pub(crate) type NttMatrix<K, L> = module_lattice::NttMatrix<BaseField, K, L>;
 
 // We require modular reduction for three moduli: q, 2^d, and 2 * gamma2.  All three of these are
 // greater than sqrt(q), which means that a number reduced mod q will always be less than M^2,

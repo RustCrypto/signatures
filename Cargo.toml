@@ -26,4 +26,5 @@ ml-dsa = { path = "./ml-dsa" }
 rfc6979 = { path = "./rfc6979" }
 slh-dsa = { path = "./slh-dsa" }
 
+module-lattice = { git = "https://github.com/RustCrypto/KEMs" }
 rand = { git = "https://github.com/rust-random/rand" }
