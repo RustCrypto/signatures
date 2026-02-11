@@ -10,7 +10,7 @@ use core::{
     fmt::{self, Debug},
 };
 use crypto_bigint::{
-    BoxedUint, NonZero, Resize,
+    BoxedUint, ConcatenatingMul, NonZero, Resize,
     modular::{BoxedMontyForm, BoxedMontyParams},
 };
 use digest::{Update, block_api::EagerHash};
@@ -132,7 +132,10 @@ impl SigningKey {
         let z = BoxedUint::from_be_slice(&hash[..z_len], z_len as u32 * 8)
             .expect("invariant violation");
 
-        let s = inv_k.mul_mod(&(z + &**x * &r), &q.resize(key_size.l_aligned()));
+        let s = inv_k.mul_mod(
+            &z.concatenating_add(x.concatenating_mul(r)),
+            &q.resize(key_size.l_aligned()),
+        );
         let s = s.resize(key_size.n_aligned());
 
         debug_assert_eq!(key_size.n_aligned(), r_short.bits_precision());
