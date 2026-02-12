@@ -72,7 +72,7 @@ macro_rules! new_signing_test {
         fn ecdsa_signing() {
             for vector in $vectors {
                 let d = decode_scalar(vector.d).expect("invalid vector.d");
-                let k = decode_scalar(vector.k).expect("invalid vector.m");
+                let k = decode_scalar(vector.k).expect("invalid vector.k");
 
                 assert_eq!(
                     <$curve as Curve>::FieldBytesSize::USIZE,
