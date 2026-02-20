@@ -21,6 +21,7 @@ and can be easily used for bare-metal or lightweight WebAssembly programming.
 | [`ml-dsa`] | [Module Lattice DSA](https://csrc.nist.gov/pubs/fips/204/final) | [![crates.io](https://img.shields.io/crates/v/ml-dsa.svg)](https://crates.io/crates/ml-dsa) | [![Documentation](https://docs.rs/ml-dsa/badge.svg)](https://docs.rs/ml-dsa) | [![lms build](https://github.com/RustCrypto/signatures/actions/workflows/ml-dsa.yml/badge.svg)](https://github.com/RustCrypto/signatures/actions/workflows/ml-dsa.yml)
 | [`rfc6979`] | [Deterministic (EC)DSA Signatures](https://datatracker.ietf.org/doc/html/rfc6979) | [![crates.io](https://img.shields.io/crates/v/rfc6979.svg)](https://crates.io/crates/rfc6979) | [![Documentation](https://docs.rs/rfc6979/badge.svg)](https://docs.rs/rfc6979) | [![rfc6979 build](https://github.com/RustCrypto/signatures/actions/workflows/rfc6979.yml/badge.svg)](https://github.com/RustCrypto/signatures/actions/workflows/rfc6979.yml)
 | [`slh-dsa`] | [Stateless Hash-Based Signature](https://csrc.nist.gov/pubs/fips/205/final) | [![crates.io](https://img.shields.io/crates/v/slh-dsa.svg)](https://crates.io/crates/slh-dsa) | [![Documentation](https://docs.rs/slh-dsa/badge.svg)](https://docs.rs/slh-dsa) | [![slh-dsa build](https://github.com/RustCrypto/signatures/actions/workflows/slh-dsa.yml/badge.svg)](https://github.com/RustCrypto/signatures/actions/workflows/slh-dsa.yml)
+| [`xmss`] | [eXtended Merkle Signature Scheme](https://datatracker.ietf.org/doc/html/rfc8391) | [![crates.io](https://img.shields.io/crates/v/xmss-signatures.svg)](https://crates.io/crates/xmss-signatures) | [![Documentation](https://docs.rs/xmss-signatures/badge.svg)](https://docs.rs/xmss-signatures) | [![xmss build](https://github.com/RustCrypto/signatures/actions/workflows/xmss.yml/badge.svg)](https://github.com/RustCrypto/signatures/actions/workflows/xmss.yml)
 
 NOTE: for RSA signatures see <https://github.com/RustCrypto/RSA>
 
@@ -61,6 +62,7 @@ dual licensed as above, without any additional terms or conditions.
 [`ml-dsa`]: ./ml-dsa
 [`rfc6979`]: ./rfc6979
 [`slh-dsa`]: ./slh-dsa
+[`xmss`]: ./xmss
 
 [//]: # (general links)
 

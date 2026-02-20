@@ -1,0 +1,64 @@
+[package]
+name = "xmss-signatures"
+authors = ["Michael Lodder <redmike7@gmail.com>"]
+category = ["cryptography"]
+description = """
+Pure Rust implementation of XMSS (eXtended Merkle Signature Scheme)
+as described in RFC 8391 and SP 800-208
+"""
+edition = "2024"
+homepage = "https://github.com/RustCrypto/signature/tree/master/xmss"
+repository = "https://github.com/RustCrypto/signatures"
+readme = "README.md"
+keywords = ["xmss", "signature", "crypto", "cryptography", "rfc8391"]
+license = "MIT/Apache-2.0"
+version = "0.1.0"
+
+[features]
+default = []
+serde = ["dep:serdect"]
+pkcs8 = ["dep:pkcs8", "dep:spki", "dep:der", "dep:const-oid"]
+
+[dependencies]
+const-oid = { version = "0.9", optional = true }
+der = { version = "0.7", optional = true, default-features = false, features = ["alloc"] }
+digest = "0.10"
+hybrid-array = { version = "0.2", features = ["zeroize"] }
+pkcs8 = { version = "0.10", optional = true, default-features = false, features = ["alloc"] }
+rand = "0.10"
+sha2 = "0.10"
+sha3 = "0.10"
+serdect = { version = "0.4", features = ["alloc"], optional = true }
+signature = "2"
+spki = { version = "0.7", optional = true, default-features = false, features = ["alloc"] }
+subtle = "2.6"
+thiserror = "2"
+zeroize = "1"
+
+[dev-dependencies]
+postcard = { version = "1", features = ["alloc"] }
+serde_json = "1"
+
+[lints.rust]
+missing_docs = "deny"
+missing_debug_implementations = "deny"
+trivial_casts = "deny"
+trivial_numeric_casts = "deny"
+unsafe_code = "deny"
+unstable_features = "deny"
+unused_import_braces = "deny"
+unused_parens = "deny"
+unused_lifetimes = "deny"
+unused_qualifications = "deny"
+unused_extern_crates = "deny"
+
+[lints.clippy]
+unwrap_used = "deny"
+cast_precision_loss = "warn"
+cast_possible_truncation = "warn"
+cast_possible_wrap = "warn"
+cast_sign_loss = "warn"
+checked_conversions = "warn"
+mod_module_files = "warn"
+panic = "warn"
+panic_in_result_fn = "warn"
