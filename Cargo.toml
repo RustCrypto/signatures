@@ -9,6 +9,7 @@ members = [
     "ml-dsa",
     "rfc6979",
     "slh-dsa",
+    "xmss",
 ]
 
 [profile.dev]
@@ -25,3 +26,4 @@ lms-signature = { path = "./lms" }
 ml-dsa = { path = "./ml-dsa" }
 rfc6979 = { path = "./rfc6979" }
 slh-dsa = { path = "./slh-dsa" }
+xmss-signatures = { path = "./xmss" }
