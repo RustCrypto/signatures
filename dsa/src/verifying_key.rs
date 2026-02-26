@@ -5,7 +5,7 @@
 use crate::{Components, Signature, two};
 use core::cmp::min;
 use crypto_bigint::{
-    BoxedUint, NonZero, Resize,
+    BoxedUint, ConcatenatingMul, NonZero, Resize,
     modular::{BoxedMontyForm, BoxedMontyParams},
 };
 use digest::{Update, block_api::EagerHash};
@@ -102,7 +102,7 @@ impl VerifyingKey {
 
         let v1 = g_form.pow(&u1).retrieve();
         let v2 = y_form.pow(&u2).retrieve();
-        let v3 = v1 * v2;
+        let v3 = v1.concatenating_mul(&v2);
         let p = p.resize(v3.bits_precision());
         let q = q.resize(v3.bits_precision());
         let v4 = v3 % p.as_nz_ref();

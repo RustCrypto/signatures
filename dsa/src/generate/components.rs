@@ -8,7 +8,7 @@ use crate::{
     two,
 };
 use crypto_bigint::{
-    BoxedUint, NonZero, Odd, RandomBits, Resize,
+    BoxedUint, ConcatenatingMul, NonZero, Odd, RandomBits, Resize,
     modular::{BoxedMontyForm, BoxedMontyParams},
 };
 use crypto_primes::{Flavor, is_prime};
@@ -47,7 +47,7 @@ pub(crate) fn common<R: CryptoRng + ?Sized>(
                     break 'gen_m m;
                 }
             };
-            let rem = NonZero::new((two() * &*q).resize(m.bits_precision()))
+            let rem = NonZero::new(two().concatenating_mul(&*q).resize(m.bits_precision()))
                 .expect("[bug] 2 * NonZero can't be zero");
 
             let mr = &m % &rem;
