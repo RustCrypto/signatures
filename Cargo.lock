@@ -383,7 +383,7 @@ dependencies = [
 
 [[package]]
 name = "dsa"
-version = "0.7.0-rc.13"
+version = "0.7.0-rc.14"
 dependencies = [
  "chacha20",
  "crypto-bigint",
