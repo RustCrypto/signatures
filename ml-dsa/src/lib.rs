@@ -37,8 +37,8 @@
 //! ```
 
 mod algebra;
-mod ct;
 mod crypto;
+mod ct;
 mod encode;
 mod hint;
 mod ntt;
