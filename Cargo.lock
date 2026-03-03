@@ -870,6 +870,7 @@ version = "0.1.0-rc.7"
 dependencies = [
  "const-oid 0.10.2",
  "criterion",
+ "ctutils",
  "getrandom 0.4.1",
  "hex",
  "hex-literal",
@@ -882,7 +883,6 @@ dependencies = [
  "serde_json",
  "sha3 0.11.0-rc.8",
  "signature 3.0.0-rc.10",
- "subtle",
  "zeroize",
 ]
 
