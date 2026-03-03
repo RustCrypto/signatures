@@ -38,7 +38,7 @@ This crate provides:
 ## Usage
 
 ```rust
-use xmss_signatures::{KeyPair, XmssSha2_10_256};
+use xmss::{KeyPair, XmssSha2_10_256};
 
 // Generate a key pair
 let mut kp = KeyPair::<XmssSha2_10_256>::generate(&mut rand::rng()).unwrap();
@@ -124,10 +124,10 @@ dual licensed as above, without any additional terms or conditions.
 
 [//]: # (badges)
 
-[crate-image]: https://img.shields.io/crates/v/xmss-signatures?logo=rust
-[crate-link]: https://crates.io/crates/xmss-signatures
-[docs-image]: https://docs.rs/xmss-signatures/badge.svg
-[docs-link]: https://docs.rs/xmss-signatures/
+[crate-image]: https://img.shields.io/crates/v/xmss?logo=rust
+[crate-link]: https://crates.io/crates/xmss
+[docs-image]: https://docs.rs/xmss/badge.svg
+[docs-link]: https://docs.rs/xmss/
 [build-image]: https://github.com/RustCrypto/signatures/actions/workflows/xmss.yml/badge.svg
 [build-link]: https://github.com/RustCrypto/signatures/actions/workflows/xmss.yml
 [license-image]: https://img.shields.io/badge/license-Apache2.0/MIT-blue.svg

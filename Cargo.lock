@@ -1518,7 +1518,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "82a72c767771b47409d2345987fda8628641887d5466101319899796367354a0"
 dependencies = [
  "fastrand",
- "getrandom 0.4.1",
+ "getrandom 0.3.4",
  "once_cell",
  "rustix",
  "windows-sys",
@@ -1823,8 +1823,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "xmss-signatures"
-version = "0.1.0"
+name = "xmss"
+version = "0.1.0-pre"
 dependencies = [
  "const-oid 0.9.6",
  "der 0.7.10",
