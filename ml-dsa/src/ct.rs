@@ -1,59 +1,60 @@
 //! Constant-time selection utilities.
 //!
-//! Provides a [`ct_select!`] macro and supporting [`CtSelect`] trait for
+//! Provides a [`ct_select!`] macro and supporting [`CtSelectExt`] trait for
 //! branchless conditional selection, preventing timing side-channels from
 //! branch prediction on secret-dependent values.
 //!
-//! This serves the same purpose as LLVM's `__builtin_ct_select` intrinsic
-//! (introduced in LLVM 22). On x86-64 the intrinsic compiles to `cmov`;
-//! on `AArch64` to `CSEL`. When Rust gains native access to the LLVM
-//! intrinsic, the implementation here can be swapped transparently.
+//! Built on the [`ctutils`] crate, which uses the [`cmov`] crate for
+//! architecture-specific predication intrinsics (`cmov` on x86-64,
+//! `CSEL` on `AArch64`).
 //!
 //! See: <https://blog.trailofbits.com/2025/12/02/introducing-constant-time-support-for-llvm-to-protect-cryptographic-code/>
 
-use subtle::{Choice, ConditionallySelectable};
+use ctutils::Choice;
 
 use crate::algebra::Elem;
 
-/// Constant-time conditional selection trait.
+/// Constant-time conditional selection for types not covered by
+/// [`ctutils::CtSelect`] (which cannot be impl'd for foreign types
+/// due to the orphan rule).
 ///
 /// Selects between two values based on a [`Choice`] without branching.
-/// When `choice` is `1` (true), returns `b`; when `0` (false), returns `a`.
-pub(crate) trait CtSelect: Sized {
+/// When `choice` is `TRUE`, returns `b`; when `FALSE`, returns `a`.
+pub(crate) trait CtSelectExt: Sized {
     fn ct_select(a: &Self, b: &Self, choice: Choice) -> Self;
 }
 
-impl CtSelect for u32 {
+impl CtSelectExt for u32 {
     #[allow(clippy::inline_always)]
     #[inline(always)]
     fn ct_select(a: &Self, b: &Self, choice: Choice) -> Self {
-        u32::conditional_select(a, b, choice)
+        ctutils::CtSelect::ct_select(a, b, choice)
     }
 }
 
-impl CtSelect for u64 {
+impl CtSelectExt for u64 {
     #[allow(clippy::inline_always)]
     #[inline(always)]
     fn ct_select(a: &Self, b: &Self, choice: Choice) -> Self {
-        u64::conditional_select(a, b, choice)
+        ctutils::CtSelect::ct_select(a, b, choice)
     }
 }
 
-impl CtSelect for Elem {
+impl CtSelectExt for Elem {
     #[allow(clippy::inline_always)]
     #[inline(always)]
     fn ct_select(a: &Self, b: &Self, choice: Choice) -> Self {
-        Elem::new(u32::conditional_select(&a.0, &b.0, choice))
+        Elem::new(ctutils::CtSelect::ct_select(&a.0, &b.0, choice))
     }
 }
 
-impl CtSelect for (Elem, Elem) {
+impl CtSelectExt for (Elem, Elem) {
     #[allow(clippy::inline_always)]
     #[inline(always)]
     fn ct_select(a: &Self, b: &Self, choice: Choice) -> Self {
         (
-            Elem::ct_select(&a.0, &b.0, choice),
-            Elem::ct_select(&a.1, &b.1, choice),
+            CtSelectExt::ct_select(&a.0, &b.0, choice),
+            CtSelectExt::ct_select(&a.1, &b.1, choice),
         )
     }
 }
@@ -62,26 +63,26 @@ impl CtSelect for (Elem, Elem) {
 /// `__builtin_ct_select`.
 ///
 /// Evaluates both `$if_true` and `$if_false` unconditionally, then
-/// selects the result based on `$choice` using bitwise operations
+/// selects the result based on `$choice` using predication instructions
 /// (no CPU branch). Both expressions must have the same type, which
-/// must implement [`CtSelect`].
+/// must implement [`CtSelectExt`].
 ///
-/// `$choice` must be a [`subtle::Choice`]. Use `ct_eq`, `ct_gt`,
-/// `ct_lt` from the `subtle` crate to produce [`Choice`] values from
+/// `$choice` must be a [`ctutils::Choice`]. Use `ct_eq`, `ct_gt`,
+/// `ct_lt` from the `ctutils` crate to produce [`Choice`] values from
 /// constant-time comparisons.
 ///
 /// # Examples
 ///
 /// ```ignore
-/// use subtle::ConstantTimeLess;
+/// use ctutils::CtLt;
 /// let result: u32 = ct_select!(a.ct_lt(&b), val_if_true, val_if_false);
 /// ```
 macro_rules! ct_select {
     ($choice:expr, $if_true:expr, $if_false:expr) => {{
         let if_true = $if_true;
         let if_false = $if_false;
-        let choice: subtle::Choice = $choice;
-        $crate::ct::CtSelect::ct_select(&if_false, &if_true, choice)
+        let choice: ctutils::Choice = $choice;
+        $crate::ct::CtSelectExt::ct_select(&if_false, &if_true, choice)
     }};
 }
 

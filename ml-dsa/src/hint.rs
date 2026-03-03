@@ -8,7 +8,7 @@ use hybrid_array::{
     typenum::{U256, Unsigned},
 };
 use module_lattice::{Field, Truncate};
-use subtle::{Choice, ConstantTimeEq, ConstantTimeGreater};
+use ctutils::{Choice, CtEq, CtGt};
 
 /// Algorithm 39 `MakeHint`: computes hint bit indicating whether adding `z` to `r` alters the high
 /// bits of `r`.
@@ -37,7 +37,7 @@ fn use_hint<TwoGamma2: Unsigned>(h: bool, r: Elem) -> Elem {
     let hinted = ct_select!(r0_positive, r1_inc, r1_dec);
 
     // Apply hint only when h is set
-    ct_select!(Choice::from(u8::from(h)), hinted, r1)
+    ct_select!(Choice::from_u8_lsb(u8::from(h)), hinted, r1)
 }
 
 #[derive(Clone, PartialEq, Debug)]

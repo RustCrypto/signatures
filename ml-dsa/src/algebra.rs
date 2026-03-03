@@ -3,7 +3,7 @@ use hybrid_array::{
     typenum::{Shleft, U1, U13, Unsigned},
 };
 use module_lattice::{Field, Truncate};
-use subtle::{ConstantTimeEq, ConstantTimeGreater, ConstantTimeLess};
+use ctutils::{CtEq, CtGt, CtLt};
 
 use crate::ct::ct_select;
 
