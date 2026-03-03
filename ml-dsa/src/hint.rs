@@ -3,12 +3,12 @@ use crate::{
     ct::ct_select,
     param::{EncodedHint, SignatureParams},
 };
+use ctutils::{Choice, CtEq, CtGt};
 use hybrid_array::{
     Array,
     typenum::{U256, Unsigned},
 };
 use module_lattice::{Field, Truncate};
-use ctutils::{Choice, CtEq, CtGt};
 
 /// Algorithm 39 `MakeHint`: computes hint bit indicating whether adding `z` to `r` alters the high
 /// bits of `r`.
