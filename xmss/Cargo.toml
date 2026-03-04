@@ -23,7 +23,7 @@ pkcs8 = ["dep:pkcs8", "dep:spki", "dep:der", "dep:const-oid"]
 const-oid = { version = "0.9", optional = true }
 der = { version = "0.7", optional = true, default-features = false, features = ["alloc"] }
 digest = "0.10"
-hybrid-array = { version = "0.2", features = ["zeroize"] }
+hybrid-array = { version = "0.4", features = ["zeroize"] }
 pkcs8 = { version = "0.10", optional = true, default-features = false, features = ["alloc"] }
 rand = "0.10"
 sha2 = "0.10"
