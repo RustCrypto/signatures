@@ -38,6 +38,7 @@
 
 mod algebra;
 mod crypto;
+mod ct;
 mod encode;
 mod hint;
 mod ntt;
