@@ -5,7 +5,7 @@ use hybrid_array::{
 };
 use module_lattice::{Field, Truncate};
 
-use crate::ct::ct_select;
+use crate::ct::CtSelectExt;
 
 module_lattice::define_field!(BaseField, u32, u64, u128, 8_380_417);
 
@@ -33,7 +33,7 @@ pub(crate) trait BarrettReduce: Unsigned {
 
         let r_small: u32 = Truncate::truncate(remainder);
         let r_large: u32 = Truncate::truncate(remainder.wrapping_sub(m));
-        ct_select!(remainder.ct_lt(&m), r_small, r_large)
+        CtSelectExt::ct_select(&r_large, &r_small, remainder.ct_lt(&m))
     }
 }
 
@@ -112,7 +112,7 @@ impl Decompose for Elem {
         let r1 = Elem::new(TwoGamma2::ct_div(diff.0));
         let normal = (r1, r0);
 
-        ct_select!(is_edge, edge, normal)
+        CtSelectExt::ct_select(&normal, &edge, is_edge)
     }
 }
 
@@ -129,7 +129,7 @@ impl AlgebraExt for Elem {
     fn mod_plus_minus<M: Unsigned>(&self) -> Self {
         let raw_mod = Elem::new(M::reduce(self.0));
         let in_lower_half = !raw_mod.0.ct_gt(&(M::U32 >> 1));
-        ct_select!(in_lower_half, raw_mod, raw_mod - Elem::new(M::U32))
+        CtSelectExt::ct_select(&(raw_mod - Elem::new(M::U32)), &raw_mod, in_lower_half)
     }
 
     // FIPS 204 defines the infinity norm differently for signed vs. unsigned integers:
@@ -142,7 +142,7 @@ impl AlgebraExt for Elem {
     // since mod_plus_minus is also unsigned, we need to unwrap the "negative" values.
     fn infinity_norm(&self) -> u32 {
         let in_lower_half = !self.0.ct_gt(&(BaseField::Q >> 1));
-        ct_select!(in_lower_half, self.0, BaseField::Q - self.0)
+        CtSelectExt::ct_select(&(BaseField::Q - self.0), &self.0, in_lower_half)
     }
 
     // Algorithm 35 Power2Round
