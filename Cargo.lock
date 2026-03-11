@@ -860,6 +860,7 @@ version = "0.1.0-rc.7"
 dependencies = [
  "const-oid 0.10.2",
  "criterion",
+ "ctutils",
  "getrandom 0.4.1",
  "hex",
  "hex-literal",

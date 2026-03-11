@@ -1,7 +1,9 @@
 use crate::{
     algebra::{AlgebraExt, BaseField, Decompose, Elem, Polynomial, Vector},
+    ct::CtSelectExt,
     param::{EncodedHint, SignatureParams},
 };
+use ctutils::{Choice, CtEq, CtGt};
 use hybrid_array::{
     Array,
     typenum::{U256, Unsigned},
@@ -17,25 +19,25 @@ fn make_hint<TwoGamma2: Unsigned>(z: Elem, r: Elem) -> bool {
 }
 
 /// Algorithm 40 `UseHint`: returns the high bits of `r` adjusted according to hint `h`.
+///
+/// All branches are replaced with constant-time selection to avoid
+/// leaking information about `r0` through branch timing.
 #[allow(clippy::integer_division_remainder_used, reason = "params are public")]
 fn use_hint<TwoGamma2: Unsigned>(h: bool, r: Elem) -> Elem {
     let m: u32 = (BaseField::Q - 1) / TwoGamma2::U32;
     let (r1, r0) = r.decompose::<TwoGamma2>();
     let gamma2 = TwoGamma2::U32 / 2;
 
-    if h {
-        if r0.0 > 0 && r0.0 <= gamma2 {
-            Elem::new((r1.0 + 1) % m)
-        } else if (r0.0 == 0) || (r0.0 >= BaseField::Q - gamma2) {
-            Elem::new((r1.0 + m - 1) % m)
-        } else {
-            // We use the Elem encoding even for signed integers.  Since r0 is computed
-            // mod+- 2*gamma2 (possibly minus 1), it is guaranteed to be in [-gamma2, gamma2].
-            unreachable!();
-        }
-    } else {
-        r1
-    }
+    // Compute both possible hint-adjusted results unconditionally
+    let r1_inc = Elem::new((r1.0 + 1) % m);
+    let r1_dec = Elem::new((r1.0 + m - 1) % m);
+
+    // r0 is "positive" when r0 > 0 AND r0 <= gamma2
+    let r0_positive = !r0.0.ct_eq(&0) & !r0.0.ct_gt(&gamma2);
+    let hinted = CtSelectExt::ct_select(&r1_dec, &r1_inc, r0_positive);
+
+    // Apply hint only when h is set
+    CtSelectExt::ct_select(&r1, &hinted, Choice::from_u8_lsb(u8::from(h)))
 }
 
 #[derive(Clone, PartialEq, Debug)]
