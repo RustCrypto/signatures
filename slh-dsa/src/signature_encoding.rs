@@ -1,13 +1,18 @@
 use crate::ParameterSet;
-use crate::hashes::{
-    Sha2_128f, Sha2_128s, Sha2_192f, Sha2_192s, Sha2_256f, Sha2_256s, Shake128f, Shake192f,
-    Shake192s, Shake256f, Shake256s,
+use crate::{
+    Shake128s,
+    fors::ForsSignature,
+    hashes::{
+        Sha2_128f, Sha2_128s, Sha2_192f, Sha2_192s, Sha2_256f, Sha2_256s, Shake128f, Shake192f,
+        Shake192s, Shake256f, Shake256s,
+    },
+    hypertree::HypertreeSig,
 };
-use crate::hypertree::HypertreeSig;
-use crate::{Shake128s, fors::ForsSignature};
 use ::signature::{Error, SignatureEncoding};
-use hybrid_array::sizes::{U7856, U16224, U17088, U29792, U35664, U49856};
-use hybrid_array::{Array, ArraySize};
+use hybrid_array::{
+    Array, ArraySize,
+    sizes::{U7856, U16224, U17088, U29792, U35664, U49856},
+};
 use pkcs8::{AlgorithmIdentifierRef, der::AnyRef, spki::AssociatedAlgorithmIdentifier};
 use typenum::Unsigned;
 
@@ -17,7 +22,7 @@ use pkcs8::{
     spki::SignatureBitStringEncoding,
 };
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 /// A parsed SLH-DSA signature for a given parameter set
 ///
 /// Note that this is a large stack-allocated value and may overflow the stack on
@@ -29,6 +34,16 @@ pub struct Signature<P: ParameterSet> {
     pub(crate) fors_sig: ForsSignature<P>,
     pub(crate) ht_sig: HypertreeSig<P>,
 }
+
+impl<P: ParameterSet> PartialEq for Signature<P> {
+    fn eq(&self, other: &Self) -> bool {
+        self.randomizer == other.randomizer
+            && self.fors_sig == other.fors_sig
+            && self.ht_sig == other.ht_sig
+    }
+}
+
+impl<P: ParameterSet> Eq for Signature<P> {}
 
 impl<P: ParameterSet> Signature<P> {
     #[cfg(feature = "alloc")]
@@ -179,10 +194,10 @@ impl SignatureLen for Sha2_256f {
 
 #[cfg(test)]
 mod tests {
-    use crate::SigningKey;
-    use crate::signature_encoding::Signature;
-    use crate::util::macros::test_parameter_sets;
-    use crate::{ParameterSet, hashes::*};
+    use crate::{
+        ParameterSet, SigningKey, hashes::*, signature_encoding::Signature,
+        util::macros::test_parameter_sets,
+    };
     use hybrid_array::Array;
     use signature::{SignatureEncoding, Signer};
 

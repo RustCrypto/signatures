@@ -3,37 +3,47 @@
 // TODO(tarcieri): implement full set of tests from ECDSA2VS
 // <https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/dss2/ecdsa2vs.pdf>
 
-use crate::EcdsaCurve;
-use elliptic_curve::dev::MockCurve;
-
 pub use digest::dev::blobby;
 
-impl EcdsaCurve for MockCurve {
-    const NORMALIZE_S: bool = false;
-}
+use crate::EcdsaCurve;
+use elliptic_curve::dev::mock_curve::MockCurve;
 
-/// ECDSA test vector
-pub struct TestVector {
-    /// Private scalar
-    pub d: &'static [u8],
+/// Write a series of `criterion`-based benchmarks for ECDSA signing and verification.
+#[macro_export]
+macro_rules! bench_ecdsa {
+    ($name:ident, $desc:expr, $signing_key:expr, $signature:ty) => {
+        fn bench_sign<M: ::criterion::measurement::Measurement>(
+            group: &mut ::criterion::BenchmarkGroup<'_, M>,
+        ) {
+            use $crate::signature::Signer as _;
+            let sk = core::hint::black_box($signing_key);
+            let msg = core::hint::black_box(b"example message");
+            group.bench_function("sign", |b| {
+                b.iter(|| {
+                    let sig: Signature = sk.sign(msg);
+                    core::hint::black_box(sig)
+                })
+            });
+        }
 
-    /// Public key x-coordinate (`Qx`)
-    pub q_x: &'static [u8],
+        fn bench_verify<M: ::criterion::measurement::Measurement>(
+            group: &mut ::criterion::BenchmarkGroup<'_, M>,
+        ) {
+            use $crate::signature::{Signer as _, Verifier as _};
+            let sk = $signing_key;
+            let vk = sk.verifying_key();
+            let msg = core::hint::black_box(b"example message");
+            let sig: Signature = core::hint::black_box(sk.sign(msg));
+            group.bench_function("verify", |b| b.iter(|| vk.verify(msg, &sig)));
+        }
 
-    /// Public key y-coordinate (`Qy`)
-    pub q_y: &'static [u8],
-
-    /// Ephemeral scalar (a.k.a. nonce)
-    pub k: &'static [u8],
-
-    /// Message digest (prehashed)
-    pub m: &'static [u8],
-
-    /// Signature `r` component
-    pub r: &'static [u8],
-
-    /// Signature `s` component
-    pub s: &'static [u8],
+        fn $name(c: &mut ::criterion::Criterion) {
+            let mut group = c.benchmark_group($desc);
+            bench_sign(&mut group);
+            bench_verify(&mut group);
+            group.finish();
+        }
+    };
 }
 
 /// Define ECDSA signing test.
@@ -91,7 +101,7 @@ macro_rules! new_verification_test {
                 AffinePoint, CurveArithmetic, Scalar,
                 array::Array,
                 group::ff::PrimeField,
-                sec1::{EncodedPoint, FromEncodedPoint},
+                sec1::{FromSec1Point, Sec1Point},
             },
             signature::hazmat::PrehashVerifier,
         };
@@ -99,13 +109,13 @@ macro_rules! new_verification_test {
         #[test]
         fn ecdsa_verify_success() {
             for vector in $vectors {
-                let q_encoded = EncodedPoint::<$curve>::from_affine_coordinates(
+                let q_encoded = Sec1Point::<$curve>::from_affine_coordinates(
                     &Array::try_from(vector.q_x).unwrap(),
                     &Array::try_from(vector.q_y).unwrap(),
                     false,
                 );
 
-                let q = VerifyingKey::<$curve>::from_encoded_point(&q_encoded).unwrap();
+                let q = VerifyingKey::<$curve>::from_sec1_point(&q_encoded).unwrap();
 
                 let sig = Signature::from_scalars(
                     Array::try_from(vector.r).unwrap(),
@@ -121,13 +131,13 @@ macro_rules! new_verification_test {
         #[test]
         fn ecdsa_verify_invalid_s() {
             for vector in $vectors {
-                let q_encoded = EncodedPoint::<$curve>::from_affine_coordinates(
+                let q_encoded = Sec1Point::<$curve>::from_affine_coordinates(
                     &Array::try_from(vector.q_x).unwrap(),
                     &Array::try_from(vector.q_y).unwrap(),
                     false,
                 );
 
-                let q = VerifyingKey::<$curve>::from_encoded_point(&q_encoded).unwrap();
+                let q = VerifyingKey::<$curve>::from_sec1_point(&q_encoded).unwrap();
                 let r = Array::try_from(vector.r).unwrap();
 
                 // Flip a bit in `s`
@@ -150,7 +160,7 @@ macro_rules! new_wycheproof_test {
     ($name:ident, $test_name: expr, $curve:path) => {
         use $crate::{
             Signature,
-            elliptic_curve::sec1::EncodedPoint,
+            elliptic_curve::sec1::Sec1Point,
             signature::Verifier,
         };
 
@@ -189,11 +199,11 @@ macro_rules! new_wycheproof_test {
             ) -> Option<&'static str> {
                 let x = element_from_padded_slice::<$curve>(wx);
                 let y = element_from_padded_slice::<$curve>(wy);
-                let q_encoded = EncodedPoint::<$curve>::from_affine_coordinates(
+                let q_encoded = Sec1Point::<$curve>::from_affine_coordinates(
                     &x, &y, /* compress= */ false,
                 );
                 let verifying_key =
-                    $crate::VerifyingKey::<$curve>::from_encoded_point(&q_encoded).unwrap();
+                    $crate::VerifyingKey::<$curve>::from_sec1_point(&q_encoded).unwrap();
 
                 let sig = match Signature::from_der(sig) {
                     Ok(s) => s,
@@ -265,6 +275,34 @@ macro_rules! new_wycheproof_test {
             }
         }
     };
+}
+
+impl EcdsaCurve for MockCurve {
+    const NORMALIZE_S: bool = false;
+}
+
+/// ECDSA test vector
+pub struct TestVector {
+    /// Private scalar
+    pub d: &'static [u8],
+
+    /// Public key x-coordinate (`Qx`)
+    pub q_x: &'static [u8],
+
+    /// Public key y-coordinate (`Qy`)
+    pub q_y: &'static [u8],
+
+    /// Ephemeral scalar (a.k.a. nonce)
+    pub k: &'static [u8],
+
+    /// Message digest (prehashed)
+    pub m: &'static [u8],
+
+    /// Signature `r` component
+    pub r: &'static [u8],
+
+    /// Signature `s` component
+    pub s: &'static [u8],
 }
 
 #[cfg(test)]

@@ -15,9 +15,12 @@ pub use shake::*;
 use crate::{PkSeed, SkPrf, SkSeed, address::Address};
 
 /// A trait specifying the hash functions described in FIPS-205 section 10
-pub(crate) trait HashSuite: Sized + Clone + Debug + PartialEq + Eq {
+pub(crate) trait HashSuite: Sized + Clone + Debug {
     type N: ArraySize + Debug + Clone + PartialEq + Eq;
     type M: ArraySize + Debug + Clone + PartialEq + Eq;
+
+    /// Instantiates the hash suite.
+    fn new_from_pk_seed(pk_seed: &PkSeed<Self::N>) -> Self;
 
     /// Pseudorandom function that generates the randomizer for the randomized hashing of the message to be signed.
     fn prf_msg(
@@ -35,16 +38,12 @@ pub(crate) trait HashSuite: Sized + Clone + Debug + PartialEq + Eq {
     ) -> Array<u8, Self::M>;
 
     /// PRF that is used to generate the secret values in WOTS+ and FORS private keys.
-    fn prf_sk(
-        pk_seed: &PkSeed<Self::N>,
-        sk_seed: &SkSeed<Self::N>,
-        adrs: &impl Address,
-    ) -> Array<u8, Self::N>;
+    fn prf_sk(&self, sk_seed: &SkSeed<Self::N>, adrs: &impl Address) -> Array<u8, Self::N>;
 
     /// A hash function that maps an L*N-byte string to an N-byte string. Used for the chain function in WOTS+.
     /// Message length must be a multiple of `N`. Panics otherwise.
     fn t<L: ArraySize>(
-        pk_seed: &PkSeed<Self::N>,
+        &self,
         adrs: &impl Address,
         m: &Array<Array<u8, Self::N>, L>,
     ) -> Array<u8, Self::N>;
@@ -52,7 +51,7 @@ pub(crate) trait HashSuite: Sized + Clone + Debug + PartialEq + Eq {
     /// Specialization of `t` for 2*chunk messages. Used to compute Merkle tree nodes.
     /// May be reimplemented for better performance.
     fn h(
-        pk_seed: &PkSeed<Self::N>,
+        &self,
         adrs: &impl Address,
         m1: &Array<u8, Self::N>,
         m2: &Array<u8, Self::N>,
@@ -60,11 +59,7 @@ pub(crate) trait HashSuite: Sized + Clone + Debug + PartialEq + Eq {
 
     /// Hash function that takes an N-byte input to an N-byte output
     /// Used for the WOTS+ chain function
-    fn f(
-        pk_seed: &PkSeed<Self::N>,
-        adrs: &impl Address,
-        m: &Array<u8, Self::N>,
-    ) -> Array<u8, Self::N>;
+    fn f(&self, adrs: &impl Address, m: &Array<u8, Self::N>) -> Array<u8, Self::N>;
 }
 
 #[cfg(test)]

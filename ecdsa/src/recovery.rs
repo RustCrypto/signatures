@@ -14,7 +14,7 @@ use {
         bigint::CheckedAdd,
         ops::{LinearCombination, Reduce},
         point::DecompressPoint,
-        sec1::{self, FromEncodedPoint, ToEncodedPoint},
+        sec1::{self, FromSec1Point, ToSec1Point},
     },
     elliptic_curve::{
         CurveArithmetic, FieldBytes, Scalar, array::ArraySize, ops::Invert, subtle::CtOption,
@@ -91,7 +91,7 @@ impl RecoveryId {
     ) -> Result<Self>
     where
         C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
-        AffinePoint<C>: DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C>,
+        AffinePoint<C>: DecompressPoint<C> + FromSec1Point<C> + ToSec1Point<C>,
         FieldBytesSize<C>: sec1::ModulusSize,
         SignatureSize<C>: ArraySize,
     {
@@ -109,7 +109,7 @@ impl RecoveryId {
     where
         C: EcdsaCurve + CurveArithmetic,
         D: EagerHash,
-        AffinePoint<C>: DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C>,
+        AffinePoint<C>: DecompressPoint<C> + FromSec1Point<C> + ToSec1Point<C>,
         FieldBytesSize<C>: sec1::ModulusSize,
         SignatureSize<C>: ArraySize,
     {
@@ -126,7 +126,7 @@ impl RecoveryId {
     ) -> Result<Self>
     where
         C: EcdsaCurve + CurveArithmetic,
-        AffinePoint<C>: DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C>,
+        AffinePoint<C>: DecompressPoint<C> + FromSec1Point<C> + ToSec1Point<C>,
         FieldBytesSize<C>: sec1::ModulusSize,
         SignatureSize<C>: ArraySize,
     {
@@ -310,7 +310,7 @@ where
 impl<C> VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    AffinePoint<C>: DecompressPoint<C> + FromEncodedPoint<C> + ToEncodedPoint<C>,
+    AffinePoint<C>: DecompressPoint<C> + FromSec1Point<C> + ToSec1Point<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
     SignatureSize<C>: ArraySize,
 {

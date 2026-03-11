@@ -35,6 +35,9 @@ use core::str;
 #[cfg(feature = "zeroize")]
 use zeroize::Zeroize;
 
+#[cfg(feature = "zerocopy")]
+use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout, Unaligned};
+
 /// Algorithm [`ObjectIdentifier`] for the Ed25519 digital signature algorithm
 /// (`id-Ed25519`).
 ///
@@ -226,6 +229,11 @@ impl str::FromStr for KeypairBytes {
 /// Note that this type operates on raw bytes and performs no validation that
 /// public keys represent valid compressed Ed25519 y-coordinates.
 #[derive(Clone, Copy, Eq, PartialEq)]
+#[cfg_attr(
+    feature = "zerocopy",
+    derive(IntoBytes, FromBytes, Unaligned, KnownLayout, Immutable,)
+)]
+#[repr(transparent)]
 pub struct PublicKeyBytes(pub [u8; Self::BYTE_SIZE]);
 
 impl PublicKeyBytes {

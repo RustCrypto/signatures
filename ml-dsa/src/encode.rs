@@ -1,9 +1,9 @@
-use crate::module_lattice::encode::{ArraySize, Encode, EncodingSize, VectorEncodingSize};
 use core::ops::Add;
 use hybrid_array::{
     Array,
     typenum::{Len, Length, Sum, Unsigned},
 };
+use module_lattice::{ArraySize, Encode, EncodingSize, VectorEncodingSize};
 
 use crate::algebra::{Elem, Polynomial, Vector};
 
@@ -106,18 +106,21 @@ where
 }
 
 #[cfg(test)]
-pub(crate) mod test {
+#[allow(clippy::integer_division_remainder_used, reason = "tests")]
+pub(crate) mod tests {
     use super::*;
-    use crate::module_lattice::encode::*;
+    use crate::algebra::*;
     use core::ops::Rem;
+    use getrandom::{
+        SysRng,
+        rand_core::{Rng, UnwrapErr},
+    };
     use hybrid_array::typenum::{
         U1, U2, U3, U4, U6, U7, U8, U9, U10, U13, U17, U19,
         marker_traits::Zero,
         operator_aliases::{Diff, Mod, Shleft},
     };
-    use rand::Rng;
-
-    use crate::algebra::*;
+    use module_lattice::{EncodedPolynomial, Field};
 
     // A helper trait to construct larger arrays by repeating smaller ones
     trait Repeat<T: Clone, D: ArraySize> {
@@ -131,13 +134,11 @@ pub(crate) mod test {
         D: ArraySize + Rem<N>,
         Mod<D, N>: Zero,
     {
-        #[allow(clippy::integer_division_remainder_used)]
         fn repeat(&self) -> Array<T, D> {
             Array::from_fn(|i| self[i % N::USIZE].clone())
         }
     }
 
-    #[allow(clippy::integer_division_remainder_used)]
     fn simple_bit_pack_test<D>(b: u32, decoded: &Polynomial, encoded: &EncodedPolynomial<D>)
     where
         D: EncodingSize,
@@ -150,9 +151,9 @@ pub(crate) mod test {
         assert_eq!(actual_decoded, *decoded);
 
         // Test random decode/encode and encode/decode round trips
-        let mut rng = rand::rng();
+        let mut rng = UnwrapErr(SysRng);
         let decoded = Polynomial::new(Array::from_fn(|_| {
-            let x: u32 = rng.random();
+            let x = rng.next_u32();
             Elem::new(x % (b + 1))
         }));
 
@@ -205,7 +206,6 @@ pub(crate) mod test {
         simple_bit_pack_test::<U6>(b, &decoded, &encoded);
     }
 
-    #[allow(clippy::integer_division_remainder_used)]
     fn bit_pack_test<A, B>(decoded: &Polynomial, encoded: &RangeEncodedPolynomial<A, B>)
     where
         A: Unsigned,
@@ -223,9 +223,9 @@ pub(crate) mod test {
         assert_eq!(actual_decoded, *decoded);
 
         // Test random decode/encode and encode/decode round trips
-        let mut rng = rand::rng();
+        let mut rng = UnwrapErr(SysRng);
         let decoded = Polynomial::new(Array::from_fn(|_| {
-            let mut x: u32 = rng.random();
+            let mut x = rng.next_u32();
             x %= a.0 + b.0;
             b - Elem::new(x)
         }));

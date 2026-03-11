@@ -14,7 +14,7 @@
 //! to be resistant to quantum computers.
 //!
 //! While the API exposed by SLH-DSA is the same as conventional signature schemes, it is important
-//! to note that the signatures produced by the algorithm are much larger than classical schemes like EdDSA,
+//! to note that the signatures produced by the algorithm are much larger than classical schemes like `EdDSA`,
 //! ranging from over 7KB for the smallest parameter set to nearly 50KB at the largest
 //!
 //! This crate currently allocates signatures and intermediate values on the stack, which may cause problems for
@@ -63,18 +63,16 @@ mod verifying_key;
 mod wots;
 mod xmss;
 
+pub use hashes::*;
 pub use signature_encoding::*;
 pub use signing_key::*;
 pub use verifying_key::*;
 
 use fors::ForsParams;
-pub use hashes::*;
 
 /// Specific parameters for each of the 12 FIPS parameter sets
 #[allow(private_bounds)] // Intentionally un-usable type
-pub trait ParameterSet:
-    ForsParams + SigningKeyLen + VerifyingKeyLen + SignatureLen + PartialEq + Eq
-{
+pub trait ParameterSet: ForsParams + SigningKeyLen + VerifyingKeyLen + SignatureLen {
     /// Human-readable name for parameter set, matching the FIPS-205 designations
     const NAME: &'static str;
 
@@ -85,7 +83,7 @@ pub trait ParameterSet:
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rand::Rng;
+    use rand::RngExt;
     use signature::*;
     use util::macros::test_parameter_sets;
 

@@ -1,23 +1,19 @@
-pub(crate) use crate::module_lattice::algebra::Field;
-pub(crate) use crate::module_lattice::util::Truncate;
 use hybrid_array::{
     ArraySize,
     typenum::{Shleft, U1, U13, Unsigned},
 };
+use module_lattice::{Field, Truncate};
 
-use crate::define_field;
-use crate::module_lattice::algebra;
-
-define_field!(BaseField, u32, u64, u128, 8_380_417);
+module_lattice::define_field!(BaseField, u32, u64, u128, 8_380_417);
 
 pub(crate) type Int = <BaseField as Field>::Int;
 
-pub(crate) type Elem = algebra::Elem<BaseField>;
-pub(crate) type Polynomial = algebra::Polynomial<BaseField>;
-pub(crate) type Vector<K> = algebra::Vector<BaseField, K>;
-pub(crate) type NttPolynomial = algebra::NttPolynomial<BaseField>;
-pub(crate) type NttVector<K> = algebra::NttVector<BaseField, K>;
-pub(crate) type NttMatrix<K, L> = algebra::NttMatrix<BaseField, K, L>;
+pub(crate) type Elem = module_lattice::Elem<BaseField>;
+pub(crate) type Polynomial = module_lattice::Polynomial<BaseField>;
+pub(crate) type Vector<K> = module_lattice::Vector<BaseField, K>;
+pub(crate) type NttPolynomial = module_lattice::NttPolynomial<BaseField>;
+pub(crate) type NttVector<K> = module_lattice::NttVector<BaseField, K>;
+pub(crate) type NttMatrix<K, L> = module_lattice::NttMatrix<BaseField, K, L>;
 
 // We require modular reduction for three moduli: q, 2^d, and 2 * gamma2.  All three of these are
 // greater than sqrt(q), which means that a number reduced mod q will always be less than M^2,
@@ -46,7 +42,7 @@ where
 {
     #[allow(clippy::as_conversions)]
     const SHIFT: usize = 2 * (M::U64.ilog2() + 1) as usize;
-    #[allow(clippy::integer_division_remainder_used)]
+    #[allow(clippy::integer_division_remainder_used, reason = "constant")]
     const MULTIPLIER: u64 = (1 << Self::SHIFT) / M::U64;
 }
 
@@ -54,8 +50,55 @@ pub(crate) trait Decompose {
     fn decompose<TwoGamma2: Unsigned>(self) -> (Elem, Elem);
 }
 
+/// Constant-time division by a compile-time constant divisor.
+///
+/// This trait provides a constant-time alternative to the hardware division
+/// instruction, which has variable timing based on operand values.
+/// Uses Barrett reduction to compute `x / M` where M is a compile-time constant.
+pub(crate) trait ConstantTimeDiv: Unsigned {
+    /// Bit shift for Barrett reduction, chosen to provide sufficient precision
+    const CT_DIV_SHIFT: usize;
+    /// Precomputed multiplier: ceil(2^SHIFT / M)
+    const CT_DIV_MULTIPLIER: u64;
+
+    /// Perform constant-time division of x by `Self::U32`
+    /// Requires: x < Q (the field modulus, ~2^23)
+    #[allow(clippy::inline_always)] // Required for constant-time guarantees in crypto code
+    #[inline(always)]
+    fn ct_div(x: u32) -> u32 {
+        // Barrett reduction: q = (x * MULTIPLIER) >> SHIFT
+        // This gives us floor(x / M) for x < 2^SHIFT / MULTIPLIER * M
+        let x64 = u64::from(x);
+        let quotient = (x64 * Self::CT_DIV_MULTIPLIER) >> Self::CT_DIV_SHIFT;
+        // SAFETY: quotient is guaranteed to fit in u32 because:
+        // - x < Q (~2^23), so quotient = x / M < x < 2^23 < 2^32
+        #[allow(clippy::cast_possible_truncation, clippy::as_conversions)]
+        let result = quotient as u32;
+        result
+    }
+}
+
+impl<M> ConstantTimeDiv for M
+where
+    M: Unsigned,
+{
+    // Use a shift that provides enough precision for the ML-DSA field (Q ~ 2^23)
+    // We need SHIFT > log2(Q) + log2(M) to ensure accuracy
+    // With Q < 2^24 and M < 2^20, SHIFT = 48 is sufficient
+    const CT_DIV_SHIFT: usize = 48;
+
+    // Precompute the multiplier at compile time
+    // We add (M-1) before dividing to get ceiling division, ensuring we never underestimate
+    #[allow(clippy::integer_division_remainder_used, reason = "constant")]
+    const CT_DIV_MULTIPLIER: u64 = (1u64 << Self::CT_DIV_SHIFT).div_ceil(M::U64);
+}
+
 impl Decompose for Elem {
     // Algorithm 36 Decompose
+    //
+    // This implementation uses constant-time division to avoid timing side-channels.
+    // The original algorithm used hardware division which has variable timing based
+    // on operand values, potentially leaking secret information during signing.
     fn decompose<TwoGamma2: Unsigned>(self) -> (Elem, Elem) {
         let r_plus = self.clone();
         let r0 = r_plus.mod_plus_minus::<TwoGamma2>();
@@ -63,8 +106,9 @@ impl Decompose for Elem {
         if r_plus - r0 == Elem::new(BaseField::Q - 1) {
             (Elem::new(0), r0 - Elem::new(1))
         } else {
-            let mut r1 = r_plus - r0;
-            r1.0 /= TwoGamma2::U32;
+            let diff = r_plus - r0;
+            // Use constant-time division instead of hardware division
+            let r1 = Elem::new(TwoGamma2::ct_div(diff.0));
             (r1, r0)
         }
     }
@@ -212,7 +256,7 @@ impl<K: ArraySize> AlgebraExt for Vector<K> {
 }
 
 #[cfg(test)]
-#[allow(clippy::integer_division_remainder_used)]
+#[allow(clippy::integer_division_remainder_used, reason = "tests")]
 mod test {
     use super::*;
 
@@ -258,6 +302,44 @@ mod test {
             // The low-order and high-order outputs should combine to form the input.
             let xx = (MOD * x1.0 + x0.0) % BaseField::Q;
             assert_eq!(xx, x.0);
+        }
+    }
+
+    #[test]
+    fn barrett_reduce_boundary() {
+        let m_minus_1 = Mod::U32 - 1;
+        assert_eq!(Mod::reduce(m_minus_1), m_minus_1);
+        assert_eq!(Mod::reduce(Mod::U32), 0);
+        assert_eq!(Mod::reduce(Mod::U32 + 1), 1);
+        assert_eq!(Mod::reduce(2 * Mod::U32 - 1), m_minus_1);
+        assert_eq!(Mod::reduce(2 * Mod::U32), 0);
+    }
+
+    #[test]
+    fn constant_time_div_accuracy() {
+        for x in 0..1000 {
+            assert_eq!(Mod::ct_div(x), x / Mod::U32);
+        }
+        for x in (BaseField::Q - 1000)..BaseField::Q {
+            assert_eq!(Mod::ct_div(x), x / Mod::U32);
+        }
+    }
+
+    #[test]
+    fn decompose_edge_case() {
+        let q_minus_1 = Elem::new(BaseField::Q - 1);
+        let (r1, r0) = q_minus_1.decompose::<Mod>();
+        let reconstructed = (MOD * r1.0 + r0.0) % BaseField::Q;
+        assert_eq!(reconstructed, q_minus_1.0);
+    }
+
+    #[test]
+    fn high_low_bits_consistency() {
+        for x in [0, 1, MOD / 2, MOD - 1, MOD, MOD + 1, BaseField::Q - 1] {
+            let elem = Elem::new(x);
+            let (decomp_high, decomp_low) = elem.decompose::<Mod>();
+            assert_eq!(elem.high_bits::<Mod>(), decomp_high);
+            assert_eq!(elem.low_bits::<Mod>(), decomp_low);
         }
     }
 }

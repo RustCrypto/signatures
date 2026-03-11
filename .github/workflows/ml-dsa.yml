@@ -31,7 +31,9 @@ jobs:
           - 1.85.0 # MSRV
           - stable
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6.0.2
+        with:
+          submodules: recursive
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
@@ -53,7 +55,7 @@ jobs:
           - 1.85.0 # MSRV
           - stable
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6.0.2
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}

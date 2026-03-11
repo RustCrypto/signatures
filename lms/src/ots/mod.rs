@@ -17,21 +17,24 @@ pub use signature::Signature;
 
 #[cfg(test)]
 pub mod tests {
-    use crate::constants::ID_LEN;
-    use crate::ots::modes::{
-        LmsOtsMode, LmsOtsSha256N32W1, LmsOtsSha256N32W2, LmsOtsSha256N32W4, LmsOtsSha256N32W8,
+    use crate::{
+        constants::ID_LEN,
+        ots::{
+            modes::{
+                LmsOtsMode, LmsOtsSha256N32W1, LmsOtsSha256N32W2, LmsOtsSha256N32W4,
+                LmsOtsSha256N32W8,
+            },
+            private::SigningKey,
+        },
     };
-    use crate::ots::private::SigningKey;
-    use digest::Digest;
-    use digest::OutputSizeUser;
+    use core::convert::Infallible;
+    use digest::{Digest, OutputSizeUser};
+    use getrandom::SysRng;
     use hex_literal::hex;
     use hybrid_array::{Array, ArraySize};
-    use rand::rng;
-    use rand_core::{CryptoRng, RngCore};
-    use signature::RandomizedSignerMut;
-    use signature::Verifier;
-    use std::matches;
-    use std::ops::Add;
+    use rand_core::{TryCryptoRng, TryRng, UnwrapErr};
+    use signature::{RandomizedSignerMut, Verifier};
+    use std::{matches, ops::Add};
     use typenum::{Sum, U2};
 
     // tests that a signature signed with a private key verifies under
@@ -41,7 +44,7 @@ pub mod tests {
         <Mode::Hasher as OutputSizeUser>::OutputSize: Add<U2>,
         Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U2>: ArraySize,
     {
-        let mut rng = rng();
+        let mut rng = UnwrapErr(SysRng);
         let mut sk = SigningKey::<Mode>::new(0, [0xcc; ID_LEN], &mut rng);
         let pk = sk.public();
         let msg = "this is a test message".as_bytes();
@@ -65,7 +68,7 @@ pub mod tests {
         <Mode::Hasher as OutputSizeUser>::OutputSize: Add<U2>,
         Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U2>: ArraySize,
     {
-        let mut rng = rng();
+        let mut rng = UnwrapErr(SysRng);
         let mut sk = SigningKey::<Mode>::new(0, [0xcc; ID_LEN], &mut rng);
         let mut pk = sk.public();
         let msg = "this is a test message".as_bytes();
@@ -127,28 +130,31 @@ pub mod tests {
     /// Constant RNG for testing purposes only.
     pub struct ConstantRng<'a>(pub &'a [u8]);
 
-    impl RngCore for ConstantRng<'_> {
-        fn next_u32(&mut self) -> u32 {
+    impl TryRng for ConstantRng<'_> {
+        type Error = Infallible;
+
+        fn try_next_u32(&mut self) -> Result<u32, Self::Error> {
             let (head, tail) = self.0.split_at(4);
             self.0 = tail;
-            u32::from_be_bytes(head.try_into().unwrap())
+            Ok(u32::from_be_bytes(head.try_into().unwrap()))
         }
 
-        fn next_u64(&mut self) -> u64 {
+        fn try_next_u64(&mut self) -> Result<u64, Self::Error> {
             let (head, tail) = self.0.split_at(8);
             self.0 = tail;
-            u64::from_be_bytes(head.try_into().unwrap())
+            Ok(u64::from_be_bytes(head.try_into().unwrap()))
         }
 
-        fn fill_bytes(&mut self, dest: &mut [u8]) {
+        fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Self::Error> {
             let (hd, tl) = self.0.split_at(dest.len());
             dest.copy_from_slice(hd);
             self.0 = tl;
+            Ok(())
         }
     }
 
     /// WARNING: This is not a secure cryptographic RNG. It is only used for testing.
-    impl CryptoRng for ConstantRng<'_> {}
+    impl TryCryptoRng for ConstantRng<'_> {}
 
     #[test]
     /// Test Case 2, Appendix F. LMS level 2. https://datatracker.ietf.org/doc/html/rfc8554#appendix-F

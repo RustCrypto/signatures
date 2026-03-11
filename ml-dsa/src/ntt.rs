@@ -1,11 +1,8 @@
-use crate::module_lattice::algebra::Field;
-use crate::module_lattice::encode::ArraySize;
-use core::ops::Mul;
-
 use crate::algebra::{BaseField, Elem, NttPolynomial, NttVector, Polynomial, Vector};
+use module_lattice::{ArraySize, Field, MultiplyNtt};
 
 // Since the powers of zeta used in the NTT and MultiplyNTTs are fixed, we use pre-computed tables
-// to avoid the need to compute the exponetiations at runtime.
+// to avoid the need to compute the exponentiations at runtime.
 //
 //   ZETA_POW_BITREV[i] = zeta^{BitRev_8(i)}
 //
@@ -16,7 +13,7 @@ use crate::algebra::{BaseField, Elem, NttPolynomial, NttVector, Polynomial, Vect
 // The values computed here match those provided in Appendix B of FIPS 204.
 #[allow(clippy::cast_possible_truncation)]
 #[allow(clippy::as_conversions)]
-#[allow(clippy::integer_division_remainder_used)]
+#[allow(clippy::integer_division_remainder_used, reason = "constant")]
 const ZETA_POW_BITREV: [Elem; 256] = {
     const ZETA: u64 = 1753;
     const fn bitrev8(x: usize) -> usize {
@@ -50,28 +47,46 @@ pub(crate) trait Ntt {
     fn ntt(&self) -> Self::Output;
 }
 
+/// Constant-time NTT butterfly layer.
+///
+/// Uses const generics to ensure loop bounds are compile-time constants,
+/// avoiding UDIV instructions from runtime `step_by` calculations.
+#[allow(clippy::inline_always)] // Required for constant-time guarantees in crypto code
+#[inline(always)]
+fn ntt_layer<const LEN: usize, const ITERATIONS: usize>(w: &mut [Elem; 256], m: &mut usize) {
+    for i in 0..ITERATIONS {
+        let start = i * 2 * LEN;
+        *m += 1;
+        let z = ZETA_POW_BITREV[*m];
+        for j in start..(start + LEN) {
+            let t = z * w[j + LEN];
+            w[j + LEN] = w[j] - t;
+            w[j] = w[j] + t;
+        }
+    }
+}
+
 impl Ntt for Polynomial {
     type Output = NttPolynomial;
 
     // Algorithm 41 NTT
+    //
+    // This implementation uses const-generic helper functions to ensure all loop
+    // bounds are compile-time constants, avoiding potential UDIV instructions.
     fn ntt(&self) -> Self::Output {
-        let mut w = self.0.clone();
-
+        let mut w: [Elem; 256] = self.0.clone().into();
         let mut m = 0;
-        for len in [128, 64, 32, 16, 8, 4, 2, 1] {
-            for start in (0..256).step_by(2 * len) {
-                m += 1;
-                let z = ZETA_POW_BITREV[m];
 
-                for j in start..(start + len) {
-                    let t = z * w[j + len];
-                    w[j + len] = w[j] - t;
-                    w[j] = w[j] + t;
-                }
-            }
-        }
+        ntt_layer::<128, 1>(&mut w, &mut m);
+        ntt_layer::<64, 2>(&mut w, &mut m);
+        ntt_layer::<32, 4>(&mut w, &mut m);
+        ntt_layer::<16, 8>(&mut w, &mut m);
+        ntt_layer::<8, 16>(&mut w, &mut m);
+        ntt_layer::<4, 32>(&mut w, &mut m);
+        ntt_layer::<2, 64>(&mut w, &mut m);
+        ntt_layer::<1, 128>(&mut w, &mut m);
 
-        NttPolynomial::new(w)
+        NttPolynomial::new(w.into())
     }
 }
 
@@ -89,30 +104,51 @@ pub(crate) trait NttInverse {
     fn ntt_inverse(&self) -> Self::Output;
 }
 
+/// Constant-time inverse NTT butterfly layer.
+///
+/// Uses const generics to ensure loop bounds are compile-time constants,
+/// avoiding UDIV instructions from runtime `step_by` calculations.
+#[allow(clippy::inline_always)] // Required for constant-time guarantees in crypto code
+#[inline(always)]
+fn ntt_inverse_layer<const LEN: usize, const ITERATIONS: usize>(
+    w: &mut [Elem; 256],
+    m: &mut usize,
+) {
+    for i in 0..ITERATIONS {
+        let start = i * 2 * LEN;
+        *m -= 1;
+        let z = -ZETA_POW_BITREV[*m];
+        for j in start..(start + LEN) {
+            let t = w[j];
+            w[j] = t + w[j + LEN];
+            w[j + LEN] = z * (t - w[j + LEN]);
+        }
+    }
+}
+
 impl NttInverse for NttPolynomial {
     type Output = Polynomial;
 
     // Algorithm 42 NTT^{−1}
+    //
+    // This implementation uses const-generic helper functions to ensure all loop
+    // bounds are compile-time constants, avoiding potential UDIV instructions.
     fn ntt_inverse(&self) -> Self::Output {
         const INVERSE_256: Elem = Elem::new(8_347_681);
 
-        let mut w = self.0.clone();
-
+        let mut w: [Elem; 256] = self.0.clone().into();
         let mut m = 256;
-        for len in [1, 2, 4, 8, 16, 32, 64, 128] {
-            for start in (0..256).step_by(2 * len) {
-                m -= 1;
-                let z = -ZETA_POW_BITREV[m];
 
-                for j in start..(start + len) {
-                    let t = w[j];
-                    w[j] = t + w[j + len];
-                    w[j + len] = z * (t - w[j + len]);
-                }
-            }
-        }
+        ntt_inverse_layer::<1, 128>(&mut w, &mut m);
+        ntt_inverse_layer::<2, 64>(&mut w, &mut m);
+        ntt_inverse_layer::<4, 32>(&mut w, &mut m);
+        ntt_inverse_layer::<8, 16>(&mut w, &mut m);
+        ntt_inverse_layer::<16, 8>(&mut w, &mut m);
+        ntt_inverse_layer::<32, 4>(&mut w, &mut m);
+        ntt_inverse_layer::<64, 2>(&mut w, &mut m);
+        ntt_inverse_layer::<128, 1>(&mut w, &mut m);
 
-        INVERSE_256 * &Polynomial::new(w)
+        INVERSE_256 * &Polynomial::new(w.into())
     }
 }
 
@@ -124,13 +160,11 @@ impl<K: ArraySize> NttInverse for NttVector<K> {
     }
 }
 
-impl Mul<&NttPolynomial> for &NttPolynomial {
-    type Output = NttPolynomial;
-
+impl MultiplyNtt for BaseField {
     // Algorithm 45 MultiplyNTT
-    fn mul(self, rhs: &NttPolynomial) -> NttPolynomial {
+    fn multiply_ntt(lhs: &NttPolynomial, rhs: &NttPolynomial) -> NttPolynomial {
         NttPolynomial::new(
-            self.0
+            lhs.0
                 .iter()
                 .zip(rhs.0.iter())
                 .map(|(&x, &y)| x * y)
@@ -152,24 +186,20 @@ mod test {
     use crate::algebra::*;
 
     // Multiplication in R_q, modulo X^256 + 1
-    impl Mul<&Polynomial> for &Polynomial {
-        type Output = Polynomial;
+    fn poly_mul(lhs: &Polynomial, rhs: &Polynomial) -> Polynomial {
+        let mut out = Polynomial::default();
+        for (i, x) in lhs.0.iter().enumerate() {
+            for (j, y) in rhs.0.iter().enumerate() {
+                let (sign, index) = if i + j < 256 {
+                    (Elem::new(1), i + j)
+                } else {
+                    (Elem::new(BaseField::Q - 1), i + j - 256)
+                };
 
-        fn mul(self, rhs: &Polynomial) -> Self::Output {
-            let mut out = Self::Output::default();
-            for (i, x) in self.0.iter().enumerate() {
-                for (j, y) in rhs.0.iter().enumerate() {
-                    let (sign, index) = if i + j < 256 {
-                        (Elem::new(1), i + j)
-                    } else {
-                        (Elem::new(BaseField::Q - 1), i + j - 256)
-                    };
-
-                    out.0[index] = out.0[index] + (sign * *x * *y);
-                }
+                out.0[index] = out.0[index] + (sign * *x * *y);
             }
-            out
         }
+        out
     }
 
     // A polynomial with only a scalar component, to make simple test cases
@@ -197,7 +227,7 @@ mod test {
         assert_eq!(fg, fg_unhat);
 
         // Verify that NTT is a homomorphism with regard to multiplication
-        let fg = &f * &g;
+        let fg = poly_mul(&f, &g);
         let f_hat_g_hat = &f_hat * &g_hat;
         let fg_unhat = f_hat_g_hat.ntt_inverse();
         assert_eq!(fg, fg_unhat);

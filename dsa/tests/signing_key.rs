@@ -1,7 +1,7 @@
-#![cfg(all(feature = "hazmat", feature = "pkcs8"))]
 // We abused the deprecated attribute for unsecure key sizes
 // But we want to use those small key sizes for fast tests
 #![allow(deprecated)]
+#![cfg(all(feature = "hazmat", feature = "pkcs8"))]
 
 use crypto_bigint::{
     BoxedUint, Odd,
@@ -9,6 +9,7 @@ use crypto_bigint::{
 };
 use digest::Digest;
 use dsa::{Components, KeySize, SigningKey};
+use getrandom::{SysRng, rand_core::UnwrapErr};
 use pkcs8::{DecodePrivateKey, EncodePrivateKey, LineEnding};
 use sha1::Sha1;
 use signature::{DigestVerifier, RandomizedDigestSigner};
@@ -16,7 +17,7 @@ use signature::{DigestVerifier, RandomizedDigestSigner};
 const OPENSSL_PEM_PRIVATE_KEY: &str = include_str!("pems/private.pem");
 
 fn generate_keypair() -> SigningKey {
-    let mut rng = rand::thread_rng();
+    let mut rng = UnwrapErr(SysRng);
     let components = Components::generate(&mut rng, KeySize::DSA_1024_160);
     SigningKey::generate(&mut rng, components)
 }
@@ -48,11 +49,10 @@ fn sign_and_verify() {
 
     let signing_key = generate_keypair();
     let verifying_key = signing_key.verifying_key();
+    let mut rng = UnwrapErr(SysRng);
 
-    let signature = signing_key
-        .sign_digest_with_rng(&mut rand::thread_rng(), |digest: &mut Sha1| {
-            digest.update(DATA)
-        });
+    let signature =
+        signing_key.sign_digest_with_rng(&mut rng, |digest: &mut Sha1| digest.update(DATA));
 
     assert!(
         verifying_key
@@ -73,7 +73,7 @@ fn verify_validity() {
     let components = signing_key.verifying_key().components();
 
     let params = BoxedMontyParams::new(Odd::new((**components.p()).clone()).unwrap());
-    let form = BoxedMontyForm::new((**components.g()).clone(), params);
+    let form = BoxedMontyForm::new((**components.g()).clone(), &params);
 
     assert!(
         BoxedUint::zero() < **signing_key.x() && signing_key.x() < components.q(),

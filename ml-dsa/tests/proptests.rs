@@ -1,57 +1,79 @@
-use hybrid_array::AsArrayRef;
-use ml_dsa::{
-    KeyGen, KeyPair, MlDsa44, MlDsa65, MlDsa87, Signature,
-    signature::{Signer, Verifier},
-};
-use proptest::prelude::*;
+//! Property-based tests for the `ml-dsa` crate.
 
-/// Example message
-const MSG: &[u8] = b"Hello world";
-
-// Keypairs
-prop_compose! {
-    fn mldsa44_keypair()(seed_bytes in any::<[u8; 32]>()) -> KeyPair<MlDsa44> {
-       MlDsa44::from_seed(seed_bytes.as_array_ref())
-    }
-}
-prop_compose! {
-    fn mldsa65_keypair()(seed_bytes in any::<[u8; 32]>()) -> KeyPair<MlDsa65> {
-       MlDsa65::from_seed(seed_bytes.as_array_ref())
-    }
-}
-prop_compose! {
-    fn mldsa87_keypair()(seed_bytes in any::<[u8; 32]>()) -> KeyPair<MlDsa87> {
-        MlDsa87::from_seed(seed_bytes.as_array_ref())
-    }
+macro_rules! signature_round_trip_encode {
+    ($alg:ident, $sig:expr) => {{
+        let sig_enc = $sig.encode();
+        let sig_dec_result = Signature::<$alg>::decode(&sig_enc);
+        prop_assert_eq!(&sig_dec_result, &Some($sig));
+        sig_dec_result.unwrap()
+    }};
 }
 
-macro_rules! round_trip_test {
-    ($params:path, $keypair:expr) => {
-        let sig = $keypair.signing_key().sign(MSG);
+macro_rules! mldsa_proptests {
+    ($name:ident, $alg:ident) => {
+        mod $name {
+            use ml_dsa::{
+                KeyGen, Signature,
+                signature::{DigestSigner, DigestVerifier, digest::Update},
+                $alg,
+            };
+            use proptest::{collection, prelude::*};
 
-        // Check signature verification
-        let verify_result = $keypair.verifying_key().verify(MSG, &sig);
-        prop_assert!(verify_result.is_ok());
+            #[cfg(feature = "rand_core")]
+            use ml_dsa::signature::RandomizedDigestSigner;
 
-        // Check signature encoding round trip
-        let sig_decoded = Signature::<$params>::decode(&sig.encode());
-        prop_assert_eq!(Some(sig), sig_decoded);
+            proptest! {
+                #[test]
+                fn round_trip_test(
+                    seed in any::<[u8; 32]>(),
+                    msg in collection::vec(0u8..u8::MAX, 0..65536),
+                    rnd in any::<[u8; 32]>()
+                ) {
+                    let kp = $alg::from_seed(&seed.into());
+                    let sk = kp.signing_key();
+                    let vk = kp.verifying_key();
+
+                    let sig = sk.sign_internal(&[&msg], &rnd.into());
+                    let sig_dec = signature_round_trip_encode!($alg, sig);
+                    assert!(vk.verify_internal(&msg, &sig_dec));
+                }
+
+                #[test]
+                fn round_trip_digest_test(
+                    seed in any::<[u8; 32]>(),
+                    msg in collection::vec(0u8..u8::MAX, 0..65536),
+                ) {
+                    let kp = $alg::from_seed(&seed.into());
+                    let sk = kp.signing_key();
+                    let vk = kp.verifying_key();
+
+                    let sig = sk.sign_digest(|digest| digest.update(&msg));
+                    let sig_dec = signature_round_trip_encode!($alg, sig);
+                    let verify_result = vk.verify_digest(|digest| Ok(digest.update(&msg)), &sig_dec);
+                    assert!(verify_result.is_ok());
+                }
+
+                #[cfg(feature = "rand_core")]
+                #[test]
+                fn round_trip_randomized_digest_test(
+                    seed in any::<[u8; 32]>(),
+                    msg in collection::vec(0u8..u8::MAX, 0..65536),
+                ) {
+                    let kp = $alg::from_seed(&seed.into());
+                    let sk = kp.signing_key();
+                    let vk = kp.verifying_key();
+
+                    let mut rng = rand_core::UnwrapErr(getrandom::SysRng);
+                    let sig = sk.sign_digest_with_rng(&mut rng, |digest| digest.update(&msg));
+                    let sig_dec = signature_round_trip_encode!($alg, sig);
+                    let verify_result = vk.verify_digest(|digest| Ok(digest.update(&msg)), &sig_dec);
+                    assert!(verify_result.is_ok());
+                }
+            }
+        }
     };
 }
 
-proptest! {
-    #[test]
-    fn mldsa44_round_trip(keypair in mldsa44_keypair()) {
-        round_trip_test!(MlDsa44, keypair);
-    }
-
-    #[test]
-    fn mldsa65_round_trip(keypair in mldsa65_keypair()) {
-        round_trip_test!(MlDsa65, keypair);
-    }
-
-    #[test]
-    fn mldsa87_round_trip(keypair in mldsa87_keypair()) {
-        round_trip_test!(MlDsa87, keypair);
-    }
-}
+mldsa_proptests!(mldsa44, MlDsa44);
+mldsa_proptests!(mldsa65, MlDsa65);
+mldsa_proptests!(mldsa87, MlDsa87);

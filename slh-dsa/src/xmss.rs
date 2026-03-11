@@ -1,16 +1,21 @@
+use crate::{SkSeed, address, wots::WotsParams, wots::WotsSig};
+use core::fmt::Debug;
 use hybrid_array::{Array, ArraySize};
 use typenum::Unsigned;
 
-use crate::wots::WotsSig;
-use crate::{PkSeed, SkSeed};
-use crate::{address, wots::WotsParams};
-use core::fmt::Debug;
-
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 pub(crate) struct XmssSig<P: XmssParams> {
     pub(crate) sig: WotsSig<P>,
     pub(crate) auth: Array<Array<u8, P::N>, P::HPrime>,
 }
+
+impl<P: XmssParams> PartialEq for XmssSig<P> {
+    fn eq(&self, other: &Self) -> bool {
+        self.sig == other.sig && self.auth == other.auth
+    }
+}
+
+impl<P: XmssParams> Eq for XmssSig<P> {}
 
 impl<P: XmssParams> XmssSig<P> {
     pub(crate) const SIZE: usize = WotsSig::<P>::SIZE + P::HPrime::USIZE * P::N::USIZE;
@@ -58,10 +63,10 @@ pub(crate) trait XmssParams: WotsParams + Sized {
     type HPrime: ArraySize + Debug + Eq;
 
     fn xmss_node(
+        &self,
         sk_seed: &SkSeed<Self::N>,
         node: u32,
         height: u32,
-        pk_seed: &PkSeed<Self::N>,
         adrs: &address::WotsHash,
     ) -> Array<u8, Self::N> {
         debug_assert!(height <= Self::HPrime::U32);
@@ -69,33 +74,33 @@ pub(crate) trait XmssParams: WotsParams + Sized {
         if height == 0 {
             let mut adrs = adrs.clone();
             adrs.key_pair_adrs.set(node);
-            Self::wots_pk_gen(sk_seed, pk_seed, &adrs)
+            self.wots_pk_gen(sk_seed, &adrs)
         } else {
-            let lnode = Self::xmss_node(sk_seed, 2 * node, height - 1, pk_seed, adrs);
-            let rnode = Self::xmss_node(sk_seed, 2 * node + 1, height - 1, pk_seed, adrs);
+            let lnode = self.xmss_node(sk_seed, 2 * node, height - 1, adrs);
+            let rnode = self.xmss_node(sk_seed, 2 * node + 1, height - 1, adrs);
             let mut adrs = adrs.tree_adrs();
             adrs.tree_height.set(height);
             adrs.tree_index.set(node);
-            Self::h(pk_seed, &adrs, &lnode, &rnode)
+            self.h(&adrs, &lnode, &rnode)
         }
     }
 
     fn xmss_sign(
+        &self,
         m: &Array<u8, Self::N>,
         sk_seed: &SkSeed<Self::N>,
-        pk_seed: &PkSeed<Self::N>,
         idx: u32,
         adrs: &address::WotsHash,
     ) -> XmssSig<Self> {
         let mut adrs = adrs.clone();
         adrs.key_pair_adrs.set(idx);
 
-        let sig = Self::wots_sign(m, sk_seed, pk_seed, &adrs);
+        let sig = self.wots_sign(m, sk_seed, &adrs);
 
         let mut auth = Array::<Array<u8, Self::N>, Self::HPrime>::default();
         let mut idx = idx;
         for j in 0..Self::HPrime::U32 {
-            let node = Self::xmss_node(sk_seed, idx ^ 1, j, pk_seed, &adrs);
+            let node = self.xmss_node(sk_seed, idx ^ 1, j, &adrs);
             idx >>= 1;
             auth[j as usize] = node;
         }
@@ -104,17 +109,17 @@ pub(crate) trait XmssParams: WotsParams + Sized {
     }
 
     fn xmss_pk_from_sig(
+        &self,
         idx: u32,
         sig: &XmssSig<Self>,
         m: &Array<u8, Self::N>,
-        pk_seed: &PkSeed<Self::N>,
         adrs: &address::WotsHash,
     ) -> Array<u8, Self::N>
 where {
         let mut adrs = adrs.clone();
         adrs.key_pair_adrs.set(idx);
 
-        let mut node = Self::wots_pk_from_sig(&sig.sig, m, pk_seed, &adrs);
+        let mut node = self.wots_pk_from_sig(&sig.sig, m, &adrs);
 
         let mut adrs = adrs.tree_adrs();
 
@@ -125,9 +130,9 @@ where {
             (idx, rem) = (idx >> 1, idx & 1);
             adrs.tree_index.set(idx);
             if rem == 0 {
-                node = Self::h(pk_seed, &adrs, &node, &sig.auth[j as usize]);
+                node = self.h(&adrs, &node, &sig.auth[j as usize]);
             } else {
-                node = Self::h(pk_seed, &adrs, &sig.auth[j as usize], &node);
+                node = self.h(&adrs, &sig.auth[j as usize], &node);
             }
         }
         node
@@ -136,32 +141,22 @@ where {
 
 #[cfg(test)]
 mod tests {
-
-    use crate::PkSeed;
-    use crate::SkSeed;
-    use crate::util::macros::test_parameter_sets;
+    use crate::{
+        PkSeed, SkSeed, address::WotsHash, hashes::Shake128f, util::macros::test_parameter_sets,
+        xmss::XmssParams,
+    };
     use hex_literal::hex;
     use hybrid_array::Array;
-    use rand::Rng;
-    use rand::RngCore;
-    use rand::rng;
-
+    use rand::{Rng, RngExt};
     use typenum::Unsigned;
-
-    use crate::{address::WotsHash, hashes::Shake128f, xmss::XmssParams};
 
     #[test]
     fn test_xmss_node_shake128f_kat() {
         let sk_seed = SkSeed(Array([1; 16]));
         let pk_seed = PkSeed(Array([2; 16]));
+        let xmss = Shake128f::new_from_pk_seed(&pk_seed);
         let adrs = WotsHash::default();
-        let node = Shake128f::xmss_node(
-            &sk_seed,
-            0,
-            <Shake128f as XmssParams>::HPrime::U32,
-            &pk_seed,
-            &adrs,
-        );
+        let node = xmss.xmss_node(&sk_seed, 0, <Shake128f as XmssParams>::HPrime::U32, &adrs);
 
         // Generated by https://github.com/mjosaarinen/slh-dsa-py
         let expected = hex!("94e24679fb2460b97332db131c38bec9");
@@ -173,10 +168,11 @@ mod tests {
     fn test_sign_shake128f_kat() {
         let sk_seed = SkSeed(Array([1; 16]));
         let pk_seed = PkSeed(Array([2; 16]));
+        let xmss = Shake128f::new_from_pk_seed(&pk_seed);
         let adrs = WotsHash::default();
         let m = Array([3; 16]);
         let idx = 3;
-        let sig = Shake128f::xmss_sign(&m, &sk_seed, &pk_seed, idx, &adrs);
+        let sig = xmss.xmss_sign(&m, &sk_seed, idx, &adrs);
 
         let expected = hex!(
             "
@@ -206,23 +202,21 @@ mod tests {
 
     fn test_sign_verify<Xmss: XmssParams>() {
         // Generate random sk_seed, pk_seed, message, index, address
-        let mut rng = rng();
+        let mut rng = rand::rng();
 
         let sk_seed = SkSeed::new(&mut rng);
-
         let pk_seed = PkSeed::new(&mut rng);
+        let xmss = Xmss::new_from_pk_seed(&pk_seed);
 
         let mut msg = Array::<u8, _>::default();
         rng.fill_bytes(msg.as_mut_slice());
 
         let idx = rng.random_range(0..(1 << Xmss::HPrime::U32));
-
         let adrs = WotsHash::default();
 
-        let pk = Xmss::xmss_node(&sk_seed, 0, Xmss::HPrime::U32, &pk_seed, &adrs);
-
-        let sig = Xmss::xmss_sign(&msg, &sk_seed, &pk_seed, idx, &adrs);
-        let pk_recovered = Xmss::xmss_pk_from_sig(idx, &sig, &msg, &pk_seed, &adrs);
+        let pk = xmss.xmss_node(&sk_seed, 0, Xmss::HPrime::U32, &adrs);
+        let sig = xmss.xmss_sign(&msg, &sk_seed, idx, &adrs);
+        let pk_recovered = xmss.xmss_pk_from_sig(idx, &sig, &msg, &adrs);
 
         assert_eq!(pk, pk_recovered);
     }
@@ -231,28 +225,25 @@ mod tests {
 
     fn test_sign_verify_fail<Xmss: XmssParams>() {
         // Generate random sk_seed, pk_seed, message, index, address
-        let mut rng = rng();
+        let mut rng = rand::rng();
 
         let sk_seed = SkSeed::new(&mut rng);
-
         let pk_seed = PkSeed::new(&mut rng);
+        let xmss = Xmss::new_from_pk_seed(&pk_seed);
 
         let mut msg = Array::<u8, _>::default();
         rng.fill_bytes(msg.as_mut_slice());
 
         let idx = rng.random_range(0..(1 << Xmss::HPrime::U32));
-
         let adrs = WotsHash::default();
 
-        let pk = Xmss::xmss_node(&sk_seed, 0, Xmss::HPrime::U32, &pk_seed, &adrs);
-
-        let sig = Xmss::xmss_sign(&msg, &sk_seed, &pk_seed, idx, &adrs);
+        let pk = xmss.xmss_node(&sk_seed, 0, Xmss::HPrime::U32, &adrs);
+        let sig = xmss.xmss_sign(&msg, &sk_seed, idx, &adrs);
 
         // Tweak message
         msg[0] ^= 0xff;
 
-        let pk_recovered = Xmss::xmss_pk_from_sig(idx, &sig, &msg, &pk_seed, &adrs);
-
+        let pk_recovered = xmss.xmss_pk_from_sig(idx, &sig, &msg, &adrs);
         assert_ne!(pk, pk_recovered);
     }
 

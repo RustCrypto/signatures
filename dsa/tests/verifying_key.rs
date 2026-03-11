@@ -13,13 +13,14 @@ use {
         modular::{BoxedMontyForm, BoxedMontyParams},
     },
     dsa::{Components, KeySize, SigningKey},
+    getrandom::SysRng,
 };
 
 const OPENSSL_PEM_PUBLIC_KEY: &str = include_str!("pems/public.pem");
 
 #[cfg(feature = "hazmat")]
 fn generate_verifying_key() -> VerifyingKey {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand_core::UnwrapErr(SysRng);
     let components = Components::generate(&mut rng, KeySize::DSA_1024_160);
     let signing_key = SigningKey::generate(&mut rng, components);
 
@@ -56,7 +57,7 @@ fn validate_verifying_key() {
     let q = verifying_key.components().q();
 
     let params = BoxedMontyParams::new(Odd::new((**p).clone()).unwrap());
-    let form = BoxedMontyForm::new((**verifying_key.y()).clone(), params);
+    let form = BoxedMontyForm::new((**verifying_key.y()).clone(), &params);
 
     // Taken from the parameter validation from bouncy castle
     assert_eq!(form.pow(q).retrieve(), BoxedUint::one());

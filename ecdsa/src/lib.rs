@@ -74,7 +74,7 @@ mod verifying;
 pub use crate::recovery::RecoveryId;
 
 // Re-export the `elliptic-curve` crate (and select types)
-pub use elliptic_curve::{self, PrimeCurve, sec1::EncodedPoint};
+pub use elliptic_curve::{self, PrimeCurve, sec1::Sec1Point};
 
 // Re-export the `signature` crate (and select types)
 pub use signature::{self, Error, Result, SignatureEncoding};

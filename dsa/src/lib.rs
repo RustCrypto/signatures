@@ -15,7 +15,9 @@
 #![cfg_attr(feature = "hazmat", doc = "```")]
 #![cfg_attr(not(feature = "hazmat"), doc = "```ignore")]
 //! # use dsa::{KeySize, Components, SigningKey};
-//! let mut csprng = rand::thread_rng();
+//! use getrandom::{SysRng, rand_core::UnwrapErr};
+//!
+//! let mut csprng = UnwrapErr(SysRng);
 //! let components = Components::generate(&mut csprng, KeySize::DSA_2048_256);
 //! let signing_key = SigningKey::generate(&mut csprng, components);
 //! let verifying_key = signing_key.verifying_key();

@@ -8,14 +8,14 @@ use crate::{
     two,
 };
 use crypto_bigint::{
-    BoxedUint, NonZero, Odd, RandomBits, Resize,
+    BoxedUint, ConcatenatingMul, NonZero, Odd, RandomBits, Resize,
     modular::{BoxedMontyForm, BoxedMontyParams},
 };
 use crypto_primes::{Flavor, is_prime};
 use signature::rand_core::CryptoRng;
 
 #[cfg(feature = "hazmat")]
-use {crate::Components, crypto_bigint::subtle::CtOption};
+use {crate::Components, crypto_bigint::CtOption};
 
 /// Generate the common components p, q, and g
 ///
@@ -47,7 +47,7 @@ pub(crate) fn common<R: CryptoRng + ?Sized>(
                     break 'gen_m m;
                 }
             };
-            let rem = NonZero::new((two() * &*q).resize(m.bits_precision()))
+            let rem = NonZero::new(two().concatenating_mul(&*q).resize(m.bits_precision()))
                 .expect("[bug] 2 * NonZero can't be zero");
 
             let mr = &m % &rem;
@@ -68,7 +68,7 @@ pub(crate) fn common<R: CryptoRng + ?Sized>(
     let mut h = BoxedUint::one().resize(l);
     let g = loop {
         let params = BoxedMontyParams::new_vartime(p.clone());
-        let form = BoxedMontyForm::new(h.clone(), params);
+        let form = BoxedMontyForm::new(h.clone(), &params);
         let g = form.pow(&e).retrieve();
 
         if !bool::from(g.is_one()) {
@@ -96,7 +96,7 @@ pub(crate) fn public(
     let g = components.g();
 
     let params = BoxedMontyParams::new_vartime(p.clone());
-    let form = BoxedMontyForm::new((**g).clone(), params);
+    let form = BoxedMontyForm::new((**g).clone(), &params);
 
     NonZero::new(form.pow(x).retrieve())
 }

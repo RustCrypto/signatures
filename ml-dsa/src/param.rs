@@ -8,11 +8,14 @@
 //! know any details about object sizes.  For example, `VectorEncodingSize::flatten` needs to know
 //! that the size of an encoded vector is `K` times the size of an encoded polynomial.
 
-use core::fmt::Debug;
-use core::ops::{Add, Div, Mul, Rem, Sub};
-
-use crate::module_lattice::encode::{
-    ArraySize, Encode, EncodedPolynomialSize, EncodedVectorSize, EncodingSize,
+use crate::{
+    B32, B64,
+    algebra::{Polynomial, Vector},
+    encode::{BitPack, RangeEncodedPolynomialSize, RangeEncodedVectorSize, RangeEncodingSize},
+};
+use core::{
+    fmt::Debug,
+    ops::{Add, Div, Mul, Rem, Sub},
 };
 use hybrid_array::{
     Array,
@@ -21,12 +24,7 @@ use hybrid_array::{
         Unsigned,
     },
 };
-
-use crate::algebra::{Polynomial, Vector};
-use crate::encode::{
-    BitPack, RangeEncodedPolynomialSize, RangeEncodedVectorSize, RangeEncodingSize,
-};
-use crate::util::{B32, B64};
+use module_lattice::{ArraySize, Encode, EncodedPolynomialSize, EncodedVectorSize, EncodingSize};
 
 /// Some useful compile-time constants
 pub(crate) type SpecQ = Sum<Diff<Shleft<U1, U23>, Shleft<U1, U13>>, U1>;
@@ -137,9 +135,9 @@ pub trait SigningKeyParams: ParameterSet {
         s1: EncodedS1<Self>,
         s2: EncodedS2<Self>,
         t0: EncodedT0<Self>,
-    ) -> EncodedSigningKey<Self>;
+    ) -> ExpandedSigningKey<Self>;
     fn split_sk(
-        enc: &EncodedSigningKey<Self>,
+        enc: &ExpandedSigningKey<Self>,
     ) -> (
         &B32,
         &B32,
@@ -157,7 +155,7 @@ pub(crate) type EncodedT0<P> = Array<u8, <P as SigningKeyParams>::T0Size>;
 pub(crate) type SigningKeySize<P> = <P as SigningKeyParams>::SigningKeySize;
 
 /// A signing key encoded as a byte array
-pub type EncodedSigningKey<P> = Array<u8, SigningKeySize<P>>;
+pub type ExpandedSigningKey<P> = Array<u8, SigningKeySize<P>>;
 
 impl<P> SigningKeyParams for P
 where
@@ -250,12 +248,12 @@ where
         s1: EncodedS1<Self>,
         s2: EncodedS2<Self>,
         t0: EncodedT0<Self>,
-    ) -> EncodedSigningKey<Self> {
+    ) -> ExpandedSigningKey<Self> {
         rho.concat(K).concat(tr).concat(s1).concat(s2).concat(t0)
     }
 
     fn split_sk(
-        enc: &EncodedSigningKey<Self>,
+        enc: &ExpandedSigningKey<Self>,
     ) -> (
         &B32,
         &B32,

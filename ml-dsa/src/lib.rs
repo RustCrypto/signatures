@@ -20,9 +20,13 @@
 //! ```
 //! # #[cfg(feature = "rand_core")]
 //! # {
-//! use ml_dsa::{MlDsa65, KeyGen, signature::{Keypair, Signer, Verifier}};
+//! use ml_dsa::{
+//!     signature::{Keypair, Signer, Verifier},
+//!     MlDsa65, KeyGen,
+//! };
+//! use getrandom::{SysRng, rand_core::UnwrapErr};
 //!
-//! let mut rng = rand::rng();
+//! let mut rng = UnwrapErr(SysRng);
 //! let kp = MlDsa65::key_gen(&mut rng);
 //!
 //! let msg = b"Hello world";
@@ -40,12 +44,18 @@ mod ntt;
 mod param;
 mod pkcs8;
 mod sampling;
-mod util;
 
-// TODO(RLB) Move module to an independent crate shared with ml_kem
-mod module_lattice;
+pub use crate::param::{EncodedSignature, EncodedVerifyingKey, ExpandedSigningKey, MlDsaParams};
+pub use signature::{self, Error};
 
+use crate::algebra::{AlgebraExt, Elem, NttMatrix, NttVector, Vector};
+use crate::crypto::H;
+use crate::hint::Hint;
+use crate::ntt::{Ntt, NttInverse};
+use crate::param::{ParameterSet, QMinus1, SamplingSize, SpecQ};
+use crate::sampling::{expand_a, expand_mask, expand_s, sample_in_ball};
 use core::convert::{AsRef, TryFrom, TryInto};
+use core::fmt;
 use hybrid_array::{
     Array,
     typenum::{
@@ -53,6 +63,7 @@ use hybrid_array::{
         U75, U80, U88, Unsigned,
     },
 };
+use module_lattice::Truncate;
 use sha3::Shake256;
 use signature::{DigestSigner, DigestVerifier, MultipartSigner, MultipartVerifier, Signer};
 
@@ -65,18 +76,11 @@ use {
 #[cfg(feature = "zeroize")]
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
-use crate::algebra::{AlgebraExt, Elem, NttMatrix, NttVector, Truncate, Vector};
-use crate::crypto::H;
-use crate::hint::Hint;
-use crate::ntt::{Ntt, NttInverse};
-use crate::param::{ParameterSet, QMinus1, SamplingSize, SpecQ};
-use crate::sampling::{expand_a, expand_mask, expand_s, sample_in_ball};
-use crate::util::B64;
-use core::fmt;
+/// A 32-byte array, defined here for brevity because it is used several times
+pub type B32 = Array<u8, U32>;
 
-pub use crate::param::{EncodedSignature, EncodedSigningKey, EncodedVerifyingKey, MlDsaParams};
-pub use crate::util::B32;
-pub use signature::{self, Error};
+/// A 64-byte array, defined here for brevity because it is used several times
+pub(crate) type B64 = Array<u8, U64>;
 
 /// ML-DSA seeds are signing (private) keys, which are consistently 32-bytes across all security
 /// levels, and are the preferred serialization for representing such keys.
@@ -484,28 +488,37 @@ impl<P: MlDsaParams> SigningKey<P> {
         Ok(self.sign_mu_deterministic(&mu))
     }
 
-    /// Encode the key in a fixed-size byte array.
-    // Algorithm 24 skEncode
-    pub fn encode(&self) -> EncodedSigningKey<P>
-    where
-        P: MlDsaParams,
-    {
-        let s1_enc = P::encode_s1(&self.s1);
-        let s2_enc = P::encode_s2(&self.s2);
-        let t0_enc = P::encode_t0(&self.t0);
-        P::concat_sk(
-            self.rho.clone(),
-            self.K.clone(),
-            self.tr.clone(),
-            s1_enc,
-            s2_enc,
-            t0_enc,
-        )
+    /// This auxiliary function derives a `VerifyingKey` from a bare
+    /// `SigningKey` (even in the absence of the original seed).
+    ///
+    /// This is a utility function that is useful when importing the private key
+    /// from an external source which does not export the seed and does not
+    /// provide the precomputed public key associated with the private key
+    /// itself.
+    ///
+    /// `SigningKey` implements `signature::Keypair`: this inherent method is
+    /// retained for convenience, so it is available for callers even when the
+    /// `signature::Keypair` trait is out-of-scope.
+    pub fn verifying_key(&self) -> VerifyingKey<P> {
+        let kp: &dyn signature::Keypair<VerifyingKey = VerifyingKey<P>> = self;
+        kp.verifying_key()
     }
 
-    /// Decode the key from an appropriately sized byte array.
+    /// DEPRECATED: decode the key from an appropriately sized byte array.
+    ///
+    /// Note that this form is deprecated in practice; prefer to use [`SigningKey::from_seed`].
+    ///
+    /// <div class="warning">
+    /// <b>Panics</b>
+    ///
+    /// This API does not validate expanded signing keys and can potentially panic if keys are
+    /// malformed or maliciously generated.
+    ///
+    /// To avoid panics, use [`SigningKey::from_seed`] instead.
+    /// </div>
     // Algorithm 25 skDecode
-    pub fn decode(enc: &EncodedSigningKey<P>) -> Self
+    #[deprecated(since = "0.1.0", note = "use `SigningKey::from_seed` instead")]
+    pub fn from_expanded(enc: &ExpandedSigningKey<P>) -> Self
     where
         P: MlDsaParams,
     {
@@ -521,21 +534,26 @@ impl<P: MlDsaParams> SigningKey<P> {
         )
     }
 
-    /// This auxiliary function derives a `VerifyingKey` from a bare
-    /// `SigningKey` (even in the absence of the original seed).
+    /// DEPRECATED: encode the key in a fixed-size byte array.
     ///
-    /// This is a utility function that is useful when importing the private key
-    /// from an external source which does not export the seed and does not
-    /// provide the precomputed public key associated with the private key
-    /// itself.
-    ///
-    /// `SigningKey` implements `signature::Keypair`: this inherent method is
-    /// retained for convenience, so it is available for callers even when the
-    /// `signature::Keypair` trait is out-of-scope.
-    pub fn verifying_key(&self) -> VerifyingKey<P> {
-        let kp: &dyn signature::Keypair<VerifyingKey = VerifyingKey<P>> = self;
-
-        kp.verifying_key()
+    /// Note that this form is deprecated in practice; prefer to use [`KeyPair::to_seed`].
+    // Algorithm 24 skEncode
+    #[deprecated(since = "0.1.0", note = "use `KeyPair::to_seed` instead")]
+    pub fn to_expanded(&self) -> ExpandedSigningKey<P>
+    where
+        P: MlDsaParams,
+    {
+        let s1_enc = P::encode_s1(&self.s1);
+        let s2_enc = P::encode_s2(&self.s2);
+        let t0_enc = P::encode_t0(&self.t0);
+        P::concat_sk(
+            self.rho.clone(),
+            self.K.clone(),
+            self.tr.clone(),
+            s1_enc,
+            s2_enc,
+            t0_enc,
+        )
     }
 }
 
@@ -925,7 +943,6 @@ where
 mod test {
     use super::*;
     use crate::param::*;
-    use signature::digest::Update;
 
     #[test]
     fn output_sizes() {
@@ -961,16 +978,19 @@ mod test {
         let vk2 = VerifyingKey::<P>::decode(&vk_bytes);
         assert!(vk == vk2);
 
-        let sk_bytes = sk.encode();
-        let sk2 = SigningKey::<P>::decode(&sk_bytes);
-        assert!(sk == sk2);
+        #[allow(deprecated)]
+        {
+            let sk_bytes = sk.to_expanded();
+            let sk2 = SigningKey::<P>::from_expanded(&sk_bytes);
+            assert!(sk == sk2);
 
-        let M = b"Hello world";
-        let rnd = Array([0u8; 32]);
-        let sig = sk.sign_internal(&[M], &rnd);
-        let sig_bytes = sig.encode();
-        let sig2 = Signature::<P>::decode(&sig_bytes).unwrap();
-        assert!(sig == sig2);
+            let M = b"Hello world";
+            let rnd = Array([0u8; 32]);
+            let sig = sk.sign_internal(&[M], &rnd);
+            let sig_bytes = sig.encode();
+            let sig2 = Signature::<P>::decode(&sig_bytes).unwrap();
+            assert!(sig == sig2);
+        }
     }
 
     #[test]
@@ -1019,44 +1039,6 @@ mod test {
         sign_verify_round_trip_test::<MlDsa44>();
         sign_verify_round_trip_test::<MlDsa65>();
         sign_verify_round_trip_test::<MlDsa87>();
-    }
-
-    fn many_round_trip_test<P>()
-    where
-        P: MlDsaParams,
-    {
-        use rand::Rng;
-
-        const ITERATIONS: usize = 1000;
-
-        let mut rng = rand::rng();
-        let mut seed = B32::default();
-
-        for _i in 0..ITERATIONS {
-            let seed_data: &mut [u8] = seed.as_mut();
-            rng.fill(seed_data);
-
-            let kp = P::from_seed(&seed);
-            let sk = kp.signing_key;
-            let vk = kp.verifying_key;
-
-            let M = b"Hello world";
-            let rnd = Array([0u8; 32]);
-            let sig = sk.sign_internal(&[M], &rnd);
-
-            let sig_enc = sig.encode();
-            let sig_dec = Signature::<P>::decode(&sig_enc).unwrap();
-
-            assert_eq!(sig_dec, sig);
-            assert!(vk.verify_internal(M, &sig_dec));
-        }
-    }
-
-    #[test]
-    fn many_round_trip() {
-        many_round_trip_test::<MlDsa44>();
-        many_round_trip_test::<MlDsa65>();
-        many_round_trip_test::<MlDsa87>();
     }
 
     #[test]
@@ -1126,62 +1108,6 @@ mod test {
     }
 
     #[test]
-    fn sign_digest_round_trip() {
-        fn sign_digest<P>()
-        where
-            P: MlDsaParams,
-        {
-            let kp = P::from_seed(&Array::default());
-            let sk = kp.signing_key;
-            let vk = kp.verifying_key;
-
-            let M = b"Hello world";
-            let sig = sk.sign_digest(|digest| digest.update(M));
-            assert_eq!(sig, sk.sign(M));
-
-            vk.verify_digest(
-                |digest| {
-                    digest.update(M);
-                    Ok(())
-                },
-                &sig,
-            )
-            .unwrap();
-        }
-        sign_digest::<MlDsa44>();
-        sign_digest::<MlDsa65>();
-        sign_digest::<MlDsa87>();
-    }
-
-    #[test]
-    #[cfg(feature = "rand_core")]
-    fn sign_randomized_digest_round_trip() {
-        fn sign_digest<P>()
-        where
-            P: MlDsaParams,
-        {
-            let kp = P::from_seed(&Array::default());
-            let sk = kp.signing_key;
-            let vk = kp.verifying_key;
-
-            let M = b"Hello world";
-            let sig = sk.sign_digest_with_rng(&mut rand::rng(), |digest| digest.update(M));
-
-            vk.verify_digest(
-                |digest| {
-                    digest.update(M);
-                    Ok(())
-                },
-                &sig,
-            )
-            .unwrap();
-        }
-        sign_digest::<MlDsa44>();
-        sign_digest::<MlDsa65>();
-        sign_digest::<MlDsa87>();
-    }
-
-    #[test]
     fn from_seed_implementations_match() {
         fn assert_from_seed_equality<P>()
         where
@@ -1197,5 +1123,120 @@ mod test {
         assert_from_seed_equality::<MlDsa44>();
         assert_from_seed_equality::<MlDsa65>();
         assert_from_seed_equality::<MlDsa87>();
+    }
+
+    #[test]
+    fn to_seed_returns_correct_seed() {
+        fn test_to_seed<P: MlDsaParams>() {
+            let seed = Array([
+                1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
+                24, 25, 26, 27, 28, 29, 30, 31, 32,
+            ]);
+            let kp = P::from_seed(&seed);
+            assert_eq!(kp.to_seed(), seed);
+        }
+        test_to_seed::<MlDsa44>();
+        test_to_seed::<MlDsa65>();
+        test_to_seed::<MlDsa87>();
+    }
+
+    #[test]
+    fn verification_rejects_invalid_signature() {
+        fn test_invalid_sig<P: MlDsaParams>() {
+            let kp = P::from_seed(&Array::default());
+            let vk = kp.verifying_key();
+
+            let msg = b"Hello world";
+            let rnd = Array([0u8; 32]);
+            let mut sig = kp.signing_key().sign_internal(&[msg], &rnd);
+            sig.c_tilde[0] ^= 0xFF;
+
+            assert!(!vk.verify_with_context(msg, &[], &sig));
+        }
+        test_invalid_sig::<MlDsa44>();
+        test_invalid_sig::<MlDsa65>();
+        test_invalid_sig::<MlDsa87>();
+    }
+
+    #[test]
+    fn verification_rejects_wrong_message() {
+        fn test_wrong_msg<P: MlDsaParams>() {
+            let kp = P::from_seed(&Array::default());
+            let vk = kp.verifying_key();
+
+            let msg1 = b"Hello world";
+            let msg2 = b"Wrong message";
+            let rnd = Array([0u8; 32]);
+            let sig = kp.signing_key().sign_internal(&[msg1], &rnd);
+
+            assert!(!vk.verify_with_context(msg2, &[], &sig));
+        }
+        test_wrong_msg::<MlDsa44>();
+        test_wrong_msg::<MlDsa65>();
+        test_wrong_msg::<MlDsa87>();
+    }
+
+    #[test]
+    fn context_length_validation() {
+        fn test_ctx_length<P: MlDsaParams>() {
+            let kp = P::from_seed(&Array::default());
+            let sk = kp.signing_key();
+            let vk = kp.verifying_key();
+
+            let msg = b"Hello world";
+            let long_ctx = [0u8; 256];
+            let short_ctx = [0u8; 255];
+
+            assert!(sk.sign_deterministic(msg, &long_ctx).is_err());
+
+            let sig = sk.sign_deterministic(msg, &short_ctx).unwrap();
+            assert!(!vk.verify_with_context(msg, &long_ctx, &sig));
+            assert!(vk.verify_with_context(msg, &short_ctx, &sig));
+        }
+        test_ctx_length::<MlDsa44>();
+        test_ctx_length::<MlDsa65>();
+        test_ctx_length::<MlDsa87>();
+    }
+
+    #[test]
+    fn derived_verifying_key_validates_signatures() {
+        fn test_derived_vk<P: MlDsaParams>() {
+            let seed = Array([42u8; 32]);
+            let kp = P::from_seed(&seed);
+            let sk = kp.signing_key();
+            let derived_vk = sk.verifying_key();
+
+            let msg = b"Test message for derived key";
+            let rnd = Array([0u8; 32]);
+            let sig = sk.sign_internal(&[msg], &rnd);
+
+            assert!(derived_vk.verify_internal(msg, &sig));
+            assert_eq!(derived_vk.encode(), kp.verifying_key().encode());
+        }
+        test_derived_vk::<MlDsa44>();
+        test_derived_vk::<MlDsa65>();
+        test_derived_vk::<MlDsa87>();
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn debug_implementations() {
+        extern crate alloc;
+        use core::fmt::Write;
+
+        fn test_debug<P: MlDsaParams>() {
+            let kp = P::from_seed(&Array::default());
+
+            let mut kp_debug = alloc::string::String::new();
+            write!(&mut kp_debug, "{:?}", kp).unwrap();
+            assert!(kp_debug.contains("KeyPair"));
+
+            let mut sk_debug = alloc::string::String::new();
+            write!(&mut sk_debug, "{:?}", kp.signing_key()).unwrap();
+            assert!(sk_debug.contains("SigningKey"));
+        }
+        test_debug::<MlDsa44>();
+        test_debug::<MlDsa65>();
+        test_debug::<MlDsa87>();
     }
 }
