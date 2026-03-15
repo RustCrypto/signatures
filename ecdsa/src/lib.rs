@@ -441,7 +441,7 @@ where
         if !hex
             .as_bytes()
             .iter()
-            .all(|&byte| matches!(byte, b'0'..=b'9' | b'a'..=b'z' | b'A'..=b'Z'))
+            .all(|&byte| matches!(byte, b'0'..=b'9' | b'a'..=b'f' | b'A'..=b'F'))
         {
             return Err(Error::new());
         }
