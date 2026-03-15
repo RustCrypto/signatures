@@ -438,11 +438,7 @@ where
         }
 
         // This check is mainly to ensure `hex.split_at` below won't panic
-        if !hex
-            .as_bytes()
-            .iter()
-            .all(|&byte| byte.is_ascii_hexdigit())
-        {
+        if !hex.as_bytes().iter().all(|&byte| byte.is_ascii_hexdigit()) {
             return Err(Error::new());
         }
 
