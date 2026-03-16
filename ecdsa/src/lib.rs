@@ -437,15 +437,6 @@ where
             return Err(Error::new());
         }
 
-        // This check is mainly to ensure `hex.split_at` below won't panic
-        if !hex
-            .as_bytes()
-            .iter()
-            .all(|&byte| matches!(byte, b'0'..=b'9' | b'a'..=b'z' | b'A'..=b'Z'))
-        {
-            return Err(Error::new());
-        }
-
         let (r_hex, s_hex) = hex.split_at(C::FieldBytesSize::USIZE * 2);
 
         let r = r_hex
