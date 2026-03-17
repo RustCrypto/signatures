@@ -66,6 +66,8 @@ use hybrid_array::{
 use module_lattice::Truncate;
 use sha3::Shake256;
 use signature::{DigestSigner, DigestVerifier, MultipartSigner, MultipartVerifier, Signer};
+extern crate alloc;
+use alloc::boxed::Box;
 
 #[cfg(feature = "rand_core")]
 use {
@@ -278,7 +280,7 @@ pub struct SigningKey<P: MlDsaParams> {
     s1_hat: NttVector<P::L>,
     s2_hat: NttVector<P::K>,
     t0_hat: NttVector<P::K>,
-    A_hat: NttMatrix<P::K, P::L>,
+    A_hat: Box<NttMatrix<P::K, P::L>>,
 }
 
 impl<P: MlDsaParams> fmt::Debug for SigningKey<P> {
@@ -312,7 +314,7 @@ impl<P: MlDsaParams> SigningKey<P> {
         t0: Vector<P::K>,
         A_hat: Option<NttMatrix<P::K, P::L>>,
     ) -> Self {
-        let A_hat = A_hat.unwrap_or_else(|| expand_a(&rho));
+        let A_hat = Box::new(A_hat.unwrap_or_else(|| expand_a(&rho)));
         let s1_hat = s1.ntt();
         let s2_hat = s2.ntt();
         let t0_hat = t0.ntt();
@@ -369,7 +371,7 @@ impl<P: MlDsaParams> SigningKey<P> {
         // Rejection sampling loop
         for kappa in (0..u16::MAX).step_by(P::L::USIZE) {
             let y = expand_mask::<P::L, P::Gamma1>(&rhopp, kappa);
-            let w = (&self.A_hat * &y.ntt()).ntt_inverse();
+            let w = (&*self.A_hat * &y.ntt()).ntt_inverse();
             let w1 = w.high_bits::<P::TwoGamma2>();
 
             let w1_tilde = P::encode_w1(&w1);
@@ -601,13 +603,13 @@ impl<P: MlDsaParams> signature::Keypair for SigningKey<P> {
     /// provide the precomputed public key associated with the private key
     /// itself.
     fn verifying_key(&self) -> Self::VerifyingKey {
-        let As1 = &self.A_hat * &self.s1_hat;
+        let As1 = &*self.A_hat * &self.s1_hat;
         let t = &As1.ntt_inverse() + &self.s2;
 
         /* Discard t0 */
         let (t1, _) = t.power2round();
 
-        VerifyingKey::new(self.rho.clone(), t1, Some(self.A_hat.clone()), None)
+        VerifyingKey::new(self.rho.clone(), t1, Some((*self.A_hat).clone()), None)
     }
 }
 
@@ -667,7 +669,7 @@ pub struct VerifyingKey<P: ParameterSet> {
     t1: Vector<P::K>,
 
     // Derived values
-    A_hat: NttMatrix<P::K, P::L>,
+    A_hat: Box<NttMatrix<P::K, P::L>>,
     t1_2d_hat: NttVector<P::K>,
     tr: B64,
 }
@@ -679,7 +681,7 @@ impl<P: MlDsaParams> VerifyingKey<P> {
         A_hat: Option<NttMatrix<P::K, P::L>>,
         enc: Option<EncodedVerifyingKey<P>>,
     ) -> Self {
-        let A_hat = A_hat.unwrap_or_else(|| expand_a(&rho));
+        let A_hat = Box::new(A_hat.unwrap_or_else(|| expand_a(&rho)));
         let enc = enc.unwrap_or_else(|| Self::encode_internal(&rho, &t1));
 
         let t1_2d_hat = (Elem::new(1 << 13) * &t1).ntt();
@@ -730,7 +732,7 @@ impl<P: MlDsaParams> VerifyingKey<P> {
 
         let z_hat = sigma.z.ntt();
         let c_hat = c.ntt();
-        let Az_hat = &self.A_hat * &z_hat;
+        let Az_hat = &*self.A_hat * &z_hat;
         let ct1_2d_hat = &c_hat * &self.t1_2d_hat;
 
         let wp_approx = (&Az_hat - &ct1_2d_hat).ntt_inverse();
