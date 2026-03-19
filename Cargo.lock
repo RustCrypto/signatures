@@ -776,15 +776,6 @@ dependencies = [
 
 [[package]]
 name = "keccak"
-version = "0.1.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb26cec98cce3a3d96cbb7bced3c4b16e3d13f27ec56dbd62cbc8f39cfb9d653"
-dependencies = [
- "cpufeatures 0.2.17",
-]
-
-[[package]]
-name = "keccak"
 version = "0.2.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "882b69cb15b1f78b51342322a97ccd16f5123d1dc8a3da981a95244f488e8692"
@@ -870,7 +861,7 @@ dependencies = [
  "rand_core 0.10.0",
  "serde",
  "serde_json",
- "sha3 0.11.0-rc.8",
+ "sha3",
  "signature 3.0.0-rc.10",
  "zeroize",
 ]
@@ -1379,22 +1370,12 @@ dependencies = [
 
 [[package]]
 name = "sha3"
-version = "0.10.8"
+version = "0.11.0-rc.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "75872d278a8f37ef87fa0ddbda7802605cb18344497949862c0d4dcb291eba60"
-dependencies = [
- "digest 0.10.7",
- "keccak 0.1.6",
-]
-
-[[package]]
-name = "sha3"
-version = "0.11.0-rc.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "95f78cd62cc39ece5aefbeb6caaa2ea44f70b4815d4b85f7e150ac685ada2bb5"
+checksum = "0b233a7d59d7bfc027208506a33ffc9532b2acb24ddc61fe7e758dc2250db431"
 dependencies = [
  "digest 0.11.1",
- "keccak 0.2.0-rc.2",
+ "keccak",
 ]
 
 [[package]]
@@ -1436,7 +1417,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.11.0-rc.5",
- "sha3 0.11.0-rc.8",
+ "sha3",
  "signature 3.0.0-rc.10",
  "typenum",
  "zerocopy",
@@ -1826,7 +1807,7 @@ dependencies = [
  "serde_json",
  "serdect",
  "sha2 0.10.9",
- "sha3 0.10.8",
+ "sha3",
  "signature 2.2.0",
  "spki 0.7.3",
  "subtle",
