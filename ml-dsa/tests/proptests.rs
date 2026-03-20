@@ -14,7 +14,7 @@ macro_rules! mldsa_proptests {
         mod $name {
             use ml_dsa::{
                 KeyGen, Signature,
-                signature::{DigestSigner, DigestVerifier, digest::Update},
+                signature::{DigestSigner, DigestVerifier, Keypair, digest::Update},
                 $alg,
             };
             use proptest::{collection, prelude::*};

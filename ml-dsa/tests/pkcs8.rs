@@ -1,7 +1,10 @@
 #![cfg(all(feature = "pkcs8", feature = "alloc"))]
 
 use core::ops::Deref;
-use ml_dsa::{KeyPair, MlDsa44, MlDsa65, MlDsa87, MlDsaParams, SigningKey, VerifyingKey};
+use ml_dsa::{
+    ExpandedSigningKey, MlDsa44, MlDsa65, MlDsa87, MlDsaParams, SigningKey, VerifyingKey,
+    signature::Keypair,
+};
 use pkcs8::{
     DecodePrivateKey, DecodePublicKey, EncodePrivateKey, EncodePublicKey,
     der::{AnyRef, pem::LineEnding},
@@ -15,11 +18,11 @@ fn private_key_serialization() {
         P: MlDsaParams,
         P: AssociatedAlgorithmIdentifier<Params = AnyRef<'static>>,
     {
-        let sk = SigningKey::<P>::from_pkcs8_pem(private_bytes).expect("parse private key");
-        let kp = KeyPair::<P>::from_pkcs8_pem(private_bytes).expect("parse private key");
-        assert!(sk == *kp.signing_key());
+        let sk = ExpandedSigningKey::<P>::from_pkcs8_pem(private_bytes).expect("parse private key");
+        let ssk = SigningKey::<P>::from_pkcs8_pem(private_bytes).expect("parse private key");
+        assert!(sk == *ssk.signing_key());
         assert_eq!(
-            kp.to_pkcs8_pem(LineEnding::LF)
+            ssk.to_pkcs8_pem(LineEnding::LF)
                 .expect("serialize private seed")
                 .deref(),
             private_bytes
@@ -33,7 +36,8 @@ fn private_key_serialization() {
             public_bytes
         );
 
-        assert_eq!(kp.verifying_key(), &pk);
+        assert_eq!(sk.verifying_key(), pk);
+        assert_eq!(ssk.verifying_key(), pk);
     }
 
     test_roundtrip::<MlDsa44>(

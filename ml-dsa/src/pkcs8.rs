@@ -3,8 +3,8 @@
 #![cfg(feature = "pkcs8")]
 
 use crate::{
-    EncodedVerifyingKey, KeyGen, KeyPair, MlDsa44, MlDsa65, MlDsa87, MlDsaParams, Signature,
-    SigningKey, VerifyingKey,
+    EncodedVerifyingKey, ExpandedSigningKey, KeyGen, MlDsa44, MlDsa65, MlDsa87, MlDsaParams,
+    Signature, SigningKey, VerifyingKey,
 };
 use ::pkcs8::{
     AlgorithmIdentifierRef, PrivateKeyInfoRef,
@@ -79,7 +79,7 @@ impl<P: MlDsaParams> SignatureBitStringEncoding for Signature<P> {
     }
 }
 
-impl<P> SignatureAlgorithmIdentifier for KeyPair<P>
+impl<P> SignatureAlgorithmIdentifier for SigningKey<P>
 where
     P: MlDsaParams,
     P: AssociatedAlgorithmIdentifier<Params = AnyRef<'static>>,
@@ -90,7 +90,7 @@ where
         Signature::<P>::ALGORITHM_IDENTIFIER;
 }
 
-impl<P> TryFrom<PrivateKeyInfoRef<'_>> for KeyPair<P>
+impl<P> TryFrom<PrivateKeyInfoRef<'_>> for SigningKey<P>
 where
     P: MlDsaParams,
     P: AssociatedAlgorithmIdentifier<Params = AnyRef<'static>>,
@@ -117,7 +117,7 @@ where
 }
 
 #[cfg(feature = "alloc")]
-impl<P> EncodePrivateKey for KeyPair<P>
+impl<P> EncodePrivateKey for SigningKey<P>
 where
     P: MlDsaParams,
     P: AssociatedAlgorithmIdentifier<Params = AnyRef<'static>>,
@@ -136,7 +136,7 @@ where
     }
 }
 
-impl<P> SignatureAlgorithmIdentifier for SigningKey<P>
+impl<P> SignatureAlgorithmIdentifier for ExpandedSigningKey<P>
 where
     P: MlDsaParams,
     P: AssociatedAlgorithmIdentifier<Params = AnyRef<'static>>,
@@ -147,7 +147,7 @@ where
         Signature::<P>::ALGORITHM_IDENTIFIER;
 }
 
-impl<P> TryFrom<PrivateKeyInfoRef<'_>> for SigningKey<P>
+impl<P> TryFrom<PrivateKeyInfoRef<'_>> for ExpandedSigningKey<P>
 where
     P: MlDsaParams,
     P: AssociatedAlgorithmIdentifier<Params = AnyRef<'static>>,
@@ -155,7 +155,7 @@ where
     type Error = ::pkcs8::Error;
 
     fn try_from(private_key_info: ::pkcs8::PrivateKeyInfoRef<'_>) -> ::pkcs8::Result<Self> {
-        let keypair = KeyPair::try_from(private_key_info)?;
+        let keypair = SigningKey::try_from(private_key_info)?;
 
         Ok(keypair.signing_key)
     }

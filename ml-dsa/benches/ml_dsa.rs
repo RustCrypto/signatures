@@ -1,7 +1,9 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use getrandom::SysRng;
 use hybrid_array::{Array, ArraySize};
-use ml_dsa::{B32, KeyGen, MlDsa65, Signature, SigningKey, VerifyingKey};
+use ml_dsa::{
+    B32, ExpandedSigningKey, KeyGen, MlDsa65, Signature, VerifyingKey, signature::Keypair,
+};
 use rand_core::{CryptoRng, UnwrapErr};
 
 pub fn rand<L: ArraySize, R: CryptoRng + ?Sized>(rng: &mut R) -> Array<u8, L> {
@@ -38,7 +40,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     // Signing
     c.bench_function("sign", |b| {
         b.iter(|| {
-            let sk = SigningKey::<MlDsa65>::from_expanded(&sk_bytes);
+            let sk = ExpandedSigningKey::<MlDsa65>::from_expanded(&sk_bytes);
             let _sig = sk.sign_deterministic(&m, &ctx);
         })
     });
