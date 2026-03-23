@@ -1825,7 +1825,7 @@ version = "0.1.0-pre.0"
 dependencies = [
  "const-oid 0.9.6",
  "der 0.7.10",
- "digest 0.10.7",
+ "digest 0.11.2",
  "hybrid-array",
  "pkcs8 0.10.2",
  "postcard",
