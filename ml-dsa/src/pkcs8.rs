@@ -6,27 +6,23 @@ use crate::{
     EncodedVerifyingKey, KeyGen, KeyPair, MlDsa44, MlDsa65, MlDsa87, MlDsaParams, Signature,
     SigningKey, VerifyingKey,
 };
+pub use ::pkcs8::*;
 use ::pkcs8::{
-    AlgorithmIdentifierRef, PrivateKeyInfoRef,
     der::{
-        self, AnyRef, Reader, TagNumber,
+        AnyRef, Reader, TagNumber,
         asn1::{ContextSpecific, OctetStringRef},
     },
-    spki::{
-        self, AlgorithmIdentifier, AssociatedAlgorithmIdentifier, SignatureAlgorithmIdentifier,
-        SubjectPublicKeyInfoRef,
-    },
+    spki::{AlgorithmIdentifier, AssociatedAlgorithmIdentifier, SignatureAlgorithmIdentifier},
 };
 use const_oid::db::fips204;
 
 #[cfg(feature = "alloc")]
 use pkcs8::{
-    EncodePrivateKey, EncodePublicKey,
     der::{
         Encode, TagMode,
         asn1::{BitString, BitStringRef},
     },
-    spki::{SignatureBitStringEncoding, SubjectPublicKeyInfo},
+    spki::SignatureBitStringEncoding,
 };
 
 /// Tag number for the seed value.

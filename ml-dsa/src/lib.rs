@@ -42,12 +42,10 @@ mod encode;
 mod hint;
 mod ntt;
 mod param;
-mod pkcs8_impl;
+pub mod pkcs8;
 mod sampling;
 
 pub use crate::param::{EncodedSignature, EncodedVerifyingKey, ExpandedSigningKey, MlDsaParams};
-#[cfg(feature = "pkcs8")]
-pub use pkcs8;
 pub use signature::{self, Error};
 
 use crate::algebra::{AlgebraExt, Elem, NttMatrix, NttVector, Vector};
