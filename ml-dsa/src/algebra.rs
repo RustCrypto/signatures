@@ -1,11 +1,9 @@
-use ctutils::{CtEq, CtGt, CtLt};
+use ctutils::{CtEq, CtGt, CtLt, CtSelect};
 use hybrid_array::{
     ArraySize,
     typenum::{Shleft, U1, U13, Unsigned},
 };
 use module_lattice::{Field, Truncate};
-
-use crate::ct::CtSelectExt;
 
 module_lattice::define_field!(BaseField, u32, u64, u128, 8_380_417);
 
@@ -33,7 +31,7 @@ pub(crate) trait BarrettReduce: Unsigned {
 
         let r_small: u32 = Truncate::truncate(remainder);
         let r_large: u32 = Truncate::truncate(remainder.wrapping_sub(m));
-        CtSelectExt::ct_select(&r_large, &r_small, remainder.ct_lt(&m))
+        u32::ct_select(&r_large, &r_small, remainder.ct_lt(&m))
     }
 }
 
@@ -112,7 +110,9 @@ impl Decompose for Elem {
         let r1 = Elem::new(TwoGamma2::ct_div(diff.0));
         let normal = (r1, r0);
 
-        CtSelectExt::ct_select(&normal, &edge, is_edge)
+        let r1_out = Elem::new(u32::ct_select(&normal.0.0, &edge.0.0, is_edge));
+        let r0_out = Elem::new(u32::ct_select(&normal.1.0, &edge.1.0, is_edge));
+        (r1_out, r0_out)
     }
 }
 
@@ -129,7 +129,11 @@ impl AlgebraExt for Elem {
     fn mod_plus_minus<M: Unsigned>(&self) -> Self {
         let raw_mod = Elem::new(M::reduce(self.0));
         let in_lower_half = !raw_mod.0.ct_gt(&(M::U32 >> 1));
-        CtSelectExt::ct_select(&(raw_mod - Elem::new(M::U32)), &raw_mod, in_lower_half)
+        Elem::new(u32::ct_select(
+            &(raw_mod - Elem::new(M::U32)).0,
+            &raw_mod.0,
+            in_lower_half,
+        ))
     }
 
     // FIPS 204 defines the infinity norm differently for signed vs. unsigned integers:
@@ -142,7 +146,7 @@ impl AlgebraExt for Elem {
     // since mod_plus_minus is also unsigned, we need to unwrap the "negative" values.
     fn infinity_norm(&self) -> u32 {
         let in_lower_half = !self.0.ct_gt(&(BaseField::Q >> 1));
-        CtSelectExt::ct_select(&(BaseField::Q - self.0), &self.0, in_lower_half)
+        u32::ct_select(&(BaseField::Q - self.0), &self.0, in_lower_half)
     }
 
     // Algorithm 35 Power2Round

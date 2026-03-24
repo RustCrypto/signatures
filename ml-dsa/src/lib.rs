@@ -38,7 +38,6 @@
 
 mod algebra;
 mod crypto;
-mod ct;
 mod encode;
 mod hint;
 mod ntt;
@@ -311,9 +310,8 @@ impl<P: MlDsaParams> SigningKey<P> {
         s1: Vector<P::L>,
         s2: Vector<P::K>,
         t0: Vector<P::K>,
-        A_hat: Option<NttMatrix<P::K, P::L>>,
+        A_hat: NttMatrix<P::K, P::L>,
     ) -> Self {
-        let A_hat = A_hat.unwrap_or_else(|| expand_a(&rho));
         let s1_hat = s1.ntt();
         let s2_hat = s2.ntt();
         let t0_hat = t0.ntt();
@@ -331,6 +329,19 @@ impl<P: MlDsaParams> SigningKey<P> {
             t0_hat,
             A_hat,
         }
+    }
+
+    #[inline]
+    fn new_expand_a(
+        rho: B32,
+        K: B32,
+        tr: B64,
+        s1: Vector<P::L>,
+        s2: Vector<P::K>,
+        t0: Vector<P::K>,
+    ) -> Self {
+        let A_hat = expand_a(&rho);
+        Self::new(rho, K, tr, s1, s2, t0, A_hat)
     }
 
     /// Deterministically generate a signing key from the specified seed.
@@ -524,14 +535,13 @@ impl<P: MlDsaParams> SigningKey<P> {
         P: MlDsaParams,
     {
         let (rho, K, tr, s1_enc, s2_enc, t0_enc) = P::split_sk(enc);
-        Self::new(
+        Self::new_expand_a(
             rho.clone(),
             K.clone(),
             tr.clone(),
             P::decode_s1(s1_enc),
             P::decode_s2(s2_enc),
             P::decode_t0(t0_enc),
-            None,
         )
     }
 
@@ -608,7 +618,7 @@ impl<P: MlDsaParams> signature::Keypair for SigningKey<P> {
         /* Discard t0 */
         let (t1, _) = t.power2round();
 
-        VerifyingKey::new(self.rho.clone(), t1, Some(self.A_hat.clone()), None)
+        VerifyingKey::new(self.rho.clone(), t1, self.A_hat.clone(), None)
     }
 }
 
@@ -677,10 +687,9 @@ impl<P: MlDsaParams> VerifyingKey<P> {
     fn new(
         rho: B32,
         t1: Vector<P::K>,
-        A_hat: Option<NttMatrix<P::K, P::L>>,
+        A_hat: NttMatrix<P::K, P::L>,
         enc: Option<EncodedVerifyingKey<P>>,
     ) -> Self {
-        let A_hat = A_hat.unwrap_or_else(|| expand_a(&rho));
         let enc = enc.unwrap_or_else(|| Self::encode_internal(&rho, &t1));
 
         let t1_2d_hat = (Elem::new(1 << 13) * &t1).ntt();
@@ -693,6 +702,12 @@ impl<P: MlDsaParams> VerifyingKey<P> {
             t1_2d_hat,
             tr,
         }
+    }
+
+    #[inline]
+    fn new_expand_a(rho: B32, t1: Vector<P::K>, enc: Option<EncodedVerifyingKey<P>>) -> Self {
+        let A_hat = expand_a(&rho);
+        Self::new(rho, t1, A_hat, enc)
     }
 
     /// Computes µ according to FIPS 204 for use in ML-DSA.Sign and ML-DSA.Verify.
@@ -783,7 +798,7 @@ impl<P: MlDsaParams> VerifyingKey<P> {
     pub fn decode(enc: &EncodedVerifyingKey<P>) -> Self {
         let (rho, t1_enc) = P::split_vk(enc);
         let t1 = P::decode_t1(t1_enc);
-        Self::new(rho.clone(), t1, None, Some(enc.clone()))
+        Self::new_expand_a(rho.clone(), t1, Some(enc.clone()))
     }
 }
 
@@ -928,9 +943,8 @@ where
         // Compress and encode
         let (t1, t0) = t.power2round();
 
-        let verifying_key = VerifyingKey::new(rho, t1, Some(A_hat.clone()), None);
-        let signing_key =
-            SigningKey::new(rho, K, verifying_key.tr.clone(), s1, s2, t0, Some(A_hat));
+        let verifying_key = VerifyingKey::new(rho, t1, A_hat.clone(), None);
+        let signing_key = SigningKey::new(rho, K, verifying_key.tr.clone(), s1, s2, t0, A_hat);
 
         KeyPair {
             signing_key,

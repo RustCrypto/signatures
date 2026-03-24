@@ -1,9 +1,8 @@
 use crate::{
     algebra::{AlgebraExt, BaseField, Decompose, Elem, Polynomial, Vector},
-    ct::CtSelectExt,
     param::{EncodedHint, SignatureParams},
 };
-use ctutils::{Choice, CtEq, CtGt};
+use ctutils::{Choice, CtEq, CtGt, CtSelect};
 use hybrid_array::{
     Array,
     typenum::{U256, Unsigned},
@@ -34,10 +33,10 @@ fn use_hint<TwoGamma2: Unsigned>(h: bool, r: Elem) -> Elem {
 
     // r0 is "positive" when r0 > 0 AND r0 <= gamma2
     let r0_positive = !r0.0.ct_eq(&0) & !r0.0.ct_gt(&gamma2);
-    let hinted = CtSelectExt::ct_select(&r1_dec, &r1_inc, r0_positive);
+    let hinted = Elem::new(u32::ct_select(&r1_dec.0, &r1_inc.0, r0_positive));
 
     // Apply hint only when h is set
-    CtSelectExt::ct_select(&r1, &hinted, Choice::from_u8_lsb(u8::from(h)))
+    Elem::new(u32::ct_select(&r1.0, &hinted.0, Choice::from_u8_lsb(u8::from(h))))
 }
 
 #[derive(Clone, PartialEq, Debug)]
