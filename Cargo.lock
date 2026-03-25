@@ -96,15 +96,6 @@ checksum = "89af0b093cc13baa4e51e64e65ec2422f7e73aea0e612e5ad3872986671622f1"
 
 [[package]]
 name = "block-buffer"
-version = "0.10.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3078c7629b62d3f0439517fa394996acacc5cbc91c5a20d8c658e77abd503a71"
-dependencies = [
- "generic-array",
-]
-
-[[package]]
-name = "block-buffer"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cdd35008169921d80bc60d3d0ab416eecb028c4cd653352907921d95084790be"
@@ -181,8 +172,8 @@ version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e34d8227fe1ba289043aeb13792056ff80fd6de1a9f49137a5f499de8e8c78ea"
 dependencies = [
- "block-buffer 0.12.0",
- "crypto-common 0.2.1",
+ "block-buffer",
+ "crypto-common",
  "inout",
 ]
 
@@ -351,16 +342,6 @@ dependencies = [
 
 [[package]]
 name = "crypto-common"
-version = "0.1.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "78c8292055d1c1df0cce5d180393dc8cce0abec0a7102adb6c7b1eef6016d60a"
-dependencies = [
- "generic-array",
- "typenum",
-]
-
-[[package]]
-name = "crypto-common"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "77727bb15fa921304124b128af125e7e3b968275d1b108b379190264f4423710"
@@ -435,24 +416,14 @@ dependencies = [
 
 [[package]]
 name = "digest"
-version = "0.10.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9ed9a281f7bc9b7576e61468ba615a66a5c8cfdff42420a70aa82701a3b1e292"
-dependencies = [
- "block-buffer 0.10.4",
- "crypto-common 0.1.7",
-]
-
-[[package]]
-name = "digest"
 version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4850db49bf08e663084f7fb5c87d202ef91a3907271aff24a94eb97ff039153c"
 dependencies = [
  "blobby",
- "block-buffer 0.12.0",
+ "block-buffer",
  "const-oid 0.10.2",
- "crypto-common 0.2.1",
+ "crypto-common",
  "ctutils",
 ]
 
@@ -464,7 +435,7 @@ dependencies = [
  "crypto-bigint",
  "crypto-primes",
  "der 0.8.0",
- "digest 0.11.2",
+ "digest",
  "getrandom 0.4.2",
  "hex",
  "hex-literal",
@@ -473,7 +444,7 @@ dependencies = [
  "rand_core 0.10.0",
  "rfc6979",
  "sha1",
- "sha2 0.11.0-rc.5",
+ "sha2",
  "signature 3.0.0-rc.10",
  "zeroize",
 ]
@@ -483,12 +454,12 @@ name = "ecdsa"
 version = "0.17.0-rc.16"
 dependencies = [
  "der 0.8.0",
- "digest 0.11.2",
+ "digest",
  "elliptic-curve",
  "hex-literal",
  "rfc6979",
  "serdect",
- "sha2 0.11.0-rc.5",
+ "sha2",
  "signature 3.0.0-rc.10",
  "spki 0.8.0-rc.4",
  "zeroize",
@@ -534,8 +505,8 @@ checksum = "e84043d573efd4ac9d2d125817979a379204bf7e328b25a4a30487e8d100e618"
 dependencies = [
  "base16ct",
  "crypto-bigint",
- "crypto-common 0.2.1",
- "digest 0.11.2",
+ "crypto-common",
+ "digest",
  "hex-literal",
  "hybrid-array",
  "once_cell",
@@ -595,16 +566,6 @@ name = "foldhash"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d9c4f5dac5e15c24eb999c26181a6ca40b39fe946cbe4c263c7209467bc83af2"
-
-[[package]]
-name = "generic-array"
-version = "0.14.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "85649ca51fd72272d7821adaf274ad91c288277713d9c18820d8499a7ff69e9a"
-dependencies = [
- "typenum",
- "version_check",
-]
 
 [[package]]
 name = "getrandom"
@@ -708,7 +669,7 @@ version = "0.13.0-rc.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "60017b071c523c9e5a55dd1253582bff6150c5e96a7e8511e419de1ab5ee97f9"
 dependencies = [
- "digest 0.11.2",
+ "digest",
 ]
 
 [[package]]
@@ -776,15 +737,6 @@ dependencies = [
 
 [[package]]
 name = "keccak"
-version = "0.1.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb26cec98cce3a3d96cbb7bced3c4b16e3d13f27ec56dbd62cbc8f39cfb9d653"
-dependencies = [
- "cpufeatures 0.2.17",
-]
-
-[[package]]
-name = "keccak"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9e24a010dd405bd7ed803e5253182815b41bf2e6a80cc3bfc066658e03a198aa"
@@ -821,13 +773,13 @@ checksum = "32a66949e030da00e8c7d4434b251670a91556f4144941d37452769c25d58a53"
 name = "lms-signature"
 version = "0.1.0-rc.2"
 dependencies = [
- "digest 0.11.2",
+ "digest",
  "getrandom 0.4.2",
  "hex",
  "hex-literal",
  "hybrid-array",
  "rand_core 0.10.0",
- "sha2 0.11.0-rc.5",
+ "sha2",
  "signature 3.0.0-rc.10",
  "static_assertions",
  "typenum",
@@ -871,7 +823,7 @@ dependencies = [
  "rand_core 0.10.0",
  "serde",
  "serde_json",
- "sha3 0.11.0-rc.9",
+ "sha3",
  "signature 3.0.0-rc.10",
  "zeroize",
 ]
@@ -1187,7 +1139,7 @@ version = "0.5.0-rc.5"
 dependencies = [
  "hex-literal",
  "hmac",
- "sha2 0.11.0-rc.5",
+ "sha2",
  "subtle",
 ]
 
@@ -1359,39 +1311,18 @@ checksum = "3b167252f3c126be0d8926639c4c4706950f01445900c4b3db0fd7e89fcb750a"
 dependencies = [
  "cfg-if",
  "cpufeatures 0.2.17",
- "digest 0.11.2",
+ "digest",
 ]
 
 [[package]]
 name = "sha2"
-version = "0.10.9"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a7507d819769d01a365ab707794a4084392c824f54a7a6a7862f8c3d0892b283"
+checksum = "446ba717509524cb3f22f17ecc096f10f4822d76ab5c0b9822c5f9c284e825f4"
 dependencies = [
  "cfg-if",
- "cpufeatures 0.2.17",
- "digest 0.10.7",
-]
-
-[[package]]
-name = "sha2"
-version = "0.11.0-rc.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c5f3b1e2dc8aad28310d8410bd4d7e180eca65fca176c52ab00d364475d0024"
-dependencies = [
- "cfg-if",
- "cpufeatures 0.2.17",
- "digest 0.11.2",
-]
-
-[[package]]
-name = "sha3"
-version = "0.10.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "75872d278a8f37ef87fa0ddbda7802605cb18344497949862c0d4dcb291eba60"
-dependencies = [
- "digest 0.10.7",
- "keccak 0.1.6",
+ "cpufeatures 0.3.0",
+ "digest",
 ]
 
 [[package]]
@@ -1400,8 +1331,8 @@ version = "0.11.0-rc.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b233a7d59d7bfc027208506a33ffc9532b2acb24ddc61fe7e758dc2250db431"
 dependencies = [
- "digest 0.11.2",
- "keccak 0.2.0",
+ "digest",
+ "keccak",
 ]
 
 [[package]]
@@ -1416,7 +1347,7 @@ version = "3.0.0-rc.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f1880df446116126965eeec169136b2e0251dba37c6223bcc819569550edea3"
 dependencies = [
- "digest 0.11.2",
+ "digest",
  "rand_core 0.10.0",
 ]
 
@@ -1429,7 +1360,7 @@ dependencies = [
  "const-oid 0.10.2",
  "criterion",
  "ctr",
- "digest 0.11.2",
+ "digest",
  "hex",
  "hex-literal",
  "hmac",
@@ -1442,8 +1373,8 @@ dependencies = [
  "rand_core 0.10.0",
  "serde",
  "serde_json",
- "sha2 0.11.0-rc.5",
- "sha3 0.11.0-rc.9",
+ "sha2",
+ "sha3",
  "signature 3.0.0-rc.10",
  "typenum",
  "zerocopy",
@@ -1574,12 +1505,6 @@ name = "unicode-xid"
 version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ebc1c04c71510c7f702b52b7c350734c9ff1295c464a03335b00bb84fc54f853"
-
-[[package]]
-name = "version_check"
-version = "0.9.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
 name = "wait-timeout"
@@ -1825,15 +1750,15 @@ version = "0.1.0-pre.0"
 dependencies = [
  "const-oid 0.9.6",
  "der 0.7.10",
- "digest 0.11.2",
+ "digest",
  "hybrid-array",
  "pkcs8 0.10.2",
  "postcard",
  "rand 0.10.0",
  "serde_json",
  "serdect",
- "sha2 0.10.9",
- "sha3 0.10.8",
+ "sha2",
+ "sha3",
  "signature 2.2.0",
  "spki 0.7.3",
  "subtle",

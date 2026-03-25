@@ -21,7 +21,7 @@ digest = "0.11"
 crypto-bigint = { version = "0.7", default-features = false, features = ["alloc", "zeroize"] }
 crypto-primes = { version = "0.7", default-features = false }
 rfc6979 = { version = "0.5.0-rc.5" }
-sha2 = { version = "0.11.0-rc.5", default-features = false }
+sha2 = { version = "0.11", default-features = false }
 signature = { version = "3.0.0-rc.10", default-features = false, features = ["alloc", "digest", "rand_core"] }
 zeroize = { version = "1", default-features = false, features = ["alloc"] }
 
@@ -30,14 +30,14 @@ pkcs8 = { version = "0.11.0-rc.11", optional = true, default-features = false, f
 
 [dev-dependencies]
 chacha20 = { version = "0.10", features = ["rng"] }
+der = { version = "0.8", features = ["derive"] }
 hex = "0.4"
 hex-literal = "1"
+getrandom = { version = "0.4", features = ["sys_rng"] }
 pkcs8 = { version = "0.11.0-rc.11", default-features = false, features = ["pem"] }
 proptest = "1"
-getrandom = { version = "0.4", features = ["sys_rng"] }
-sha1 = "0.11.0-rc.5"
-der = { version = "0.8", features = ["derive"] }
 rand_core = "0.10"
+sha1 = "0.11.0-rc.5"
 
 [features]
 default = ["pkcs8"]
