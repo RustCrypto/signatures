@@ -42,7 +42,7 @@ mod encode;
 mod hint;
 mod ntt;
 mod param;
-mod pkcs8;
+pub mod pkcs8;
 mod sampling;
 
 pub use crate::param::{EncodedSignature, EncodedVerifyingKey, ExpandedSigningKey, MlDsaParams};
