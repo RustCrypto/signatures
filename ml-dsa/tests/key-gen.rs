@@ -1,6 +1,7 @@
 use ml_dsa::*;
 
 use hybrid_array::Array;
+use signature::Keypair;
 use std::{fs::read_to_string, path::PathBuf};
 
 #[test]
@@ -29,11 +30,11 @@ fn verify<P: MlDsaParams>(tc: &acvp::TestCase) {
     // Import test data into the relevant array structures
     let seed = Array::try_from(tc.seed.as_slice()).unwrap();
     let vk_bytes = EncodedVerifyingKey::<P>::try_from(tc.pk.as_slice()).unwrap();
-    let sk_bytes = ExpandedSigningKey::<P>::try_from(tc.sk.as_slice()).unwrap();
+    let sk_bytes = ExpandedSigningKeyBytes::<P>::try_from(tc.sk.as_slice()).unwrap();
 
-    let kp = P::from_seed(&seed);
-    let sk = kp.signing_key().clone();
-    let vk = kp.verifying_key().clone();
+    let ssk = P::from_seed(&seed);
+    let sk = ssk.signing_key().clone();
+    let vk = ssk.verifying_key().clone();
 
     assert_eq!(vk.encode(), vk_bytes);
     assert!(vk == VerifyingKey::<P>::decode(&vk_bytes));
@@ -42,7 +43,7 @@ fn verify<P: MlDsaParams>(tc: &acvp::TestCase) {
     #[allow(deprecated)]
     {
         assert_eq!(sk.to_expanded(), sk_bytes);
-        assert!(sk == SigningKey::<P>::from_expanded(&sk_bytes));
+        assert!(sk == ExpandedSigningKey::<P>::from_expanded(&sk_bytes));
     }
 }
 

@@ -45,7 +45,9 @@ mod param;
 pub mod pkcs8;
 mod sampling;
 
-pub use crate::param::{EncodedSignature, EncodedVerifyingKey, ExpandedSigningKey, MlDsaParams};
+pub use crate::param::{
+    EncodedSignature, EncodedVerifyingKey, ExpandedSigningKeyBytes, MlDsaParams,
+};
 pub use signature::{self, Error};
 
 use crate::algebra::{AlgebraExt, Elem, NttMatrix, NttVector, Vector};
@@ -54,7 +56,7 @@ use crate::hint::Hint;
 use crate::ntt::{Ntt, NttInverse};
 use crate::param::{ParameterSet, QMinus1, SamplingSize, SpecQ};
 use crate::sampling::{expand_a, expand_mask, expand_s, sample_in_ball};
-use core::convert::{AsRef, TryFrom, TryInto};
+use core::convert::{TryFrom, TryInto};
 use core::fmt;
 use hybrid_array::{
     Array,
@@ -184,31 +186,23 @@ impl AsMut<Shake256> for MuBuilder {
     }
 }
 
-/// An ML-DSA key pair
-pub struct KeyPair<P: MlDsaParams> {
+/// An ML-DSA signing key initialized through a seed
+pub struct SigningKey<P: MlDsaParams> {
     /// The signing key of the key pair
-    signing_key: SigningKey<P>,
-
-    /// The verifying key of the key pair
-    verifying_key: VerifyingKey<P>,
+    signing_key: ExpandedSigningKey<P>,
 
     /// The seed this signing key was derived from
     seed: B32,
 }
 
-impl<P: MlDsaParams> KeyPair<P> {
+impl<P: MlDsaParams> SigningKey<P> {
     /// The signing key of the key pair
-    pub fn signing_key(&self) -> &SigningKey<P> {
+    pub fn signing_key(&self) -> &ExpandedSigningKey<P> {
         &self.signing_key
     }
 
-    /// The verifying key of the key pair
-    pub fn verifying_key(&self) -> &VerifyingKey<P> {
-        &self.verifying_key
-    }
-
     /// Serialize the [`Seed`] value: 32-bytes which can be used to reconstruct the
-    /// [`KeyPair`].
+    /// [`SigningKey`].
     ///
     /// # ⚠️ Warning!
     ///
@@ -219,43 +213,38 @@ impl<P: MlDsaParams> KeyPair<P> {
     }
 }
 
-impl<P: MlDsaParams> AsRef<VerifyingKey<P>> for KeyPair<P> {
-    fn as_ref(&self) -> &VerifyingKey<P> {
-        &self.verifying_key
-    }
-}
-
-impl<P: MlDsaParams> fmt::Debug for KeyPair<P> {
+impl<P: MlDsaParams> fmt::Debug for SigningKey<P> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("KeyPair")
-            .field("verifying_key", &self.verifying_key)
-            .finish_non_exhaustive()
+        f.debug_struct("SigningKey").finish_non_exhaustive()
     }
 }
 
-impl<P: MlDsaParams> signature::KeypairRef for KeyPair<P> {
+impl<P: MlDsaParams> signature::Keypair for SigningKey<P> {
     type VerifyingKey = VerifyingKey<P>;
+    fn verifying_key(&self) -> VerifyingKey<P> {
+        self.signing_key.verifying_key()
+    }
 }
 
-/// The `Signer` implementation for `KeyPair` uses the optional deterministic variant of ML-DSA, and
+/// The `Signer` implementation for `SigningKey` uses the optional deterministic variant of ML-DSA, and
 /// only supports signing with an empty context string.
-impl<P: MlDsaParams> Signer<Signature<P>> for KeyPair<P> {
+impl<P: MlDsaParams> Signer<Signature<P>> for SigningKey<P> {
     fn try_sign(&self, msg: &[u8]) -> Result<Signature<P>, Error> {
         self.try_multipart_sign(&[msg])
     }
 }
 
-/// The `Signer` implementation for `KeyPair` uses the optional deterministic variant of ML-DSA, and
+/// The `Signer` implementation for `SigningKey` uses the optional deterministic variant of ML-DSA, and
 /// only supports signing with an empty context string.
-impl<P: MlDsaParams> MultipartSigner<Signature<P>> for KeyPair<P> {
+impl<P: MlDsaParams> MultipartSigner<Signature<P>> for SigningKey<P> {
     fn try_multipart_sign(&self, msg: &[&[u8]]) -> Result<Signature<P>, Error> {
         self.signing_key.raw_sign_deterministic(msg, &[])
     }
 }
 
-/// The `DigestSigner` implementation for `KeyPair` uses the optional deterministic variant of ML-DSA
+/// The `DigestSigner` implementation for `SigningKey` uses the optional deterministic variant of ML-DSA
 /// with a pre-computed μ, and only supports signing with an empty context string.
-impl<P: MlDsaParams> DigestSigner<Shake256, Signature<P>> for KeyPair<P> {
+impl<P: MlDsaParams> DigestSigner<Shake256, Signature<P>> for SigningKey<P> {
     fn try_sign_digest<F: Fn(&mut Shake256) -> Result<(), Error>>(
         &self,
         f: F,
@@ -266,7 +255,7 @@ impl<P: MlDsaParams> DigestSigner<Shake256, Signature<P>> for KeyPair<P> {
 
 /// An ML-DSA signing key
 #[derive(Clone, PartialEq)]
-pub struct SigningKey<P: MlDsaParams> {
+pub struct ExpandedSigningKey<P: MlDsaParams> {
     rho: B32,
     K: B32,
     tr: B64,
@@ -281,14 +270,14 @@ pub struct SigningKey<P: MlDsaParams> {
     A_hat: NttMatrix<P::K, P::L>,
 }
 
-impl<P: MlDsaParams> fmt::Debug for SigningKey<P> {
+impl<P: MlDsaParams> fmt::Debug for ExpandedSigningKey<P> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("SigningKey").finish_non_exhaustive()
+        f.debug_struct("ExpandedSigningKey").finish_non_exhaustive()
     }
 }
 
 #[cfg(feature = "zeroize")]
-impl<P: MlDsaParams> Drop for SigningKey<P> {
+impl<P: MlDsaParams> Drop for ExpandedSigningKey<P> {
     fn drop(&mut self) {
         self.rho.zeroize();
         self.K.zeroize();
@@ -300,9 +289,9 @@ impl<P: MlDsaParams> Drop for SigningKey<P> {
 }
 
 #[cfg(feature = "zeroize")]
-impl<P: MlDsaParams> ZeroizeOnDrop for SigningKey<P> {}
+impl<P: MlDsaParams> ZeroizeOnDrop for ExpandedSigningKey<P> {}
 
-impl<P: MlDsaParams> SigningKey<P> {
+impl<P: MlDsaParams> ExpandedSigningKey<P> {
     fn new(
         rho: B32,
         K: B32,
@@ -501,14 +490,14 @@ impl<P: MlDsaParams> SigningKey<P> {
     }
 
     /// This auxiliary function derives a `VerifyingKey` from a bare
-    /// `SigningKey` (even in the absence of the original seed).
+    /// `ExpandedSigningKey` (even in the absence of the original seed).
     ///
     /// This is a utility function that is useful when importing the private key
     /// from an external source which does not export the seed and does not
     /// provide the precomputed public key associated with the private key
     /// itself.
     ///
-    /// `SigningKey` implements `signature::Keypair`: this inherent method is
+    /// `ExpandedSigningKey` implements `signature::Keypair`: this inherent method is
     /// retained for convenience, so it is available for callers even when the
     /// `signature::Keypair` trait is out-of-scope.
     pub fn verifying_key(&self) -> VerifyingKey<P> {
@@ -518,7 +507,7 @@ impl<P: MlDsaParams> SigningKey<P> {
 
     /// DEPRECATED: decode the key from an appropriately sized byte array.
     ///
-    /// Note that this form is deprecated in practice; prefer to use [`SigningKey::from_seed`].
+    /// Note that this form is deprecated in practice; prefer to use [`ExpandedSigningKey::from_seed`].
     ///
     /// <div class="warning">
     /// <b>Panics</b>
@@ -526,11 +515,11 @@ impl<P: MlDsaParams> SigningKey<P> {
     /// This API does not validate expanded signing keys and can potentially panic if keys are
     /// malformed or maliciously generated.
     ///
-    /// To avoid panics, use [`SigningKey::from_seed`] instead.
+    /// To avoid panics, use [`ExpandedSigningKey::from_seed`] instead.
     /// </div>
     // Algorithm 25 skDecode
-    #[deprecated(since = "0.1.0", note = "use `SigningKey::from_seed` instead")]
-    pub fn from_expanded(enc: &ExpandedSigningKey<P>) -> Self
+    #[deprecated(since = "0.1.0", note = "use `ExpandedSigningKey::from_seed` instead")]
+    pub fn from_expanded(enc: &ExpandedSigningKeyBytes<P>) -> Self
     where
         P: MlDsaParams,
     {
@@ -547,10 +536,10 @@ impl<P: MlDsaParams> SigningKey<P> {
 
     /// DEPRECATED: encode the key in a fixed-size byte array.
     ///
-    /// Note that this form is deprecated in practice; prefer to use [`KeyPair::to_seed`].
+    /// Note that this form is deprecated in practice; prefer to use [`SigningKey:to_seed`].
     // Algorithm 24 skEncode
-    #[deprecated(since = "0.1.0", note = "use `KeyPair::to_seed` instead")]
-    pub fn to_expanded(&self) -> ExpandedSigningKey<P>
+    #[deprecated(since = "0.1.0", note = "use `SigningKey::to_seed` instead")]
+    pub fn to_expanded(&self) -> ExpandedSigningKeyBytes<P>
     where
         P: MlDsaParams,
     {
@@ -568,28 +557,28 @@ impl<P: MlDsaParams> SigningKey<P> {
     }
 }
 
-/// The `Signer` implementation for `SigningKey` uses the optional deterministic variant of ML-DSA, and
+/// The `Signer` implementation for `ExpandedSigningKey` uses the optional deterministic variant of ML-DSA, and
 /// only supports signing with an empty context string.  If you would like to include a context
-/// string, use the [`SigningKey::sign_deterministic`] method.
-impl<P: MlDsaParams> Signer<Signature<P>> for SigningKey<P> {
+/// string, use the [`ExpandedSigningKey::sign_deterministic`] method.
+impl<P: MlDsaParams> Signer<Signature<P>> for ExpandedSigningKey<P> {
     fn try_sign(&self, msg: &[u8]) -> Result<Signature<P>, Error> {
         self.try_multipart_sign(&[msg])
     }
 }
 
-/// The `Signer` implementation for `SigningKey` uses the optional deterministic variant of ML-DSA, and
+/// The `Signer` implementation for `ExpandedSigningKey` uses the optional deterministic variant of ML-DSA, and
 /// only supports signing with an empty context string. If you would like to include a context
-/// string, use the [`SigningKey::sign_deterministic`] method.
-impl<P: MlDsaParams> MultipartSigner<Signature<P>> for SigningKey<P> {
+/// string, use the [`ExpandedSigningKey::sign_deterministic`] method.
+impl<P: MlDsaParams> MultipartSigner<Signature<P>> for ExpandedSigningKey<P> {
     fn try_multipart_sign(&self, msg: &[&[u8]]) -> Result<Signature<P>, Error> {
         self.raw_sign_deterministic(msg, &[])
     }
 }
 
-/// The `Signer` implementation for `SigningKey` uses the optional deterministic variant of ML-DSA
+/// The `Signer` implementation for `ExpandedSigningKey` uses the optional deterministic variant of ML-DSA
 /// with a pre-computed µ, and only supports signing with an empty context string. If you would
-/// like to include a context string, use the [`SigningKey::sign_mu_deterministic`] method.
-impl<P: MlDsaParams> DigestSigner<Shake256, Signature<P>> for SigningKey<P> {
+/// like to include a context string, use the [`ExpandedSigningKey::sign_mu_deterministic`] method.
+impl<P: MlDsaParams> DigestSigner<Shake256, Signature<P>> for ExpandedSigningKey<P> {
     fn try_sign_digest<F: Fn(&mut Shake256) -> Result<(), Error>>(
         &self,
         f: F,
@@ -602,9 +591,9 @@ impl<P: MlDsaParams> DigestSigner<Shake256, Signature<P>> for SigningKey<P> {
     }
 }
 
-/// The `KeyPair` implementation for `SigningKey` allows to derive a `VerifyingKey` from
-/// a bare `SigningKey` (even in the absence of the original seed).
-impl<P: MlDsaParams> signature::Keypair for SigningKey<P> {
+/// The [`signature::KeyPair`] implementation for `ExpandedSigningKey` allows to derive a `VerifyingKey` from
+/// a bare `ExpandedSigningKey` (even in the absence of the original seed).
+impl<P: MlDsaParams> signature::Keypair for ExpandedSigningKey<P> {
     type VerifyingKey = VerifyingKey<P>;
 
     /// This is a utility function that is useful when importing the private key
@@ -622,11 +611,11 @@ impl<P: MlDsaParams> signature::Keypair for SigningKey<P> {
     }
 }
 
-/// The `RandomizedSigner` implementation for `SigningKey` only supports signing with an empty
+/// The `RandomizedSigner` implementation for `ExpandedSigningKey` only supports signing with an empty
 /// context string. If you would like to include a context string, use the
-/// [`SigningKey::sign_randomized`] method.
+/// [`ExpandedSigningKey::sign_randomized`] method.
 #[cfg(feature = "rand_core")]
-impl<P: MlDsaParams> RandomizedSigner<Signature<P>> for SigningKey<P> {
+impl<P: MlDsaParams> RandomizedSigner<Signature<P>> for ExpandedSigningKey<P> {
     fn try_sign_with_rng<R: TryCryptoRng + ?Sized>(
         &self,
         rng: &mut R,
@@ -636,11 +625,11 @@ impl<P: MlDsaParams> RandomizedSigner<Signature<P>> for SigningKey<P> {
     }
 }
 
-/// The `RandomizedSigner` implementation for `SigningKey` only supports signing with an empty
+/// The `RandomizedSigner` implementation for `ExpandedSigningKey` only supports signing with an empty
 /// context string. If you would like to include a context string, use the
-/// [`SigningKey::sign_randomized`] method.
+/// [`ExpandedSigningKey::sign_randomized`] method.
 #[cfg(feature = "rand_core")]
-impl<P: MlDsaParams> RandomizedMultipartSigner<Signature<P>> for SigningKey<P> {
+impl<P: MlDsaParams> RandomizedMultipartSigner<Signature<P>> for ExpandedSigningKey<P> {
     fn try_multipart_sign_with_rng<R: TryCryptoRng + ?Sized>(
         &self,
         rng: &mut R,
@@ -650,11 +639,11 @@ impl<P: MlDsaParams> RandomizedMultipartSigner<Signature<P>> for SigningKey<P> {
     }
 }
 
-/// The `RandomizedSigner` implementation for `SigningKey` only supports signing with an empty
+/// The `RandomizedSigner` implementation for `ExpandedSigningKey` only supports signing with an empty
 /// context string. If you would like to include a context string, use the
-/// [`SigningKey::sign_mu_randomized`] method.
+/// [`ExpandedSigningKey::sign_mu_randomized`] method.
 #[cfg(feature = "rand_core")]
-impl<P: MlDsaParams> RandomizedDigestSigner<Shake256, Signature<P>> for SigningKey<P> {
+impl<P: MlDsaParams> RandomizedDigestSigner<Shake256, Signature<P>> for ExpandedSigningKey<P> {
     fn try_sign_digest_with_rng<
         R: TryCryptoRng + ?Sized,
         F: Fn(&mut Shake256) -> Result<(), Error>,
@@ -902,12 +891,12 @@ impl<P> KeyGen for P
 where
     P: MlDsaParams,
 {
-    type KeyPair = KeyPair<P>;
+    type KeyPair = SigningKey<P>;
 
     /// Generate a signing key pair from the specified RNG
     // Algorithm 1 ML-DSA.KeyGen()
     #[cfg(feature = "rand_core")]
-    fn key_gen<R: CryptoRng + ?Sized>(rng: &mut R) -> KeyPair<P> {
+    fn key_gen<R: CryptoRng + ?Sized>(rng: &mut R) -> SigningKey<P> {
         let mut xi = B32::default();
         rng.fill_bytes(&mut xi);
         Self::from_seed(&xi)
@@ -917,7 +906,7 @@ where
     ///
     /// This method reflects the ML-DSA.KeyGen_internal algorithm from FIPS 204.
     // Algorithm 6 ML-DSA.KeyGen_internal
-    fn from_seed(xi: &Seed) -> KeyPair<P>
+    fn from_seed(xi: &Seed) -> SigningKey<P>
     where
         P: MlDsaParams,
     {
@@ -943,12 +932,12 @@ where
         // Compress and encode
         let (t1, t0) = t.power2round();
 
-        let verifying_key = VerifyingKey::new(rho, t1, A_hat.clone(), None);
-        let signing_key = SigningKey::new(rho, K, verifying_key.tr.clone(), s1, s2, t0, A_hat);
+        let enc = VerifyingKey::<P>::encode_internal(&rho, &t1);
+        let tr: B64 = H::default().absorb(&enc).squeeze_new();
+        let signing_key = ExpandedSigningKey::new(rho, K, tr, s1, s2, t0, A_hat);
 
-        KeyPair {
+        SigningKey {
             signing_key,
-            verifying_key,
             seed: xi.clone(),
         }
     }
@@ -958,6 +947,7 @@ where
 mod test {
     use super::*;
     use crate::param::*;
+    use signature::Keypair;
 
     #[test]
     fn output_sizes() {
@@ -983,11 +973,11 @@ mod test {
         P: MlDsaParams + PartialEq,
     {
         let seed = Array::default();
-        let kp = P::from_seed(&seed);
-        assert_eq!(kp.to_seed(), seed);
+        let ssk = P::from_seed(&seed);
+        assert_eq!(ssk.to_seed(), seed);
 
-        let sk = kp.signing_key;
-        let vk = kp.verifying_key;
+        let sk = &ssk.signing_key;
+        let vk = ssk.verifying_key();
 
         let vk_bytes = vk.encode();
         let vk2 = VerifyingKey::<P>::decode(&vk_bytes);
@@ -996,8 +986,8 @@ mod test {
         #[allow(deprecated)]
         {
             let sk_bytes = sk.to_expanded();
-            let sk2 = SigningKey::<P>::from_expanded(&sk_bytes);
-            assert!(sk == sk2);
+            let sk2 = ExpandedSigningKey::<P>::from_expanded(&sk_bytes);
+            assert!(sk == &sk2);
 
             let M = b"Hello world";
             let rnd = Array([0u8; 32]);
@@ -1019,9 +1009,9 @@ mod test {
     where
         P: MlDsaParams + PartialEq,
     {
-        let kp = P::from_seed(&Array::default());
-        let sk = kp.signing_key;
-        let vk = kp.verifying_key;
+        let ssk = P::from_seed(&Array::default());
+        let sk = &ssk.signing_key;
+        let vk = ssk.verifying_key();
         let vk_derived = sk.verifying_key();
 
         assert!(vk == vk_derived);
@@ -1038,9 +1028,9 @@ mod test {
     where
         P: MlDsaParams,
     {
-        let kp = P::from_seed(&Array::default());
-        let sk = kp.signing_key;
-        let vk = kp.verifying_key;
+        let ssk = P::from_seed(&Array::default());
+        let sk = &ssk.signing_key;
+        let vk = ssk.verifying_key();
 
         let M = b"Hello world";
         let rnd = Array([0u8; 32]);
@@ -1062,9 +1052,9 @@ mod test {
         where
             P: MlDsaParams,
         {
-            let kp = P::from_seed(&Array::default());
-            let sk = kp.signing_key;
-            let vk = kp.verifying_key;
+            let ssk = P::from_seed(&Array::default());
+            let sk = &ssk.signing_key;
+            let vk = ssk.verifying_key();
 
             let M = b"Hello world";
             let rnd = Array([0u8; 32]);
@@ -1084,9 +1074,9 @@ mod test {
         where
             P: MlDsaParams,
         {
-            let kp = P::from_seed(&Array::default());
-            let sk = kp.signing_key;
-            let vk = kp.verifying_key;
+            let ssk = P::from_seed(&Array::default());
+            let sk = &ssk.signing_key;
+            let vk = ssk.verifying_key();
 
             let M = b"Hello world";
             let rnd = Array([0u8; 32]);
@@ -1106,9 +1096,9 @@ mod test {
         where
             P: MlDsaParams,
         {
-            let kp = P::from_seed(&Array::default());
-            let sk = kp.signing_key;
-            let vk = kp.verifying_key;
+            let ssk = P::from_seed(&Array::default());
+            let sk = &ssk.signing_key;
+            let vk = ssk.verifying_key();
 
             let M = b"Hello world";
             let rnd = Array([0u8; 32]);
@@ -1129,11 +1119,9 @@ mod test {
             P: MlDsaParams,
         {
             let seed = Seed::default();
-            let kp1 = P::from_seed(&seed);
-            let sk1 = SigningKey::<P>::from_seed(&seed);
-            let vk1 = sk1.verifying_key();
-            assert_eq!(kp1.signing_key, sk1);
-            assert_eq!(kp1.verifying_key, vk1);
+            let ssk = P::from_seed(&seed);
+            let sk1 = ExpandedSigningKey::<P>::from_seed(&seed);
+            assert_eq!(ssk.signing_key, sk1);
         }
         assert_from_seed_equality::<MlDsa44>();
         assert_from_seed_equality::<MlDsa65>();
@@ -1194,9 +1182,9 @@ mod test {
     #[test]
     fn context_length_validation() {
         fn test_ctx_length<P: MlDsaParams>() {
-            let kp = P::from_seed(&Array::default());
-            let sk = kp.signing_key();
-            let vk = kp.verifying_key();
+            let ssk = P::from_seed(&Array::default());
+            let sk = ssk.signing_key();
+            let vk = ssk.verifying_key();
 
             let msg = b"Hello world";
             let long_ctx = [0u8; 256];
@@ -1217,8 +1205,8 @@ mod test {
     fn derived_verifying_key_validates_signatures() {
         fn test_derived_vk<P: MlDsaParams>() {
             let seed = Array([42u8; 32]);
-            let kp = P::from_seed(&seed);
-            let sk = kp.signing_key();
+            let ssk = P::from_seed(&seed);
+            let sk = ssk.signing_key();
             let derived_vk = sk.verifying_key();
 
             let msg = b"Test message for derived key";
@@ -1226,7 +1214,7 @@ mod test {
             let sig = sk.sign_internal(&[msg], &rnd);
 
             assert!(derived_vk.verify_internal(msg, &sig));
-            assert_eq!(derived_vk.encode(), kp.verifying_key().encode());
+            assert_eq!(derived_vk.encode(), ssk.verifying_key().encode());
         }
         test_derived_vk::<MlDsa44>();
         test_derived_vk::<MlDsa65>();
@@ -1244,11 +1232,11 @@ mod test {
 
             let mut kp_debug = alloc::string::String::new();
             write!(&mut kp_debug, "{:?}", kp).unwrap();
-            assert!(kp_debug.contains("KeyPair"));
+            assert!(kp_debug.contains("SigningKey"));
 
             let mut sk_debug = alloc::string::String::new();
             write!(&mut sk_debug, "{:?}", kp.signing_key()).unwrap();
-            assert!(sk_debug.contains("SigningKey"));
+            assert!(sk_debug.contains("ExpandedSigningKey"));
         }
         test_debug::<MlDsa44>();
         test_debug::<MlDsa65>();
