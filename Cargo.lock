@@ -831,9 +831,9 @@ dependencies = [
 
 [[package]]
 name = "module-lattice"
-version = "0.2.0-rc.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "217a321cd6f89254aa8c6a5d4412547370121618d557e6537121f8bda21df5ae"
+checksum = "1cbdc2ac6ead7d0889a5d96e70b7f11a8812702a100ca7c65c5c71fdf076e182"
 dependencies = [
  "hybrid-array",
  "num-traits",
