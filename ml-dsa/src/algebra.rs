@@ -1,3 +1,4 @@
+use ctutils::{CtEq, CtGt, CtLt, CtSelect};
 use hybrid_array::{
     ArraySize,
     typenum::{Shleft, U1, U13, Unsigned},
@@ -28,11 +29,9 @@ pub(crate) trait BarrettReduce: Unsigned {
         let quotient = (x * Self::MULTIPLIER) >> Self::SHIFT;
         let remainder = x - quotient * m;
 
-        if remainder < m {
-            Truncate::truncate(remainder)
-        } else {
-            Truncate::truncate(remainder - m)
-        }
+        let r_small: u32 = Truncate::truncate(remainder);
+        let r_large: u32 = Truncate::truncate(remainder.wrapping_sub(m));
+        u32::ct_select(&r_large, &r_small, remainder.ct_lt(&m))
     }
 }
 
@@ -103,14 +102,17 @@ impl Decompose for Elem {
         let r_plus = self.clone();
         let r0 = r_plus.mod_plus_minus::<TwoGamma2>();
 
-        if r_plus - r0 == Elem::new(BaseField::Q - 1) {
-            (Elem::new(0), r0 - Elem::new(1))
-        } else {
-            let diff = r_plus - r0;
-            // Use constant-time division instead of hardware division
-            let r1 = Elem::new(TwoGamma2::ct_div(diff.0));
-            (r1, r0)
-        }
+        let diff = r_plus - r0;
+        let is_edge = diff.0.ct_eq(&(BaseField::Q - 1));
+
+        // Compute both branches unconditionally
+        let edge = (Elem::new(0), r0 - Elem::new(1));
+        let r1 = Elem::new(TwoGamma2::ct_div(diff.0));
+        let normal = (r1, r0);
+
+        let r1_out = Elem::new(u32::ct_select(&normal.0.0, &edge.0.0, is_edge));
+        let r0_out = Elem::new(u32::ct_select(&normal.1.0, &edge.1.0, is_edge));
+        (r1_out, r0_out)
     }
 }
 
@@ -126,11 +128,12 @@ pub(crate) trait AlgebraExt: Sized {
 impl AlgebraExt for Elem {
     fn mod_plus_minus<M: Unsigned>(&self) -> Self {
         let raw_mod = Elem::new(M::reduce(self.0));
-        if raw_mod.0 <= M::U32 >> 1 {
-            raw_mod
-        } else {
-            raw_mod - Elem::new(M::U32)
-        }
+        let in_lower_half = !raw_mod.0.ct_gt(&(M::U32 >> 1));
+        Elem::new(u32::ct_select(
+            &(raw_mod - Elem::new(M::U32)).0,
+            &raw_mod.0,
+            in_lower_half,
+        ))
     }
 
     // FIPS 204 defines the infinity norm differently for signed vs. unsigned integers:
@@ -142,11 +145,8 @@ impl AlgebraExt for Elem {
     // the signed integers used in this crate, so we can safely use the unsigned version.  However,
     // since mod_plus_minus is also unsigned, we need to unwrap the "negative" values.
     fn infinity_norm(&self) -> u32 {
-        if self.0 <= BaseField::Q >> 1 {
-            self.0
-        } else {
-            BaseField::Q - self.0
-        }
+        let in_lower_half = !self.0.ct_gt(&(BaseField::Q >> 1));
+        u32::ct_select(&(BaseField::Q - self.0), &self.0, in_lower_half)
     }
 
     // Algorithm 35 Power2Round
