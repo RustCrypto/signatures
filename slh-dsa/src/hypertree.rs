@@ -151,7 +151,8 @@ mod tests {
 
         let idx_tree = rng.random_range(
             0..=(1u64
-                .wrapping_shl(HTMode::H::U32 - HTMode::HPrime::U32)
+                .checked_shl(HTMode::H::U32 - HTMode::HPrime::U32)
+                .unwrap_or(0)
                 .wrapping_sub(1)),
         );
         let idx_leaf = rng.random_range(0..(1 << (HTMode::HPrime::USIZE)));
@@ -181,7 +182,8 @@ mod tests {
 
         let idx_tree = rng.random_range(
             0..=(1u64
-                .wrapping_shl(HTMode::H::U32 - HTMode::HPrime::U32)
+                .checked_shl(HTMode::H::U32 - HTMode::HPrime::U32)
+                .unwrap_or(0)
                 .wrapping_sub(1)),
         );
         let idx_leaf = rng.random_range(0..(1 << (HTMode::HPrime::USIZE)));
