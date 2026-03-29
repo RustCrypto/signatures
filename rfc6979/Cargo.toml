@@ -16,7 +16,7 @@ edition = "2024"
 rust-version = "1.85"
 
 [dependencies]
-hmac = { version = "0.13.0-rc.5", default-features = false }
+hmac = { version = "0.13", default-features = false }
 subtle = { version = "2", default-features = false }
 
 [dev-dependencies]
