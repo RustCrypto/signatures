@@ -23,4 +23,4 @@ subtle = { version = "2", default-features = false }
 [dev-dependencies]
 hex-literal = "1"
 belt-block = "0.2.0-rc.3"
-belt-hash = "0.2.0-rc.5"
+belt-hash = "0.2"
