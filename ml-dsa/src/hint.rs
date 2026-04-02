@@ -1,5 +1,5 @@
 use crate::{
-    algebra::{AlgebraExt, BaseField, Decompose, Elem, Polynomial, Vector},
+    algebra::{BaseField, Decompose, Elem, Polynomial, Vector},
     param::{EncodedHint, SignatureParams},
 };
 use ctutils::{Choice, CtEq, CtGt, CtSelect};
