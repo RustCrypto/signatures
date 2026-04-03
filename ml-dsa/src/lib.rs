@@ -58,6 +58,7 @@ use crate::param::{ParameterSet, QMinus1, SamplingSize, SpecQ};
 use crate::sampling::{expand_a, expand_mask, expand_s, sample_in_ball};
 use core::convert::{TryFrom, TryInto};
 use core::fmt;
+use ctutils::{Choice, CtEq};
 use hybrid_array::{
     Array,
     typenum::{
@@ -187,7 +188,7 @@ impl AsMut<Shake256> for MuBuilder {
 }
 
 /// An ML-DSA signing key initialized through a seed
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 pub struct SigningKey<P: MlDsaParams> {
     /// The signing key of the key pair
     signing_key: ExpandedSigningKey<P>,
@@ -254,8 +255,22 @@ impl<P: MlDsaParams> DigestSigner<Shake256, Signature<P>> for SigningKey<P> {
     }
 }
 
+impl<P: MlDsaParams> PartialEq for SigningKey<P> {
+    fn eq(&self, other: &Self) -> bool {
+        self.ct_eq(other).into()
+    }
+}
+
+impl<P: MlDsaParams> CtEq for SigningKey<P> {
+    fn ct_eq(&self, other: &Self) -> Choice {
+        self.signing_key
+            .ct_eq(&other.signing_key)
+            .and(self.seed.ct_eq(&other.seed))
+    }
+}
+
 /// An ML-DSA signing key
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 pub struct ExpandedSigningKey<P: MlDsaParams> {
     rho: B32,
     K: B32,
@@ -658,6 +673,24 @@ impl<P: MlDsaParams> RandomizedDigestSigner<Shake256, Signature<P>> for Expanded
         let mu = mu.finish();
 
         self.sign_mu_randomized(&mu, rng)
+    }
+}
+
+impl<P: MlDsaParams> PartialEq for ExpandedSigningKey<P> {
+    fn eq(&self, other: &Self) -> bool {
+        self.ct_eq(other).into()
+    }
+}
+
+impl<P: MlDsaParams> CtEq for ExpandedSigningKey<P> {
+    fn ct_eq(&self, other: &Self) -> Choice {
+        self.rho
+            .ct_eq(&other.rho)
+            .and(self.K.ct_eq(&other.K))
+            .and(self.tr.ct_eq(&other.tr))
+            .and(self.s1.ct_eq(&other.s1))
+            .and(self.s2.ct_eq(&other.s2))
+            .and(self.t0.ct_eq(&other.t0))
     }
 }
 
