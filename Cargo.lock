@@ -715,6 +715,7 @@ version = "0.4.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3944cf8cf766b40e2a1a333ee5e9b563f854d5fa49d6a8ca2764e97c6eddb214"
 dependencies = [
+ "ctutils",
  "subtle",
  "typenum",
  "zeroize",
@@ -868,10 +869,11 @@ dependencies = [
 
 [[package]]
 name = "module-lattice"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1cbdc2ac6ead7d0889a5d96e70b7f11a8812702a100ca7c65c5c71fdf076e182"
+checksum = "164eb3faeaecbd14b0b2a917c1b4d0c035097a9c559b0bed85c2cdd032bc8faa"
 dependencies = [
+ "ctutils",
  "hybrid-array",
  "num-traits",
  "zeroize",
