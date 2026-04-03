@@ -187,6 +187,7 @@ impl AsMut<Shake256> for MuBuilder {
 }
 
 /// An ML-DSA signing key initialized through a seed
+#[derive(Clone, PartialEq)]
 pub struct SigningKey<P: MlDsaParams> {
     /// The signing key of the key pair
     signing_key: ExpandedSigningKey<P>,
