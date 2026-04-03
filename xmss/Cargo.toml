@@ -27,7 +27,7 @@ hybrid-array = { version = "0.4", features = ["zeroize"] }
 pkcs8 = { version = "0.10", optional = true, default-features = false, features = ["alloc"] }
 rand = "0.10"
 sha2 = "0.11"
-sha3 = "0.11.0-rc.9"
+sha3 = "0.11.0"
 serdect = { version = "0.4", features = ["alloc"], optional = true }
 signature = "2"
 spki = { version = "0.7", optional = true, default-features = false, features = ["alloc"] }
