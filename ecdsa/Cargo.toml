@@ -27,7 +27,7 @@ digest = { version = "0.11", optional = true, default-features = false, features
 rfc6979 = { version = "0.5.0-rc.5", optional = true }
 serdect = { version = "0.4", optional = true, default-features = false, features = ["alloc"] }
 sha2 = { version = "0.11", optional = true, default-features = false, features = ["oid"] }
-spki = { version = "0.8.0-rc.4", optional = true, default-features = false }
+spki = { version = "0.8.0", optional = true, default-features = false }
 
 [dev-dependencies]
 elliptic-curve = { version = "0.14.0-rc.27", default-features = false, features = ["dev"] }
