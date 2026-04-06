@@ -20,17 +20,17 @@ serde = ["dep:serdect"]
 pkcs8 = ["dep:pkcs8", "dep:spki", "dep:der", "dep:const-oid"]
 
 [dependencies]
-const-oid = { version = "0.9", optional = true }
-der = { version = "0.7", optional = true, default-features = false, features = ["alloc"] }
+const-oid = { version = "0.10", optional = true }
+der = { version = "0.8", optional = true, default-features = false, features = ["alloc"] }
 digest = "0.11"
 hybrid-array = { version = "0.4", features = ["zeroize"] }
-pkcs8 = { version = "0.10", optional = true, default-features = false, features = ["alloc"] }
+pkcs8 = { version = "0.11.0-rc.11", optional = true, default-features = false, features = ["alloc"] }
 rand = "0.10"
 sha2 = "0.11"
 sha3 = "0.11"
 serdect = { version = "0.4", features = ["alloc"], optional = true }
 signature = "2"
-spki = { version = "0.7", optional = true, default-features = false, features = ["alloc"] }
+spki = { version = "0.8", optional = true, default-features = false, features = ["alloc"] }
 subtle = "2.6"
 thiserror = "2"
 zeroize = "1"
