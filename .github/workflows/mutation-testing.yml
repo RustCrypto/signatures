@@ -48,7 +48,7 @@ jobs:
           - package: ${{ github.event.inputs.package != 'all' && github.event.inputs.package != 'ml-dsa' && 'ml-dsa' || 'NONE' }}
           - package: ${{ github.event.inputs.package != 'all' && github.event.inputs.package != 'slh-dsa' && 'slh-dsa' || 'NONE' }}
     steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v4.2.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v4.2.2
         with:
           persist-credentials: false
           submodules: recursive
