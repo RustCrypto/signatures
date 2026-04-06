@@ -48,7 +48,18 @@ pub enum Error {
         /// Actual signature length in bytes.
         got: usize,
     },
+    /// PKCS#8 errors.
+    #[cfg(feature = "pkcs8")]
+    #[error("PKCS#8 error: {0}")]
+    Pkcs8(pkcs8::Error),
 }
 
 /// Result type used by this crate.
 pub type XmssResult<T> = Result<T, Error>;
+
+#[cfg(feature = "pkcs8")]
+impl From<pkcs8::Error> for Error {
+    fn from(err: pkcs8::Error) -> Self {
+        Self::Pkcs8(err)
+    }
+}

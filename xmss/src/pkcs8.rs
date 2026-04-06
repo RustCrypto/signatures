@@ -1,11 +1,11 @@
 //! PKCS#8 encoding/decoding support for XMSS keys and signatures.
 
 use const_oid::ObjectIdentifier;
-use der::asn1::BitStringRef;
-use pkcs8::{AlgorithmIdentifierRef, EncodePrivateKey, PrivateKeyInfo};
+use der::asn1::{BitStringRef, OctetStringRef};
+use pkcs8::{AlgorithmIdentifierRef, EncodePrivateKey, PrivateKeyInfo, PrivateKeyInfoRef};
 use spki::{EncodePublicKey, SubjectPublicKeyInfoRef};
 
-use crate::error::Error;
+use crate::error::{Error, XmssResult};
 use crate::params::XmssParameter;
 use crate::xmss::{KeyPair, SigningKey, VerifyingKey};
 
@@ -67,8 +67,8 @@ impl<P: XmssParameter> EncodePrivateKey for KeyPair<P> {
             oid: algorithm_oid::<P>(),
             parameters: None,
         };
-        let sk_bytes = self.signing_key_ref().as_ref();
-        let pk_bytes = self.verifying_key().as_ref();
+        let sk_bytes = OctetStringRef::new(self.signing_key_ref().as_ref())?;
+        let pk_bytes = BitStringRef::new(0, self.verifying_key().as_ref())?;
         let pki = PrivateKeyInfo {
             algorithm: algo,
             private_key: sk_bytes,
@@ -80,19 +80,23 @@ impl<P: XmssParameter> EncodePrivateKey for KeyPair<P> {
 
 impl<P: XmssParameter> KeyPair<P> {
     /// Decodes a key pair from PKCS#8 DER bytes.
-    pub fn from_pkcs8_der(der_bytes: &[u8]) -> crate::error::XmssResult<Self> {
-        let pk_info = PrivateKeyInfo::try_from(der_bytes).map_err(|_| Error::InvalidKeyLength {
-            expected: 0,
-            got: der_bytes.len(),
-        })?;
+    pub fn from_pkcs8_der(der_bytes: &[u8]) -> XmssResult<Self> {
+        let pk_info =
+            PrivateKeyInfoRef::try_from(der_bytes).map_err(|_| Error::InvalidKeyLength {
+                expected: 0,
+                got: der_bytes.len(),
+            })?;
 
         let expected_oid = algorithm_oid::<P>();
         if pk_info.algorithm.oid != expected_oid {
             return Err(Error::InvalidOid(0));
         }
 
-        let signing_key = SigningKey::<P>::try_from(pk_info.private_key)?;
-        let verifying_key = if let Some(pk_bytes) = pk_info.public_key {
+        let signing_key = SigningKey::<P>::try_from(pk_info.private_key.as_ref())?;
+        let verifying_key = if let Some(pk) = pk_info.public_key {
+            let pk_bytes = pk.as_bytes().ok_or(pkcs8::Error::KeyMalformed)?;
+
+            // TODO(tarcieri): verify key matches expected value?
             VerifyingKey::<P>::try_from(pk_bytes)?
         } else {
             VerifyingKey::from(&signing_key)
