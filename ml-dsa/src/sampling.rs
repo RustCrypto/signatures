@@ -138,7 +138,7 @@ fn rej_bounded_poly(rho: &[u8], eta: Eta, r: u16) -> Polynomial {
     let mut buf = [0u8; 840];
     ctx.squeeze(&mut buf);
 
-    for &byte in buf.iter() {
+    for &byte in &buf {
         let (z0, z1) = coeffs_from_byte(byte, eta);
         if let Some(x) = z0 {
             a.0[j] = x;
