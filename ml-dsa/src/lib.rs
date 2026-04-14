@@ -301,6 +301,9 @@ impl<P: MlDsaParams> Drop for ExpandedSigningKey<P> {
         self.s1.zeroize();
         self.s2.zeroize();
         self.t0.zeroize();
+        self.s1_hat.zeroize();
+        self.s2_hat.zeroize();
+        self.t0_hat.zeroize();
     }
 }
 
