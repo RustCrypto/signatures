@@ -24,7 +24,7 @@ use {
         CurveArithmetic, NonZeroScalar, ProjectivePoint, Scalar,
         ff::PrimeField,
         group::{Curve as _, Group},
-        ops::{Invert, LinearCombination, Reduce},
+        ops::{Invert, MulByGeneratorVartime, Reduce},
         point::AffineCoordinates,
         scalar::IsHigh,
     },
@@ -213,7 +213,7 @@ where
     let s_inv = *s.invert_vartime();
     let u1 = z * s_inv;
     let u2 = *r * s_inv;
-    let x = ProjectivePoint::<C>::lincomb(&[(ProjectivePoint::<C>::generator(), u1), (*q, u2)])
+    let x = ProjectivePoint::<C>::mul_by_generator_and_mul_add_vartime(&u1, &u2, q)
         .to_affine()
         .x();
 
