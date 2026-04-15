@@ -1173,13 +1173,13 @@ impl XmssOid {
         self.initialize(&mut params)?;
 
         let expected = params.get_seed_length();
-        if let Some(seed) = seed
-            && seed.len() != expected
-        {
-            return Err(Error::InvalidSeedLength {
-                expected,
-                got: seed.len(),
-            });
+        if let Some(seed) = seed {
+            if seed.len() != expected {
+                return Err(Error::InvalidSeedLength {
+                    expected,
+                    got: seed.len(),
+                });
+            }
         }
 
         let oid = self.raw_oid();

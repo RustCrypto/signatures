@@ -5,6 +5,8 @@ use crate::{
 };
 use hybrid_array::Array;
 use module_lattice::{ArraySize, Field, Truncate};
+#[cfg(feature = "zeroize")]
+use zeroize::Zeroize;
 
 // Algorithm 13 BytesToBits
 fn bit_set(z: &[u8], i: usize) -> bool {
@@ -122,7 +124,11 @@ fn rej_ntt_poly(rho: &[u8], r: u8, s: u8) -> NttPolynomial {
             j += 1;
         }
     }
-
+    #[cfg(feature = "zeroize")]
+    {
+        buf.zeroize();
+        tmp.zeroize();
+    }
     a
 }
 
@@ -132,10 +138,8 @@ fn rej_bounded_poly(rho: &[u8], eta: Eta, r: u16) -> Polynomial {
     let mut ctx = H::default().absorb(rho).absorb(&r.to_le_bytes());
     let mut a = Polynomial::default();
 
-    // Squeeze 840 bytes in a single call rather than 1 byte at a time.  Each
-    // byte yields two half-byte candidates, and the acceptance probability per
-    // half-byte is ≥50%, so 1680 candidates are almost always sufficient.
-    let mut buf = [0u8; 840];
+    // The reference implementation uses 136 bytes (1 SHAKE256 block) for eta=2 and 272 bytes (2 blocks) for eta=4.
+    let mut buf = [0u8; 272];
     ctx.squeeze(&mut buf);
 
     for &byte in &buf {
@@ -172,7 +176,11 @@ fn rej_bounded_poly(rho: &[u8], eta: Eta, r: u16) -> Polynomial {
             }
         }
     }
-
+    #[cfg(feature = "zeroize")]
+    {
+        buf.zeroize();
+        tmp.zeroize();
+    }
     a
 }
 
