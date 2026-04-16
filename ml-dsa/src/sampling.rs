@@ -148,7 +148,7 @@ fn rej_bounded_poly(rho: &[u8], eta: Eta, r: u16) -> Polynomial {
             a.0[j] = x;
             j += 1;
             if j == 256 {
-                return a;
+                break;
             }
         }
         if let Some(x) = z1 {
