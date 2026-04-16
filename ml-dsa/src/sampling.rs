@@ -110,7 +110,7 @@ fn rej_ntt_poly(rho: &[u8], r: u8, s: u8) -> NttPolynomial {
             a.0[j] = x;
             j += 1;
             if j == 256 {
-                return a;
+                break;
             }
         }
     }
