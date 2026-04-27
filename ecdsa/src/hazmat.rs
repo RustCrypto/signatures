@@ -54,8 +54,10 @@ pub trait DigestAlgorithm: EcdsaCurve {
 /// [RFC6979 § 2.3.2]: https://datatracker.ietf.org/doc/html/rfc6979#section-2.3.2
 /// [SEC1]: https://www.secg.org/sec1-v2.pdf
 pub fn bits2field<C: EcdsaCurve>(bits: &[u8]) -> Result<FieldBytes<C>> {
-    // Minimum allowed bits size is half the field size
-    if bits.len() < C::FieldBytesSize::USIZE / 2 {
+    // Absolute 128-bit / 16-byte minimum to catch egregious digest misuse
+    // without rejecting legitimate combinations like SHA-256 with P-521
+    // (see e.g. XML Signature, which permits such pairings).
+    if bits.len() < 16 {
         return Err(Error::new());
     }
 
@@ -233,6 +235,9 @@ mod tests {
     #[test]
     fn bits2field_too_small() {
         assert!(bits2field::<MockCurve>(b"").is_err());
+        // 15 bytes is one short of the 128-bit absolute floor.
+        let prehash = hex!("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+        assert!(bits2field::<MockCurve>(&prehash).is_err());
     }
 
     #[test]
