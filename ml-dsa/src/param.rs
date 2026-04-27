@@ -34,14 +34,16 @@ pub(crate) type BitlenQMinusD = Diff<Length<SpecQ>, SpecD>;
 pub(crate) type Pow2DMinus1 = Shleft<U1, Diff<SpecD, U1>>;
 pub(crate) type Pow2DMinus1Minus1 = Diff<Pow2DMinus1, U1>;
 
-/// An integer that describes a bit length to be used in sampling
-#[expect(unreachable_pub)]
+/// An integer that describes a bit length to be used in sampling.
+#[allow(unreachable_pub, reason = "MSRV 1.85 complains")]
 pub trait SamplingSize: ArraySize + Len {
     const ETA: Eta;
 }
 
+/// Range of the uniform distribution to be used in sampling.
 #[derive(Copy, Clone)]
-pub(crate) enum Eta {
+#[allow(unreachable_pub, reason = "MSRV 1.85 complains")]
+pub enum Eta {
     Two,
     Four,
 }
@@ -54,8 +56,8 @@ impl SamplingSize for U4 {
     const ETA: Eta = Eta::Four;
 }
 
-/// An integer that describes a mask sampling size
-#[expect(unreachable_pub)]
+/// An integer that describes a mask sampling size.
+#[allow(unreachable_pub, reason = "MSRV 1.85 complains")]
 pub trait MaskSamplingSize: Unsigned {
     type SampleSize: ArraySize;
 
