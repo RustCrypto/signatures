@@ -71,6 +71,12 @@ impl<P: ParameterSet> Signature<P> {
     }
 }
 
+impl<P: ParameterSet> core::hash::Hash for Signature<P> {
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+        self.to_bytes().hash(state);
+    }
+}
+
 impl<P: ParameterSet> TryFrom<&[u8]> for Signature<P> {
     type Error = Error;
 
