@@ -151,6 +151,17 @@ where
     }
 }
 
+impl<C> core::hash::Hash for Signature<C>
+where
+    C: EcdsaCurve,
+    MaxSize<C>: ArraySize,
+    <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArraySize,
+{
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+        self.as_bytes().hash(state);
+    }
+}
+
 impl<C> AsRef<[u8]> for Signature<C>
 where
     C: EcdsaCurve,

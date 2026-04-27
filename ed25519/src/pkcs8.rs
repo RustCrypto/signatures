@@ -229,7 +229,7 @@ impl str::FromStr for KeypairBytes {
 ///
 /// Note that this type operates on raw bytes and performs no validation that
 /// public keys represent valid compressed Ed25519 y-coordinates.
-#[derive(Clone, Copy, Eq, PartialEq)]
+#[derive(Clone, Copy, Eq, Hash, PartialEq)]
 #[cfg_attr(
     feature = "zerocopy",
     derive(IntoBytes, FromBytes, Unaligned, KnownLayout, Immutable,)

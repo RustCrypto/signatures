@@ -136,6 +136,12 @@ impl<P: ParameterSet + VerifyingKeyLen> VerifyingKey<P> {
     }
 }
 
+impl<P: ParameterSet> core::hash::Hash for VerifyingKey<P> {
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+        self.to_bytes().hash(state);
+    }
+}
+
 impl<P: ParameterSet> Clone for VerifyingKey<P> {
     fn clone(&self) -> Self {
         VerifyingKey {
