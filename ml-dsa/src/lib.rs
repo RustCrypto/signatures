@@ -145,6 +145,12 @@ impl<P: MlDsaParams> signature::SignatureEncoding for Signature<P> {
     type Repr = EncodedSignature<P>;
 }
 
+impl<P: MlDsaParams> core::hash::Hash for Signature<P> {
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+        self.encode().hash(state);
+    }
+}
+
 struct MuBuilder(H);
 
 impl MuBuilder {
@@ -825,6 +831,12 @@ impl<P: MlDsaParams> VerifyingKey<P> {
         let (rho, t1_enc) = P::split_vk(enc);
         let t1 = P::decode_t1(t1_enc);
         Self::new_expand_a(rho.clone(), t1, Some(enc.clone()))
+    }
+}
+
+impl<P: MlDsaParams> core::hash::Hash for VerifyingKey<P> {
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+        self.encode().hash(state);
     }
 }
 
