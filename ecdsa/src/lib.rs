@@ -80,6 +80,8 @@ pub use elliptic_curve::{self, PrimeCurve, sec1::Sec1Point};
 pub use signature::{self, Error, Result, SignatureEncoding};
 use zeroize::Zeroize;
 
+#[cfg(feature = "der")]
+pub use crate::der::PemParseError;
 #[cfg(feature = "algorithm")]
 pub use crate::signing::SigningKey;
 #[cfg(feature = "algorithm")]

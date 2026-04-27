@@ -3,6 +3,9 @@
 //!
 //! [RFC5912 Section 6]: https://www.rfc-editor.org/rfc/rfc5912#section-6
 
+#[cfg(feature = "std")]
+extern crate std;
+
 use crate::{EcdsaCurve, Error, Result};
 use core::{
     fmt::{self, Debug},
@@ -49,6 +52,57 @@ pub type MaxSize<C> = <<FieldBytesSize<C> as Add>::Output as Add<MaxOverhead>>::
 
 /// Byte array containing a serialized ASN.1 signature
 type SignatureBytes<C> = Array<u8, MaxSize<C>>;
+
+#[derive(Debug, PartialEq, Eq)]
+///Possible errors decoding DER encoded entity
+pub enum PemParseError {
+    ///DER error
+    Der(der::Error),
+    ///Unable to recognize document label
+    UnknownLabel,
+    ///PEM is encoded with algorithm that is not enabled
+    NotEnabled,
+    ///Indicates invalid pkcs8 EC key
+    Pkcs8(elliptic_curve::pkcs8::Error),
+    ///Indicates invalid Sec1 EC key
+    Sec1(::sec1::Error),
+}
+
+impl From<der::Error> for PemParseError {
+    #[inline(always)]
+    fn from(error: der::Error) -> Self {
+        Self::Der(error)
+    }
+}
+
+impl From<elliptic_curve::pkcs8::Error> for PemParseError {
+    #[inline(always)]
+    fn from(error: elliptic_curve::pkcs8::Error) -> Self {
+        Self::Pkcs8(error)
+    }
+}
+
+impl From<::sec1::Error> for PemParseError {
+    #[inline(always)]
+    fn from(error: ::sec1::Error) -> Self {
+        Self::Sec1(error)
+    }
+}
+
+impl fmt::Display for PemParseError {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Der(error) => fmt.write_fmt(format_args!("Failed to parse DER: {error}")),
+            Self::UnknownLabel => fmt.write_str("Unrecognized key label"),
+            Self::NotEnabled => fmt.write_str("Feature 'pkcs8' is required to enable PEM parsing"),
+            Self::Pkcs8(error) => fmt.write_fmt(format_args!("Faoled to parse Pkcs8 key: {error}")),
+            Self::Sec1(error) => fmt.write_fmt(format_args!("Faoled to parse SEC1 key: {error}")),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for PemParseError {}
 
 /// ASN.1 DER-encoded signature as specified in [RFC5912 Section 6]:
 ///

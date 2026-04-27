@@ -124,6 +124,39 @@ where
     }
 }
 
+impl<C> SigningKey<C>
+where
+    C: EcdsaCurve + AssociatedOid + CurveArithmetic,
+    AffinePoint<C>: FromSec1Point<C> + ToSec1Point<C>,
+    FieldBytesSize<C>: sec1::ModulusSize,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
+    SignatureSize<C>: ArraySize,
+{
+    #[cfg(all(feature = "der", feature = "pem"))]
+    /// Decodes PEM encoded key from provided string `pem`, determining type of the key from label
+    pub fn from_pem(_pem: &str) -> core::result::Result<Self, der::PemParseError> {
+        #[cfg(all(feature = "alloc", feature = "pkcs8"))]
+        {
+            use pem_rfc7468::PemLabel;
+            let (label, doc) = SecretDocument::from_pem(_pem)?;
+
+            if pkcs8::PrivateKeyInfoRef::validate_pem_label(label).is_ok() {
+                Self::from_pkcs8_der(doc.as_bytes()).map_err(Into::into)
+            } else if ::sec1::EcPrivateKey::validate_pem_label(label).is_ok() {
+                let ec_key = ::sec1::EcPrivateKey::try_from(doc.as_bytes())?;
+                SecretKey::try_from(ec_key)
+                    .map(Into::into)
+                    .map_err(Into::into)
+            } else {
+                Err(der::PemParseError::UnknownLabel)
+            }
+        }
+
+        #[cfg(not(all(feature = "alloc", feature = "pkcs8")))]
+        Err(der::PemParseError::NotEnabled)
+    }
+}
+
 impl<C> Generate for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
