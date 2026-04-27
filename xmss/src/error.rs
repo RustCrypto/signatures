@@ -63,3 +63,10 @@ impl From<pkcs8::Error> for Error {
         Self::Pkcs8(err)
     }
 }
+
+#[cfg(feature = "pkcs8")]
+impl From<pkcs8::KeyError> for Error {
+    fn from(err: pkcs8::KeyError) -> Self {
+        Self::Pkcs8(err.into())
+    }
+}

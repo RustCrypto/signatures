@@ -271,26 +271,27 @@ impl<'a> TryFrom<PrivateKeyInfoRef<'a>> for SigningKey {
 
         let x = UintRef::from_der(value.private_key.into())?;
         let x = BoxedUint::from_be_slice(x.as_bytes(), precision)
-            .map_err(|_| pkcs8::Error::KeyMalformed)?;
+            .map_err(|_| pkcs8::KeyError::Invalid)?;
         let x = NonZero::new(x)
             .into_option()
-            .ok_or(pkcs8::Error::KeyMalformed)?;
+            .ok_or(pkcs8::KeyError::Invalid)?;
 
         let y = if let Some(y_bytes) = value.public_key.as_ref().and_then(|bs| bs.as_bytes()) {
             let y = UintRef::from_der(y_bytes)?;
             BoxedUint::from_be_slice(y.as_bytes(), precision)
-                .map_err(|_| pkcs8::Error::KeyMalformed)?
+                .map_err(|_| pkcs8::KeyError::Invalid)?
         } else {
             crate::generate::public_component(&components, &x)
                 .into_option()
-                .ok_or(pkcs8::Error::KeyMalformed)?
+                .ok_or(pkcs8::KeyError::Invalid)?
                 .get()
         };
 
         let verifying_key =
-            VerifyingKey::from_components(components, y).map_err(|_| pkcs8::Error::KeyMalformed)?;
+            VerifyingKey::from_components(components, y).map_err(|_| pkcs8::KeyError::Invalid)?;
 
-        SigningKey::from_components(verifying_key, x.get()).map_err(|_| pkcs8::Error::KeyMalformed)
+        Ok(SigningKey::from_components(verifying_key, x.get())
+            .map_err(|_| pkcs8::KeyError::Invalid)?)
     }
 }
 

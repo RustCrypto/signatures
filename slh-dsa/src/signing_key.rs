@@ -298,7 +298,7 @@ where
             .assert_algorithm_oid(P::ALGORITHM_OID)?;
 
         Self::try_from(private_key_info.private_key.as_bytes())
-            .map_err(|_| pkcs8::Error::KeyMalformed)
+            .map_err(|_| pkcs8::KeyError::Invalid.into())
     }
 }
 

@@ -212,12 +212,12 @@ impl<P: ParameterSet> TryFrom<pkcs8::SubjectPublicKeyInfoRef<'_>> for VerifyingK
     fn try_from(spki: pkcs8::SubjectPublicKeyInfoRef<'_>) -> spki::Result<Self> {
         spki.algorithm.assert_algorithm_oid(P::ALGORITHM_OID)?;
 
-        Ok(Self::try_from(
+        Self::try_from(
             spki.subject_public_key
                 .as_bytes()
                 .ok_or_else(|| der::Tag::BitString.value_error().to_error())?,
         )
-        .map_err(|_| pkcs8::Error::KeyMalformed)?)
+        .map_err(|_| spki::Error::KeyMalformed)
     }
 }
 

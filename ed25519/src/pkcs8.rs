@@ -15,7 +15,8 @@
 //! breaking changes when using this module.
 
 pub use pkcs8::{
-    DecodePrivateKey, DecodePublicKey, Error, ObjectIdentifier, PrivateKeyInfoRef, Result, spki,
+    DecodePrivateKey, DecodePublicKey, Error, KeyError, ObjectIdentifier, PrivateKeyInfoRef,
+    Result, spki,
 };
 
 #[cfg(feature = "alloc")]
@@ -169,14 +170,14 @@ impl TryFrom<PrivateKeyInfoRef<'_>> for KeypairBytes {
         // - 0x04: OCTET STRING tag
         // - 0x20: 32-byte length
         let secret_key = match private_key.private_key.as_bytes() {
-            [0x04, 0x20, rest @ ..] => rest.try_into().map_err(|_| Error::KeyMalformed),
-            _ => Err(Error::KeyMalformed),
+            [0x04, 0x20, rest @ ..] => rest.try_into().map_err(|_| KeyError::Invalid),
+            _ => Err(KeyError::Invalid),
         }?;
 
         let public_key = private_key
             .public_key
             .and_then(|bs| bs.as_bytes())
-            .map(|bytes| bytes.try_into().map_err(|_| Error::KeyMalformed))
+            .map(|bytes| bytes.try_into().map_err(|_| KeyError::Invalid))
             .transpose()?
             .map(PublicKeyBytes);
 

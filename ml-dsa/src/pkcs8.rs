@@ -100,12 +100,12 @@ where
 
         let mut reader = der::SliceReader::new(private_key_info.private_key.as_bytes())?;
         let seed_string = SeedString::decode_implicit(&mut reader, SEED_TAG_NUMBER)?
-            .ok_or(pkcs8::Error::KeyMalformed)?;
+            .ok_or(pkcs8::KeyError::Invalid)?;
         let seed = seed_string
             .value
             .as_bytes()
             .try_into()
-            .map_err(|_| pkcs8::Error::KeyMalformed)?;
+            .map_err(|_| pkcs8::KeyError::Invalid)?;
         reader.finish()?;
 
         Ok(P::from_seed(&seed))
@@ -203,7 +203,7 @@ where
                     .as_bytes()
                     .ok_or_else(|| der::Tag::BitString.value_error().to_error())?,
             )
-            .map_err(|_| ::pkcs8::Error::KeyMalformed)?,
+            .map_err(|_| spki::Error::KeyMalformed)?,
         ))
     }
 }
