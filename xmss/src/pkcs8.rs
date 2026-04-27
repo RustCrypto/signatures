@@ -94,7 +94,7 @@ impl<P: XmssParameter> KeyPair<P> {
 
         let signing_key = SigningKey::<P>::try_from(pk_info.private_key.as_ref())?;
         let verifying_key = if let Some(pk) = pk_info.public_key {
-            let pk_bytes = pk.as_bytes().ok_or(pkcs8::Error::KeyMalformed)?;
+            let pk_bytes = pk.as_bytes().ok_or(pkcs8::KeyError::Invalid)?;
 
             // TODO(tarcieri): verify key matches expected value?
             VerifyingKey::<P>::try_from(pk_bytes)?
