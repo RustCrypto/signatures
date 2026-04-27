@@ -151,9 +151,21 @@ where
     type Error = ::pkcs8::Error;
 
     fn try_from(private_key_info: ::pkcs8::PrivateKeyInfoRef<'_>) -> ::pkcs8::Result<Self> {
-        let keypair = SigningKey::try_from(private_key_info)?;
+        private_key_info
+            .algorithm
+            .assert_algorithm_oid(P::ALGORITHM_IDENTIFIER.oid)?;
 
-        Ok(keypair.signing_key)
+        let mut reader = der::SliceReader::new(private_key_info.private_key.as_bytes())?;
+        let seed_string = SeedString::decode_implicit(&mut reader, SEED_TAG_NUMBER)?
+            .ok_or(pkcs8::Error::KeyMalformed)?;
+        let seed = seed_string
+            .value
+            .as_bytes()
+            .try_into()
+            .map_err(|_| pkcs8::Error::KeyMalformed)?;
+        reader.finish()?;
+
+        Ok(ExpandedSigningKey::<P>::from_seed(&seed))
     }
 }
 

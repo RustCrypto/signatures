@@ -269,6 +269,18 @@ impl<P: MlDsaParams> CtEq for SigningKey<P> {
     }
 }
 
+#[cfg(feature = "zeroize")]
+impl<P: MlDsaParams> Drop for SigningKey<P> {
+    fn drop(&mut self) {
+        // `signing_key` is zeroized by its own `Drop` impl. Zeroize the seed,
+        // which is private key material (it regenerates the signing key).
+        self.seed.zeroize();
+    }
+}
+
+#[cfg(feature = "zeroize")]
+impl<P: MlDsaParams> ZeroizeOnDrop for SigningKey<P> {}
+
 /// An ML-DSA signing key
 #[derive(Clone)]
 pub struct ExpandedSigningKey<P: MlDsaParams> {
@@ -357,9 +369,32 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
     /// This method reflects the ML-DSA.KeyGen_internal algorithm from FIPS 204, but only returns a
     /// signing key.
     #[must_use]
-    pub fn from_seed(seed: &Seed) -> Self {
-        let kp = P::from_seed(seed);
-        kp.signing_key
+    pub fn from_seed(xi: &Seed) -> Self {
+        // Derive seeds
+        let mut h = H::default()
+            .absorb(xi)
+            .absorb(&[P::K::U8])
+            .absorb(&[P::L::U8]);
+
+        let rho: B32 = h.squeeze_new();
+        let rhop: B64 = h.squeeze_new();
+        let K: B32 = h.squeeze_new();
+
+        // Sample private key components
+        let A_hat = expand_a::<P::K, P::L>(&rho);
+        let s1 = expand_s::<P::L>(&rhop, P::Eta::ETA, 0);
+        let s2 = expand_s::<P::K>(&rhop, P::Eta::ETA, P::L::USIZE);
+
+        // Compute derived values
+        let As1_hat = &A_hat * &s1.ntt();
+        let t = &As1_hat.ntt_inverse() + &s2;
+
+        // Compress and encode
+        let (t1, t0) = t.power2round();
+
+        let enc = VerifyingKey::<P>::encode_internal(&rho, &t1);
+        let tr: B64 = H::default().absorb(&enc).squeeze_new();
+        ExpandedSigningKey::new(rho, K, tr, s1, s2, t0, A_hat)
     }
 
     /// This method reflects the ML-DSA.Sign_internal algorithm from FIPS 204. It does not
@@ -947,34 +982,8 @@ where
     where
         P: MlDsaParams,
     {
-        // Derive seeds
-        let mut h = H::default()
-            .absorb(xi)
-            .absorb(&[P::K::U8])
-            .absorb(&[P::L::U8]);
-
-        let rho: B32 = h.squeeze_new();
-        let rhop: B64 = h.squeeze_new();
-        let K: B32 = h.squeeze_new();
-
-        // Sample private key components
-        let A_hat = expand_a::<P::K, P::L>(&rho);
-        let s1 = expand_s::<P::L>(&rhop, P::Eta::ETA, 0);
-        let s2 = expand_s::<P::K>(&rhop, P::Eta::ETA, P::L::USIZE);
-
-        // Compute derived values
-        let As1_hat = &A_hat * &s1.ntt();
-        let t = &As1_hat.ntt_inverse() + &s2;
-
-        // Compress and encode
-        let (t1, t0) = t.power2round();
-
-        let enc = VerifyingKey::<P>::encode_internal(&rho, &t1);
-        let tr: B64 = H::default().absorb(&enc).squeeze_new();
-        let signing_key = ExpandedSigningKey::new(rho, K, tr, s1, s2, t0, A_hat);
-
         SigningKey {
-            signing_key,
+            signing_key: ExpandedSigningKey::<P>::from_seed(xi),
             seed: xi.clone(),
         }
     }
@@ -1256,6 +1265,18 @@ mod test {
         test_derived_vk::<MlDsa44>();
         test_derived_vk::<MlDsa65>();
         test_derived_vk::<MlDsa87>();
+    }
+
+    #[test]
+    #[cfg(feature = "zeroize")]
+    fn zeroize_on_drop_impls() {
+        fn assert_zeroize_on_drop<T: ZeroizeOnDrop>() {}
+        assert_zeroize_on_drop::<SigningKey<MlDsa44>>();
+        assert_zeroize_on_drop::<SigningKey<MlDsa65>>();
+        assert_zeroize_on_drop::<SigningKey<MlDsa87>>();
+        assert_zeroize_on_drop::<ExpandedSigningKey<MlDsa44>>();
+        assert_zeroize_on_drop::<ExpandedSigningKey<MlDsa65>>();
+        assert_zeroize_on_drop::<ExpandedSigningKey<MlDsa87>>();
     }
 
     #[test]
