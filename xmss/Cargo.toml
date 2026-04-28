@@ -1,18 +1,18 @@
 [package]
 name = "xmss"
+version = "0.1.0-pre.1"
 authors = ["Michael Lodder <redmike7@gmail.com>"]
 description = """
 Pure Rust implementation of XMSS (eXtended Merkle Signature Scheme)
 as described in RFC 8391 and SP 800-208
 """
+license = "Apache-2.0 OR MIT"
 edition = "2024"
 homepage = "https://github.com/RustCrypto/signature/tree/master/xmss"
 repository = "https://github.com/RustCrypto/signatures"
 readme = "README.md"
 categories = ["cryptography"]
 keywords = ["xmss", "signature", "crypto", "cryptography", "rfc8391"]
-license = "MIT/Apache-2.0"
-version = "0.1.0-pre.0"
 
 [features]
 default = []

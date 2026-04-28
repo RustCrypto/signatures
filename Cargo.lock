@@ -435,7 +435,7 @@ dependencies = [
 
 [[package]]
 name = "dsa"
-version = "0.7.0-rc.14"
+version = "0.7.0-rc.15"
 dependencies = [
  "chacha20",
  "crypto-bigint",
@@ -457,7 +457,7 @@ dependencies = [
 
 [[package]]
 name = "ecdsa"
-version = "0.17.0-rc.17"
+version = "0.17.0-rc.18"
 dependencies = [
  "der",
  "digest",
@@ -473,7 +473,7 @@ dependencies = [
 
 [[package]]
 name = "ed25519"
-version = "3.0.0-rc.4"
+version = "3.0.0-rc.5"
 dependencies = [
  "hex-literal",
  "pkcs8",
@@ -487,7 +487,7 @@ dependencies = [
 
 [[package]]
 name = "ed448"
-version = "0.5.0-rc.5"
+version = "0.5.0-rc.6"
 dependencies = [
  "hex-literal",
  "pkcs8",
@@ -816,7 +816,7 @@ checksum = "f8ca58f447f06ed17d5fc4043ce1b10dd205e060fb3ce5b979b8ed8e59ff3f79"
 
 [[package]]
 name = "ml-dsa"
-version = "0.1.0-rc.8"
+version = "0.1.0-rc.9"
 dependencies = [
  "const-oid",
  "criterion",
@@ -1352,7 +1352,7 @@ dependencies = [
 
 [[package]]
 name = "slh-dsa"
-version = "0.2.0-rc.4"
+version = "0.2.0-rc.5"
 dependencies = [
  "aes",
  "cipher",
@@ -1435,7 +1435,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
 dependencies = [
  "fastrand",
- "getrandom 0.4.2",
+ "getrandom 0.3.4",
  "once_cell",
  "rustix",
  "windows-sys",
@@ -1735,7 +1735,7 @@ dependencies = [
 
 [[package]]
 name = "xmss"
-version = "0.1.0-pre.0"
+version = "0.1.0-pre.1"
 dependencies = [
  "const-oid",
  "der",
