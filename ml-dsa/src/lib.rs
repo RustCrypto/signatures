@@ -36,6 +36,9 @@
 //! # }
 //! ```
 
+#[cfg(feature = "alloc")]
+extern crate alloc;
+
 mod algebra;
 mod crypto;
 mod encode;
@@ -56,8 +59,11 @@ use crate::hint::Hint;
 use crate::ntt::{Ntt, NttInverse};
 use crate::param::{ParameterSet, QMinus1, SamplingSize, SpecQ};
 use crate::sampling::{expand_a, expand_mask, expand_s, sample_in_ball};
-use core::convert::{TryFrom, TryInto};
-use core::fmt;
+use core::{
+    convert::{TryFrom, TryInto},
+    fmt,
+    ops::{Deref, DerefMut},
+};
 use ctutils::{Choice, CtEq};
 use hybrid_array::{
     Array,
@@ -90,10 +96,10 @@ pub(crate) type B64 = Array<u8, U64>;
 pub type Seed = B32;
 
 /// An ML-DSA signature
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Signature<P: MlDsaParams> {
     c_tilde: Array<u8, P::Lambda>,
-    z: Vector<P::L>,
+    z: MaybeBox<Vector<P::L>>,
     h: Hint<P>,
 }
 
@@ -113,7 +119,7 @@ impl<P: MlDsaParams> Signature<P> {
         let (c_tilde, z, h) = P::split_sig(enc);
 
         let c_tilde = c_tilde.clone();
-        let z = P::decode_z(z);
+        let z = MaybeBox::new(P::decode_z(z));
         let h = Hint::bit_unpack(h)?;
 
         if z.infinity_norm() >= P::GAMMA1_MINUS_BETA {
@@ -421,7 +427,7 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
                 continue;
             }
 
-            let z = z.mod_plus_minus::<SpecQ>();
+            let z = MaybeBox::new(z.mod_plus_minus::<SpecQ>());
             return Signature { c_tilde, z, h };
         }
 
@@ -977,6 +983,45 @@ where
             signing_key,
             seed: xi.clone(),
         }
+    }
+}
+
+/// Type which opportunistically uses `Box` when the `alloc` feature is available but falls back to
+/// a stack-allocated type when it's unavailable.
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct MaybeBox<T> {
+    #[cfg(not(feature = "alloc"))]
+    inner: T,
+    #[cfg(feature = "alloc")]
+    inner: alloc::boxed::Box<T>,
+}
+
+impl<T> MaybeBox<T> {
+    /// Create a new `MaybeBox`, using `Box` if `alloc` is available.
+    #[inline]
+    pub(crate) fn new(inner: T) -> Self {
+        #[cfg(not(feature = "alloc"))]
+        {
+            Self { inner }
+        }
+        #[cfg(feature = "alloc")]
+        Self {
+            inner: alloc::boxed::Box::new(inner),
+        }
+    }
+}
+
+impl<T> Deref for MaybeBox<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.inner
+    }
+}
+
+impl<T> DerefMut for MaybeBox<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.inner
     }
 }
 
