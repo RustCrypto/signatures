@@ -398,6 +398,16 @@ where
     }
 }
 
+impl<C> core::hash::Hash for Signature<C>
+where
+    C: EcdsaCurve,
+    SignatureSize<C>: ArraySize,
+{
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+        self.to_bytes().hash(state);
+    }
+}
+
 impl<C> fmt::LowerHex for Signature<C>
 where
     C: EcdsaCurve,
@@ -665,6 +675,18 @@ where
     SignatureSize<C>: ArraySize,
     <SignatureSize<C> as ArraySize>::ArrayType<u8>: Copy,
 {
+}
+
+#[cfg(feature = "digest")]
+impl<C> core::hash::Hash for SignatureWithOid<C>
+where
+    C: EcdsaCurve,
+    SignatureSize<C>: ArraySize,
+{
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+        self.signature.hash(state);
+        self.oid.hash(state);
+    }
 }
 
 #[cfg(feature = "digest")]

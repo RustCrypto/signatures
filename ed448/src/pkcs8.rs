@@ -205,7 +205,7 @@ impl fmt::Debug for KeypairBytes {
 ///
 /// Note that this type operates on raw bytes and performs no validation that
 /// public keys represent valid compressed Ed448 y-coordinates.
-#[derive(Clone, Copy, Eq, PartialEq)]
+#[derive(Clone, Copy, Eq, Hash, PartialEq)]
 pub struct PublicKeyBytes(pub [u8; Self::BYTE_SIZE]);
 
 impl PublicKeyBytes {
