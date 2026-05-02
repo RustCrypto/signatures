@@ -451,7 +451,7 @@ dependencies = [
  "rfc6979",
  "sha1",
  "sha2",
- "signature 3.0.0-rc.10",
+ "signature 3.0.0",
  "zeroize",
 ]
 
@@ -466,7 +466,7 @@ dependencies = [
  "rfc6979",
  "serdect",
  "sha2",
- "signature 3.0.0-rc.10",
+ "signature 3.0.0",
  "spki",
  "zeroize",
 ]
@@ -480,7 +480,7 @@ dependencies = [
  "rand_core 0.9.5",
  "serde",
  "serde_bytes",
- "signature 3.0.0-rc.10",
+ "signature 3.0.0",
  "zerocopy",
  "zeroize",
 ]
@@ -493,7 +493,7 @@ dependencies = [
  "pkcs8",
  "serde",
  "serde_bytes",
- "signature 3.0.0-rc.10",
+ "signature 3.0.0",
  "zeroize",
 ]
 
@@ -787,7 +787,7 @@ dependencies = [
  "hybrid-array",
  "rand_core 0.10.1",
  "sha2",
- "signature 3.0.0-rc.10",
+ "signature 3.0.0",
  "static_assertions",
  "typenum",
  "zeroize",
@@ -832,7 +832,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha3",
- "signature 3.0.0-rc.10",
+ "signature 3.0.0",
  "zeroize",
 ]
 
@@ -1342,9 +1342,9 @@ checksum = "77549399552de45a898a580c1b41d445bf730df867cc44e6c0233bbc4b8329de"
 
 [[package]]
 name = "signature"
-version = "3.0.0-rc.10"
+version = "3.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f1880df446116126965eeec169136b2e0251dba37c6223bcc819569550edea3"
+checksum = "28d567dcbaf0049cb8ac2608a76cd95ff9e4412e1899d389ee400918ca7537f5"
 dependencies = [
  "digest",
  "rand_core 0.10.1",
@@ -1374,7 +1374,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "sha3",
- "signature 3.0.0-rc.10",
+ "signature 3.0.0",
  "typenum",
  "zerocopy",
  "zeroize",
@@ -1435,7 +1435,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
 dependencies = [
  "fastrand",
- "getrandom 0.3.4",
+ "getrandom 0.4.2",
  "once_cell",
  "rustix",
  "windows-sys",
