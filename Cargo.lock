@@ -477,7 +477,6 @@ version = "3.0.0-rc.5"
 dependencies = [
  "hex-literal",
  "pkcs8",
- "rand_core 0.9.5",
  "serdect",
  "signature 3.0.0",
  "zerocopy",

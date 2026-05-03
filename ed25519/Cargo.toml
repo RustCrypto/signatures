@@ -30,7 +30,6 @@ zerocopy = { version = "0.8", optional = true, features = ["derive"] }
 #ed25519-dalek = { version = "2", features = ["rand_core"] }
 hex-literal = "1"
 #ring-compat = { version = "0.8", default-features = false, features = ["signature"] }
-rand_core = { version = "0.9", features = ["std"] }
 
 [features]
 default = ["alloc"]
