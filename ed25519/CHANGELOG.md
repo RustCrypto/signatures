@@ -4,6 +4,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 3.0.0 (2026-05-03)
+### Added
+- `SignatureBitStringEncoding` support ([#889])
+- Implement `Zeroize` for `Signature` ([#952], [#1326])
+- Implement `MultipartSigner`/`MultipartVerifier` ([#982])
+- Optional `zerocopy` support ([#1134])
+- Implement `Hash` for `Signature` ([#1309])
+
+### Changed
+- Upgrade to the 2024 edition and bump MSRV to 1.85 ([#913])
+- Bump `pkcs8` dependency to v0.11 ([#1316])
+- Bump `signature` dependency to v3 ([#1321])
+- Use `serdect` for `serde` support ([#1324])
+
+### Removed
+- `std` feature ([#985])
+- `serde_bytes` feature ([#1324])
+
+[#889]: https://github.com/RustCrypto/signatures/pull/889
+[#913]: https://github.com/RustCrypto/signatures/pull/913
+[#952]: https://github.com/RustCrypto/signatures/pull/952
+[#982]: https://github.com/RustCrypto/signatures/pull/982
+[#985]: https://github.com/RustCrypto/signatures/pull/985
+[#1134]: https://github.com/RustCrypto/signatures/pull/1134
+[#1309]: https://github.com/RustCrypto/signatures/pull/1309
+[#1316]: https://github.com/RustCrypto/signatures/pull/1316
+[#1321]: https://github.com/RustCrypto/signatures/pull/1321
+[#1324]: https://github.com/RustCrypto/signatures/pull/1324
+[#1326]: https://github.com/RustCrypto/signatures/pull/1326
+
 ## 2.2.3 (2023-10-15)
 ### Changed
 - Bump `ring-compat` from 0.7 to 0.8 ([#744])
