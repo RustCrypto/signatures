@@ -1,8 +1,8 @@
 //! Hexadecimal display/serialization tests.
 
+use core::str::FromStr;
 use ed25519::Signature;
 use hex_literal::hex;
-use std::str::FromStr;
 
 /// Test 1 signature from RFC 8032 § 7.1
 /// <https://datatracker.ietf.org/doc/html/rfc8032#section-7.1>
@@ -19,7 +19,7 @@ fn display() {
     assert_eq!(
         sig.to_string(),
         "E5564300C360AC729086E2CC806E828A84877F1EB8E5D974D873E065224901555FB8821590A33BACC61E39701CF9B46BD25BF5F0595BBE24655141438E7A100B"
-    )
+    );
 }
 
 #[test]
@@ -28,7 +28,7 @@ fn lower_hex() {
     assert_eq!(
         format!("{:x}", sig),
         "e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b"
-    )
+    );
 }
 
 #[test]
@@ -37,7 +37,7 @@ fn upper_hex() {
     assert_eq!(
         format!("{:X}", sig),
         "E5564300C360AC729086E2CC806E828A84877F1EB8E5D974D873E065224901555FB8821590A33BACC61E39701CF9B46BD25BF5F0595BBE24655141438E7A100B"
-    )
+    );
 }
 
 #[test]

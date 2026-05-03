@@ -13,6 +13,7 @@ repository = "https://github.com/RustCrypto/signatures"
 readme = "README.md"
 categories = ["cryptography"]
 keywords = ["xmss", "signature", "crypto", "cryptography", "rfc8391"]
+rust-version = "1.85"
 
 [features]
 default = []
