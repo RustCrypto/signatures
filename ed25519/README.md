@@ -24,10 +24,10 @@ to be written abstractly in such a way that different signer/verifier
 providers can be plugged in, enabling support for using different
 Ed25519 implementations, including HSMs or Cloud KMS services.
 
-## SemVer Policy
+## `SemVer` Policy
 
-- All on-by-default features of this library are covered by SemVer
-- MSRV is considered exempt from SemVer as noted above
+- All on-by-default features of this library are covered by `SemVer`
+- MSRV is considered exempt from `SemVer` as noted above
 - The `pkcs8` module is exempted as it uses a pre-1.0 dependency, however,
   breaking changes to this module will be accompanied by a minor version bump.
 

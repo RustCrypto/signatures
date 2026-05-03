@@ -4,14 +4,6 @@
 #![doc(html_logo_url = "https://raw.githubusercontent.com/RustCrypto/meta/master/logo_small.png")]
 #![allow(non_snake_case)]
 #![forbid(unsafe_code)]
-#![warn(
-    clippy::unwrap_used,
-    missing_docs,
-    rust_2018_idioms,
-    unused_lifetimes,
-    unused_qualifications,
-    unreachable_pub
-)]
 
 //! # Using Ed25519 generically over algorithm implementations/providers
 //!
@@ -230,7 +222,7 @@
 //!
 //! - [`ed25519-dalek`] - mature pure Rust implementation of Ed25519
 //! - [`ring-compat`] - compatibility wrapper for [*ring*]
-//! - [`yubihsm`] - host-side client library for YubiHSM2 devices from Yubico
+//! - [`yubihsm`] - host-side client library for `YubiHSM2` devices from Yubico
 //!
 //! [`ed25519-dalek`]: https://docs.rs/ed25519-dalek
 //! [`ring-compat`]: https://docs.rs/ring-compat
@@ -332,6 +324,7 @@ impl Signature {
     pub const BYTE_SIZE: usize = COMPONENT_SIZE * 2;
 
     /// Parse an Ed25519 signature from a byte slice.
+    #[must_use]
     pub fn from_bytes(bytes: &SignatureBytes) -> Self {
         let mut R = ComponentBytes::default();
         let mut s = ComponentBytes::default();
@@ -344,15 +337,15 @@ impl Signature {
     }
 
     /// Parse an Ed25519 signature from its `R` and `s` components.
+    #[must_use]
     pub fn from_components(R: ComponentBytes, s: ComponentBytes) -> Self {
         Self { R, s }
     }
 
     /// Parse an Ed25519 signature from a byte slice.
     ///
-    /// # Returns
-    /// - `Ok` on success
-    /// - `Err` if the input byte slice is not 64-bytes
+    /// # Errors
+    /// - Returns [`Error`] if the input byte slice is not 64-bytes.
     pub fn from_slice(bytes: &[u8]) -> signature::Result<Self> {
         SignatureBytes::try_from(bytes)
             .map(Into::into)
@@ -360,16 +353,19 @@ impl Signature {
     }
 
     /// Bytes for the `R` component of a signature.
+    #[must_use]
     pub fn r_bytes(&self) -> &ComponentBytes {
         &self.R
     }
 
     /// Bytes for the `s` component of a signature.
+    #[must_use]
     pub fn s_bytes(&self) -> &ComponentBytes {
         &self.s
     }
 
     /// Return the inner byte array.
+    #[must_use]
     pub fn to_bytes(&self) -> SignatureBytes {
         let mut ret = [0u8; Self::BYTE_SIZE];
         let (R, s) = ret.split_at_mut(COMPONENT_SIZE);
@@ -380,6 +376,7 @@ impl Signature {
 
     /// Convert this signature into a byte vector.
     #[cfg(feature = "alloc")]
+    #[must_use]
     pub fn to_vec(&self) -> Vec<u8> {
         self.to_bytes().to_vec()
     }

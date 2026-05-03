@@ -13,7 +13,7 @@ const PKCS8_V1_DER: &[u8] = include_bytes!("examples/pkcs8-v1.der");
 /// Ed25519 PKCS#8 v2 private key + public key encoded as ASN.1 DER.
 const PKCS8_V2_DER: &[u8] = include_bytes!("examples/pkcs8-v2.der");
 
-/// Ed25519 SubjectPublicKeyInfo encoded as ASN.1 DER.
+/// Ed25519 `SubjectPublicKeyInfo` encoded as ASN.1 DER.
 const PUBLIC_KEY_DER: &[u8] = include_bytes!("examples/pubkey.der");
 
 #[test]
