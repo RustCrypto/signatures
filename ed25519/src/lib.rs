@@ -475,7 +475,7 @@ impl<'de> Deserialize<'de> for Signature {
 #[cfg(feature = "zeroize")]
 impl Zeroize for Signature {
     fn zeroize(&mut self) {
-        self.R = [0; 32];
-        self.s = [0; 32];
+        self.R.zeroize();
+        self.s.zeroize();
     }
 }
