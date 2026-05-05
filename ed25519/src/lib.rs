@@ -255,10 +255,12 @@
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
-mod hex;
-
 #[cfg(feature = "pkcs8")]
 pub mod pkcs8;
+
+mod hex;
+#[cfg(feature = "serde")]
+mod serde;
 
 pub use signature::{self, Error, SignatureEncoding};
 
@@ -275,20 +277,15 @@ use core::fmt;
 
 #[cfg(feature = "alloc")]
 use alloc::vec::Vec;
-#[cfg(feature = "serde")]
-use serdect::serde::{Deserialize, Serialize, de, ser};
-
 #[cfg(all(feature = "alloc", feature = "pkcs8"))]
 use pkcs8::spki::{
     SignatureBitStringEncoding,
     der::{self, asn1::BitString},
 };
-
-#[cfg(feature = "zeroize")]
-use zeroize::Zeroize;
-
 #[cfg(feature = "zerocopy")]
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout, Unaligned};
+#[cfg(feature = "zeroize")]
+use zeroize::Zeroize;
 
 /// Size of a single component of an Ed25519 signature.
 const COMPONENT_SIZE: usize = 32;
@@ -447,28 +444,6 @@ impl fmt::Debug for Signature {
 impl fmt::Display for Signature {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{self:X}")
-    }
-}
-
-#[cfg(feature = "serde")]
-impl Serialize for Signature {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ser::Serializer,
-    {
-        serdect::array::serialize_hex_upper_or_bin(&self.to_bytes(), serializer)
-    }
-}
-
-#[cfg(feature = "serde")]
-impl<'de> Deserialize<'de> for Signature {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: de::Deserializer<'de>,
-    {
-        let mut bytes = [0u8; Signature::BYTE_SIZE];
-        serdect::array::deserialize_hex_or_bin(&mut bytes, deserializer)?;
-        Ok(bytes.into())
     }
 }
 
