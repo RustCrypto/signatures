@@ -48,7 +48,7 @@ impl<'de> serde_bytes::Deserialize<'de> for Signature {
             type Value = SignatureBytes;
 
             fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-                formatter.write_str("bytestring of length 64")
+                formatter.write_str("bytestring of length 114")
             }
 
             fn visit_bytes<E>(self, bytes: &[u8]) -> Result<Self::Value, E>
