@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.5.0 (2026-05-06)
+### Added
+- `generate_k_mut` function ([#773])
+- P-521 + SHA-512 test vectors ([#775])
+- Upgrade to 2024 edition and bump MSRV to 1.85 ([#913])
+
+### Changed
+- Replace `Digest` bounds with `EagerHash` ([#1076])
+- Bump `sha2` dependency to v0.11 ([#1267])
+- Bump `hmac` to v0.13 ([#1274])
+
+### Removed
+- Output size bounds on digest functions ([#773])
+
+### Fixed
+- Handling of inputs which are not the same size as the digest output ([#781])
+
+[#773]: https://github.com/RustCrypto/signatures/pull/773
+[#775]: https://github.com/RustCrypto/signatures/pull/775
+[#781]: https://github.com/RustCrypto/signatures/pull/781
+[#913]: https://github.com/RustCrypto/signatures/pull/913
+[#1076]: https://github.com/RustCrypto/signatures/pull/1076
+[#1267]: https://github.com/RustCrypto/signatures/pull/1267
+[#1274]: https://github.com/RustCrypto/signatures/pull/1274
+
 ## 0.4.0 (2023-02-28)
 ### Changed
 - MSRV 1.60 ([#628])
