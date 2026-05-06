@@ -3,15 +3,6 @@
 #![doc = include_str!("../README.md")]
 #![doc(html_logo_url = "https://raw.githubusercontent.com/RustCrypto/meta/master/logo_small.png")]
 #![allow(non_snake_case)]
-#![forbid(unsafe_code)]
-#![warn(
-    clippy::unwrap_used,
-    missing_docs,
-    rust_2018_idioms,
-    unused_lifetimes,
-    unused_qualifications,
-    unreachable_pub
-)]
 
 //! # Using Ed448 generically over algorithm implementations/providers
 //!

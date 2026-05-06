@@ -1,7 +1,5 @@
 #![no_std]
 #![doc = include_str!("../README.md")]
-#![forbid(unsafe_code, clippy::unwrap_used)]
-#![warn(missing_docs, rust_2018_idioms, unreachable_pub)]
 #![doc(
     html_logo_url = "https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg",
     html_favicon_url = "https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg"
@@ -42,6 +40,7 @@ mod ct;
 pub use hmac;
 pub use hmac::digest::array::typenum::consts;
 
+use core::fmt::{self, Debug};
 use hmac::{
     HmacReset,
     digest::{
@@ -86,6 +85,9 @@ where
 /// - `q`: field modulus
 /// - `h`: hash/digest of input message: must be reduced modulo `q` in advance
 /// - `data`: additional associated data, e.g. CSRNG output used as added entropy
+///
+/// # Panics
+/// If `x`, `q`, `h`, and `k` are not all the same length.
 #[inline]
 pub fn generate_k_mut<D>(x: &[u8], q: &[u8], h: &[u8], data: &[u8], k: &mut [u8])
 where
@@ -135,7 +137,9 @@ impl<D> HmacDrbg<D>
 where
     D: EagerHash,
 {
-    /// Initialize `HMAC_DRBG`
+    /// Initialize `HMAC_DRBG`.
+    #[must_use]
+    #[allow(clippy::missing_panics_doc, reason = "should not panic")]
     pub fn new(entropy_input: &[u8], nonce: &[u8], personalization_string: &[u8]) -> Self {
         let mut k = HmacReset::new(&Default::default());
         let mut v = Array::default();
@@ -148,7 +152,7 @@ where
             k.update(entropy_input);
             k.update(nonce);
             k.update(personalization_string);
-            k = HmacReset::new_from_slice(&k.finalize().into_bytes()).expect("HMAC error");
+            k = HmacReset::new_from_slice(&k.finalize().into_bytes()).expect("should work");
 
             // Steps 3.2.e,g: v = HMAC_k(v)
             k.update(&v);
@@ -159,6 +163,7 @@ where
     }
 
     /// Write the next `HMAC_DRBG` output to the given byte slice.
+    #[allow(clippy::missing_panics_doc, reason = "should not panic")]
     pub fn fill_bytes(&mut self, out: &mut [u8]) {
         let mut out_chunks = out.chunks_exact_mut(self.v.len());
 
@@ -178,9 +183,18 @@ where
         self.k.update(&self.v);
         self.k.update(&[0x00]);
         self.k =
-            HmacReset::new_from_slice(&self.k.finalize_reset().into_bytes()).expect("HMAC error");
+            HmacReset::new_from_slice(&self.k.finalize_reset().into_bytes()).expect("should work");
         self.k.update(&self.v);
         self.v = self.k.finalize_reset().into_bytes();
+    }
+}
+
+impl<D> Debug for HmacDrbg<D>
+where
+    D: EagerHash,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("HmacDrbg").finish_non_exhaustive()
     }
 }
 
@@ -196,8 +210,8 @@ mod tests {
 
     /// "Detailed Example" from RFC6979 Appendix A.1.
     ///
-    /// Example for ECDSA on the curve K-163 described in FIPS 186-4 (also known as
-    /// "ansix9t163k1" in X9.62), defined over a field GF(2^163)
+    /// Example for ECDSA on the curve K-163 described in FIPS 186-4 (also known as "ansix9t163k1"
+    /// in X9.62), defined over a field GF(2^163)
     #[test]
     fn k163_sha256() {
         let q = hex!("04000000000000000000020108A2E0CC0D99F8A5EF");
