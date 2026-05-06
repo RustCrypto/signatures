@@ -36,5 +36,8 @@ pem = ["alloc", "pkcs8/pem"]
 serde = ["dep:serdect"]
 serde_bytes = ["serde", "dep:serde_bytes"]
 
+[lints]
+workspace = true
+
 [package.metadata.docs.rs]
 all-features = true

@@ -316,7 +316,7 @@ pub struct Signature {
 }
 
 impl Signature {
-    /// Size of an encoded Ed25519 signature in bytes.
+    /// Size of an encoded Ed25519 signature in bytes (64-bytes).
     pub const BYTE_SIZE: usize = COMPONENT_SIZE * 2;
 
     /// Parse an Ed25519 signature from a byte slice.

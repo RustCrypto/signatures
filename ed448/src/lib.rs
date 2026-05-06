@@ -123,10 +123,11 @@ pub struct Signature {
 }
 
 impl Signature {
-    /// Size of an encoded Ed448 signature in bytes.
+    /// Size of an encoded Ed448 signature in bytes (114-bytes).
     pub const BYTE_SIZE: usize = COMPONENT_SIZE * 2;
 
     /// Parse an Ed448 signature from a byte slice.
+    #[must_use]
     pub fn from_bytes(bytes: &SignatureBytes) -> Self {
         let mut R = [0; COMPONENT_SIZE];
         let mut s = [0; COMPONENT_SIZE];
@@ -140,9 +141,8 @@ impl Signature {
 
     /// Parse an Ed448 signature from a byte slice.
     ///
-    /// # Returns
-    /// - `Ok` on success
-    /// - `Err` if the input byte slice is not 64-bytes
+    /// # Errors
+    /// - Returns [`Error`] if the input byte slice is not 114-bytes.
     pub fn from_slice(bytes: &[u8]) -> signature::Result<Self> {
         SignatureBytes::try_from(bytes)
             .map(Into::into)
@@ -150,16 +150,19 @@ impl Signature {
     }
 
     /// Bytes for the `R` component of a signature.
+    #[must_use]
     pub fn r_bytes(&self) -> &ComponentBytes {
         &self.R
     }
 
     /// Bytes for the `s` component of a signature.
+    #[must_use]
     pub fn s_bytes(&self) -> &ComponentBytes {
         &self.s
     }
 
     /// Return the inner byte array.
+    #[must_use]
     pub fn to_bytes(&self) -> SignatureBytes {
         let mut ret = [0u8; Self::BYTE_SIZE];
         let (R, s) = ret.split_at_mut(COMPONENT_SIZE);

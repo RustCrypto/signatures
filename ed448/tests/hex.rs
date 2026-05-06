@@ -1,8 +1,8 @@
 //! Hexadecimal display/serialization tests.
 
+use core::str::FromStr;
 use ed448::Signature;
 use hex_literal::hex;
-use std::str::FromStr;
 
 /// Test 1 signature from RFC 8032 § 7.4
 /// <https://datatracker.ietf.org/doc/html/rfc8032#section-7.4>
@@ -23,7 +23,7 @@ fn display() {
     assert_eq!(
         sig.to_string(),
         "533A37F6BBE457251F023C0D88F976AE2DFB504A843E34D2074FD823D41A591F2B233F034F628281F2FD7A22DDD47D7828C59BD0A21BFD3980FF0D2028D4B18A9DF63E006C5D1C2D345B925D8DC00B4104852DB99AC5C7CDDA8530A113A0F4DBB61149F05A7363268C71D95808FF2E652600"
-    )
+    );
 }
 
 #[test]
@@ -32,7 +32,7 @@ fn lower_hex() {
     assert_eq!(
         format!("{:x}", sig),
         "533a37f6bbe457251f023c0d88f976ae2dfb504a843e34d2074fd823d41a591f2b233f034f628281f2fd7a22ddd47d7828c59bd0a21bfd3980ff0d2028d4b18a9df63e006c5d1c2d345b925d8dc00b4104852db99ac5c7cdda8530a113a0f4dbb61149f05a7363268c71d95808ff2e652600"
-    )
+    );
 }
 
 #[test]
@@ -41,7 +41,7 @@ fn upper_hex() {
     assert_eq!(
         format!("{:X}", sig),
         "533A37F6BBE457251F023C0D88F976AE2DFB504A843E34D2074FD823D41A591F2B233F034F628281F2FD7A22DDD47D7828C59BD0A21BFD3980FF0D2028D4B18A9DF63E006C5D1C2D345B925D8DC00B4104852DB99AC5C7CDDA8530A113A0F4DBB61149F05A7363268C71D95808FF2E652600"
-    )
+    );
 }
 
 #[test]

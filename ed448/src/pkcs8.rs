@@ -80,7 +80,10 @@ impl KeypairBytes {
     const BYTE_SIZE: usize = 114;
 
     /// Parse raw keypair from a 114-byte input.
+    #[must_use]
+    #[allow(clippy::missing_panics_doc, reason = "MSRV TODO")]
     pub fn from_bytes(bytes: &[u8; Self::BYTE_SIZE]) -> Self {
+        // TODO(tarcieri): use `as_chunks` when MSRV is 1.88
         let (sk, pk) = bytes.split_at(Self::BYTE_SIZE / 2);
 
         Self {
@@ -94,9 +97,9 @@ impl KeypairBytes {
     /// Serialize as a 114-byte keypair.
     ///
     /// # Returns
-    ///
     /// - `Some(bytes)` if the `public_key` is present.
     /// - `None` if the `public_key` is absent (i.e. `None`).
+    #[must_use]
     pub fn to_bytes(&self) -> Option<[u8; Self::BYTE_SIZE]> {
         if let Some(public_key) = &self.public_key {
             let mut result = [0u8; Self::BYTE_SIZE];
@@ -113,7 +116,7 @@ impl KeypairBytes {
 impl Drop for KeypairBytes {
     fn drop(&mut self) {
         #[cfg(feature = "zeroize")]
-        self.secret_key.zeroize()
+        self.secret_key.zeroize();
     }
 }
 
@@ -213,6 +216,7 @@ impl PublicKeyBytes {
     const BYTE_SIZE: usize = 57;
 
     /// Returns the raw bytes of the public key.
+    #[must_use]
     pub fn to_bytes(&self) -> [u8; Self::BYTE_SIZE] {
         self.0
     }
