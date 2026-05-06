@@ -3,7 +3,6 @@
 #![doc = include_str!("../README.md")]
 #![doc(html_logo_url = "https://raw.githubusercontent.com/RustCrypto/meta/master/logo_small.png")]
 #![allow(non_snake_case)]
-#![forbid(unsafe_code)]
 
 //! # Using Ed25519 generically over algorithm implementations/providers
 //!

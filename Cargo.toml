@@ -52,6 +52,7 @@ missing_docs = "warn"
 trivial_casts = "warn"
 trivial_numeric_casts = "warn"
 unreachable_pub = "warn"
+unsafe_code = "forbid"
 unused_lifetimes = "warn"
 unused_qualifications = "warn"
 

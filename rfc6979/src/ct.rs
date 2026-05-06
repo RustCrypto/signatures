@@ -47,8 +47,8 @@ pub(crate) fn lt(a: &[u8], b: &[u8]) -> Choice {
     // Perform subtraction with borrow a byte-at-a-time, interpreting a
     // no-borrow condition as the less-than case
     for (&a, &b) in a.iter().zip(b.iter()).rev() {
-        let c = (b as u16).wrapping_add(borrow >> (u8::BITS - 1));
-        borrow = (a as u16).wrapping_sub(c) >> u8::BITS as u8;
+        let c = u16::from(b).wrapping_add(borrow >> (u8::BITS - 1));
+        borrow = u16::from(a).wrapping_sub(c) >> u8::BITS;
     }
 
     !borrow.ct_eq(&0)
