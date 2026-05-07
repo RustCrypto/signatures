@@ -1,3 +1,5 @@
+//! PKCS#8 tests (i.e. private key serialization)
+
 #![cfg(all(feature = "pkcs8", feature = "alloc"))]
 
 use core::ops::Deref;
