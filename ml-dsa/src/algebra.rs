@@ -69,7 +69,7 @@ pub(crate) trait ConstantTimeDiv: Unsigned {
         // This gives us floor(x / M) for x < 2^SHIFT / MULTIPLIER * M
         let x64 = u64::from(x);
         let quotient = (x64 * Self::CT_DIV_MULTIPLIER) >> Self::CT_DIV_SHIFT;
-        // SAFETY: quotient is guaranteed to fit in u32 because:
+        // Quotient is guaranteed to fit in u32 because:
         // - x < Q (~2^23), so quotient = x / M < x < 2^23 < 2^32
         #[allow(clippy::cast_possible_truncation, clippy::as_conversions)]
         let result = quotient as u32;
@@ -183,7 +183,11 @@ impl AlgebraExt for Polynomial {
     }
 
     fn infinity_norm(&self) -> u32 {
-        self.0.iter().map(AlgebraExt::infinity_norm).max().unwrap()
+        self.0
+            .iter()
+            .map(AlgebraExt::infinity_norm)
+            .max()
+            .expect("should have a maximum")
     }
 
     fn power2round(&self) -> (Self, Self) {
@@ -222,7 +226,11 @@ impl<K: ArraySize> AlgebraExt for Vector<K> {
     }
 
     fn infinity_norm(&self) -> u32 {
-        self.0.iter().map(AlgebraExt::infinity_norm).max().unwrap()
+        self.0
+            .iter()
+            .map(AlgebraExt::infinity_norm)
+            .max()
+            .expect("should have a maximum")
     }
 
     fn power2round(&self) -> (Self, Self) {

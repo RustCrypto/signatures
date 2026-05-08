@@ -99,13 +99,13 @@ where
             .assert_algorithm_oid(P::ALGORITHM_IDENTIFIER.oid)?;
 
         let mut reader = der::SliceReader::new(private_key_info.private_key.as_bytes())?;
-        let seed_string = SeedString::decode_implicit(&mut reader, SEED_TAG_NUMBER)?
-            .ok_or(pkcs8::KeyError::Invalid)?;
+        let seed_string =
+            SeedString::decode_implicit(&mut reader, SEED_TAG_NUMBER)?.ok_or(KeyError::Invalid)?;
         let seed = seed_string
             .value
             .as_bytes()
             .try_into()
-            .map_err(|_| pkcs8::KeyError::Invalid)?;
+            .map_err(|_| KeyError::Invalid)?;
         reader.finish()?;
 
         Ok(P::from_seed(&seed))
@@ -118,7 +118,7 @@ where
     P: MlDsaParams,
     P: AssociatedAlgorithmIdentifier<Params = AnyRef<'static>>,
 {
-    fn to_pkcs8_der(&self) -> ::pkcs8::Result<der::SecretDocument> {
+    fn to_pkcs8_der(&self) -> ::pkcs8::Result<SecretDocument> {
         let seed_der = SeedString {
             tag_mode: TagMode::Implicit,
             tag_number: SEED_TAG_NUMBER,
@@ -174,7 +174,7 @@ where
     P: MlDsaParams,
     P: AssociatedAlgorithmIdentifier<Params = AnyRef<'static>>,
 {
-    fn to_public_key_der(&self) -> spki::Result<der::Document> {
+    fn to_public_key_der(&self) -> spki::Result<Document> {
         let public_key = self.encode();
         let subject_public_key = BitStringRef::new(0, &public_key)?;
 

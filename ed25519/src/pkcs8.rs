@@ -20,24 +20,24 @@ pub use pkcs8::{
 };
 
 #[cfg(feature = "alloc")]
-pub use pkcs8::{EncodePrivateKey, spki::EncodePublicKey};
-
-#[cfg(feature = "alloc")]
-pub use pkcs8::der::{
-    Document, SecretDocument,
-    asn1::{BitStringRef, OctetStringRef},
+pub use pkcs8::{
+    EncodePrivateKey,
+    der::{
+        Document, SecretDocument,
+        asn1::{BitStringRef, OctetStringRef},
+    },
+    spki::EncodePublicKey,
 };
 
+use crate::COMPONENT_SIZE;
 use core::fmt;
 
 #[cfg(feature = "pem")]
 use core::str;
-
-#[cfg(feature = "zeroize")]
-use zeroize::Zeroize;
-
 #[cfg(feature = "zerocopy")]
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout, Unaligned};
+#[cfg(feature = "zeroize")]
+use zeroize::Zeroize;
 
 /// Algorithm [`ObjectIdentifier`] for the Ed25519 digital signature algorithm
 /// (`id-Ed25519`).
@@ -73,7 +73,7 @@ pub struct KeypairBytes {
     /// Little endian serialization of an element of the Curve25519 scalar
     /// field, prior to "clamping" (i.e. setting/clearing bits to ensure the
     /// scalar is actually a valid field element)
-    pub secret_key: [u8; Self::BYTE_SIZE / 2],
+    pub secret_key: [u8; COMPONENT_SIZE],
 
     /// Ed25519 public key (if available).
     ///
@@ -90,7 +90,7 @@ impl KeypairBytes {
     #[allow(clippy::missing_panics_doc, reason = "MSRV TODO")]
     pub fn from_bytes(bytes: &[u8; Self::BYTE_SIZE]) -> Self {
         // TODO(tarcieri): use `as_chunks` when MSRV is 1.88
-        let (sk, pk) = bytes.split_at(Self::BYTE_SIZE / 2);
+        let (sk, pk) = bytes.split_at(COMPONENT_SIZE);
 
         Self {
             secret_key: sk.try_into().expect("secret key size error"),
@@ -109,7 +109,7 @@ impl KeypairBytes {
     pub fn to_bytes(&self) -> Option<[u8; Self::BYTE_SIZE]> {
         if let Some(public_key) = &self.public_key {
             let mut result = [0u8; Self::BYTE_SIZE];
-            let (sk, pk) = result.split_at_mut(Self::BYTE_SIZE / 2);
+            let (sk, pk) = result.split_at_mut(COMPONENT_SIZE);
             sk.copy_from_slice(&self.secret_key);
             pk.copy_from_slice(public_key.as_ref());
             Some(result)
@@ -130,7 +130,7 @@ impl Drop for KeypairBytes {
 impl EncodePrivateKey for KeypairBytes {
     fn to_pkcs8_der(&self) -> Result<SecretDocument> {
         // Serialize private key as nested OCTET STRING
-        let mut private_key = [0u8; 2 + (Self::BYTE_SIZE / 2)];
+        let mut private_key = [0u8; 2 + (COMPONENT_SIZE)];
         private_key[0] = 0x04;
         private_key[1] = 0x20;
         private_key[2..].copy_from_slice(&self.secret_key);

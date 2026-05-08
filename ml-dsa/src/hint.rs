@@ -130,7 +130,7 @@ where
         let cuts: Array<usize, P::K> = cuts.iter().map(|x| usize::from(*x)).collect();
 
         let indices: Array<usize, P::Omega> = indices.iter().map(|x| usize::from(*x)).collect();
-        let max_cut: usize = cuts.iter().copied().max().unwrap();
+        let max_cut: usize = cuts.iter().copied().max().expect("should have a maximum");
 
         // cuts must be monotonic but can repeat
         if !cuts.windows(2).all(|w| w[0] <= w[1])

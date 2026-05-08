@@ -41,7 +41,7 @@ pub trait SamplingSize: ArraySize + Len {
 }
 
 /// Range of the uniform distribution to be used in sampling.
-#[derive(Copy, Clone)]
+#[derive(Clone, Copy, Debug)]
 #[allow(unreachable_pub, reason = "MSRV 1.85 complains")]
 pub enum Eta {
     Two,

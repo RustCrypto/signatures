@@ -5,15 +5,10 @@
     html_favicon_url = "https://raw.githubusercontent.com/RustCrypto/meta/master/logo.svg"
 )]
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![warn(clippy::pedantic)] // Be pedantic by default
-#![warn(clippy::integer_division_remainder_used)] // Be judicious about using `/` and `%`
-#![warn(clippy::as_conversions)] // Use proper conversions, not `as`
 #![allow(non_snake_case)] // Allow notation matching the spec
 #![allow(clippy::similar_names)] // Allow notation matching the spec
 #![allow(clippy::many_single_char_names)] // Allow notation matching the spec
 #![allow(clippy::clone_on_copy)] // Be explicit about moving data
-#![deny(missing_docs)] // Require all public interfaces to be documented
-#![warn(unreachable_pub)] // Prevent unexpected interface changes
 
 //! # Quickstart
 //!
@@ -877,7 +872,7 @@ impl<P: MlDsaParams> DigestVerifier<Shake256, Signature<P>> for VerifyingKey<P> 
 }
 
 /// `MlDsa44` is the parameter set for security category 2.
-#[derive(Default, Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct MlDsa44;
 
 impl ParameterSet for MlDsa44 {
@@ -894,7 +889,7 @@ impl ParameterSet for MlDsa44 {
 }
 
 /// `MlDsa65` is the parameter set for security category 3.
-#[derive(Default, Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct MlDsa65;
 
 impl ParameterSet for MlDsa65 {
@@ -911,7 +906,7 @@ impl ParameterSet for MlDsa65 {
 }
 
 /// `MlDsa87` is the parameter set for security category 5.
-#[derive(Default, Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct MlDsa87;
 
 impl ParameterSet for MlDsa87 {

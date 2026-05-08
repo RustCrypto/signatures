@@ -1,3 +1,8 @@
+//! ML-DSA benchmarks.
+
+#![allow(clippy::unwrap_used, reason = "benchmarks")]
+#![allow(missing_docs, reason = "benchmarks")]
+
 use criterion::{Criterion, criterion_group, criterion_main};
 use getrandom::SysRng;
 use hybrid_array::{Array, ArraySize};
@@ -6,12 +11,14 @@ use ml_dsa::{
 };
 use rand_core::{CryptoRng, UnwrapErr};
 
+/// Create a random array of the given length.
 pub fn rand<L: ArraySize, R: CryptoRng + ?Sized>(rng: &mut R) -> Array<u8, L> {
     let mut val = Array::<u8, L>::default();
     rng.fill_bytes(&mut val);
     val
 }
 
+/// ML-DSA benchmarks.
 #[allow(deprecated)] // TODO(tarcieri): stop using expanded signing keys
 fn criterion_benchmark(c: &mut Criterion) {
     let mut rng = UnwrapErr(SysRng);
@@ -34,7 +41,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             let kp = MlDsa65::from_seed(&xi);
             let _sk_bytes = kp.signing_key().to_expanded();
             let _vk_bytes = kp.verifying_key().encode();
-        })
+        });
     });
 
     // Signing
@@ -42,7 +49,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         b.iter(|| {
             let sk = ExpandedSigningKey::<MlDsa65>::from_expanded(&sk_bytes);
             let _sig = sk.sign_deterministic(&m, &ctx);
-        })
+        });
     });
 
     // Verifying
@@ -51,7 +58,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             let vk = VerifyingKey::<MlDsa65>::decode(&vk_bytes);
             let sig = Signature::<MlDsa65>::decode(&sig_bytes).unwrap();
             let _ver = vk.verify_with_context(&m, &ctx, &sig);
-        })
+        });
     });
 
     // Round trip
@@ -60,7 +67,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             let kp = MlDsa65::from_seed(&xi);
             let sig = kp.signing_key().sign_deterministic(&m, &ctx).unwrap();
             let _ver = kp.verifying_key().verify_with_context(&m, &ctx, &sig);
-        })
+        });
     });
 }
 

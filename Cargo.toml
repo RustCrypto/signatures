@@ -17,6 +17,7 @@ members = [
 opt-level = 2
 
 [workspace.lints.clippy]
+as_conversions = "warn"
 borrow_as_ptr = "warn"
 cast_lossless = "warn"
 cast_possible_truncation = "warn"
@@ -26,6 +27,7 @@ cast_sign_loss = "warn"
 checked_conversions = "warn"
 from_iter_instead_of_collect = "warn"
 implicit_saturating_sub = "warn"
+integer_division_remainder_used = "warn"
 manual_assert = "warn"
 map_unwrap_or = "warn"
 missing_errors_doc = "warn"

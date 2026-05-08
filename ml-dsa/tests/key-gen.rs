@@ -1,6 +1,9 @@
-use ml_dsa::*;
+//! Key generation tests.
+
+#![allow(clippy::unwrap_used, reason = "tests")]
 
 use hybrid_array::Array;
+use ml_dsa::*;
 use signature::Keypair;
 use std::{fs::read_to_string, path::PathBuf};
 

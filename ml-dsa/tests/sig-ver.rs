@@ -1,5 +1,8 @@
-use ml_dsa::*;
+//! Signature verification tests.
 
+#![allow(clippy::unwrap_used, reason = "tests")]
+
+use ml_dsa::*;
 use std::{fs::read_to_string, path::PathBuf};
 
 #[test]
