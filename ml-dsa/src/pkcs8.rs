@@ -1,7 +1,5 @@
 //! PKCS#8 private key encoding support.
 
-#![cfg(feature = "pkcs8")]
-
 use crate::{
     EncodedVerifyingKey, ExpandedSigningKey, KeyGen, MlDsa44, MlDsa65, MlDsa87, MlDsaParams,
     Signature, SigningKey, VerifyingKey,
