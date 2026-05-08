@@ -57,9 +57,7 @@ pub use signature::{self, Error};
 use crate::algebra::{AlgebraExt, Vector};
 use crate::crypto::H;
 use crate::hint::Hint;
-use crate::ntt::{Ntt, NttInverse};
-use crate::param::{ParameterSet, QMinus1, SamplingSize};
-use crate::sampling::{expand_a, expand_s};
+use crate::param::{ParameterSet, QMinus1};
 use core::{
     convert::{TryFrom, TryInto},
     ops::{Deref, DerefMut},
@@ -68,7 +66,7 @@ use hybrid_array::{
     Array,
     typenum::{
         Diff, Length, Prod, Quot, Shleft, U1, U2, U4, U5, U6, U7, U8, U17, U19, U32, U48, U55, U64,
-        U75, U80, U88, Unsigned,
+        U75, U80, U88,
     },
 };
 use module_lattice::Truncate;
@@ -273,43 +271,9 @@ where
     }
 
     /// Deterministically generate a signing key pair from the specified seed
-    ///
-    /// This method reflects the ML-DSA.KeyGen_internal algorithm from FIPS 204.
     // Algorithm 6 ML-DSA.KeyGen_internal
-    fn from_seed(xi: &Seed) -> SigningKey<P>
-    where
-        P: MlDsaParams,
-    {
-        // Derive seeds
-        let mut h = H::default()
-            .absorb(xi)
-            .absorb(&[P::K::U8])
-            .absorb(&[P::L::U8]);
-
-        let rho: B32 = h.squeeze_new();
-        let rhop: B64 = h.squeeze_new();
-        let K: B32 = h.squeeze_new();
-
-        // Sample private key components
-        let A_hat = expand_a::<P::K, P::L>(&rho);
-        let s1 = expand_s::<P::L>(&rhop, P::Eta::ETA, 0);
-        let s2 = expand_s::<P::K>(&rhop, P::Eta::ETA, P::L::USIZE);
-
-        // Compute derived values
-        let As1_hat = &A_hat * &s1.ntt();
-        let t = &As1_hat.ntt_inverse() + &s2;
-
-        // Compress and encode
-        let (t1, t0) = t.power2round();
-
-        let enc = VerifyingKey::<P>::encode_internal(&rho, &t1);
-        let tr: B64 = H::default().absorb(&enc).squeeze_new();
-        let signing_key = ExpandedSigningKey::new(rho, K, tr, s1, s2, t0, A_hat);
-
-        SigningKey {
-            expanded_key: signing_key,
-            seed: xi.clone(),
-        }
+    fn from_seed(seed: &Seed) -> SigningKey<P> {
+        SigningKey::from_seed(seed)
     }
 }
 
@@ -356,6 +320,7 @@ impl<T> DerefMut for MaybeBox<T> {
 mod test {
     use super::*;
     use crate::param::*;
+    use hybrid_array::typenum::Unsigned;
     use signature::Keypair;
 
     #[test]
@@ -385,7 +350,7 @@ mod test {
         let ssk = P::from_seed(&seed);
         assert_eq!(ssk.to_seed(), seed);
 
-        let sk = &ssk.expanded_key;
+        let esk = ssk.expanded_key();
         let vk = ssk.verifying_key();
 
         let vk_bytes = vk.encode();
@@ -394,13 +359,13 @@ mod test {
 
         #[allow(deprecated)]
         {
-            let sk_bytes = sk.to_expanded();
+            let sk_bytes = esk.to_expanded();
             let sk2 = ExpandedSigningKey::<P>::from_expanded(&sk_bytes);
-            assert!(sk == &sk2);
+            assert!(esk == &sk2);
 
             let M = b"Hello world";
             let rnd = Array([0u8; 32]);
-            let sig = sk.sign_internal(&[M], &rnd);
+            let sig = esk.sign_internal(&[M], &rnd);
             let sig_bytes = sig.encode();
             let sig2 = Signature::<P>::decode(&sig_bytes).unwrap();
             assert!(sig == sig2);
@@ -419,9 +384,9 @@ mod test {
         P: MlDsaParams + PartialEq,
     {
         let ssk = P::from_seed(&Array::default());
-        let sk = &ssk.expanded_key;
+        let esk = ssk.expanded_key();
         let vk = ssk.verifying_key();
-        let vk_derived = sk.verifying_key();
+        let vk_derived = esk.verifying_key();
 
         assert!(vk == vk_derived);
     }
@@ -438,12 +403,12 @@ mod test {
         P: MlDsaParams,
     {
         let ssk = P::from_seed(&Array::default());
-        let sk = &ssk.expanded_key;
+        let esk = ssk.expanded_key();
         let vk = ssk.verifying_key();
 
         let M = b"Hello world";
         let rnd = Array([0u8; 32]);
-        let sig = sk.sign_internal(&[M], &rnd);
+        let sig = esk.sign_internal(&[M], &rnd);
 
         assert!(vk.verify_internal(M, &sig));
     }
@@ -462,13 +427,13 @@ mod test {
             P: MlDsaParams,
         {
             let ssk = P::from_seed(&Array::default());
-            let sk = &ssk.expanded_key;
+            let esk = ssk.expanded_key();
             let vk = ssk.verifying_key();
 
             let M = b"Hello world";
             let rnd = Array([0u8; 32]);
-            let mu = MuBuilder::internal(&sk.tr, &[M]);
-            let sig = sk.raw_sign_mu(&mu, &rnd);
+            let mu = MuBuilder::internal(&esk.tr, &[M]);
+            let sig = esk.raw_sign_mu(&mu, &rnd);
 
             assert!(vk.raw_verify_mu(&mu, &sig));
         }
@@ -484,13 +449,13 @@ mod test {
             P: MlDsaParams,
         {
             let ssk = P::from_seed(&Array::default());
-            let sk = &ssk.expanded_key;
+            let esk = ssk.expanded_key();
             let vk = ssk.verifying_key();
 
             let M = b"Hello world";
             let rnd = Array([0u8; 32]);
-            let mu = MuBuilder::internal(&sk.tr, &[M]);
-            let sig = sk.raw_sign_mu(&mu, &rnd);
+            let mu = MuBuilder::internal(&esk.tr, &[M]);
+            let sig = esk.raw_sign_mu(&mu, &rnd);
 
             assert!(vk.verify_internal(M, &sig));
         }
@@ -506,13 +471,13 @@ mod test {
             P: MlDsaParams,
         {
             let ssk = P::from_seed(&Array::default());
-            let sk = &ssk.expanded_key;
+            let esk = ssk.expanded_key();
             let vk = ssk.verifying_key();
 
             let M = b"Hello world";
             let rnd = Array([0u8; 32]);
-            let mu = MuBuilder::internal(&sk.tr, &[M]);
-            let sig = sk.sign_internal(&[M], &rnd);
+            let mu = MuBuilder::internal(&esk.tr, &[M]);
+            let sig = esk.sign_internal(&[M], &rnd);
 
             assert!(vk.raw_verify_mu(&mu, &sig));
         }
@@ -530,7 +495,7 @@ mod test {
             let seed = Seed::default();
             let ssk = P::from_seed(&seed);
             let sk1 = ExpandedSigningKey::<P>::from_seed(&seed);
-            assert_eq!(ssk.expanded_key, sk1);
+            assert_eq!(ssk.expanded_key(), &sk1);
         }
         assert_from_seed_equality::<MlDsa44>();
         assert_from_seed_equality::<MlDsa65>();

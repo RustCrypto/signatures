@@ -120,7 +120,7 @@ where
         let seed_der = SeedString {
             tag_mode: TagMode::Implicit,
             tag_number: SEED_TAG_NUMBER,
-            value: OctetStringRef::new(&self.seed)?,
+            value: OctetStringRef::new(&self.to_seed())?,
         }
         .to_der()?;
 
@@ -148,10 +148,8 @@ where
 {
     type Error = ::pkcs8::Error;
 
-    fn try_from(private_key_info: ::pkcs8::PrivateKeyInfoRef<'_>) -> ::pkcs8::Result<Self> {
-        let keypair = SigningKey::try_from(private_key_info)?;
-
-        Ok(keypair.expanded_key)
+    fn try_from(private_key_info: PrivateKeyInfoRef<'_>) -> Result<Self> {
+        SigningKey::try_from(private_key_info).map(|sk| sk.expanded_key().clone())
     }
 }
 

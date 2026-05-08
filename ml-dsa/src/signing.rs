@@ -9,7 +9,7 @@ use crate::{
     crypto::H,
     hint::Hint,
     ntt::{Ntt, NttInverse},
-    param::SpecQ,
+    param::{SamplingSize, SpecQ},
     sampling::{expand_a, expand_mask, sample_in_ball},
 };
 use core::fmt;
@@ -24,23 +24,60 @@ use {
     signature::{RandomizedDigestSigner, RandomizedMultipartSigner, RandomizedSigner},
 };
 
+use crate::sampling::expand_s;
 #[cfg(feature = "zeroize")]
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
-/// An ML-DSA signing key.
+/// ML-DSA signing key (i.e. private/secret key).
 ///
-/// This type is initialized through a [`Seed`].
-// TODO(tarcieri): reduce field-level visibility.
+/// This type is initialized through a [`Seed`], and can be used to generate ML-DSA signatures.
 #[derive(Clone)]
 pub struct SigningKey<P: MlDsaParams> {
     /// The expanded form of the signing key.
-    pub(crate) expanded_key: ExpandedSigningKey<P>,
+    expanded_key: ExpandedSigningKey<P>,
 
     /// The seed this signing key was derived from
-    pub(crate) seed: B32,
+    seed: Seed,
 }
 
 impl<P: MlDsaParams> SigningKey<P> {
+    /// Deterministically generate a signing key pair from the specified seed
+    ///
+    /// This method reflects the `ML-DSA.KeyGen_internal` algorithm from FIPS 204 (Algorithm 6).
+    #[must_use]
+    pub fn from_seed(xi: &Seed) -> Self {
+        // Derive seeds
+        let mut h = H::default()
+            .absorb(xi)
+            .absorb(&[P::K::U8])
+            .absorb(&[P::L::U8]);
+
+        let rho: B32 = h.squeeze_new();
+        let rhop: B64 = h.squeeze_new();
+        let K: B32 = h.squeeze_new();
+
+        // Sample private key components
+        let A_hat = expand_a::<P::K, P::L>(&rho);
+        let s1 = expand_s::<P::L>(&rhop, P::Eta::ETA, 0);
+        let s2 = expand_s::<P::K>(&rhop, P::Eta::ETA, P::L::USIZE);
+
+        // Compute derived values
+        let As1_hat = &A_hat * &s1.ntt();
+        let t = &As1_hat.ntt_inverse() + &s2;
+
+        // Compress and encode
+        let (t1, t0) = t.power2round();
+
+        let enc = VerifyingKey::<P>::encode_internal(&rho, &t1);
+        let tr: B64 = H::default().absorb(&enc).squeeze_new();
+        let signing_key = ExpandedSigningKey::new(rho, K, tr, s1, s2, t0, A_hat);
+
+        SigningKey {
+            expanded_key: signing_key,
+            seed: xi.clone(),
+        }
+    }
+
     /// Serialize the [`Seed`] value: 32-bytes which can be used to reconstruct the
     /// [`SigningKey`].
     ///
