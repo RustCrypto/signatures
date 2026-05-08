@@ -22,7 +22,7 @@ fn private_key_serialization() {
     {
         let sk = ExpandedSigningKey::<P>::from_pkcs8_pem(private_bytes).expect("parse private key");
         let ssk = SigningKey::<P>::from_pkcs8_pem(private_bytes).expect("parse private key");
-        assert!(sk == *ssk.signing_key());
+        assert!(sk == *ssk.expanded_key());
         assert_eq!(
             ssk.to_pkcs8_pem(LineEnding::LF)
                 .expect("serialize private seed")
