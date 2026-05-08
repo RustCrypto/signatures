@@ -27,7 +27,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     let ctx: B32 = rand(&mut rng);
 
     let kp = MlDsa65::from_seed(&xi);
-    let sk = kp.signing_key();
+    let sk = kp.expanded_key();
     let vk = kp.verifying_key();
     let sig = sk.sign_deterministic(&m, &ctx).unwrap();
 
@@ -39,7 +39,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("keygen", |b| {
         b.iter(|| {
             let kp = MlDsa65::from_seed(&xi);
-            let _sk_bytes = kp.signing_key().to_expanded();
+            let _sk_bytes = kp.expanded_key().to_expanded();
             let _vk_bytes = kp.verifying_key().encode();
         });
     });
@@ -65,7 +65,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("round_trip", |b| {
         b.iter(|| {
             let kp = MlDsa65::from_seed(&xi);
-            let sig = kp.signing_key().sign_deterministic(&m, &ctx).unwrap();
+            let sig = kp.expanded_key().sign_deterministic(&m, &ctx).unwrap();
             let _ver = kp.verifying_key().verify_with_context(&m, &ctx, &sig);
         });
     });

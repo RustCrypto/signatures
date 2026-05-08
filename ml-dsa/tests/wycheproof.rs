@@ -83,7 +83,7 @@ macro_rules! mldsa_sign_seed_test {
                         let sig = sk.sign(&test.msg);
                         assert_eq!(&*sig.to_bytes(), test.sig.as_slice());
                     } else {
-                        let result = sk.signing_key().sign_deterministic(&test.msg, &test.ctx);
+                        let result = sk.expanded_key().sign_deterministic(&test.msg, &test.ctx);
 
                         match test.result {
                             ExpectedResult::Valid => {

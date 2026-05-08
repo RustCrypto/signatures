@@ -30,7 +30,7 @@ macro_rules! mldsa_proptests {
                     rnd in any::<[u8; 32]>()
                 ) {
                     let kp = $alg::from_seed(&seed.into());
-                    let sk = kp.signing_key();
+                    let sk = kp.expanded_key();
                     let vk = kp.verifying_key();
 
                     let sig = sk.sign_internal(&[&msg], &rnd.into());
@@ -44,7 +44,7 @@ macro_rules! mldsa_proptests {
                     msg in collection::vec(0u8..u8::MAX, 0..65536),
                 ) {
                     let kp = $alg::from_seed(&seed.into());
-                    let sk = kp.signing_key();
+                    let sk = kp.expanded_key();
                     let vk = kp.verifying_key();
 
                     let sig = sk.sign_digest(|digest| digest.update(&msg));
@@ -60,7 +60,7 @@ macro_rules! mldsa_proptests {
                     msg in collection::vec(0u8..u8::MAX, 0..65536),
                 ) {
                     let kp = $alg::from_seed(&seed.into());
-                    let sk = kp.signing_key();
+                    let sk = kp.expanded_key();
                     let vk = kp.verifying_key();
 
                     let mut rng = rand_core::UnwrapErr(getrandom::SysRng);

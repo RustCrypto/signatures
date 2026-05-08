@@ -33,19 +33,14 @@ use zeroize::{Zeroize, ZeroizeOnDrop};
 // TODO(tarcieri): reduce field-level visibility.
 #[derive(Clone)]
 pub struct SigningKey<P: MlDsaParams> {
-    /// The signing key of the key pair
-    pub(crate) signing_key: ExpandedSigningKey<P>,
+    /// The expanded form of the signing key.
+    pub(crate) expanded_key: ExpandedSigningKey<P>,
 
     /// The seed this signing key was derived from
     pub(crate) seed: B32,
 }
 
 impl<P: MlDsaParams> SigningKey<P> {
-    /// The signing key of the key pair
-    pub fn signing_key(&self) -> &ExpandedSigningKey<P> {
-        &self.signing_key
-    }
-
     /// Serialize the [`Seed`] value: 32-bytes which can be used to reconstruct the
     /// [`SigningKey`].
     ///
@@ -58,6 +53,12 @@ impl<P: MlDsaParams> SigningKey<P> {
     pub fn to_seed(&self) -> Seed {
         self.seed
     }
+
+    /// The expanded form of the signing key.
+    #[doc(hidden)]
+    pub fn expanded_key(&self) -> &ExpandedSigningKey<P> {
+        &self.expanded_key
+    }
 }
 
 impl<P: MlDsaParams> fmt::Debug for SigningKey<P> {
@@ -69,7 +70,7 @@ impl<P: MlDsaParams> fmt::Debug for SigningKey<P> {
 impl<P: MlDsaParams> signature::Keypair for SigningKey<P> {
     type VerifyingKey = VerifyingKey<P>;
     fn verifying_key(&self) -> VerifyingKey<P> {
-        self.signing_key.verifying_key()
+        self.expanded_key.verifying_key()
     }
 }
 
@@ -85,7 +86,7 @@ impl<P: MlDsaParams> Signer<Signature<P>> for SigningKey<P> {
 /// only supports signing with an empty context string.
 impl<P: MlDsaParams> MultipartSigner<Signature<P>> for SigningKey<P> {
     fn try_multipart_sign(&self, msg: &[&[u8]]) -> Result<Signature<P>, Error> {
-        self.signing_key.raw_sign_deterministic(msg, &[])
+        self.expanded_key.raw_sign_deterministic(msg, &[])
     }
 }
 
@@ -96,7 +97,7 @@ impl<P: MlDsaParams> DigestSigner<Shake256, Signature<P>> for SigningKey<P> {
         &self,
         f: F,
     ) -> Result<Signature<P>, Error> {
-        self.signing_key.try_sign_digest(&f)
+        self.expanded_key.try_sign_digest(&f)
     }
 }
 
@@ -108,8 +109,8 @@ impl<P: MlDsaParams> PartialEq for SigningKey<P> {
 
 impl<P: MlDsaParams> CtEq for SigningKey<P> {
     fn ct_eq(&self, other: &Self) -> Choice {
-        self.signing_key
-            .ct_eq(&other.signing_key)
+        self.expanded_key
+            .ct_eq(&other.expanded_key)
             .and(self.seed.ct_eq(&other.seed))
     }
 }
@@ -180,7 +181,7 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
     #[must_use]
     pub fn from_seed(seed: &Seed) -> Self {
         let kp = P::from_seed(seed);
-        kp.signing_key
+        kp.expanded_key
     }
 
     /// This method reflects the ML-DSA.Sign_internal algorithm from FIPS 204. It does not

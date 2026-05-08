@@ -10,11 +10,11 @@
 #![allow(clippy::many_single_char_names)] // Allow notation matching the spec
 #![allow(clippy::clone_on_copy)] // Be explicit about moving data
 
-//! # Quickstart
+//! # Usage
 //!
-//! ```
-//! # #[cfg(feature = "rand_core")]
-//! # {
+#![cfg_attr(feature = "rand_core", doc = "```")]
+#![cfg_attr(not(feature = "rand_core"), doc = "```ignore")]
+//! # fn main() -> Result<(), signature::Error> {
 //! use ml_dsa::{
 //!     signature::{Keypair, Signer, Verifier},
 //!     MlDsa65, KeyGen,
@@ -22,13 +22,13 @@
 //! use getrandom::{SysRng, rand_core::UnwrapErr};
 //!
 //! let mut rng = UnwrapErr(SysRng);
-//! let kp = MlDsa65::key_gen(&mut rng);
+//! let sk = MlDsa65::key_gen(&mut rng);
 //!
 //! let msg = b"Hello world";
-//! let sig = kp.signing_key().sign(msg);
+//! let sig = sk.sign(msg);
 //!
-//! assert!(kp.verifying_key().verify(msg, &sig).is_ok());
-//! # }
+//! sk.verifying_key().verify(msg, &sig)?;
+//! # Ok(()) }
 //! ```
 
 #[cfg(feature = "alloc")]
@@ -307,7 +307,7 @@ where
         let signing_key = ExpandedSigningKey::new(rho, K, tr, s1, s2, t0, A_hat);
 
         SigningKey {
-            signing_key,
+            expanded_key: signing_key,
             seed: xi.clone(),
         }
     }
@@ -385,7 +385,7 @@ mod test {
         let ssk = P::from_seed(&seed);
         assert_eq!(ssk.to_seed(), seed);
 
-        let sk = &ssk.signing_key;
+        let sk = &ssk.expanded_key;
         let vk = ssk.verifying_key();
 
         let vk_bytes = vk.encode();
@@ -419,7 +419,7 @@ mod test {
         P: MlDsaParams + PartialEq,
     {
         let ssk = P::from_seed(&Array::default());
-        let sk = &ssk.signing_key;
+        let sk = &ssk.expanded_key;
         let vk = ssk.verifying_key();
         let vk_derived = sk.verifying_key();
 
@@ -438,7 +438,7 @@ mod test {
         P: MlDsaParams,
     {
         let ssk = P::from_seed(&Array::default());
-        let sk = &ssk.signing_key;
+        let sk = &ssk.expanded_key;
         let vk = ssk.verifying_key();
 
         let M = b"Hello world";
@@ -462,7 +462,7 @@ mod test {
             P: MlDsaParams,
         {
             let ssk = P::from_seed(&Array::default());
-            let sk = &ssk.signing_key;
+            let sk = &ssk.expanded_key;
             let vk = ssk.verifying_key();
 
             let M = b"Hello world";
@@ -484,7 +484,7 @@ mod test {
             P: MlDsaParams,
         {
             let ssk = P::from_seed(&Array::default());
-            let sk = &ssk.signing_key;
+            let sk = &ssk.expanded_key;
             let vk = ssk.verifying_key();
 
             let M = b"Hello world";
@@ -506,7 +506,7 @@ mod test {
             P: MlDsaParams,
         {
             let ssk = P::from_seed(&Array::default());
-            let sk = &ssk.signing_key;
+            let sk = &ssk.expanded_key;
             let vk = ssk.verifying_key();
 
             let M = b"Hello world";
@@ -530,7 +530,7 @@ mod test {
             let seed = Seed::default();
             let ssk = P::from_seed(&seed);
             let sk1 = ExpandedSigningKey::<P>::from_seed(&seed);
-            assert_eq!(ssk.signing_key, sk1);
+            assert_eq!(ssk.expanded_key, sk1);
         }
         assert_from_seed_equality::<MlDsa44>();
         assert_from_seed_equality::<MlDsa65>();
@@ -560,7 +560,7 @@ mod test {
 
             let msg = b"Hello world";
             let rnd = Array([0u8; 32]);
-            let mut sig = kp.signing_key().sign_internal(&[msg], &rnd);
+            let mut sig = kp.expanded_key().sign_internal(&[msg], &rnd);
             sig.c_tilde[0] ^= 0xFF;
 
             assert!(!vk.verify_with_context(msg, &[], &sig));
@@ -579,7 +579,7 @@ mod test {
             let msg1 = b"Hello world";
             let msg2 = b"Wrong message";
             let rnd = Array([0u8; 32]);
-            let sig = kp.signing_key().sign_internal(&[msg1], &rnd);
+            let sig = kp.expanded_key().sign_internal(&[msg1], &rnd);
 
             assert!(!vk.verify_with_context(msg2, &[], &sig));
         }
@@ -592,7 +592,7 @@ mod test {
     fn context_length_validation() {
         fn test_ctx_length<P: MlDsaParams>() {
             let ssk = P::from_seed(&Array::default());
-            let sk = ssk.signing_key();
+            let sk = ssk.expanded_key();
             let vk = ssk.verifying_key();
 
             let msg = b"Hello world";
@@ -615,7 +615,7 @@ mod test {
         fn test_derived_vk<P: MlDsaParams>() {
             let seed = Array([42u8; 32]);
             let ssk = P::from_seed(&seed);
-            let sk = ssk.signing_key();
+            let sk = ssk.expanded_key();
             let derived_vk = sk.verifying_key();
 
             let msg = b"Test message for derived key";
@@ -644,7 +644,7 @@ mod test {
             assert!(kp_debug.contains("SigningKey"));
 
             let mut sk_debug = alloc::string::String::new();
-            write!(&mut sk_debug, "{:?}", kp.signing_key()).unwrap();
+            write!(&mut sk_debug, "{:?}", kp.expanded_key()).unwrap();
             assert!(sk_debug.contains("ExpandedSigningKey"));
         }
         test_debug::<MlDsa44>();
