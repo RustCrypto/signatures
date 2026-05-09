@@ -442,7 +442,7 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
 
     /// DEPRECATED: encode the key in a fixed-size byte array.
     ///
-    /// Note that this form is deprecated in practice; prefer to use [`SigningKey:to_seed`].
+    /// Note that this form is deprecated in practice; prefer to use [`SigningKey::to_seed`].
     // Algorithm 24 skEncode
     #[deprecated(since = "0.1.0", note = "use `SigningKey::to_seed` instead")]
     pub fn to_expanded(&self) -> ExpandedSigningKeyBytes<P>
@@ -497,8 +497,8 @@ impl<P: MlDsaParams> DigestSigner<Shake256, Signature<P>> for ExpandedSigningKey
     }
 }
 
-/// The [`signature::KeyPair`] implementation for `ExpandedSigningKey` allows to derive a `VerifyingKey` from
-/// a bare `ExpandedSigningKey` (even in the absence of the original seed).
+/// The [`signature::Keypair`] implementation for [`ExpandedSigningKey`] allows to derive a
+/// [`VerifyingKey`] from a bare `ExpandedSigningKey` (even in the absence of the original seed).
 impl<P: MlDsaParams> signature::Keypair for ExpandedSigningKey<P> {
     type VerifyingKey = VerifyingKey<P>;
 
