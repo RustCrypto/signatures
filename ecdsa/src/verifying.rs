@@ -58,7 +58,7 @@ use elliptic_curve::pkcs8::EncodePublicKey;
 /// primary API for verifying:
 ///
 /// - [`Verifier`]: verify a message against a provided key and signature
-/// - [`DigestVerifier`]: verify a message [`Digest`] against a provided key and signature
+/// - [`DigestVerifier`]: verify a message digest against a provided key and signature
 /// - [`PrehashVerifier`]: verify the low-level raw output bytes of a message digest
 ///
 /// See the [`p256` crate](https://docs.rs/p256/latest/p256/ecdsa/index.html)

@@ -33,7 +33,7 @@ use {
 #[cfg(feature = "digest")]
 use digest::block_api::EagerHash;
 
-/// Bind a preferred [`Digest`] algorithm to an elliptic curve type.
+/// Bind a preferred [`EagerHash`] algorithm to an elliptic curve type.
 ///
 /// Generally there is a preferred variety of the SHA-2 family used with ECDSA
 /// for a particular elliptic curve.
