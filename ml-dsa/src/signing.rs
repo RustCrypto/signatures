@@ -41,6 +41,10 @@ pub struct SigningKey<P: MlDsaParams> {
 
     /// The seed this signing key was derived from
     seed: MaybeBox<Seed>,
+
+    /// When the `alloc` feature is available, precompute the [`VerifyingKey`].
+    #[cfg(feature = "alloc")]
+    verifying_key: VerifyingKey<P>,
 }
 
 impl<P: MlDsaParams> SigningKey<P> {
@@ -73,11 +77,16 @@ impl<P: MlDsaParams> SigningKey<P> {
 
         let enc = VerifyingKey::<P>::encode_internal(&rho, &t1);
         let tr: B64 = H::default().absorb(&enc).squeeze_new();
-        let signing_key = ExpandedSigningKey::new(rho, K, tr, s1, s2, t0, A_hat);
+        let expanded_key = ExpandedSigningKey::new(rho, K, tr, s1, s2, t0, A_hat);
+
+        #[cfg(feature = "alloc")]
+        let verifying_key = expanded_key.verifying_key();
 
         SigningKey {
-            expanded_key: MaybeBox::new(signing_key),
+            expanded_key: MaybeBox::new(expanded_key),
             seed: MaybeBox::new(xi.clone()),
+            #[cfg(feature = "alloc")]
+            verifying_key,
         }
     }
 
@@ -134,11 +143,27 @@ impl<P: MlDsaParams> fmt::Debug for SigningKey<P> {
     }
 }
 
+// NOTE: when the `alloc` feature is enabled, we receive a blanket impl of `Keypair` via the impl
+// of the `KeypairRef` trait which simply clones the precomputed verifying key, providing equivalent
+// functionality and thus this is actually still an additive use of features.
+#[cfg(not(feature = "alloc"))]
 impl<P: MlDsaParams> signature::Keypair for SigningKey<P> {
     type VerifyingKey = VerifyingKey<P>;
     fn verifying_key(&self) -> VerifyingKey<P> {
         self.expanded_key.verifying_key()
     }
+}
+
+#[cfg(feature = "alloc")]
+impl<P: MlDsaParams> AsRef<VerifyingKey<P>> for SigningKey<P> {
+    fn as_ref(&self) -> &VerifyingKey<P> {
+        &self.verifying_key
+    }
+}
+
+#[cfg(feature = "alloc")]
+impl<P: MlDsaParams> signature::KeypairRef for SigningKey<P> {
+    type VerifyingKey = VerifyingKey<P>;
 }
 
 /// The `Signer` implementation for `SigningKey` uses the optional deterministic variant of ML-DSA, and
