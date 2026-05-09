@@ -1,12 +1,12 @@
 //! ML-DSA signature verification.
 
-use crate::param::VerifyingKeySize;
 use crate::{
-    B32, B64, EncodedVerifyingKey, MlDsaParams, MuBuilder, Signature,
+    B32, B64, EncodedVerifyingKey, MaybeBox, MlDsaParams, MuBuilder, Signature,
     algebra::{Elem, NttMatrix, NttVector, Vector},
     crypto::H,
     ntt::{Ntt, NttInverse},
     param::ParameterSet,
+    param::VerifyingKeySize,
     sampling::{expand_a, sample_in_ball},
 };
 use common::{Key, KeyExport, KeyInit, KeySizeUser};
@@ -16,13 +16,41 @@ use signature::{DigestVerifier, Error, MultipartVerifier};
 /// An ML-DSA verification key.
 #[derive(Clone, Debug, PartialEq)]
 pub struct VerifyingKey<P: ParameterSet> {
+    /// Public seed used to deterministically re-expand `A_hat`.
     rho: B32,
-    t1: Vector<P::K>,
 
-    // Derived values
+    /// High bits of the public key polynomial `t`.
+    t1: MaybeBox<Vector<P::K>>,
+
+    /// Precomputed expanded values.
+    precomputed_values: MaybeBox<PrecomputedValues<P>>,
+}
+
+/// Cached values derived from `rho` and `t1` at key construction time to avoid re-expanding them
+/// when verifying signatures.
+#[derive(Clone, Debug, PartialEq)]
+struct PrecomputedValues<P: ParameterSet> {
+    /// Expanded public matrix in NTT domain.
     A_hat: NttMatrix<P::K, P::L>,
+
+    /// `2ᵈ ⋅ t1` which can be reused in signature verification.
     t1_2d_hat: NttVector<P::K>,
+
+    /// Hash of the encoded public key, used to bind messages to the key this was precomputed from.
     tr: B64,
+}
+
+impl<P: MlDsaParams> PrecomputedValues<P> {
+    fn new(t1: &Vector<P::K>, enc: &EncodedVerifyingKey<P>, A_hat: NttMatrix<P::K, P::L>) -> Self {
+        let t1_2d_hat = (Elem::new(1 << 13) * t1).ntt();
+        let tr = H::default().absorb(enc).squeeze_new();
+
+        Self {
+            A_hat,
+            t1_2d_hat,
+            tr,
+        }
+    }
 }
 
 impl<P: MlDsaParams> VerifyingKey<P> {
@@ -33,16 +61,12 @@ impl<P: MlDsaParams> VerifyingKey<P> {
         enc: Option<EncodedVerifyingKey<P>>,
     ) -> Self {
         let enc = enc.unwrap_or_else(|| Self::encode_internal(&rho, &t1));
-
-        let t1_2d_hat = (Elem::new(1 << 13) * &t1).ntt();
-        let tr: B64 = H::default().absorb(&enc).squeeze_new();
+        let precomputed_values = PrecomputedValues::new(&t1, &enc, A_hat);
 
         Self {
             rho,
-            t1,
-            A_hat,
-            t1_2d_hat,
-            tr,
+            t1: MaybeBox::new(t1),
+            precomputed_values: MaybeBox::new(precomputed_values),
         }
     }
 
@@ -61,7 +85,7 @@ impl<P: MlDsaParams> VerifyingKey<P> {
         Mp: F,
         ctx: &[u8],
     ) -> Result<B64, Error> {
-        let mut mu = MuBuilder::new(&self.tr, ctx);
+        let mut mu = MuBuilder::new(&self.precomputed_values.tr, ctx);
         Mp(mu.as_mut())?;
         Ok(mu.finish())
     }
@@ -74,7 +98,7 @@ impl<P: MlDsaParams> VerifyingKey<P> {
     where
         P: MlDsaParams,
     {
-        let mu = MuBuilder::internal(&self.tr, &[M]);
+        let mu = MuBuilder::internal(&self.precomputed_values.tr, &[M]);
         self.raw_verify_mu(&mu, sigma)
     }
 
@@ -87,8 +111,8 @@ impl<P: MlDsaParams> VerifyingKey<P> {
 
         let z_hat = sigma.z.ntt();
         let c_hat = c.ntt();
-        let Az_hat = &self.A_hat * &z_hat;
-        let ct1_2d_hat = &c_hat * &self.t1_2d_hat;
+        let Az_hat = &self.precomputed_values.A_hat * &z_hat;
+        let ct1_2d_hat = &c_hat * &self.precomputed_values.t1_2d_hat;
 
         let wp_approx = (&Az_hat - &ct1_2d_hat).ntt_inverse();
         let w1p = sigma.h.use_hint(&wp_approx);
@@ -117,7 +141,7 @@ impl<P: MlDsaParams> VerifyingKey<P> {
             return false;
         }
 
-        let mu = MuBuilder::new(&self.tr, ctx).message(M);
+        let mu = MuBuilder::new(&self.precomputed_values.tr, ctx).message(M);
         self.verify_mu(&mu, sigma)
     }
 
@@ -129,6 +153,7 @@ impl<P: MlDsaParams> VerifyingKey<P> {
     /// Encode the key in a fixed-size byte array.
     ///
     /// Implementation of Algorithm 22: `pkEncode` from FIPS 204.
+    #[must_use]
     pub fn encode(&self) -> EncodedVerifyingKey<P> {
         Self::encode_internal(&self.rho, &self.t1)
     }
@@ -185,7 +210,7 @@ impl<P: MlDsaParams> DigestVerifier<Shake256, Signature<P>> for VerifyingKey<P> 
         f: F,
         signature: &Signature<P>,
     ) -> Result<(), Error> {
-        let mut mu = MuBuilder::new(&self.tr, &[]);
+        let mut mu = MuBuilder::new(&self.precomputed_values.tr, &[]);
         f(mu.as_mut())?;
         let mu = mu.finish();
 
