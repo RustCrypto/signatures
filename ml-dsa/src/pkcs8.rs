@@ -1,8 +1,8 @@
 //! PKCS#8 private key encoding support.
 
 use crate::{
-    EncodedVerifyingKey, ExpandedSigningKey, KeyGen, MlDsa44, MlDsa65, MlDsa87, MlDsaParams,
-    Signature, SigningKey, VerifyingKey,
+    EncodedVerifyingKey, ExpandedSigningKey, MlDsa44, MlDsa65, MlDsa87, MlDsaParams, Signature,
+    SigningKey, VerifyingKey,
 };
 pub use ::pkcs8::*;
 use ::pkcs8::{
@@ -89,9 +89,9 @@ where
     P: MlDsaParams,
     P: AssociatedAlgorithmIdentifier<Params = AnyRef<'static>>,
 {
-    type Error = ::pkcs8::Error;
+    type Error = Error;
 
-    fn try_from(private_key_info: PrivateKeyInfoRef<'_>) -> ::pkcs8::Result<Self> {
+    fn try_from(private_key_info: PrivateKeyInfoRef<'_>) -> Result<Self> {
         private_key_info
             .algorithm
             .assert_algorithm_oid(P::ALGORITHM_IDENTIFIER.oid)?;
@@ -106,7 +106,7 @@ where
             .map_err(|_| KeyError::Invalid)?;
         reader.finish()?;
 
-        Ok(P::from_seed(&seed))
+        Ok(SigningKey::from_seed(&seed))
     }
 }
 
@@ -193,13 +193,13 @@ where
         spki.algorithm
             .assert_algorithm_oid(P::ALGORITHM_IDENTIFIER.oid)?;
 
-        Ok(Self::decode(
-            &EncodedVerifyingKey::<P>::try_from(
-                spki.subject_public_key
-                    .as_bytes()
-                    .ok_or_else(|| der::Tag::BitString.value_error().to_error())?,
-            )
-            .map_err(|_| spki::Error::KeyMalformed)?,
-        ))
+        let evk = EncodedVerifyingKey::<P>::try_from(
+            spki.subject_public_key
+                .as_bytes()
+                .ok_or_else(|| der::Tag::BitString.value_error().to_error())?,
+        )
+        .map_err(|_| spki::Error::KeyMalformed)?;
+
+        Ok(Self::decode(&evk))
     }
 }

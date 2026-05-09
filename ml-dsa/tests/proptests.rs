@@ -13,7 +13,7 @@ macro_rules! mldsa_proptests {
     ($name:ident, $alg:ident) => {
         mod $name {
             use ml_dsa::{
-                KeyGen, Signature,
+                Signature, SigningKey,
                 signature::{DigestSigner, DigestVerifier, Keypair, digest::Update},
                 $alg,
             };
@@ -29,7 +29,7 @@ macro_rules! mldsa_proptests {
                     msg in collection::vec(0u8..u8::MAX, 0..65536),
                     rnd in any::<[u8; 32]>()
                 ) {
-                    let kp = $alg::from_seed(&seed.into());
+                    let kp = SigningKey::<$alg>::from_seed(&seed.into());
                     let sk = kp.expanded_key();
                     let vk = kp.verifying_key();
 
@@ -43,7 +43,7 @@ macro_rules! mldsa_proptests {
                     seed in any::<[u8; 32]>(),
                     msg in collection::vec(0u8..u8::MAX, 0..65536),
                 ) {
-                    let kp = $alg::from_seed(&seed.into());
+                    let kp = SigningKey::<$alg>::from_seed(&seed.into());
                     let sk = kp.expanded_key();
                     let vk = kp.verifying_key();
 
@@ -59,11 +59,11 @@ macro_rules! mldsa_proptests {
                     seed in any::<[u8; 32]>(),
                     msg in collection::vec(0u8..u8::MAX, 0..65536),
                 ) {
-                    let kp = $alg::from_seed(&seed.into());
+                    let kp = SigningKey::<$alg>::from_seed(&seed.into());
                     let sk = kp.expanded_key();
                     let vk = kp.verifying_key();
 
-                    let mut rng = rand_core::UnwrapErr(getrandom::SysRng);
+                    let mut rng = signature::rand_core::UnwrapErr(getrandom::SysRng);
                     let sig = sk.sign_digest_with_rng(&mut rng, |digest| digest.update(&msg));
                     let sig_dec = signature_round_trip_encode!($alg, sig);
                     let verify_result = vk.verify_digest(|digest| Ok(digest.update(&msg)), &sig_dec);

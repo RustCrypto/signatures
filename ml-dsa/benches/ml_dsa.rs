@@ -4,29 +4,18 @@
 #![allow(missing_docs, reason = "benchmarks")]
 
 use criterion::{Criterion, criterion_group, criterion_main};
-use getrandom::SysRng;
-use hybrid_array::{Array, ArraySize};
 use ml_dsa::{
-    B32, ExpandedSigningKey, KeyGen, MlDsa65, Signature, VerifyingKey, signature::Keypair,
+    B32, ExpandedSigningKey, Generate, Keypair, MlDsa65, Signature, SigningKey, VerifyingKey,
 };
-use rand_core::{CryptoRng, UnwrapErr};
-
-/// Create a random array of the given length.
-pub fn rand<L: ArraySize, R: CryptoRng + ?Sized>(rng: &mut R) -> Array<u8, L> {
-    let mut val = Array::<u8, L>::default();
-    rng.fill_bytes(&mut val);
-    val
-}
 
 /// ML-DSA benchmarks.
 #[allow(deprecated)] // TODO(tarcieri): stop using expanded signing keys
 fn criterion_benchmark(c: &mut Criterion) {
-    let mut rng = UnwrapErr(SysRng);
-    let xi: B32 = rand(&mut rng);
-    let m: B32 = rand(&mut rng);
-    let ctx: B32 = rand(&mut rng);
+    let xi = B32::generate();
+    let m = B32::generate();
+    let ctx = B32::generate();
 
-    let kp = MlDsa65::from_seed(&xi);
+    let kp = SigningKey::<MlDsa65>::from_seed(&xi);
     let sk = kp.expanded_key();
     let vk = kp.verifying_key();
     let sig = sk.sign_deterministic(&m, &ctx).unwrap();
@@ -38,7 +27,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     // Key generation
     c.bench_function("keygen", |b| {
         b.iter(|| {
-            let kp = MlDsa65::from_seed(&xi);
+            let kp = SigningKey::<MlDsa65>::generate();
             let _sk_bytes = kp.expanded_key().to_expanded();
             let _vk_bytes = kp.verifying_key().encode();
         });
@@ -64,7 +53,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     // Round trip
     c.bench_function("round_trip", |b| {
         b.iter(|| {
-            let kp = MlDsa65::from_seed(&xi);
+            let kp = SigningKey::<MlDsa65>::from_seed(&xi);
             let sig = kp.expanded_key().sign_deterministic(&m, &ctx).unwrap();
             let _ver = kp.verifying_key().verify_with_context(&m, &ctx, &sig);
         });

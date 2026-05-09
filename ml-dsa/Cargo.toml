@@ -25,13 +25,16 @@ exclude = [
 ]
 
 [features]
-default = ["rand_core", "alloc", "pkcs8"]
-zeroize = ["dep:zeroize", "hybrid-array/zeroize", "module-lattice/zeroize"]
-rand_core = ["dep:rand_core", "signature/rand_core"]
-alloc = ["pkcs8?/alloc"]
+default = ["alloc", "getrandom", "pkcs8"]
+alloc = ["hybrid-array/alloc", "pkcs8?/alloc", "signature/alloc"]
+
+getrandom = ["common/getrandom", "rand_core"]
 pkcs8 = ["dep:const-oid", "dep:pkcs8"]
+rand_core = ["common/rand_core", "signature/rand_core"]
+zeroize = ["dep:zeroize", "hybrid-array/zeroize", "module-lattice/zeroize"]
 
 [dependencies]
+common = { package = "crypto-common", version = "0.2", default-features = false }
 ctutils = { version = "0.4", default-features = false }
 hybrid-array = { version = "0.4", features = ["extra-sizes"] }
 module-lattice = { version = "0.2.2", features = ["ctutils"] }
@@ -41,7 +44,6 @@ signature = { version = "3", default-features = false, features = ["digest"] }
 # optional dependencies
 const-oid = { version = "0.10", features = ["db"], optional = true }
 pkcs8 = { version = "0.11", default-features = false, optional = true }
-rand_core = { version = "0.10", optional = true }
 zeroize = { version = "1.8.1", optional = true, default-features = false }
 
 [dev-dependencies]
@@ -57,6 +59,7 @@ serde_json = "1.0.132"
 [[bench]]
 name = "ml_dsa"
 harness = false
+required-features = ["getrandom"]
 
 [lints]
 workspace = true

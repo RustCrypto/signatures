@@ -3,15 +3,16 @@
 //! These types implement signature generation.
 
 use crate::{
-    B32, B64, ExpandedSigningKeyBytes, KeyGen, MaybeBox, MlDsaParams, MuBuilder, Seed, Signature,
+    B32, B64, ExpandedSigningKeyBytes, MaybeBox, MlDsaParams, MuBuilder, Seed, Signature,
     VerifyingKey,
     algebra::{AlgebraExt, NttMatrix, NttVector, Vector},
     crypto::H,
     hint::Hint,
     ntt::{Ntt, NttInverse},
     param::{SamplingSize, SpecQ},
-    sampling::{expand_a, expand_mask, sample_in_ball},
+    sampling::{expand_a, expand_mask, expand_s, sample_in_ball},
 };
+use common::{KeyExport, KeyInit, KeySizeUser, typenum::U32};
 use core::fmt;
 use ctutils::{Choice, CtEq};
 use hybrid_array::typenum::Unsigned;
@@ -20,11 +21,13 @@ use signature::{DigestSigner, Error, MultipartSigner, Signer};
 
 #[cfg(feature = "rand_core")]
 use {
-    rand_core::TryCryptoRng,
-    signature::{RandomizedDigestSigner, RandomizedMultipartSigner, RandomizedSigner},
+    common::Generate,
+    signature::{
+        RandomizedDigestSigner, RandomizedMultipartSigner, RandomizedSigner,
+        rand_core::TryCryptoRng,
+    },
 };
 
-use crate::sampling::expand_s;
 #[cfg(feature = "zeroize")]
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
@@ -95,6 +98,31 @@ impl<P: MlDsaParams> SigningKey<P> {
     #[doc(hidden)]
     pub fn expanded_key(&self) -> &ExpandedSigningKey<P> {
         &self.expanded_key
+    }
+}
+
+impl<P: MlDsaParams> KeySizeUser for SigningKey<P> {
+    type KeySize = U32;
+}
+
+impl<P: MlDsaParams> KeyInit for SigningKey<P> {
+    fn new(seed: &Seed) -> Self {
+        Self::from_seed(seed)
+    }
+}
+
+impl<P: MlDsaParams> KeyExport for SigningKey<P> {
+    fn to_bytes(&self) -> Seed {
+        self.to_seed()
+    }
+}
+
+/// Algorithm 1: `ML-DSA.KeyGen()`.
+#[cfg(feature = "rand_core")]
+impl<P: MlDsaParams> Generate for SigningKey<P> {
+    fn try_generate_from_rng<R: TryCryptoRng + ?Sized>(rng: &mut R) -> Result<Self, R::Error> {
+        let seed = Seed::try_generate_from_rng(rng)?;
+        Ok(Self::from_seed(&seed))
     }
 }
 
@@ -217,7 +245,7 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
     /// signing key.
     #[must_use]
     pub fn from_seed(seed: &Seed) -> Self {
-        let kp = P::from_seed(seed);
+        let kp = SigningKey::from_seed(seed);
         kp.expanded_key
     }
 

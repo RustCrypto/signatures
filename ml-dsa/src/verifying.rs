@@ -1,5 +1,6 @@
 //! ML-DSA signature verification.
 
+use crate::param::VerifyingKeySize;
 use crate::{
     B32, B64, EncodedVerifyingKey, MlDsaParams, MuBuilder, Signature,
     algebra::{Elem, NttMatrix, NttVector, Vector},
@@ -8,6 +9,7 @@ use crate::{
     param::ParameterSet,
     sampling::{expand_a, sample_in_ball},
 };
+use common::{Key, KeyExport, KeyInit, KeySizeUser};
 use sha3::Shake256;
 use signature::{DigestVerifier, Error, MultipartVerifier};
 
@@ -53,7 +55,6 @@ impl<P: MlDsaParams> VerifyingKey<P> {
     /// Computes µ according to FIPS 204 for use in ML-DSA.Sign and ML-DSA.Verify.
     ///
     /// # Errors
-    ///
     /// Returns [`Error`] if the given `Mp` returns one.
     pub fn compute_mu<F: FnOnce(&mut Shake256) -> Result<(), Error>>(
         &self,
@@ -65,10 +66,10 @@ impl<P: MlDsaParams> VerifyingKey<P> {
         Ok(mu.finish())
     }
 
-    /// This algorithm reflects the ML-DSA.Verify_internal algorithm from FIPS 204.  It does not
-    /// include the domain separator that distinguishes between the normal and pre-hashed cases,
-    /// and it does not separate the context string from the rest of the message.
-    // Algorithm 8 ML-DSA.Verify_internal
+    /// Implementation of Algorithm 8: `ML-DSA.Verify_internal` algorithm from FIPS 204.
+    ///
+    /// It does not include the domain separator that distinguishes between the normal and
+    /// pre-hashed cases, and it does not separate the context string from the rest of the message.
     pub fn verify_internal(&self, M: &[u8], sigma: &Signature<P>) -> bool
     where
         P: MlDsaParams,
@@ -101,14 +102,12 @@ impl<P: MlDsaParams> VerifyingKey<P> {
         sigma.c_tilde == cp_tilde
     }
 
-    /// This algorithm reflects the ML-DSA.Verify algorithm from FIPS 204.
-    // Algorithm 3 ML-DSA.Verify
+    /// Implementation of Algorithm 3: `ML-DSA.Verify` from FIPS 204.
     pub fn verify_with_context(&self, M: &[u8], ctx: &[u8], sigma: &Signature<P>) -> bool {
         self.raw_verify_with_context(&[M], ctx, sigma)
     }
 
-    /// This algorithm reflects the ML-DSA.Verify algorithm with a pre-computed μ from FIPS 204.
-    // Algorithm 3 ML-DSA.Verify (optional pre-computed μ variant)
+    /// Implementation of Algorithm 3: `ML-DSA.Verify` from FIPS 204 with a pre-computed μ.
     pub fn verify_mu(&self, mu: &B64, sigma: &Signature<P>) -> bool {
         self.raw_verify_mu(mu, sigma)
     }
@@ -128,17 +127,35 @@ impl<P: MlDsaParams> VerifyingKey<P> {
     }
 
     /// Encode the key in a fixed-size byte array.
-    // Algorithm 22 pkEncode
+    ///
+    /// Implementation of Algorithm 22: `pkEncode` from FIPS 204.
     pub fn encode(&self) -> EncodedVerifyingKey<P> {
         Self::encode_internal(&self.rho, &self.t1)
     }
 
     /// Decode the key from an appropriately sized byte array.
-    // Algorithm 23 pkDecode
+    ///
+    /// Implementation of Algorithm 23: `pkDecode` from FIPS 204.
     pub fn decode(enc: &EncodedVerifyingKey<P>) -> Self {
         let (rho, t1_enc) = P::split_vk(enc);
         let t1 = P::decode_t1(t1_enc);
         Self::new_expand_a(rho.clone(), t1, Some(enc.clone()))
+    }
+}
+
+impl<P: MlDsaParams> KeySizeUser for VerifyingKey<P> {
+    type KeySize = VerifyingKeySize<P>;
+}
+
+impl<P: MlDsaParams> KeyInit for VerifyingKey<P> {
+    fn new(key: &Key<Self>) -> Self {
+        Self::decode(key)
+    }
+}
+
+impl<P: MlDsaParams> KeyExport for VerifyingKey<P> {
+    fn to_bytes(&self) -> Key<Self> {
+        self.encode()
     }
 }
 
