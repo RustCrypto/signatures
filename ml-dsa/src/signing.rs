@@ -90,10 +90,22 @@ impl<P: MlDsaParams> SigningKey<P> {
         }
     }
 
-    /// Serialize the [`Seed`] value: 32-bytes which can be used to reconstruct the
-    /// [`SigningKey`].
+    /// Borrow the [`Seed`] value: 32-bytes which can be used to reconstruct the [`SigningKey`].
     ///
-    /// <div class = "warning">
+    /// <div class="warning">
+    /// <b>Warning</b>
+    ///
+    /// This value is key material. Please treat it with care.
+    /// </div>
+    #[inline]
+    #[must_use]
+    pub fn as_seed(&self) -> &Seed {
+        &self.seed
+    }
+
+    /// Serialize the [`Seed`] value: 32-bytes which can be used to reconstruct the [`SigningKey`].
+    ///
+    /// <div class="warning">
     /// <b>Warning</b>
     ///
     /// This value is key material. Please treat it with care.
