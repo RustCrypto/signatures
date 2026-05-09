@@ -85,9 +85,6 @@ use hybrid_array::{
 use module_lattice::Truncate;
 use sha3::Shake256;
 
-#[cfg(feature = "rand_core")]
-use signature::rand_core::CryptoRng;
-
 /// A 32-byte array, defined here for brevity because it is used several times
 pub type B32 = Array<u8, U32>;
 
@@ -256,47 +253,6 @@ impl ParameterSet for MlDsa87 {
     type Lambda = U64;
     type Omega = U75;
     const TAU: usize = 60;
-}
-
-/// A parameter set that knows how to generate key pairs.
-#[deprecated(
-    since = "0.1.0",
-    note = "use the `KeyInit` or `Generate` traits instead"
-)]
-pub trait KeyGen: MlDsaParams {
-    /// The type that is returned by key generation
-    type KeyPair: Keypair;
-
-    /// Generate a signing key pair from the specified RNG
-    #[cfg(feature = "rand_core")]
-    fn key_gen<R: CryptoRng + ?Sized>(rng: &mut R) -> Self::KeyPair;
-
-    /// Deterministically generate a signing key pair from the specified seed
-    ///
-    /// This method reflects the ML-DSA.KeyGen_internal algorithm from FIPS 204.
-    fn from_seed(xi: &B32) -> Self::KeyPair;
-}
-
-#[allow(deprecated, reason = "deprecated impl block")]
-impl<P> KeyGen for P
-where
-    P: MlDsaParams,
-{
-    type KeyPair = SigningKey<P>;
-
-    /// Generate a signing key pair from the specified RNG
-    #[cfg(feature = "rand_core")]
-    fn key_gen<R: CryptoRng + ?Sized>(rng: &mut R) -> SigningKey<P> {
-        let mut xi = B32::default();
-        rng.fill_bytes(&mut xi);
-        Self::from_seed(&xi)
-    }
-
-    /// Deterministically generate a signing key pair from the specified seed
-    // Algorithm 6 ML-DSA.KeyGen_internal
-    fn from_seed(seed: &Seed) -> SigningKey<P> {
-        SigningKey::from_seed(seed)
-    }
 }
 
 /// Type which opportunistically uses `Box` when the `alloc` feature is available but falls back to
