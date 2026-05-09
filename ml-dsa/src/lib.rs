@@ -12,17 +12,13 @@
 
 //! # Usage
 //!
-#![cfg_attr(feature = "rand_core", doc = "```")]
-#![cfg_attr(not(feature = "rand_core"), doc = "```ignore")]
+#![cfg_attr(feature = "getrandom", doc = "```")]
+#![cfg_attr(not(feature = "getrandom"), doc = "```ignore")]
 //! # fn main() -> Result<(), signature::Error> {
-//! use ml_dsa::{
-//!     signature::{Keypair, Signer, Verifier},
-//!     MlDsa65, KeyGen,
-//! };
-//! use getrandom::{SysRng, rand_core::UnwrapErr};
+//! // NOTE: requires the `getrandom` feature is enabled
+//! use ml_dsa::{MlDsa65, Generate, Keypair, SigningKey, Signer, Verifier};
 //!
-//! let mut rng = UnwrapErr(SysRng);
-//! let sk = MlDsa65::key_gen(&mut rng);
+//! let sk = SigningKey::<MlDsa65>::generate();
 //!
 //! let msg = b"Hello world";
 //! let sig = sk.sign(msg);
@@ -52,7 +48,11 @@ pub use crate::{
     signing::{ExpandedSigningKey, SigningKey},
     verifying::VerifyingKey,
 };
-pub use signature::{self, Error};
+pub use common::{self, KeyExport, KeyInit, KeySizeUser};
+pub use signature::{self, Error, Keypair, Signer, Verifier};
+
+#[cfg(feature = "rand_core")]
+pub use common::Generate;
 
 use crate::algebra::{AlgebraExt, Vector};
 use crate::crypto::H;
@@ -73,7 +73,7 @@ use module_lattice::Truncate;
 use sha3::Shake256;
 
 #[cfg(feature = "rand_core")]
-use rand_core::CryptoRng;
+use signature::rand_core::CryptoRng;
 
 /// A 32-byte array, defined here for brevity because it is used several times
 pub type B32 = Array<u8, U32>;
@@ -240,10 +240,14 @@ impl ParameterSet for MlDsa87 {
     const TAU: usize = 60;
 }
 
-/// A parameter set that knows how to generate key pairs
+/// A parameter set that knows how to generate key pairs.
+#[deprecated(
+    since = "0.1.0",
+    note = "use the `KeyInit` or `Generate` traits instead"
+)]
 pub trait KeyGen: MlDsaParams {
     /// The type that is returned by key generation
-    type KeyPair: signature::Keypair;
+    type KeyPair: Keypair;
 
     /// Generate a signing key pair from the specified RNG
     #[cfg(feature = "rand_core")]
@@ -255,6 +259,7 @@ pub trait KeyGen: MlDsaParams {
     fn from_seed(xi: &B32) -> Self::KeyPair;
 }
 
+#[allow(deprecated, reason = "deprecated impl block")]
 impl<P> KeyGen for P
 where
     P: MlDsaParams,
@@ -262,7 +267,6 @@ where
     type KeyPair = SigningKey<P>;
 
     /// Generate a signing key pair from the specified RNG
-    // Algorithm 1 ML-DSA.KeyGen()
     #[cfg(feature = "rand_core")]
     fn key_gen<R: CryptoRng + ?Sized>(rng: &mut R) -> SigningKey<P> {
         let mut xi = B32::default();
@@ -347,7 +351,7 @@ mod test {
         P: MlDsaParams + PartialEq,
     {
         let seed = Array::default();
-        let ssk = P::from_seed(&seed);
+        let ssk = SigningKey::from_seed(&seed);
         assert_eq!(ssk.to_seed(), seed);
 
         let esk = ssk.expanded_key();
@@ -383,7 +387,7 @@ mod test {
     where
         P: MlDsaParams + PartialEq,
     {
-        let ssk = P::from_seed(&Array::default());
+        let ssk = SigningKey::<P>::from_seed(&Array::default());
         let esk = ssk.expanded_key();
         let vk = ssk.verifying_key();
         let vk_derived = esk.verifying_key();
@@ -402,7 +406,7 @@ mod test {
     where
         P: MlDsaParams,
     {
-        let ssk = P::from_seed(&Array::default());
+        let ssk = SigningKey::<P>::from_seed(&Array::default());
         let esk = ssk.expanded_key();
         let vk = ssk.verifying_key();
 
@@ -426,7 +430,7 @@ mod test {
         where
             P: MlDsaParams,
         {
-            let ssk = P::from_seed(&Array::default());
+            let ssk = SigningKey::<P>::from_seed(&Array::default());
             let esk = ssk.expanded_key();
             let vk = ssk.verifying_key();
 
@@ -448,7 +452,7 @@ mod test {
         where
             P: MlDsaParams,
         {
-            let ssk = P::from_seed(&Array::default());
+            let ssk = SigningKey::<P>::from_seed(&Array::default());
             let esk = ssk.expanded_key();
             let vk = ssk.verifying_key();
 
@@ -470,7 +474,7 @@ mod test {
         where
             P: MlDsaParams,
         {
-            let ssk = P::from_seed(&Array::default());
+            let ssk = SigningKey::<P>::from_seed(&Array::default());
             let esk = ssk.expanded_key();
             let vk = ssk.verifying_key();
 
@@ -493,7 +497,7 @@ mod test {
             P: MlDsaParams,
         {
             let seed = Seed::default();
-            let ssk = P::from_seed(&seed);
+            let ssk = SigningKey::<P>::from_seed(&seed);
             let sk1 = ExpandedSigningKey::<P>::from_seed(&seed);
             assert_eq!(ssk.expanded_key(), &sk1);
         }
@@ -509,7 +513,7 @@ mod test {
                 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
                 24, 25, 26, 27, 28, 29, 30, 31, 32,
             ]);
-            let kp = P::from_seed(&seed);
+            let kp = SigningKey::<P>::from_seed(&seed);
             assert_eq!(kp.to_seed(), seed);
         }
         test_to_seed::<MlDsa44>();
@@ -520,7 +524,7 @@ mod test {
     #[test]
     fn verification_rejects_invalid_signature() {
         fn test_invalid_sig<P: MlDsaParams>() {
-            let kp = P::from_seed(&Array::default());
+            let kp = SigningKey::<P>::from_seed(&Array::default());
             let vk = kp.verifying_key();
 
             let msg = b"Hello world";
@@ -538,7 +542,7 @@ mod test {
     #[test]
     fn verification_rejects_wrong_message() {
         fn test_wrong_msg<P: MlDsaParams>() {
-            let kp = P::from_seed(&Array::default());
+            let kp = SigningKey::<P>::from_seed(&Array::default());
             let vk = kp.verifying_key();
 
             let msg1 = b"Hello world";
@@ -556,7 +560,7 @@ mod test {
     #[test]
     fn context_length_validation() {
         fn test_ctx_length<P: MlDsaParams>() {
-            let ssk = P::from_seed(&Array::default());
+            let ssk = SigningKey::<P>::from_seed(&Array::default());
             let sk = ssk.expanded_key();
             let vk = ssk.verifying_key();
 
@@ -579,7 +583,7 @@ mod test {
     fn derived_verifying_key_validates_signatures() {
         fn test_derived_vk<P: MlDsaParams>() {
             let seed = Array([42u8; 32]);
-            let ssk = P::from_seed(&seed);
+            let ssk = SigningKey::<P>::from_seed(&seed);
             let sk = ssk.expanded_key();
             let derived_vk = sk.verifying_key();
 
@@ -602,7 +606,7 @@ mod test {
         use core::fmt::Write;
 
         fn test_debug<P: MlDsaParams>() {
-            let kp = P::from_seed(&Array::default());
+            let kp = SigningKey::<P>::from_seed(&Array::default());
 
             let mut kp_debug = alloc::string::String::new();
             write!(&mut kp_debug, "{:?}", kp).unwrap();

@@ -35,7 +35,7 @@ fn verify<P: MlDsaParams>(tc: &acvp::TestCase) {
     let vk_bytes = EncodedVerifyingKey::<P>::try_from(tc.pk.as_slice()).unwrap();
     let sk_bytes = ExpandedSigningKeyBytes::<P>::try_from(tc.sk.as_slice()).unwrap();
 
-    let ssk = P::from_seed(&seed);
+    let ssk = SigningKey::from_seed(&seed);
     let sk = ssk.expanded_key().clone();
     let vk = ssk.verifying_key().clone();
 

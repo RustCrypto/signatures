@@ -2,7 +2,7 @@
 
 // Implementation is based in part on `rsa` which is in turn based on Graviola.
 
-use ml_dsa::{KeyGen, MlDsa44, MlDsa65, MlDsa87, Signature, VerifyingKey};
+use ml_dsa::{MlDsa44, MlDsa65, MlDsa87, Signature, SigningKey, VerifyingKey};
 use serde::Deserialize;
 use signature::{SignatureEncoding, Signer, Verifier};
 use std::fs::File;
@@ -68,13 +68,15 @@ macro_rules! load_json_file {
 }
 
 macro_rules! mldsa_sign_seed_test {
-    ($name:ident, $json_file:expr, $keypair:ident) => {
+    ($name:ident, $json_file:expr, $params:ident) => {
         #[test]
         fn $name() {
             let tests = load_json_file!($json_file);
 
             for group in tests.groups {
-                let sk = $keypair::from_seed(&group.private_seed.as_slice().try_into().unwrap());
+                let sk = SigningKey::<$params>::from_seed(
+                    &group.private_seed.as_slice().try_into().unwrap(),
+                );
 
                 for test in &group.tests {
                     println!("Test #{}: {} ({:?})", test.id, &test.comment, &test.result);
@@ -105,7 +107,7 @@ macro_rules! mldsa_sign_seed_test {
 }
 
 macro_rules! mldsa_verify_test {
-    ($name:ident, $json_file:expr, $keypair:ident) => {
+    ($name:ident, $json_file:expr, $params:ident) => {
         #[test]
         fn $name() {
             let tests = load_json_file!($json_file);
