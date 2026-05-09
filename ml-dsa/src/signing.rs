@@ -37,14 +37,14 @@ use zeroize::{Zeroize, ZeroizeOnDrop};
 #[derive(Clone)]
 pub struct SigningKey<P: MlDsaParams> {
     /// The expanded form of the signing key.
-    expanded_key: ExpandedSigningKey<P>,
+    expanded_key: MaybeBox<ExpandedSigningKey<P>>,
 
     /// The seed this signing key was derived from
-    seed: Seed,
+    seed: MaybeBox<Seed>,
 }
 
 impl<P: MlDsaParams> SigningKey<P> {
-    /// Deterministically generate a signing key pair from the specified seed
+    /// Deterministically generate a signing key pair from the specified [`Seed`].
     ///
     /// This method reflects the `ML-DSA.KeyGen_internal` algorithm from FIPS 204 (Algorithm 6).
     #[must_use]
@@ -76,8 +76,8 @@ impl<P: MlDsaParams> SigningKey<P> {
         let signing_key = ExpandedSigningKey::new(rho, K, tr, s1, s2, t0, A_hat);
 
         SigningKey {
-            expanded_key: signing_key,
-            seed: xi.clone(),
+            expanded_key: MaybeBox::new(signing_key),
+            seed: MaybeBox::new(xi.clone()),
         }
     }
 
@@ -90,12 +90,14 @@ impl<P: MlDsaParams> SigningKey<P> {
     /// This value is key material. Please treat it with care.
     /// </div>
     #[inline]
+    #[must_use]
     pub fn to_seed(&self) -> Seed {
-        self.seed
+        *self.seed
     }
 
     /// The expanded form of the signing key.
     #[doc(hidden)]
+    #[must_use]
     pub fn expanded_key(&self) -> &ExpandedSigningKey<P> {
         &self.expanded_key
     }
@@ -180,6 +182,17 @@ impl<P: MlDsaParams> CtEq for SigningKey<P> {
     }
 }
 
+impl<P: MlDsaParams> Drop for SigningKey<P> {
+    fn drop(&mut self) {
+        // NOTE: `expanded_key` has its own zeroizing `Drop` impl so we just need to clear `seed`
+        #[cfg(feature = "zeroize")]
+        self.seed.zeroize();
+    }
+}
+
+#[cfg(feature = "zeroize")]
+impl<P: MlDsaParams> ZeroizeOnDrop for SigningKey<P> {}
+
 /// An ML-DSA signing key
 #[derive(Clone)]
 pub struct ExpandedSigningKey<P: MlDsaParams> {
@@ -239,14 +252,15 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
         Self::new(rho, K, tr, s1, s2, t0, A_hat)
     }
 
-    /// Deterministically generate a signing key from the specified seed.
+    /// Deterministically generate an expanded signing key from the specified seed.
     ///
     /// This method reflects the ML-DSA.KeyGen_internal algorithm from FIPS 204, but only returns a
     /// signing key.
     #[must_use]
+    #[inline]
     pub fn from_seed(seed: &Seed) -> Self {
         let kp = SigningKey::from_seed(seed);
-        kp.expanded_key
+        (*kp.expanded_key).clone()
     }
 
     /// This method reflects the ML-DSA.Sign_internal algorithm from FIPS 204. It does not
@@ -590,18 +604,20 @@ impl<P: MlDsaParams> fmt::Debug for ExpandedSigningKey<P> {
     }
 }
 
-#[cfg(feature = "zeroize")]
 impl<P: MlDsaParams> Drop for ExpandedSigningKey<P> {
     fn drop(&mut self) {
-        self.rho.zeroize();
-        self.K.zeroize();
-        self.tr.zeroize();
-        self.s1.zeroize();
-        self.s2.zeroize();
-        self.t0.zeroize();
-        self.s1_hat.zeroize();
-        self.s2_hat.zeroize();
-        self.t0_hat.zeroize();
+        #[cfg(feature = "zeroize")]
+        {
+            self.rho.zeroize();
+            self.K.zeroize();
+            self.tr.zeroize();
+            self.s1.zeroize();
+            self.s2.zeroize();
+            self.t0.zeroize();
+            self.s1_hat.zeroize();
+            self.s2_hat.zeroize();
+            self.t0_hat.zeroize();
+        }
     }
 }
 
