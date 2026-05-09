@@ -120,7 +120,7 @@ where
         let seed_der = SeedString {
             tag_mode: TagMode::Implicit,
             tag_number: SEED_TAG_NUMBER,
-            value: OctetStringRef::new(&self.to_seed())?,
+            value: OctetStringRef::new(self.as_seed())?,
         }
         .to_der()?;
 
