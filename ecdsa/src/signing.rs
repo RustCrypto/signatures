@@ -59,7 +59,7 @@ use elliptic_curve::pkcs8::{EncodePrivateKey, SecretDocument};
 /// primary API for signing:
 ///
 /// - [`Signer`]: sign a message using this key
-/// - [`DigestSigner`]: sign the output of a [`Digest`] using this key
+/// - [`DigestSigner`]: sign the output of a digest using this key
 /// - [`PrehashSigner`]: sign the low-level raw output bytes of a message digest
 ///
 /// See the [`p256` crate](https://docs.rs/p256/latest/p256/ecdsa/index.html)

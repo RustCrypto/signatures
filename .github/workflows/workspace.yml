@@ -11,6 +11,7 @@ on:
 env:
   CARGO_INCREMENTAL: 0
   RUSTFLAGS: "-Dwarnings"
+  RUSTDOCFLAGS: "-Dwarnings"
 
 # Cancels CI jobs when new commits are pushed to a PR branch
 concurrency:
@@ -18,16 +19,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  rustfmt:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6.0.2
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: stable
-          components: rustfmt
-      - run: cargo fmt --all -- --check
-
   clippy:
     runs-on: ubuntu-latest
     steps:
@@ -37,6 +28,25 @@ jobs:
           toolchain: 1.95.0
           components: clippy
       - run: cargo clippy --all-features -- -D warnings
+
+  doc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+      - run: cargo doc --workspace --all-features --no-deps
+
+  rustfmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          components: rustfmt
+      - run: cargo fmt --all -- --check
 
   typos:
     runs-on: ubuntu-latest

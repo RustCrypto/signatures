@@ -144,7 +144,7 @@ impl<Mode: LmsMode> RandomizedMultipartSignerMut<Signature<Mode>> for SigningKey
     }
 }
 
-/// Converts a [PrivateKey] into its byte representation
+/// Converts a [`SigningKey`] into its byte representation.
 impl<Mode: LmsMode> From<SigningKey<Mode>>
     for Array<u8, Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U28>>
 where
@@ -165,7 +165,7 @@ where
     }
 }
 
-/// Tries to parse a [PrivateKey] from an exact slice
+/// Tries to parse a [`SigningKey`] from an exact slice.
 impl<'a, Mode: LmsMode> TryFrom<&'a [u8]> for SigningKey<Mode> {
     type Error = LmsDeserializeError;
 
