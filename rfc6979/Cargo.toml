@@ -16,8 +16,8 @@ edition = "2024"
 rust-version = "1.85"
 
 [dependencies]
+ctutils = "0.4"
 hmac = { version = "0.13", default-features = false }
-subtle = { version = "2", default-features = false }
 
 [dev-dependencies]
 hex-literal = "1"

@@ -1,7 +1,7 @@
 //! Constant-time helpers.
 // TODO(tarcieri): replace this with `crypto-bigint`?
 
-use subtle::{Choice, ConditionallySelectable, ConstantTimeEq};
+use ctutils::{Choice, CtEq};
 
 /// Count the number of leading zeros in constant-time.
 #[inline]
@@ -29,7 +29,7 @@ pub(crate) fn is_zero(n: &[u8]) -> Choice {
     let mut ret = Choice::from(1);
 
     for byte in n {
-        ret.conditional_assign(&Choice::from(0), byte.ct_ne(&0));
+        ret &= byte.ct_eq(&0);
     }
 
     ret
@@ -66,37 +66,37 @@ mod tests {
     #[test]
     fn ct_is_zero() {
         use super::is_zero;
-        assert_eq!(is_zero(&A).unwrap_u8(), 1);
-        assert_eq!(is_zero(&B).unwrap_u8(), 0);
+        assert!(is_zero(&A).to_bool());
+        assert!(!is_zero(&B).to_bool());
     }
 
     #[test]
     fn ct_lt() {
         use super::lt;
 
-        assert_eq!(lt(&A, &A).unwrap_u8(), 0);
-        assert_eq!(lt(&B, &B).unwrap_u8(), 0);
-        assert_eq!(lt(&C, &C).unwrap_u8(), 0);
-        assert_eq!(lt(&D, &D).unwrap_u8(), 0);
-        assert_eq!(lt(&E, &E).unwrap_u8(), 0);
-        assert_eq!(lt(&F, &F).unwrap_u8(), 0);
+        assert!(!lt(&A, &A).to_bool());
+        assert!(!lt(&B, &B).to_bool());
+        assert!(!lt(&C, &C).to_bool());
+        assert!(!lt(&D, &D).to_bool());
+        assert!(!lt(&E, &E).to_bool());
+        assert!(!lt(&F, &F).to_bool());
 
-        assert_eq!(lt(&A, &B).unwrap_u8(), 1);
-        assert_eq!(lt(&A, &C).unwrap_u8(), 1);
-        assert_eq!(lt(&B, &A).unwrap_u8(), 0);
-        assert_eq!(lt(&C, &A).unwrap_u8(), 0);
+        assert!(lt(&A, &B).to_bool());
+        assert!(lt(&A, &C).to_bool());
+        assert!(!lt(&B, &A).to_bool());
+        assert!(!lt(&C, &A).to_bool());
 
-        assert_eq!(lt(&B, &C).unwrap_u8(), 1);
-        assert_eq!(lt(&B, &D).unwrap_u8(), 1);
-        assert_eq!(lt(&C, &B).unwrap_u8(), 0);
-        assert_eq!(lt(&D, &B).unwrap_u8(), 0);
+        assert!(lt(&B, &C).to_bool());
+        assert!(lt(&B, &D).to_bool());
+        assert!(!lt(&C, &B).to_bool());
+        assert!(!lt(&D, &B).to_bool());
 
-        assert_eq!(lt(&C, &D).unwrap_u8(), 1);
-        assert_eq!(lt(&C, &E).unwrap_u8(), 1);
-        assert_eq!(lt(&D, &C).unwrap_u8(), 0);
-        assert_eq!(lt(&E, &C).unwrap_u8(), 0);
+        assert!(lt(&C, &D).to_bool());
+        assert!(lt(&C, &E).to_bool());
+        assert!(!lt(&D, &C).to_bool());
+        assert!(!lt(&E, &C).to_bool());
 
-        assert_eq!(lt(&E, &F).unwrap_u8(), 1);
-        assert_eq!(lt(&F, &E).unwrap_u8(), 0);
+        assert!(lt(&E, &F).to_bool());
+        assert!(!lt(&F, &E).to_bool());
     }
 }

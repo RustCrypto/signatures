@@ -1135,10 +1135,10 @@ checksum = "dc897dd8d9e8bd1ed8cdad82b5966c3e0ecae09fb1907d58efaa013543185d0a"
 name = "rfc6979"
 version = "0.5.0"
 dependencies = [
+ "ctutils",
  "hex-literal",
  "hmac",
  "sha2",
- "subtle",
 ]
 
 [[package]]
