@@ -1,7 +1,7 @@
 //! ML-DSA signature verification.
 
 use crate::{
-    B32, B64, EncodedVerifyingKey, MaybeBox, MlDsaParams, MuBuilder, Signature,
+    B32, B64, EncodedVerifyingKey, MlDsaParams, MuBuilder, Signature,
     algebra::{Elem, NttMatrix, NttVector, Vector},
     crypto::H,
     ntt::{Ntt, NttInverse},
@@ -10,6 +10,7 @@ use crate::{
     sampling::{expand_a, sample_in_ball},
 };
 use common::{Key, KeyExport, KeyInit, KeySizeUser};
+use module_lattice::MaybeBox;
 use sha3::Shake256;
 use signature::{DigestVerifier, Error, MultipartVerifier};
 

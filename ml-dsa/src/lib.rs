@@ -67,22 +67,19 @@ pub use signature::{self, Error, Keypair, SignatureEncoding, Signer, Verifier};
 #[cfg(feature = "rand_core")]
 pub use common::Generate;
 
-use crate::algebra::{AlgebraExt, Vector};
-use crate::crypto::H;
-use crate::hint::Hint;
-use crate::param::{ParameterSet, QMinus1};
-use core::{
-    convert::{TryFrom, TryInto},
-    ops::{Deref, DerefMut},
+use crate::{
+    algebra::{AlgebraExt, Vector},
+    crypto::H,
+    hint::Hint,
+    param::{ParameterSet, QMinus1},
 };
+use core::convert::{TryFrom, TryInto};
 use hybrid_array::{
     Array,
-    typenum::{
-        Diff, Length, Prod, Quot, Shleft, U1, U2, U4, U5, U6, U7, U8, U17, U19, U32, U48, U55, U64,
-        U75, U80, U88,
-    },
+    sizes::{U1, U2, U4, U5, U6, U7, U8, U17, U19, U32, U48, U55, U64, U75, U80, U88},
+    typenum::{Diff, Length, Prod, Quot, Shleft},
 };
-use module_lattice::Truncate;
+use module_lattice::{MaybeBox, Truncate};
 use sha3::Shake256;
 
 /// A 32-byte array, defined here for brevity because it is used several times
@@ -253,45 +250,6 @@ impl ParameterSet for MlDsa87 {
     type Lambda = U64;
     type Omega = U75;
     const TAU: usize = 60;
-}
-
-/// Type which opportunistically uses `Box` when the `alloc` feature is available but falls back to
-/// a stack-allocated type when it's unavailable.
-#[derive(Clone, Debug, PartialEq)]
-pub(crate) struct MaybeBox<T> {
-    #[cfg(not(feature = "alloc"))]
-    inner: T,
-    #[cfg(feature = "alloc")]
-    inner: alloc::boxed::Box<T>,
-}
-
-impl<T> MaybeBox<T> {
-    /// Create a new `MaybeBox`, using `Box` if `alloc` is available.
-    #[inline]
-    pub(crate) fn new(inner: T) -> Self {
-        #[cfg(not(feature = "alloc"))]
-        {
-            Self { inner }
-        }
-        #[cfg(feature = "alloc")]
-        Self {
-            inner: alloc::boxed::Box::new(inner),
-        }
-    }
-}
-
-impl<T> Deref for MaybeBox<T> {
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        &self.inner
-    }
-}
-
-impl<T> DerefMut for MaybeBox<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.inner
-    }
 }
 
 #[cfg(test)]

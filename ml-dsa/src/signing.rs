@@ -3,8 +3,7 @@
 //! These types implement signature generation.
 
 use crate::{
-    B32, B64, ExpandedSigningKeyBytes, MaybeBox, MlDsaParams, MuBuilder, Seed, Signature,
-    VerifyingKey,
+    B32, B64, ExpandedSigningKeyBytes, MlDsaParams, MuBuilder, Seed, Signature, VerifyingKey,
     algebra::{AlgebraExt, NttMatrix, NttVector, Vector},
     crypto::H,
     hint::Hint,
@@ -16,6 +15,7 @@ use common::{KeyExport, KeyInit, KeySizeUser, typenum::U32};
 use core::fmt;
 use ctutils::{Choice, CtEq};
 use hybrid_array::typenum::Unsigned;
+use module_lattice::MaybeBox;
 use sha3::Shake256;
 use signature::{DigestSigner, Error, MultipartSigner, Signer};
 
