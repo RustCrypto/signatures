@@ -124,6 +124,33 @@ where
     }
 }
 
+#[cfg(feature = "pem")]
+impl<C> SigningKey<C>
+where
+    C: EcdsaCurve + AssociatedOid + CurveArithmetic,
+    AffinePoint<C>: FromSec1Point<C> + ToSec1Point<C>,
+    FieldBytesSize<C>: sec1::ModulusSize,
+    Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
+    SignatureSize<C>: ArraySize,
+{
+    #[inline]
+    /// Parse [`SigningKey`] from PEM-encoded private key.
+    ///
+    /// Supported formats:
+    /// - `SEC1` - requires feature `sec1`
+    /// - `PKCS#8` - requires feature `pkcs8`
+    ///
+    /// # Errors
+    /// - If `pem` is not valid PEM encoded private key
+    /// - If label within `pem` is not known valid label
+    /// - If label is valid, but unable to decode DER content of the PEM file
+    pub fn from_pem(
+        pem: &str,
+    ) -> ::core::result::Result<Self, impl core::error::Error + Send + Sync + 'static> {
+        SecretKey::<C>::from_pem(pem).map(Into::into)
+    }
+}
+
 impl<C> Generate for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
