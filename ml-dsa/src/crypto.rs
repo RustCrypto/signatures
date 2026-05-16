@@ -1,6 +1,6 @@
 use hybrid_array::Array;
 use module_lattice::ArraySize;
-use sha3::{
+use shake::{
     Shake128, Shake256,
     digest::{ExtendableOutput, XofReader},
 };
