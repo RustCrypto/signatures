@@ -16,7 +16,7 @@ use core::fmt;
 use ctutils::{Choice, CtEq};
 use hybrid_array::typenum::Unsigned;
 use module_lattice::MaybeBox;
-use sha3::Shake256;
+use shake::Shake256;
 use signature::{DigestSigner, Error, MultipartSigner, Signer};
 
 #[cfg(feature = "rand_core")]

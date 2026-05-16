@@ -38,7 +38,7 @@ common = { package = "crypto-common", version = "0.2", default-features = false 
 ctutils = { version = "0.4", default-features = false }
 hybrid-array = { version = "0.4", features = ["extra-sizes"] }
 module-lattice = { version = "0.2.3", features = ["ctutils"] }
-sha3 = { version = "0.11", default-features = false }
+shake = { version = "0.1", default-features = false }
 signature = { version = "3", default-features = false, features = ["digest"] }
 
 # optional dependencies

@@ -80,7 +80,7 @@ use hybrid_array::{
     typenum::{Diff, Length, Prod, Quot, Shleft},
 };
 use module_lattice::{MaybeBox, Truncate};
-use sha3::Shake256;
+use shake::Shake256;
 
 /// A 32-byte array, defined here for brevity because it is used several times
 pub type B32 = Array<u8, U32>;
