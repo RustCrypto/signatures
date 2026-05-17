@@ -77,7 +77,7 @@ impl<P: MlDsaParams> VerifyingKey<P> {
         Self::new(rho, t1, A_hat, enc)
     }
 
-    /// Computes µ according to FIPS 204 for use in ML-DSA.Sign and ML-DSA.Verify.
+    /// Computes µ according to FIPS 204 for use in `ML-DSA.Sign` and `ML-DSA.Verify`.
     ///
     /// # Errors
     /// Returns [`Error`] if the given `Mp` returns one.
