@@ -209,7 +209,7 @@ mod tests {
     #[cfg(feature = "alloc")]
     fn test_ht_sign_kat() {
         use hex_literal::hex;
-        use sha3::{Shake256, digest::ExtendableOutput};
+        use shake::{Shake256, digest::ExtendableOutput};
 
         let sk_seed = SkSeed(Array([1; 16]));
         let pk_seed = PkSeed(Array([2; 16]));

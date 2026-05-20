@@ -7,12 +7,12 @@ use crate::hypertree::HypertreeParams;
 use crate::wots::WotsParams;
 use crate::xmss::XmssParams;
 use crate::{ParameterSet, PkSeed, SkPrf, SkSeed};
+use ::shake::Shake256;
 use const_oid::db::fips205;
 use digest::{ExtendableOutput, Update};
 use hybrid_array::typenum::consts::{U16, U30, U32};
 use hybrid_array::typenum::{U24, U34, U39, U42, U47, U49};
 use hybrid_array::{Array, ArraySize};
-use sha3::Shake256;
 use typenum::U;
 
 /// Implementation of the component hash functions using SHAKE256
