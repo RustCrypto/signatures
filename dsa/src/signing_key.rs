@@ -13,7 +13,7 @@ use crypto_bigint::{
     BoxedUint, ConcatenatingMul, NonZero, Resize,
     modular::{BoxedMontyForm, BoxedMontyParams},
 };
-use digest::{Update, block_api::EagerHash};
+use digest::{Digest, FixedOutputReset, common::BlockSizeUser};
 use signature::{
     DigestSigner, MultipartSigner, RandomizedDigestSigner, Signer,
     hazmat::{PrehashSigner, RandomizedPrehashSigner},
@@ -94,7 +94,7 @@ impl SigningKey {
     #[cfg(feature = "hazmat")]
     pub fn sign_prehashed_rfc6979<D>(&self, prehash: &[u8]) -> Result<Signature, signature::Error>
     where
-        D: EagerHash,
+        D: Digest + BlockSizeUser + FixedOutputReset,
     {
         let k_kinv = crate::generate::secret_number_rfc6979::<D>(self, prehash)?;
         self.sign_prehashed(k_kinv, prehash)
@@ -193,7 +193,7 @@ impl RandomizedPrehashSigner<Signature> for SigningKey {
 
 impl<D> DigestSigner<D, Signature> for SigningKey
 where
-    D: EagerHash + Update,
+    D: Digest + FixedOutputReset + BlockSizeUser,
 {
     fn try_sign_digest<F: Fn(&mut D) -> Result<(), signature::Error>>(
         &self,
@@ -210,7 +210,7 @@ where
 
 impl<D> RandomizedDigestSigner<D, Signature> for SigningKey
 where
-    D: EagerHash + Update,
+    D: Digest + FixedOutputReset + BlockSizeUser,
 {
     fn try_sign_digest_with_rng<
         R: TryCryptoRng + ?Sized,
