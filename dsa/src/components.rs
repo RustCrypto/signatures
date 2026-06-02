@@ -2,13 +2,13 @@
 //! Module containing the definition of the common components container
 //!
 
-use crate::{size::KeySize, two};
+use crate::{generate, size::KeySize, two};
 use crypto_bigint::{BoxedUint, NonZero, Odd};
 use der::{
     self, DecodeValue, Encode, EncodeValue, Header, Length, Reader, Sequence, Tag, Writer,
     asn1::UintRef,
 };
-use signature::rand_core::CryptoRng;
+use signature::rand_core::TryCryptoRng;
 
 /// The common components of an DSA keypair
 ///
@@ -87,10 +87,13 @@ impl Components {
     }
 
     /// Generate a new pair of common components
-    pub fn generate<R: CryptoRng + ?Sized>(rng: &mut R, key_size: KeySize) -> Self {
-        let (p, q, g) = crate::generate::common_components(rng, key_size);
-        Self::from_components(p.get(), q.get(), g.get())
-            .expect("[Bug] Newly generated components considered invalid")
+    pub fn try_generate_from_rng_with_key_size<R: TryCryptoRng + ?Sized>(
+        rng: &mut R,
+        key_size: KeySize,
+    ) -> Result<Self, R::Error> {
+        let (p, q, g) = generate::common_components(rng, key_size)?;
+        Ok(Self::from_components(p.get(), q.get(), g.get())
+            .expect("[Bug] Newly generated components considered invalid"))
     }
 
     /// DSA prime p

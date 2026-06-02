@@ -7,8 +7,11 @@ use signature::{RandomizedDigestSigner, SignatureEncoding};
 use std::{fs::File, io::Write};
 
 fn main() {
+    let components =
+        Components::try_generate_from_rng_with_key_size(&mut SysRng, KeySize::DSA_2048_256)
+            .unwrap();
+
     let mut rng = UnwrapErr(SysRng);
-    let components = Components::generate(&mut rng, KeySize::DSA_2048_256);
     let signing_key = SigningKey::generate(&mut rng, components);
     let verifying_key = signing_key.verifying_key();
 

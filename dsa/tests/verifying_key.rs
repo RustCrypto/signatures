@@ -21,7 +21,8 @@ const OPENSSL_PEM_PUBLIC_KEY: &str = include_str!("pems/public.pem");
 #[cfg(feature = "hazmat")]
 fn generate_verifying_key() -> VerifyingKey {
     let mut rng = rand_core::UnwrapErr(SysRng);
-    let components = Components::generate(&mut rng, KeySize::DSA_1024_160);
+    let components =
+        Components::try_generate_from_rng_with_key_size(&mut rng, KeySize::DSA_1024_160).unwrap();
     let signing_key = SigningKey::generate(&mut rng, components);
 
     signing_key.verifying_key().clone()
