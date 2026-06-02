@@ -14,13 +14,17 @@
 //!
 #![cfg_attr(feature = "hazmat", doc = "```")]
 #![cfg_attr(not(feature = "hazmat"), doc = "```ignore")]
-//! # use dsa::{KeySize, Components, SigningKey};
-//! use getrandom::{SysRng, rand_core::UnwrapErr};
+//! # fn main() -> Result<(), core::convert::Infallible> {
+//! use dsa::{KeySize, Components, SigningKey};
 //!
-//! let mut csprng = UnwrapErr(SysRng);
-//! let components = Components::generate(&mut csprng, KeySize::DSA_2048_256);
+//! # use getrandom::{SysRng, rand_core::UnwrapErr};
+//! # let mut csprng = UnwrapErr(SysRng);
+//!
+//! let components = Components::try_generate_from_rng_with_key_size(&mut csprng, KeySize::DSA_2048_256)?;
 //! let signing_key = SigningKey::generate(&mut csprng, components);
 //! let verifying_key = signing_key.verifying_key();
+//! # Ok(())
+//! # }
 //! ```
 //!
 //! Create keypair from existing components
