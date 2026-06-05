@@ -31,12 +31,14 @@ pkcs8 = { version = "0.11", optional = true, default-features = false, features 
 [dev-dependencies]
 chacha20 = { version = "0.10", features = ["rng"] }
 der = { version = "0.8", features = ["derive"] }
-hex = "0.4"
+hex = { version = "0.4", features = ["serde"] }
 hex-literal = "1"
 getrandom = { version = "0.4", features = ["sys_rng"] }
 pkcs8 = { version = "0.11", default-features = false, features = ["pem"] }
 proptest = "1"
 rand_core = "0.10"
+serde = { version = "1.0.215", features = ["derive"] }
+serde_json = "1.0.132"
 sha1 = "0.11"
 
 [features]
