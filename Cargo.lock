@@ -1192,6 +1192,7 @@ dependencies = [
  "hex-literal",
  "hmac",
  "sha2",
+ "sha3 0.12.0",
 ]
 
 [[package]]
@@ -1366,6 +1367,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "sha3"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bc9bad02c26382724b2d2692c6f179285e4b54eeecd7968f52a50059c3c11759"
+dependencies = [
+ "digest",
+ "keccak",
+ "sponge-cursor",
+]
+
+[[package]]
 name = "shake"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1415,7 +1427,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
- "sha3",
+ "sha3 0.11.0",
  "signature",
  "typenum",
  "zerocopy",
@@ -1801,7 +1813,7 @@ dependencies = [
  "serde_json",
  "serdect",
  "sha2",
- "sha3",
+ "sha3 0.11.0",
  "signature",
  "spki",
  "subtle",
