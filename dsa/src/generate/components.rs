@@ -4,7 +4,7 @@
 
 use crate::{
     generate::{calculate_bounds, generate_prime},
-    size::KeySize,
+    key_size::KeySize,
     two,
 };
 use crypto_bigint::{

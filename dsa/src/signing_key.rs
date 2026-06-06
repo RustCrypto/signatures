@@ -4,7 +4,7 @@
 
 #![cfg(feature = "hazmat")]
 
-use crate::{Signature, VerifyingKey};
+use crate::{Components, Signature, VerifyingKey};
 use core::{
     cmp::min,
     fmt::{self, Debug},
@@ -13,6 +13,7 @@ use crypto_bigint::{
     BoxedUint, ConcatenatingMul, NonZero, Resize,
     modular::{BoxedMontyForm, BoxedMontyParams},
 };
+use crypto_common::Generate;
 use digest::{Digest, FixedOutputReset, common::BlockSizeUser};
 use signature::{
     DigestSigner, MultipartSigner, RandomizedDigestSigner, Signer,
@@ -21,8 +22,6 @@ use signature::{
 };
 use zeroize::{ZeroizeOnDrop, Zeroizing};
 
-#[cfg(feature = "hazmat")]
-use {crate::Components, signature::rand_core::CryptoRng};
 #[cfg(feature = "pkcs8")]
 use {
     crate::OID,
@@ -70,8 +69,11 @@ impl SigningKey {
     /// Generate a new DSA keypair
     #[cfg(feature = "hazmat")]
     #[inline]
-    pub fn generate<R: CryptoRng + ?Sized>(rng: &mut R, components: Components) -> SigningKey {
-        crate::generate::keypair(rng, components)
+    pub fn try_generate_from_rng_with_components<R: TryCryptoRng + ?Sized>(
+        rng: &mut R,
+        components: Components,
+    ) -> Result<Self, R::Error> {
+        crate::generate::signing_keypair(rng, components)
     }
 
     /// DSA public key
@@ -151,6 +153,13 @@ impl SigningKey {
 }
 
 impl ZeroizeOnDrop for SigningKey {}
+
+impl Generate for SigningKey {
+    fn try_generate_from_rng<R: TryCryptoRng + ?Sized>(rng: &mut R) -> Result<Self, R::Error> {
+        let components = Components::try_generate_from_rng(rng)?;
+        Self::try_generate_from_rng_with_components(rng, components)
+    }
+}
 
 impl Signer<Signature> for SigningKey {
     fn try_sign(&self, msg: &[u8]) -> Result<Signature, signature::Error> {

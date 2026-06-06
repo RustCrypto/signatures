@@ -12,7 +12,8 @@ fn main() {
             .unwrap();
 
     let mut rng = UnwrapErr(SysRng);
-    let signing_key = SigningKey::generate(&mut rng, components);
+    let signing_key =
+        SigningKey::try_generate_from_rng_with_components(&mut rng, components).unwrap();
     let verifying_key = signing_key.verifying_key();
 
     let signature = signing_key
