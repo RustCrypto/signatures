@@ -34,9 +34,7 @@ impl KeySize {
     pub(crate) fn other(l: u32, n: u32) -> Self {
         Self { l, n }
     }
-}
 
-impl KeySize {
     pub(crate) fn l_aligned(&self) -> u32 {
         self.l.div_ceil(Limb::BITS) * Limb::BITS
     }
@@ -47,6 +45,12 @@ impl KeySize {
 
     pub(crate) fn matches(&self, l: u32, n: u32) -> bool {
         l == self.l_aligned() && n == self.n_aligned()
+    }
+}
+
+impl Default for KeySize {
+    fn default() -> Self {
+        Self::DSA_3072_256
     }
 }
 

@@ -23,7 +23,8 @@ fn generate_verifying_key() -> VerifyingKey {
     let mut rng = rand_core::UnwrapErr(SysRng);
     let components =
         Components::try_generate_from_rng_with_key_size(&mut rng, KeySize::DSA_1024_160).unwrap();
-    let signing_key = SigningKey::generate(&mut rng, components);
+    let signing_key =
+        SigningKey::try_generate_from_rng_with_components(&mut rng, components).unwrap();
 
     signing_key.verifying_key().clone()
 }

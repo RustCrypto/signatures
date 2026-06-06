@@ -2,8 +2,9 @@
 //! Module containing the definition of the common components container
 //!
 
-use crate::{generate, size::KeySize, two};
+use crate::{generate, key_size::KeySize, two};
 use crypto_bigint::{BoxedUint, NonZero, Odd};
+use crypto_common::Generate;
 use der::{
     self, DecodeValue, Encode, EncodeValue, Header, Length, Reader, Sequence, Tag, Writer,
     asn1::UintRef,
@@ -112,6 +113,12 @@ impl Components {
     #[must_use]
     pub const fn g(&self) -> &NonZero<BoxedUint> {
         &self.g
+    }
+}
+
+impl Generate for Components {
+    fn try_generate_from_rng<R: TryCryptoRng + ?Sized>(rng: &mut R) -> Result<Self, R::Error> {
+        Self::try_generate_from_rng_with_key_size(rng, KeySize::default())
     }
 }
 

@@ -439,6 +439,7 @@ version = "0.7.0-rc.15"
 dependencies = [
  "chacha20",
  "crypto-bigint",
+ "crypto-common",
  "crypto-primes",
  "der",
  "digest",

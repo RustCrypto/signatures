@@ -19,6 +19,7 @@ rust-version = "1.85"
 der = { version = "0.8", features = ["alloc"] }
 digest = "0.11"
 crypto-bigint = { version = "0.7", default-features = false, features = ["alloc", "zeroize"] }
+crypto-common = { version = "0.2", default-features = false, features = ["rand_core"] }
 crypto-primes = { version = "0.7", default-features = false }
 rfc6979 = { version = "0.5" }
 sha2 = { version = "0.11", default-features = false }
@@ -41,6 +42,7 @@ sha1 = "0.11"
 
 [features]
 default = ["pkcs8"]
+getrandom = ["crypto-common/getrandom"]
 hazmat = []
 
 [package.metadata.docs.rs]

@@ -36,7 +36,7 @@ fn generate_random_keypair() -> SigningKey {
     let mut rng = UnwrapErr(SysRng);
     let components =
         Components::try_generate_from_rng_with_key_size(&mut rng, KeySize::DSA_1024_160).unwrap();
-    SigningKey::generate(&mut rng, components)
+    SigningKey::try_generate_from_rng_with_components(&mut rng, components).unwrap()
 }
 
 #[test]

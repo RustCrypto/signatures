@@ -12,7 +12,7 @@ pub(crate) use self::components::common as common_components;
 pub(crate) use self::secret_number::{secret_number, secret_number_rfc6979};
 
 #[cfg(feature = "hazmat")]
-pub(crate) use self::keypair::keypair;
+pub(crate) use self::keypair::signing_keypair;
 
 #[cfg(all(feature = "hazmat", feature = "pkcs8"))]
 pub(crate) use self::components::public as public_component;
