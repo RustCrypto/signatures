@@ -1,5 +1,5 @@
 use sha2::{Digest, Sha256, Sha512};
-use sha3::{
+use shake::{
     Shake128, Shake256,
     digest::{ExtendableOutput, Update, XofReader},
 };
