@@ -18,7 +18,8 @@ const OPENSSL_PEM_PRIVATE_KEY: &str = include_str!("pems/private.pem");
 
 fn generate_keypair() -> SigningKey {
     let mut rng = UnwrapErr(SysRng);
-    let components = Components::generate(&mut rng, KeySize::DSA_1024_160);
+    let components =
+        Components::try_generate_from_rng_with_key_size(&mut rng, KeySize::DSA_1024_160).unwrap();
     SigningKey::generate(&mut rng, components)
 }
 

@@ -22,6 +22,7 @@ hmac = { version = "0.13", default-features = false }
 [dev-dependencies]
 hex-literal = "1"
 sha2 = "0.11"
+sha3 = "0.12"
 
 [lints]
 workspace = true

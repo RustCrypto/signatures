@@ -42,11 +42,11 @@ pub use hmac::digest::array::typenum::consts;
 
 use core::fmt::{self, Debug};
 use hmac::{
-    HmacReset,
+    SimpleHmacReset,
     digest::{
-        KeyInit, Mac, OutputSizeUser,
+        Digest, FixedOutput, FixedOutputReset, KeyInit, Mac,
         array::{Array, ArraySize},
-        block_api::EagerHash,
+        common::BlockSizeUser,
     },
 };
 
@@ -66,7 +66,7 @@ pub fn generate_k<D, N>(
     data: &[u8],
 ) -> Array<u8, N>
 where
-    D: EagerHash,
+    D: Digest + BlockSizeUser + FixedOutput + FixedOutputReset,
     N: ArraySize,
 {
     let mut k = Array::default();
@@ -91,7 +91,7 @@ where
 #[inline]
 pub fn generate_k_mut<D>(x: &[u8], q: &[u8], h: &[u8], data: &[u8], k: &mut [u8])
 where
-    D: EagerHash,
+    D: Digest + BlockSizeUser + FixedOutput + FixedOutputReset,
 {
     let k_len = k.len();
     assert_eq!(k_len, x.len());
@@ -124,24 +124,24 @@ where
 /// deterministic ephemeral scalar `k`.
 pub struct HmacDrbg<D>
 where
-    D: EagerHash,
+    D: Digest + BlockSizeUser + FixedOutputReset,
 {
     /// HMAC key `K` (see RFC 6979 Section 3.2.c)
-    k: HmacReset<D>,
+    k: SimpleHmacReset<D>,
 
     /// Chaining value `V` (see RFC 6979 Section 3.2.c)
-    v: Array<u8, <D::Core as OutputSizeUser>::OutputSize>,
+    v: Array<u8, D::OutputSize>,
 }
 
 impl<D> HmacDrbg<D>
 where
-    D: EagerHash,
+    D: Digest + BlockSizeUser + FixedOutputReset,
 {
     /// Initialize `HMAC_DRBG`.
     #[must_use]
     #[allow(clippy::missing_panics_doc, reason = "should not panic")]
     pub fn new(entropy_input: &[u8], nonce: &[u8], personalization_string: &[u8]) -> Self {
-        let mut k = HmacReset::new(&Default::default());
+        let mut k = SimpleHmacReset::new(&Default::default());
         let mut v = Array::default();
 
         v.fill(0x01);
@@ -152,7 +152,7 @@ where
             k.update(entropy_input);
             k.update(nonce);
             k.update(personalization_string);
-            k = HmacReset::new_from_slice(&k.finalize().into_bytes()).expect("should work");
+            k = SimpleHmacReset::new_from_slice(&k.finalize().into_bytes()).expect("should work");
 
             // Steps 3.2.e,g: v = HMAC_k(v)
             k.update(&v);
@@ -182,8 +182,8 @@ where
 
         self.k.update(&self.v);
         self.k.update(&[0x00]);
-        self.k =
-            HmacReset::new_from_slice(&self.k.finalize_reset().into_bytes()).expect("should work");
+        self.k = SimpleHmacReset::new_from_slice(&self.k.finalize_reset().into_bytes())
+            .expect("should work");
         self.k.update(&self.v);
         self.v = self.k.finalize_reset().into_bytes();
     }
@@ -191,7 +191,7 @@ where
 
 impl<D> Debug for HmacDrbg<D>
 where
-    D: EagerHash,
+    D: Digest + BlockSizeUser + FixedOutputReset,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("HmacDrbg").finish_non_exhaustive()
@@ -202,11 +202,12 @@ where
 mod tests {
     use crate::{
         Array,
-        consts::{U21, U66},
+        consts::{U12, U21, U66},
         generate_k,
     };
     use hex_literal::hex;
     use sha2::{Digest, Sha256, Sha512};
+    use sha3::Sha3_256;
 
     /// "Detailed Example" from RFC6979 Appendix A.1.
     ///
@@ -249,5 +250,19 @@ mod tests {
         );
 
         assert_eq!(k, expected_k);
+    }
+
+    /// This test showcase the use with a non-block_api hash
+    /// This is used for ethereum which uses ecdsa-sha3
+    #[test]
+    fn non_block_api() {
+        let x = hex!("000000000000000000000000");
+        let q = hex!("ffffffffffffffffffffffff");
+
+        let h = hex!("080808080808080808080808");
+
+        let data = b"";
+        let out = generate_k::<Sha3_256, U12>(&x.into(), &q.into(), &h.into(), data);
+        assert_eq!(out, hex!("d460ac6531e9743d3829850f"));
     }
 }

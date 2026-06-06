@@ -8,11 +8,11 @@ use crate::{
     two,
 };
 use crypto_bigint::{
-    BoxedUint, ConcatenatingMul, NonZero, Odd, RandomBits, Resize,
+    BoxedUint, ConcatenatingMul, NonZero, Odd, RandomBits, RandomBitsError, Resize,
     modular::{BoxedMontyForm, BoxedMontyParams},
 };
 use crypto_primes::{Flavor, is_prime};
-use signature::rand_core::CryptoRng;
+use signature::rand_core::TryCryptoRng;
 
 #[cfg(feature = "hazmat")]
 use {crate::Components, crypto_bigint::CtOption};
@@ -22,10 +22,11 @@ use {crate::Components, crypto_bigint::CtOption};
 /// # Returns
 ///
 /// Tuple of three `BoxedUint`s. Ordered like this `(p, q, g)`
-pub(crate) fn common<R: CryptoRng + ?Sized>(
+#[allow(clippy::type_complexity, reason = "internal helper")]
+pub(crate) fn common<R: TryCryptoRng + ?Sized>(
     rng: &mut R,
     KeySize { l, n }: KeySize,
-) -> (Odd<BoxedUint>, NonZero<BoxedUint>, NonZero<BoxedUint>) {
+) -> Result<(Odd<BoxedUint>, NonZero<BoxedUint>, NonZero<BoxedUint>), R::Error> {
     // Calculate the lower and upper bounds of p and q
     let (p_min, p_max) = calculate_bounds(l);
     let (q_min, q_max): (NonZero<_>, _) = calculate_bounds(n);
@@ -41,7 +42,11 @@ pub(crate) fn common<R: CryptoRng + ?Sized>(
         // Attempt to find a prime p which has a subgroup of the order q
         for _ in 0..4096 {
             let m = 'gen_m: loop {
-                let m = BoxedUint::random_bits(rng, l);
+                let m = match BoxedUint::try_random_bits(rng, l) {
+                    Ok(m) => m,
+                    Err(RandomBitsError::RandCore(err)) => return Err(err),
+                    Err(other) => unreachable!("[bug] RNG error: {other}"),
+                };
 
                 if m > *p_min && m < *p_max {
                     break 'gen_m m;
@@ -82,7 +87,7 @@ pub(crate) fn common<R: CryptoRng + ?Sized>(
 
     let q = q.resize(n);
 
-    (p, q, g)
+    Ok((p, q, g))
 }
 
 /// Calculate the public component from the common components and the private component

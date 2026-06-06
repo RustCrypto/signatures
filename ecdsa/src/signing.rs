@@ -5,7 +5,7 @@ use crate::{
     hazmat::{DigestAlgorithm, bits2field, sign_prehashed_rfc6979},
 };
 use core::fmt::{self, Debug};
-use digest::{Update, block_api::EagerHash, const_oid::AssociatedOid};
+use digest::{Digest, FixedOutput, const_oid::AssociatedOid};
 use elliptic_curve::{
     CurveArithmetic, FieldBytes, Generate, NonZeroScalar, Scalar, SecretKey,
     array::ArraySize,
@@ -146,14 +146,14 @@ where
 impl<C, D> DigestSigner<D, Signature<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
-    D: EagerHash + Update,
+    D: Digest + FixedOutput,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
     fn try_sign_digest<F: Fn(&mut D) -> Result<()>>(&self, f: F) -> Result<Signature<C>> {
         let mut digest = D::new();
         f(&mut digest)?;
-        self.sign_prehash(&digest.finalize())
+        self.sign_prehash(&digest.finalize_fixed())
     }
 }
 
@@ -205,7 +205,7 @@ where
 impl<C, D> RandomizedDigestSigner<D, Signature<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
-    D: EagerHash + Update,
+    D: Digest + FixedOutput,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
@@ -216,7 +216,7 @@ where
     ) -> Result<Signature<C>> {
         let mut digest = D::new();
         f(&mut digest)?;
-        self.sign_prehash_with_rng(rng, &digest.finalize())
+        self.sign_prehash_with_rng(rng, &digest.finalize_fixed())
     }
 }
 
@@ -284,7 +284,7 @@ where
 impl<C, D> DigestSigner<D, SignatureWithOid<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
-    D: AssociatedOid + EagerHash + Update,
+    D: AssociatedOid + Digest + FixedOutput,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
@@ -354,7 +354,7 @@ where
 impl<C, D> RandomizedDigestSigner<D, der::Signature<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
-    D: EagerHash + Update,
+    D: Digest + FixedOutput,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,
@@ -393,7 +393,7 @@ where
 impl<D, C> DigestSigner<D, der::Signature<C>> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
-    D: EagerHash + Update,
+    D: Digest + FixedOutput,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,

@@ -7,7 +7,8 @@ use std::{fs::File, io::Write};
 
 fn main() {
     let mut rng = rand_core::UnwrapErr(SysRng);
-    let components = Components::generate(&mut rng, KeySize::DSA_2048_256);
+    let components =
+        Components::try_generate_from_rng_with_key_size(&mut rng, KeySize::DSA_2048_256).unwrap();
     let signing_key = SigningKey::generate(&mut rng, components);
     let verifying_key = signing_key.verifying_key();
 

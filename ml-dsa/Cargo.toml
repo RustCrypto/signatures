@@ -4,7 +4,7 @@ description = """
 Pure Rust implementation of ML-DSA (formerly known as CRYSTALS-Dilithium) as
 described in FIPS-204 (final)
 """
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 rust-version = "1.85"
 license = "Apache-2.0 OR MIT"
@@ -26,7 +26,7 @@ exclude = [
 
 [features]
 default = ["alloc", "getrandom", "pkcs8"]
-alloc = ["hybrid-array/alloc", "pkcs8?/alloc", "signature/alloc"]
+alloc = ["hybrid-array/alloc", "module-lattice/alloc", "pkcs8?/alloc", "signature/alloc"]
 
 getrandom = ["common/getrandom", "rand_core"]
 pkcs8 = ["dep:const-oid", "dep:pkcs8"]

@@ -8,7 +8,7 @@ use {
         EcdsaCurve, Signature, SignatureSize, SigningKey, VerifyingKey,
         hazmat::{DigestAlgorithm, bits2field, sign_prehashed_rfc6979, verify_prehashed},
     },
-    digest::{Digest, block_api::EagerHash},
+    digest::{Digest, FixedOutputReset, Update},
     elliptic_curve::{
         AffinePoint, FieldBytesEncoding, FieldBytesSize, Group, PrimeField, ProjectivePoint,
         bigint::CheckedAdd,
@@ -108,7 +108,7 @@ impl RecoveryId {
     ) -> Result<Self>
     where
         C: EcdsaCurve + CurveArithmetic,
-        D: EagerHash,
+        D: Digest,
         AffinePoint<C>: DecompressPoint<C> + FromSec1Point<C> + ToSec1Point<C>,
         FieldBytesSize<C>: sec1::ModulusSize,
         SignatureSize<C>: ArraySize,
@@ -203,7 +203,7 @@ where
     /// Sign the given message digest, returning a signature and recovery ID.
     pub fn sign_digest_recoverable<D>(&self, msg_digest: D) -> Result<(Signature<C>, RecoveryId)>
     where
-        D: EagerHash,
+        D: Digest,
     {
         self.sign_prehash_recoverable(&msg_digest.finalize())
     }
@@ -219,7 +219,7 @@ where
 impl<C, D> DigestSigner<D, (Signature<C>, RecoveryId)> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
-    D: EagerHash + digest::Update,
+    D: Digest + Update,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
@@ -253,7 +253,7 @@ where
 impl<C, D> RandomizedDigestSigner<D, (Signature<C>, RecoveryId)> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
-    D: EagerHash + digest::Update,
+    D: Digest + Update + FixedOutputReset,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
@@ -264,7 +264,7 @@ where
     ) -> Result<(Signature<C>, RecoveryId)> {
         let mut digest = D::new();
         f(&mut digest)?;
-        self.sign_prehash_with_rng(rng, &digest.finalize())
+        self.sign_prehash_with_rng(rng, &digest.finalize_reset())
     }
 }
 
@@ -301,7 +301,8 @@ where
 {
     fn try_multipart_sign(&self, msg: &[&[u8]]) -> Result<(Signature<C>, RecoveryId)> {
         let mut digest = C::Digest::new();
-        msg.iter().for_each(|slice| digest.update(slice));
+        msg.iter()
+            .for_each(|slice| Update::update(&mut digest, slice));
         self.sign_digest_recoverable(digest)
     }
 }
@@ -337,7 +338,7 @@ where
         recovery_id: RecoveryId,
     ) -> Result<Self>
     where
-        D: EagerHash,
+        D: Digest,
     {
         Self::recover_from_prehash(&msg_digest.finalize(), signature, recovery_id)
     }

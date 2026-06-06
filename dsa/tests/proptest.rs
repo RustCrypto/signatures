@@ -20,7 +20,7 @@ prop_compose! {
     fn private_key()(seed in any::<[u8; 32]>()) -> SigningKey {
         let mut rng = ChaCha8Rng::from_seed(seed);
         #[allow(deprecated)]
-        let components = Components::generate(&mut rng, KeySize::DSA_1024_160);
+        let components = Components::try_generate_from_rng_with_key_size(&mut rng, KeySize::DSA_1024_160).unwrap();
         SigningKey::generate(&mut rng, components)
     }
 }

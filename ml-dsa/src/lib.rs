@@ -125,6 +125,11 @@ impl<P: MlDsaParams> Signature<P> {
 
         Some(Self { c_tilde, z, h })
     }
+
+    /// Access the challenge hash `c̃`.
+    pub fn c_tilde(&self) -> &Array<u8, P::Lambda> {
+        &self.c_tilde
+    }
 }
 
 impl<'a, P: MlDsaParams> TryFrom<&'a [u8]> for Signature<P> {

@@ -31,9 +31,9 @@ use {
 };
 
 #[cfg(feature = "digest")]
-use digest::block_api::EagerHash;
+use digest::{Digest, FixedOutput, FixedOutputReset, common::BlockSizeUser};
 
-/// Bind a preferred [`EagerHash`] algorithm to an elliptic curve type.
+/// Bind a preferred [`Digest`] algorithm to an elliptic curve type.
 ///
 /// Generally there is a preferred variety of the SHA-2 family used with ECDSA
 /// for a particular elliptic curve.
@@ -41,7 +41,7 @@ use digest::block_api::EagerHash;
 pub trait DigestAlgorithm: EcdsaCurve {
     /// Preferred digest to use when computing ECDSA signatures for this
     /// elliptic curve. This is typically a member of the SHA-2 family.
-    type Digest: EagerHash + digest::Update;
+    type Digest: BlockSizeUser + Digest + FixedOutput + FixedOutputReset;
 }
 
 /// Partial implementation of the `bits2int` function as defined in
@@ -166,7 +166,7 @@ pub fn sign_prehashed_rfc6979<C, D>(
 ) -> Result<(Signature<C>, RecoveryId)>
 where
     C: EcdsaCurve + CurveArithmetic,
-    D: EagerHash,
+    D: Digest + BlockSizeUser + FixedOutput + FixedOutputReset,
     SignatureSize<C>: ArraySize,
 {
     // From RFC6979 § 2.4:
