@@ -369,9 +369,9 @@ dependencies = [
 
 [[package]]
 name = "crypto-primes"
-version = "0.7.0"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "21f41f23de7d24cdbda7f0c4d9c0351f99a4ceb258ef30e5c1927af8987ffe5a"
+checksum = "34caa94a67aadf36b12807811390033f73eff0e3789feb596925ace787b13efe"
 dependencies = [
  "crypto-bigint",
  "libm",
