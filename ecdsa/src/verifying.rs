@@ -10,7 +10,6 @@ use elliptic_curve::{
     AffinePoint, CurveArithmetic, FieldBytesSize, ProjectivePoint, PublicKey,
     array::ArraySize,
     point::PointCompression,
-    scalar::IsHigh,
     sec1::{self, CompressedPoint, FromSec1Point, Sec1Point, ToSec1Point},
 };
 use signature::{DigestVerifier, MultipartVerifier, Verifier, hazmat::PrehashVerifier};
@@ -164,10 +163,6 @@ where
     SignatureSize<C>: ArraySize,
 {
     fn verify_prehash(&self, prehash: &[u8], signature: &Signature<C>) -> Result<()> {
-        if C::NORMALIZE_S && signature.s().is_high().into() {
-            return Err(Error::new());
-        }
-
         hazmat::verify_prehashed::<C>(
             &ProjectivePoint::<C>::from(*self.inner.as_affine()),
             &bits2field::<C>(prehash)?,

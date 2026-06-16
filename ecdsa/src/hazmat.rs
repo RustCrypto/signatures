@@ -196,10 +196,6 @@ where
 /// - `z`: message digest to be verified. MUST BE OUTPUT OF A CRYPTOGRAPHICALLY SECURE DIGEST
 ///   ALGORITHM!!!
 /// - `sig`: signature to be verified against the key and message.
-///
-/// # Low-S Normalization
-///
-/// This is a low-level function that does *NOT* apply the `EcdsaCurve::NORMALIZE_S` checks.
 #[cfg(feature = "algorithm")]
 pub fn verify_prehashed<C>(
     q: &ProjectivePoint<C>,
@@ -210,6 +206,10 @@ where
     C: EcdsaCurve + CurveArithmetic,
     SignatureSize<C>: ArraySize,
 {
+    if C::NORMALIZE_S && sig.s().is_high().into() {
+        return Err(Error::new());
+    }
+
     let z = Scalar::<C>::reduce(z);
     let (r, s) = sig.split_scalars();
     let s_inv = *s.invert_vartime();
