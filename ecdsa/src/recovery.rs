@@ -130,18 +130,17 @@ impl RecoveryId {
         FieldBytesSize<C>: sec1::ModulusSize,
         SignatureSize<C>: ArraySize,
     {
-        // Ensure signature verifies with the recovered key
+        // Ensure signature verifies with the provided key
         verify_prehashed::<C>(
             &ProjectivePoint::<C>::from(*verifying_key.as_affine()),
             &bits2field::<C>(prehash)?,
             signature,
         )?;
+
         for id in 0..=Self::MAX {
             let recovery_id = RecoveryId(id);
 
-            if let Ok(vk) =
-                VerifyingKey::recover_from_prehash_noverify(prehash, signature, recovery_id)
-            {
+            if let Ok(vk) = VerifyingKey::recover_from_prehash(prehash, signature, recovery_id) {
                 if verifying_key == &vk {
                     return Ok(recovery_id);
                 }
@@ -315,8 +314,7 @@ where
     FieldBytesSize<C>: sec1::ModulusSize,
     SignatureSize<C>: ArraySize,
 {
-    /// Recover a [`VerifyingKey`] from the given message, signature, and
-    /// [`RecoveryId`].
+    /// Recover a [`VerifyingKey`] from the given message, signature, and [`RecoveryId`].
     ///
     /// The message is first hashed using this curve's [`DigestAlgorithm`].
     pub fn recover_from_msg(
@@ -330,8 +328,7 @@ where
         Self::recover_from_digest(C::Digest::new_with_prefix(msg), signature, recovery_id)
     }
 
-    /// Recover a [`VerifyingKey`] from the given message [`Digest`],
-    /// signature, and [`RecoveryId`].
+    /// Recover a [`VerifyingKey`] from the given message [`Digest`], signature, and [`RecoveryId`].
     pub fn recover_from_digest<D>(
         msg_digest: D,
         signature: &Signature<C>,
@@ -343,29 +340,21 @@ where
         Self::recover_from_prehash(&msg_digest.finalize(), signature, recovery_id)
     }
 
-    /// Recover a [`VerifyingKey`] from the given `prehash` of a message, the
-    /// signature over that prehashed message, and a [`RecoveryId`].
-    pub fn recover_from_prehash(
-        prehash: &[u8],
-        signature: &Signature<C>,
-        recovery_id: RecoveryId,
-    ) -> Result<Self> {
-        let vk = Self::recover_from_prehash_noverify(prehash, signature, recovery_id)?;
-        // Ensure signature verifies with the recovered key
-        verify_prehashed::<C>(
-            &ProjectivePoint::<C>::from(*vk.as_affine()),
-            &bits2field::<C>(prehash)?,
-            signature,
-        )?;
-        Ok(vk)
-    }
-
-    /// Recover a [`VerifyingKey`] from the given `prehash` of a message, the
-    /// signature over that prehashed message, and a [`RecoveryId`]. Compared to
-    /// `recover_from_prehash`, this function skips verification with the
-    /// recovered key.
+    /// Recover a [`VerifyingKey`] from the given `prehash` of a message, the signature over that
+    /// prehashed message, and a [`RecoveryId`].
+    ///
+    /// <div class="warning">
+    /// <b>Security Warning</b>
+    ///
+    /// The `prehash` argument must be the output of a secure digest function, e.g. Keccak256
+    /// or SHA-256.
+    ///
+    /// Failure to use such a digest algorithm to compute `prehash` allows an attacker to solve for
+    /// it in a system of linear equations that can cause the recovery function to output any public
+    /// key the attacker wants.
+    /// </div>
     #[allow(non_snake_case)]
-    pub fn recover_from_prehash_noverify(
+    pub fn recover_from_prehash(
         prehash: &[u8],
         signature: &Signature<C>,
         recovery_id: RecoveryId,
