@@ -228,8 +228,8 @@ where
     ///   out-of-range when interpreted as a big endian integer.
     pub fn from_bytes(bytes: &SignatureBytes<C>) -> Result<Self> {
         let chunks = FieldBytes::<C>::slice_as_chunks(bytes).0;
-        let r = chunks[0].clone();
-        let s = chunks[1].clone();
+        let r = chunks[0];
+        let s = chunks[1];
         Self::from_scalars(r, s)
     }
 
