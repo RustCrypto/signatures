@@ -1,6 +1,7 @@
 //! Low-level ECDSA primitives.
 //!
-//! # ⚠️ Warning: Hazmat!
+//! <div class="warning">
+//! <b>Security️ Warning: Hazardous Materials!</b>
 //!
 //! YOU PROBABLY DON'T WANT TO USE THESE!
 //!
@@ -9,6 +10,7 @@
 //! If you are an end user / non-expert in cryptography, do not use these!
 //! Failure to use them correctly can lead to catastrophic failures including
 //! FULL PRIVATE KEY RECOVERY!
+//! </div>
 
 use crate::{EcdsaCurve, Error, Result};
 use core::cmp;
@@ -16,13 +18,12 @@ use elliptic_curve::{FieldBytes, array::typenum::Unsigned};
 
 #[cfg(feature = "algorithm")]
 use {
-    crate::{
-        RecoveryId, Signature, SignatureSize,
-        elliptic_curve::{FieldBytesEncoding, array::ArraySize},
-    },
+    crate::{RecoveryId, Signature, SignatureSize},
     elliptic_curve::{
         CurveArithmetic, NonZeroScalar, ProjectivePoint, Scalar,
+        array::ArraySize,
         ff::PrimeField,
+        field,
         group::{Curve as _, Group},
         ops::{Invert, MulByGeneratorVartime, Reduce},
         point::AffineCoordinates,
@@ -179,7 +180,7 @@ where
 
     let k = NonZeroScalar::<C>::from_repr(rfc6979::generate_k::<D, _>(
         &d.to_repr(),
-        &C::ORDER.encode_field_bytes(),
+        &field::uint_to_bytes::<C>(&C::ORDER),
         &z2.to_repr(),
         ad,
     ))
