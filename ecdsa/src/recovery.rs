@@ -10,14 +10,16 @@ use {
     },
     digest::{Digest, FixedOutputReset, Update},
     elliptic_curve::{
-        AffinePoint, FieldBytesEncoding, FieldBytesSize, Group, PrimeField, ProjectivePoint,
+        AffinePoint, CurveArithmetic, FieldBytes, FieldBytesSize, Group, PrimeField,
+        ProjectivePoint, Scalar,
+        array::ArraySize,
         bigint::CheckedAdd,
+        field,
+        ops::Invert,
         ops::{LinearCombination, Reduce},
         point::DecompressPoint,
         sec1::{self, FromSec1Point, ToSec1Point},
-    },
-    elliptic_curve::{
-        CurveArithmetic, FieldBytes, Scalar, array::ArraySize, ops::Invert, subtle::CtOption,
+        subtle::CtOption,
     },
     signature::{
         DigestSigner, MultipartSigner, RandomizedDigestSigner, Signer,
@@ -363,11 +365,12 @@ where
         let z = Scalar::<C>::reduce(&bits2field::<C>(prehash)?);
 
         let r_bytes = if recovery_id.is_x_reduced() {
-            C::Uint::decode_field_bytes(&r.to_repr())
+            let uint = field::bytes_to_uint::<C>(&r.to_repr())
                 .checked_add(&C::ORDER)
                 .into_option()
-                .ok_or_else(Error::new)?
-                .encode_field_bytes()
+                .ok_or_else(Error::new)?;
+
+            field::uint_to_bytes::<C>(&uint)
         } else {
             r.to_repr()
         };
