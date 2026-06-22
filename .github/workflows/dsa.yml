@@ -58,6 +58,8 @@ jobs:
           git config --global core.eol lf
 
       - uses: actions/checkout@v6.0.2
+        with:
+          submodules: recursive
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.toolchain }}
