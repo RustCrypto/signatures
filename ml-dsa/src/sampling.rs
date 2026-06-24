@@ -3,6 +3,7 @@ use crate::{
     crypto::{G, H},
     param::{Eta, MaskSamplingSize},
 };
+use ctutils::{CtLt, CtSelect};
 use hybrid_array::Array;
 use module_lattice::{ArraySize, Field, Truncate};
 #[cfg(feature = "zeroize")]
@@ -31,26 +32,11 @@ fn coeff_from_three_bytes(b: [u8; 3]) -> Option<Elem> {
 fn coeff_from_half_byte(b: u8, eta: Eta) -> Option<Elem> {
     match eta {
         Eta::Two if b < 15 => {
-            let b = Int::from(match b {
-                b if b < 5 => b,
-                b if b < 10 => b - 5,
-                _ => b - 10,
-            });
-
-            if b <= 2 {
-                Some(Elem::new(2 - b))
-            } else {
-                Some(-Elem::new(b - 2))
-            }
-        }
-        Eta::Four if b < 9 => {
             let b = Int::from(b);
-            if b <= 4 {
-                Some(Elem::new(4 - b))
-            } else {
-                Some(-Elem::new(b - 4))
-            }
+            let sub = Int::ct_select(&10, &Int::ct_select(&5, &0, b.ct_lt(&5)), b.ct_lt(&10));
+            Some(Elem::new(2) - Elem::new(b - sub))
         }
+        Eta::Four if b < 9 => Some(Elem::new(4) - Elem::new(b.into())),
         _ => None,
     }
 }
