@@ -11,19 +11,21 @@
 //!
 //! ```
 //! use hex_literal::hex;
-//! use rfc6979::consts::U32;
+//! use rfc6979::bigint::U256;
 //! use sha2::{Digest, Sha256};
 //!
 //! // NIST P-256 field modulus
-//! const NIST_P256_MODULUS: [u8; 32] =
-//!     hex!("FFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551");
+//! const NIST_P256_MODULUS: U256 = U256::from_be_hex(
+//!     "FFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551"
+//! );
 //!
-//! // Public key for RFC6979 NIST P256/SHA256 test case
+//! // Private key for RFC6979 NIST P256/SHA256 test case (see RFC6979 Appendix A.2.5).
+//! // WARNING: don't hardcode private keys in your source code!
 //! const RFC6979_KEY: [u8; 32] =
 //!     hex!("C9AFA9D845BA75166B5C215767B1D6934E50C3DB36E89B127B8A622B120F6721");
 //!
 //! // Test message for RFC6979 NIST P256/SHA256 test case
-//! const RFC6979_MSG: &[u8; 6] = b"sample";
+//! const RFC6979_MSG: &[u8] = b"sample";
 //!
 //! // Expected K for RFC6979 NIST P256/SHA256 test case
 //! const RFC6979_EXPECTED_K: [u8; 32] =
@@ -31,238 +33,312 @@
 //!
 //! let h = Sha256::digest(RFC6979_MSG);
 //! let aad = b"";
-//! let k = rfc6979::generate_k::<Sha256, U32>(&RFC6979_KEY.into(), &NIST_P256_MODULUS.into(), &h, aad);
-//! assert_eq!(k.as_slice(), &RFC6979_EXPECTED_K);
+//! let mut kgen = rfc6979::KGenerator::<Sha256, U256>::new(&RFC6979_KEY, &h, aad, &NIST_P256_MODULUS);
+//!
+//! let mut k = [0u8; U256::BYTES];
+//! kgen.fill_next_k(&mut k);
+//! assert_eq!(k, RFC6979_EXPECTED_K);
 //! ```
 
-mod ct;
+mod hmac_drbg;
 
+pub use bigint;
 pub use hmac;
 pub use hmac::digest::array::typenum::consts;
 
-use core::fmt::{self, Debug};
-use hmac::{
-    SimpleHmacReset,
-    digest::{
-        Digest, FixedOutput, FixedOutputReset, KeyInit, Mac,
-        array::{Array, ArraySize},
-        common::BlockSizeUser,
-    },
-};
+use crate::hmac_drbg::HmacDrbg;
+use bigint::{Encoding, Limb, Unsigned};
+use core::fmt;
+use hmac::digest::{Digest, FixedOutput, FixedOutputReset, block_api::BlockSizeUser};
 
-/// Deterministically generate ephemeral scalar `k`.
-///
-/// Accepts the following parameters and inputs:
-///
-/// - `x`: secret key
-/// - `q`: field modulus
-/// - `h`: hash/digest of input message: must be reduced modulo `q` in advance
-/// - `data`: additional associated data, e.g. CSRNG output used as added entropy
-#[inline]
-pub fn generate_k<D, N>(
-    x: &Array<u8, N>,
-    q: &Array<u8, N>,
-    h: &Array<u8, N>,
-    data: &[u8],
-) -> Array<u8, N>
-where
-    D: Digest + BlockSizeUser + FixedOutput + FixedOutputReset,
-    N: ArraySize,
-{
-    let mut k = Array::default();
-    generate_k_mut::<D>(x, q, h, data, &mut k);
-    k
-}
-
-/// Deterministically generate ephemeral scalar `k` by writing it into the provided output buffer.
-///
-/// This is an API which accepts dynamically sized inputs intended for use cases where the sizes
-/// are determined at runtime, such as the legacy Digital Signature Algorithm (DSA).
-///
-/// Accepts the following parameters and inputs:
-///
-/// - `x`: secret key
-/// - `q`: field modulus
-/// - `h`: hash/digest of input message: must be reduced modulo `q` in advance
-/// - `data`: additional associated data, e.g. CSRNG output used as added entropy
-///
-/// # Panics
-/// If `x`, `q`, `h`, and `k` are not all the same length.
-#[inline]
-pub fn generate_k_mut<D>(x: &[u8], q: &[u8], h: &[u8], data: &[u8], k: &mut [u8])
+/// Deterministic generator for the ephemeral scalar `k` as used by (EC)DSA.
+pub struct KGenerator<'a, D, U>
 where
     D: Digest + BlockSizeUser + FixedOutput + FixedOutputReset,
 {
-    let k_len = k.len();
-    assert_eq!(k_len, x.len());
-    assert_eq!(k_len, q.len());
-    assert_eq!(k_len, h.len());
-    debug_assert!(bool::from(ct::lt(h, q)));
+    drbg: HmacDrbg<D>,
+    q: &'a U,
+}
 
-    let q_leading_zeros = ct::leading_zeros(q);
-    let q_has_leading_zeros = q_leading_zeros != 0;
-    let mut hmac_drbg = HmacDrbg::<D>::new(x, h, data);
+impl<'a, D, U> KGenerator<'a, D, U>
+where
+    D: Digest + BlockSizeUser + FixedOutput + FixedOutputReset,
+    U: Unsigned + Encoding,
+{
+    /// Initialize `k` generator.
+    ///
+    /// Accepts the following parameters and inputs:
+    ///
+    /// - `x`: secret key
+    /// - `h`: raw hash/digest of input message
+    /// - `data`: additional associated data, e.g. CSRNG output used as added entropy
+    /// - `q`: field modulus
+    pub fn new(x: &[u8], h: &[u8], data: &[u8], q: &'a U) -> Self {
+        // Process `h` through `bits2octets`
+        let mut h_scratch = q.to_be_bytes();
+        let h_ref = &mut h_scratch.as_mut()[..x.len()];
+        bits2octets(h, q, h_ref);
 
-    loop {
-        hmac_drbg.fill_bytes(k);
+        let drbg = HmacDrbg::<D>::new(x, h_ref, data);
+        Self { drbg, q }
+    }
 
-        if q_has_leading_zeros {
-            ct::rshift(k, q_leading_zeros);
-        }
+    /// Generate a candidate `k` value.
+    ///
+    /// This may be called repeatedly in the event a particular `k` is unsuitable, e.g. the
+    /// resulting `r` value is zero.
+    pub fn fill_next_k(&mut self, k: &mut [u8]) {
+        debug_assert_eq!(k.len(), self.q.bits().div_ceil(8) as usize);
 
-        if (!ct::is_zero(k) & ct::lt(k, q)).into() {
-            return;
+        loop {
+            self.drbg.fill_bytes(k);
+            let candidate_k = bits2int(k, self.q);
+            if ((!candidate_k.is_zero()) & candidate_k.ct_lt(self.q)).to_bool() {
+                int2octets(&candidate_k, self.q, k);
+                return;
+            }
         }
     }
 }
 
-/// Internal implementation of `HMAC_DRBG` as described in NIST SP800-90A.
+impl<'a, D, U> fmt::Debug for KGenerator<'a, D, U>
+where
+    D: Digest + BlockSizeUser + FixedOutput + FixedOutputReset,
+    U: Unsigned + Encoding,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("KGenerator").finish_non_exhaustive()
+    }
+}
+
+/// `bits2int` transform as defined in [RFC6979 §2.3.2]: "Bit String to Integer"
 ///
-/// <https://csrc.nist.gov/publications/detail/sp/800-90a/rev-1/final>
+/// From the RFC:
 ///
-/// This is a HMAC-based deterministic random bit generator used compute a
-/// deterministic ephemeral scalar `k`.
-pub struct HmacDrbg<D>
+/// >  The bits2int transform takes as input a sequence of blen bits and
+/// >  outputs a non-negative integer that is less than 2^qlen.  It consists
+/// >  of the following steps:
+/// >
+/// >  1. The sequence is first truncated or expanded to length qlen:
+/// >
+/// >  *  if qlen < blen, then the qlen leftmost bits are kept, and
+/// >     subsequent bits are discarded;
+/// >
+/// >  *  otherwise, qlen-blen bits (of value zero) are added to the
+/// >     left of the sequence (i.e., before the input bits in the
+/// >     sequence order).
+/// >
+/// >  2. The resulting sequence is then converted to an integer value
+/// >     using the big-endian convention: if input bits are called b_0
+/// >     (leftmost) to b_(qlen-1) (rightmost), then the resulting value
+/// >     is:
+/// >
+/// >        b_0*2^(qlen-1) + b_1*2^(qlen-2) + ... + b_(qlen-1)*2^0
+/// >
+/// >  The bits2int transform can also be described in the following way:
+/// >  the input bit sequence (of length blen) is transformed into an
+/// >  integer using the big-endian convention.  Then, if blen is greater
+/// >  than qlen, the resulting integer is divided by two to the power
+/// >  blen-qlen (Euclidian division: the remainder is discarded); in many
+/// >  software implementations of arithmetics on big integers, that
+/// >  division is equivalent to a "right shift" by blen-qlen bits.
+///
+/// [RFC6979 §2.3.2]: https://datatracker.ietf.org/doc/html/rfc6979#section-2.3.2
+#[inline]
+fn bits2int<U>(mut b: &[u8], q: &U) -> U
 where
-    D: Digest + BlockSizeUser + FixedOutputReset,
+    U: Unsigned + Encoding,
 {
-    /// HMAC key `K` (see RFC 6979 Section 3.2.c)
-    k: SimpleHmacReset<D>,
+    debug_assert!(!b.is_empty());
 
-    /// Chaining value `V` (see RFC 6979 Section 3.2.c)
-    v: Array<u8, D::OutputSize>,
+    let qlen = q.bits();
+    let mut blen = u32::try_from(b.len())
+        .ok()
+        .and_then(|len| len.checked_mul(8))
+        .expect("overflow");
+
+    let bits_diff = blen.saturating_sub(qlen);
+
+    // Ensure `b` is within one octet of the length of `q`. This helps ensure we don't exceed the
+    // capacity of `U`. This effectively emulates the right shift described in the RFC by truncating
+    // the least significant bytes.
+    let bytes_to_discard = bits_diff as usize / 8;
+    if bytes_to_discard > 0 {
+        b = &b[..b.len() - bytes_to_discard];
+        blen -= (bytes_to_discard as u32) * 8;
+    }
+
+    let mut int = U::from_be_slice_truncated(b, blen);
+    int.shr_assign(blen.saturating_sub(qlen));
+    int
 }
 
-impl<D> HmacDrbg<D>
-where
-    D: Digest + BlockSizeUser + FixedOutputReset,
-{
-    /// Initialize `HMAC_DRBG`.
-    #[must_use]
-    #[allow(clippy::missing_panics_doc, reason = "should not panic")]
-    pub fn new(entropy_input: &[u8], nonce: &[u8], personalization_string: &[u8]) -> Self {
-        let mut k = SimpleHmacReset::new(&Default::default());
-        let mut v = Array::default();
+/// `int2octets` transform as defined in [RFC6979 §2.3.3]: "Integer to Octet String"
+///
+/// From the RFC:
+///
+/// > An integer value x less than q (and, in particular, a value that has
+/// > been taken modulo q) can be converted into a sequence of rlen bits,
+/// > where rlen = 8*ceil(qlen/8).  This is the sequence of bits obtained
+/// > by big-endian encoding.  In other words, the sequence bits x_i (for i
+/// > ranging from 0 to rlen-1) are such that:
+/// >
+/// > x = x_0*2^(rlen-1) + x_1*2^(rlen-2) + ... + x_(rlen-1)
+/// >
+/// > We call this transform int2octets.  Since rlen is a multiple of 8
+/// > (the smallest multiple of 8 that is not smaller than qlen), then the
+/// > resulting sequence of bits is also a sequence of octets, hence the
+/// > name.
+///
+/// [RFC6979 §2.3.3]: https://datatracker.ietf.org/doc/html/rfc6979#section-2.3.3
+fn int2octets<'a, U: Unsigned>(x: &U, q: &U, out: &'a mut [u8]) -> &'a [u8] {
+    debug_assert!(x < q);
+    let qlen = q.bits();
+    let rlen = qlen.div_ceil(8) as usize; // NOTE: rlen in RFC is bits; we use bytes
 
-        v.fill(0x01);
+    debug_assert!(out.len() >= rlen);
+    let out = &mut out[..rlen];
 
-        for i in 0..=1 {
-            k.update(&v);
-            k.update(&[i]);
-            k.update(entropy_input);
-            k.update(nonce);
-            k.update(personalization_string);
-            k = SimpleHmacReset::new_from_slice(&k.finalize().into_bytes()).expect("should work");
-
-            // Steps 3.2.e,g: v = HMAC_k(v)
-            k.update(&v);
-            v = k.finalize_reset().into_bytes();
-        }
-
-        Self { k, v }
+    let xlimbs: &[Limb] = x.as_ref();
+    for (limb, chunk) in xlimbs.iter().zip(out.rchunks_mut(Limb::BYTES)) {
+        let bytes = limb.to_be_bytes();
+        let offset = Limb::BYTES.saturating_sub(chunk.len());
+        chunk.copy_from_slice(&bytes[offset..]);
     }
 
-    /// Write the next `HMAC_DRBG` output to the given byte slice.
-    #[allow(clippy::missing_panics_doc, reason = "should not panic")]
-    pub fn fill_bytes(&mut self, out: &mut [u8]) {
-        let mut out_chunks = out.chunks_exact_mut(self.v.len());
-
-        for out_chunk in &mut out_chunks {
-            self.k.update(&self.v);
-            self.v = self.k.finalize_reset().into_bytes();
-            out_chunk.copy_from_slice(&self.v[..out_chunk.len()]);
-        }
-
-        let out_remainder = out_chunks.into_remainder();
-        if !out_remainder.is_empty() {
-            self.k.update(&self.v);
-            self.v = self.k.finalize_reset().into_bytes();
-            out_remainder.copy_from_slice(&self.v[..out_remainder.len()]);
-        }
-
-        self.k.update(&self.v);
-        self.k.update(&[0x00]);
-        self.k = SimpleHmacReset::new_from_slice(&self.k.finalize_reset().into_bytes())
-            .expect("should work");
-        self.k.update(&self.v);
-        self.v = self.k.finalize_reset().into_bytes();
-    }
+    out
 }
 
-impl<D> Debug for HmacDrbg<D>
+/// `bits2octets` transform as defined in [RFC6979 §2.3.4]: "Bit String to Octet String"
+///
+/// From the RFC:
+///
+/// > The bits2octets transform takes as input a sequence of blen bits and
+/// > outputs a sequence of rlen bits.  It consists of the following steps:
+/// >
+/// > 1. The input sequence b is converted into an integer value z1
+/// >    through the bits2int transform:
+/// >
+/// >       z1 = bits2int(b)
+/// >
+/// > 2. z1 is reduced modulo q, yielding z2 (an integer between 0 and
+/// >    q-1, inclusive):
+/// >
+/// >       z2 = z1 mod q
+/// >
+/// >    Note that since z1 is less than 2^qlen, that modular reduction
+/// >    can be implemented with a simple conditional subtraction:
+/// >    z2 = z1-q if that value is non-negative; otherwise, z2 = z1.
+/// >
+/// > 3.  z2 is transformed into a sequence of octets (a sequence of rlen
+/// >    bits) by applying int2octets.
+///
+/// [RFC6979 §2.3.3]: https://datatracker.ietf.org/doc/html/rfc6979#section-2.3.3
+fn bits2octets<'a, U>(b: &[u8], q: &U, out: &'a mut [u8]) -> &'a [u8]
 where
-    D: Digest + BlockSizeUser + FixedOutputReset,
+    U: Unsigned + Encoding,
 {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("HmacDrbg").finish_non_exhaustive()
-    }
+    let z1 = bits2int(b, q);
+    let mut z2 = z1.wrapping_sub(q);
+
+    // Perform modular reduction via conditional subtraction, since we know `z1` is the same bit
+    // length as `q` and therefore only one such subtraction is required.
+    // (see description of this approach in the rustdoc)
+    z2.ct_assign(&z1, z1.ct_lt(q));
+    int2octets(&z2, q, out)
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        Array,
-        consts::{U12, U21, U66},
-        generate_k,
-    };
-    use hex_literal::hex;
-    use sha2::{Digest, Sha256, Sha512};
-    use sha3::Sha3_256;
+    mod bits2int {
+        use crate::bits2int;
+        use bigint::U256;
 
-    /// "Detailed Example" from RFC6979 Appendix A.1.
-    ///
-    /// Example for ECDSA on the curve K-163 described in FIPS 186-4 (also known as "ansix9t163k1"
-    /// in X9.62), defined over a field GF(2^163)
-    #[test]
-    fn k163_sha256() {
-        let q = hex!("04000000000000000000020108A2E0CC0D99F8A5EF");
-        let x = hex!("009A4D6792295A7F730FC3F2B49CBC0F62E862272F");
+        #[test]
+        fn left_pads_when_blen_is_shorter_than_qlen() {
+            let q = U256::from_u64(0x800);
+            assert_eq!(bits2int(&[0x2a], &q), U256::from_u64(0x2a));
+        }
 
-        // Note: SHA-256 digest of "sample" with the output run through `bits2octets` transform
-        let h2 = hex!("01795EDF0D54DB760F156D0DAC04C0322B3A204224");
+        #[test]
+        fn keeps_exact_qlen_bits() {
+            let q = U256::from_u64(0x80);
+            assert_eq!(bits2int(&[0xab], &q), U256::from_u64(0xab));
+        }
 
-        let aad = b"";
-        let k = generate_k::<Sha256, U21>(&x.into(), &q.into(), &h2.into(), aad);
-        assert_eq!(k, hex!("023AF4074C90A02B3FE61D286D5C87F425E6BDD81B"));
+        // K-163 inspired test case
+        #[test]
+        fn discards_trailing_bytes_then_shifts_remaining_bits() {
+            let q = U256::ONE.shl_vartime(162);
+            let b = [0xff; 32];
+
+            assert_eq!(
+                bits2int(&b, &q),
+                U256::from_be_hex(
+                    "000000000000000000000007FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+                )
+            );
+        }
+
+        #[test]
+        fn truncates_leftmost_bits_on_byte_boundary() {
+            let q = U256::from_u64(0x80);
+            assert_eq!(bits2int(&[0xab, 0xcd], &q), U256::from_u64(0xab));
+        }
+
+        #[test]
+        fn truncates_leftmost_bits_across_partial_byte() {
+            let q = U256::from_u64(0x800);
+            assert_eq!(bits2int(&[0xab, 0xcd], &q), U256::from_u64(0xabc));
+        }
     }
 
-    /// Example from RFC6979 Appendix A.2.7.
-    #[test]
-    fn p521_sha512() {
-        let q = hex!(
-            "01FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFA51868783BF2F966B7FCC0148F709A5D03BB5C9B8899C47AEBB6FB71E91386409"
-        );
+    mod int2octets {
+        use crate::int2octets;
+        use bigint::U256;
 
-        let x = hex!(
-            "00FAD06DAA62BA3B25D2FB40133DA757205DE67F5BB0018FEE8C86E1B68C7E75CAA896EB32F1F47C70855836A6D16FCC1466F6D8FBEC67DB89EC0C08B0E996B83538"
-        );
+        #[test]
+        fn encodes_single_octet() {
+            let q = U256::from_u64(0x80);
+            let x = U256::from_u64(0x2a);
+            let mut out = [0u8; 32];
+            assert_eq!(int2octets(&x, &q, &mut out), &[0x2a]);
+        }
 
-        // Hash message and emulate `bits2octets` to produce the input digest
-        let message = "sample";
-        let mut h = Array::<u8, U66>::default();
-        h[2..].copy_from_slice(&Sha512::digest(message));
+        #[test]
+        fn left_pads_to_qlen_octets() {
+            let q = U256::from_u64(0x800);
+            let x = U256::from_u64(0x2a);
+            let mut out = [0u8; 32];
+            assert_eq!(int2octets(&x, &q, &mut out), &[0x00, 0x2a]);
+        }
 
-        let aad = b"";
-        let k = generate_k::<Sha512, U66>(&x.into(), &q.into(), &h, aad);
-
-        let expected_k = hex!(
-            "01DAE2EA071F8110DC26882D4D5EAE0621A3256FC8847FB9022E2B7D28E6F10198B1574FDD03A9053C08A1854A168AA5A57470EC97DD5CE090124EF52A2F7ECBFFD3"
-        );
-
-        assert_eq!(k, expected_k);
+        #[test]
+        fn int2octets_preserves_full_width_value() {
+            let q = U256::from_u64(0x800);
+            let x = U256::from_u64(0x7ff);
+            let mut out = [0u8; 32];
+            assert_eq!(int2octets(&x, &q, &mut out), &[0x07, 0xff]);
+        }
     }
 
-    /// This test showcase the use with a non-block_api hash
-    /// This is used for ethereum which uses ecdsa-sha3
-    #[test]
-    fn non_block_api() {
-        let x = hex!("000000000000000000000000");
-        let q = hex!("ffffffffffffffffffffffff");
+    mod bits2octets {
+        use crate::bits2octets;
+        use bigint::U256;
 
-        let h = hex!("080808080808080808080808");
+        #[test]
+        fn already_reduced() {
+            let q = U256::from_u64(0x80);
+            let mut out = [0u8; 32];
+            assert_eq!(bits2octets(&[0x2a], &q, &mut out), &[0x2a]);
+        }
 
-        let data = b"";
-        let out = generate_k::<Sha3_256, U12>(&x.into(), &q.into(), &h.into(), data);
-        assert_eq!(out, hex!("d460ac6531e9743d3829850f"));
+        #[test]
+        fn needs_reduction() {
+            let q = U256::from_u64(0x80);
+            let mut out = [0u8; 32];
+
+            assert_eq!(bits2octets(&[0xff], &q, &mut out), &[0x7f]);
+        }
     }
 }

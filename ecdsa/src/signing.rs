@@ -2,7 +2,7 @@
 
 use crate::{
     EcdsaCurve, Error, Result, Signature, SignatureSize, SignatureWithOid, ecdsa_oid_for_digest,
-    hazmat::{DigestAlgorithm, bits2field, sign_prehashed_rfc6979},
+    hazmat::{DigestAlgorithm, sign_prehashed_rfc6979},
 };
 use core::fmt::{self, Debug};
 use digest::{Digest, FixedOutput, const_oid::AssociatedOid};
@@ -157,8 +157,8 @@ where
     }
 }
 
-/// Sign message prehash using a deterministic ephemeral scalar (`k`)
-/// computed using the algorithm described in [RFC6979 § 3.2].
+/// Sign message prehash using a deterministic ephemeral scalar (`k`) computed using the algorithm
+/// described in [RFC6979 § 3.2].
 ///
 /// [RFC6979 § 3.2]: https://tools.ietf.org/html/rfc6979#section-3
 impl<C> PrehashSigner<Signature<C>> for SigningKey<C>
@@ -168,8 +168,7 @@ where
     SignatureSize<C>: ArraySize,
 {
     fn sign_prehash(&self, prehash: &[u8]) -> Result<Signature<C>> {
-        let z = bits2field::<C>(prehash)?;
-        Ok(sign_prehashed_rfc6979::<C, C::Digest>(&self.secret_scalar, &z, &[])?.0)
+        Ok(sign_prehashed_rfc6979::<C, C::Digest>(&self.secret_scalar, prehash, &[]).0)
     }
 }
 
@@ -231,18 +230,9 @@ where
         rng: &mut R,
         prehash: &[u8],
     ) -> Result<Signature<C>> {
-        let z = bits2field::<C>(prehash)?;
-
-        loop {
-            let mut ad = FieldBytes::<C>::default();
-            rng.try_fill_bytes(&mut ad).map_err(|_| Error::new())?;
-
-            if let Ok((signature, _)) =
-                sign_prehashed_rfc6979::<C, C::Digest>(&self.secret_scalar, &z, &ad)
-            {
-                break Ok(signature);
-            }
-        }
+        let mut ad = FieldBytes::<C>::default();
+        rng.try_fill_bytes(&mut ad).map_err(|_| Error::new())?;
+        Ok(sign_prehashed_rfc6979::<C, C::Digest>(&self.secret_scalar, prehash, &ad).0)
     }
 }
 
