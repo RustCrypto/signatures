@@ -62,6 +62,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2af50177e190e07a26ab74f8b1efbfe2ef87da2116221318cb1c2e82baf7de06"
 
 [[package]]
+name = "bash-f"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bfed5cd32720841afa8cd58c89a317e9efb0c8083e1b349dae4098f022620353"
+
+[[package]]
+name = "bash-hash"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "934cdf3921906a2374a6c07408f244b661fdd6cb6eb48c89923261411a58c471"
+dependencies = [
+ "bash-f",
+ "digest",
+]
+
+[[package]]
 name = "belt-block"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -84,12 +100,13 @@ dependencies = [
 name = "bign-genk"
 version = "0.1.0-pre.0"
 dependencies = [
+ "bash-hash",
  "belt-block",
  "belt-hash",
  "cipher",
+ "crypto-bigint",
  "digest",
  "hex-literal",
- "subtle",
 ]
 
 [[package]]

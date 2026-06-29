@@ -3,3 +3,8 @@ extend-exclude = [
     ".git/",
     "ml-dsa/tests/examples/*",
 ]
+
+[default]
+extend-ignore-re = [
+    'hex!\(\s*"[0-9A-Fa-f \n]+"\s*\)',
+]

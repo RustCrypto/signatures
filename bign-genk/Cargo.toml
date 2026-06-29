@@ -18,9 +18,11 @@ rust-version = "1.85"
 [dependencies]
 cipher = { version = "0.5", default-features = false }
 digest = { version = "0.11", default-features = false, features = ["oid"] }
-subtle = { version = "2", default-features = false }
+bigint = { package = "crypto-bigint", version = "0.7.5", default-features = false }
+belt-hash = { version = "0.2", default-features = false }
 
 [dev-dependencies]
 hex-literal = "1"
-belt-block = "0.2.0-rc.3"
-belt-hash = "0.2"
+belt-block = "0.2"
+bash-hash = { version = "0.1", default-features = false, features = ["oid"] }
+belt-hash = { version = "0.2", default-features = false, features = ["oid"] }
