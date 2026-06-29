@@ -5,8 +5,8 @@ use crate::{Error, Result};
 #[cfg(feature = "algorithm")]
 use {
     crate::{
-        EcdsaCurve, Signature, SignatureSize, SigningKey, VerifyingKey,
-        hazmat::{DigestAlgorithm, bytes2scalar, sign_prehashed_rfc6979, verify_prehashed},
+        DigestAlgorithm, EcdsaCurve, Signature, SignatureSize, SigningKey, VerifyingKey,
+        hazmat::{bytes2scalar, sign_prehashed_rfc6979, verify_prehashed},
     },
     digest::{Digest, FixedOutputReset, Update},
     elliptic_curve::{

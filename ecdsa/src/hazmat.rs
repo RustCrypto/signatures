@@ -12,36 +12,20 @@
 //! FULL PRIVATE KEY RECOVERY!
 //! </div>
 
-use crate::EcdsaCurve;
-
-#[cfg(feature = "algorithm")]
-use {
-    crate::{Error, RecoveryId, Result, Signature, SignatureSize},
-    elliptic_curve::{
-        CurveArithmetic, FieldBytes, NonZeroScalar, ProjectivePoint, Scalar,
-        array::ArraySize,
-        bigint::{BitOps, Encoding},
-        ff::PrimeField,
-        group::{Curve as _, Group},
-        ops::{Invert, MulByGeneratorVartime, Reduce},
-        point::AffineCoordinates,
-        scalar::IsHigh,
-    },
+use crate::{EcdsaCurve, Error, RecoveryId, Result, Signature, SignatureSize};
+use elliptic_curve::{
+    CurveArithmetic, FieldBytes, NonZeroScalar, ProjectivePoint, Scalar,
+    array::ArraySize,
+    bigint::{BitOps, Encoding},
+    ff::PrimeField,
+    group::{Curve as _, Group},
+    ops::{Invert, MulByGeneratorVartime, Reduce},
+    point::AffineCoordinates,
+    scalar::IsHigh,
 };
 
 #[cfg(feature = "digest")]
-use digest::{Digest, FixedOutput, FixedOutputReset, common::BlockSizeUser};
-
-/// Bind a preferred [`Digest`] algorithm to an elliptic curve type.
-///
-/// Generally there is a preferred variety of the SHA-2 family used with ECDSA
-/// for a particular elliptic curve.
-#[cfg(feature = "digest")]
-pub trait DigestAlgorithm: EcdsaCurve {
-    /// Preferred digest to use when computing ECDSA signatures for this
-    /// elliptic curve. This is typically a member of the SHA-2 family.
-    type Digest: BlockSizeUser + Digest + FixedOutput + FixedOutputReset;
-}
+use digest::{Digest, FixedOutputReset, block_api::BlockSizeUser};
 
 /// Sign a prehashed message digest using the provided secret scalar and
 /// ephemeral scalar, returning an ECDSA signature.
@@ -66,7 +50,6 @@ pub trait DigestAlgorithm: EcdsaCurve {
 ///
 /// This will return an error if a zero-scalar was generated. It can be tried again with a
 /// different `k`.
-#[cfg(feature = "algorithm")]
 #[allow(non_snake_case)]
 pub fn sign_prehashed<C>(
     d: &NonZeroScalar<C>,
@@ -118,7 +101,6 @@ where
 /// - `ad`: optional additional data, e.g. added entropy from an RNG
 ///
 /// [RFC6979]: https://datatracker.ietf.org/doc/html/rfc6979
-#[cfg(feature = "algorithm")]
 pub fn sign_prehashed_rfc6979<C, D>(
     d: &NonZeroScalar<C>,
     z: &[u8],
@@ -126,7 +108,7 @@ pub fn sign_prehashed_rfc6979<C, D>(
 ) -> (Signature<C>, RecoveryId)
 where
     C: EcdsaCurve + CurveArithmetic,
-    D: Digest + BlockSizeUser + FixedOutput + FixedOutputReset,
+    D: Digest + BlockSizeUser + FixedOutputReset,
     SignatureSize<C>: ArraySize,
 {
     let order = C::ORDER;
@@ -152,7 +134,6 @@ where
 /// - `z`: message digest to be verified. MUST BE OUTPUT OF A CRYPTOGRAPHICALLY SECURE DIGEST
 ///   ALGORITHM!!!
 /// - `sig`: signature to be verified against the key and message.
-#[cfg(feature = "algorithm")]
 pub fn verify_prehashed<C>(q: &ProjectivePoint<C>, z: &[u8], sig: &Signature<C>) -> Result<()>
 where
     C: EcdsaCurve + CurveArithmetic,
@@ -181,7 +162,6 @@ where
 /// Convert the provided bytestring into a `Scalar` for the given curve, interpreting it as big
 /// endian, zero-padding or truncating it to the bit length of `n` (curve order) if necessary,
 /// and then reducing it mod `n`.
-#[cfg(feature = "algorithm")]
 pub(crate) fn bytes2scalar<C: EcdsaCurve + CurveArithmetic>(mut bytes: &[u8]) -> Scalar<C> {
     // Compute number of bytes in `n` (curve order)
     let n_bits = C::ORDER.bits();

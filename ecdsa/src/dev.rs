@@ -309,7 +309,7 @@ pub struct TestVector {
 mod tests {
     use super::*;
 
-    impl crate::hazmat::DigestAlgorithm for MockCurve {
+    impl crate::DigestAlgorithm for MockCurve {
         type Digest = sha2::Sha256;
     }
 

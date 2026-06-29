@@ -1,8 +1,8 @@
 //! ECDSA signing: producing signatures using a [`SigningKey`].
 
 use crate::{
-    EcdsaCurve, Error, Result, Signature, SignatureSize, SignatureWithOid, ecdsa_oid_for_digest,
-    hazmat::{DigestAlgorithm, sign_prehashed_rfc6979},
+    DigestAlgorithm, EcdsaCurve, Error, Result, Signature, SignatureSize, SignatureWithOid,
+    ecdsa_oid_for_digest, hazmat::sign_prehashed_rfc6979,
 };
 use core::fmt::{self, Debug};
 use digest::{Digest, FixedOutput, const_oid::AssociatedOid};
@@ -22,15 +22,6 @@ use signature::{
     rand_core::TryCryptoRng,
 };
 
-#[cfg(feature = "der")]
-use {crate::der, core::ops::Add};
-
-#[cfg(feature = "pem")]
-use {core::str::FromStr, elliptic_curve::pkcs8::DecodePrivateKey};
-
-#[cfg(any(feature = "der", feature = "pem"))]
-use elliptic_curve::FieldBytesSize;
-
 #[cfg(feature = "pkcs8")]
 use crate::elliptic_curve::{
     AffinePoint,
@@ -41,12 +32,16 @@ use crate::elliptic_curve::{
     },
     sec1::{self, FromSec1Point, ToSec1Point},
 };
-
-#[cfg(feature = "algorithm")]
-use {crate::VerifyingKey, elliptic_curve::PublicKey, signature::KeypairRef};
-
+#[cfg(any(feature = "der", feature = "pem"))]
+use elliptic_curve::FieldBytesSize;
 #[cfg(all(feature = "alloc", feature = "pkcs8"))]
 use elliptic_curve::pkcs8::{EncodePrivateKey, SecretDocument};
+#[cfg(feature = "algorithm")]
+use {crate::VerifyingKey, elliptic_curve::PublicKey, signature::KeypairRef};
+#[cfg(feature = "der")]
+use {crate::der, core::ops::Add};
+#[cfg(feature = "pem")]
+use {core::str::FromStr, elliptic_curve::pkcs8::DecodePrivateKey};
 
 /// ECDSA secret key used for signing. Generic over prime order elliptic curves
 /// (e.g. NIST P-curves).

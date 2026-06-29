@@ -1,9 +1,6 @@
 //! ECDSA verifying: checking signatures are authentic using a [`VerifyingKey`].
 
-use crate::{
-    EcdsaCurve, Error, Result, Signature, SignatureSize,
-    hazmat::{self, DigestAlgorithm},
-};
+use crate::{DigestAlgorithm, EcdsaCurve, Error, Result, Signature, SignatureSize, hazmat};
 use core::{cmp::Ordering, fmt::Debug};
 use digest::{Digest, Update};
 use elliptic_curve::{
