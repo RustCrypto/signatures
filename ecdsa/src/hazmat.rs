@@ -12,14 +12,13 @@
 //! FULL PRIVATE KEY RECOVERY!
 //! </div>
 
-use crate::{EcdsaCurve, Error, Result};
-use elliptic_curve::FieldBytes;
+use crate::EcdsaCurve;
 
 #[cfg(feature = "algorithm")]
 use {
-    crate::{RecoveryId, Signature, SignatureSize},
+    crate::{Error, RecoveryId, Result, Signature, SignatureSize},
     elliptic_curve::{
-        CurveArithmetic, NonZeroScalar, ProjectivePoint, Scalar,
+        CurveArithmetic, FieldBytes, NonZeroScalar, ProjectivePoint, Scalar,
         array::ArraySize,
         bigint::{BitOps, Encoding},
         ff::PrimeField,

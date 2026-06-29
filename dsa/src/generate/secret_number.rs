@@ -29,10 +29,11 @@ where
 {
     let q = signing_key.verifying_key().components().q();
     let size = (q.bits() / 8) as usize;
+
+    // Truncate hash and reduce mod q
+    // TODO(tarcieri): `rfc6979` now truncates and reduces mod q. some of this may be redundant?
     let hash = BoxedUint::from_be_slice(&hash[..min(size, hash.len())], q.bits_precision())
         .map_err(|_| signature::Error::new())?;
-
-    // Reduce hash mod q
     let hash = (hash % q).to_be_bytes();
     let hash = truncate_hash(&hash, size);
 

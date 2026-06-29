@@ -4,10 +4,16 @@
     html_logo_url = "https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg",
     html_favicon_url = "https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg"
 )]
+#![allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::integer_division_remainder_used,
+    reason = "TODO"
+)]
 
 //! ## Usage
 //!
-//! See also: the documentation for the [`generate_k`] function.
+//! See also: [`KGenerator`] documentation.
 //!
 //! ```
 //! use hex_literal::hex;
@@ -252,7 +258,7 @@ where
 mod tests {
     mod bits2int {
         use crate::bits2int;
-        use bigint::U256;
+        use bigint::{BitOps, BoxedUint, U256};
 
         #[test]
         fn left_pads_when_blen_is_shorter_than_qlen() {
@@ -291,6 +297,16 @@ mod tests {
             let q = U256::from_u64(0x800);
             assert_eq!(bits2int(&[0xab, 0xcd], &q), U256::from_u64(0xabc));
         }
+
+        #[test]
+        fn boxed_matches_fixed_for_short_input() {
+            let q = U256::from_be_hex(
+                "FFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551",
+            );
+            let q_boxed = BoxedUint::from_be_slice(&q.to_be_bytes(), q.bits_precision()).unwrap();
+            let h = [0xab; 20];
+            assert_eq!(bits2int(&h, &q_boxed), bits2int(&h, &q),);
+        }
     }
 
     mod int2octets {
@@ -324,7 +340,10 @@ mod tests {
 
     mod bits2octets {
         use crate::bits2octets;
-        use bigint::U256;
+        use bigint::{BoxedUint, U256};
+
+        const EXAMPLE_Q: U256 =
+            U256::from_be_hex("FFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551");
 
         #[test]
         fn already_reduced() {
@@ -337,8 +356,55 @@ mod tests {
         fn needs_reduction() {
             let q = U256::from_u64(0x80);
             let mut out = [0u8; 32];
-
             assert_eq!(bits2octets(&[0xff], &q, &mut out), &[0x7f]);
+        }
+
+        #[test]
+        fn left_pads_when_blen_is_shorter_than_qlen() {
+            let h = [0xab; 20];
+            let mut out = [0u8; 32];
+
+            assert_eq!(
+                bits2octets(&h, &EXAMPLE_Q, &mut out),
+                &[
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xab, 0xab, 0xab, 0xab, 0xab, 0xab, 0xab,
+                    0xab, 0xab, 0xab, 0xab, 0xab, 0xab, 0xab, 0xab, 0xab, 0xab, 0xab, 0xab, 0xab,
+                ],
+            );
+        }
+
+        #[test]
+        fn boxed_left_pads_short_hash_to_rlen() {
+            let boxed_q = BoxedUint::from_be_slice(&EXAMPLE_Q.to_be_bytes(), 256).unwrap();
+            let h = [0xab; 20];
+            let mut out = [0u8; 32];
+
+            assert_eq!(
+                bits2octets(&h, &boxed_q, &mut out),
+                &[
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xab, 0xab, 0xab, 0xab, 0xab, 0xab, 0xab,
+                    0xab, 0xab, 0xab, 0xab, 0xab, 0xab, 0xab, 0xab, 0xab, 0xab, 0xab, 0xab, 0xab,
+                ],
+            );
+        }
+
+        #[test]
+        fn boxed_160_bit_hash_with_256_bit_q() {
+            let q = U256::from_be_hex(
+                "87A8E61DB4B6663CFFBBD19C6519599998CEEF608660DD0F25D2CE4EDDBF8A9B",
+            );
+
+            let boxed_q = BoxedUint::from_be_slice(&q.to_be_bytes(), 256).unwrap();
+
+            let h = [
+                0x81, 0x53, 0x2b, 0x5b, 0xe0, 0x21, 0xe9, 0xb6, 0xe9, 0x87, 0xf3, 0x37, 0x66, 0x31,
+                0x97, 0x4e, 0xa3, 0x1b, 0x72, 0x37,
+            ];
+
+            let mut out = [0u8; 32];
+            let actual = bits2octets(&h, &boxed_q, &mut out);
+            assert_eq!(&actual[..12], &[0u8; 12]);
+            assert_eq!(&actual[12..], &h);
         }
     }
 }
