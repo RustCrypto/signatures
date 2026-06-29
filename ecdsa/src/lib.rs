@@ -64,7 +64,7 @@ mod recovery;
 pub mod der;
 #[cfg(feature = "dev")]
 pub mod dev;
-#[cfg(feature = "hazmat")]
+#[cfg(feature = "algorithm")]
 pub mod hazmat;
 #[cfg(feature = "algorithm")]
 mod signing;
@@ -93,32 +93,28 @@ use elliptic_curve::{
 
 #[cfg(feature = "alloc")]
 use alloc::vec::Vec;
-
+#[cfg(feature = "digest")]
+use digest::{
+    Digest, FixedOutputReset,
+    common::BlockSizeUser,
+    const_oid::{AssociatedOid, ObjectIdentifier},
+};
+#[cfg(all(feature = "alloc", feature = "pkcs8"))]
+use elliptic_curve::pkcs8::spki::{
+    self, AlgorithmIdentifierOwned, DynAssociatedAlgorithmIdentifier,
+};
+#[cfg(feature = "pkcs8")]
+use elliptic_curve::pkcs8::spki::{
+    AlgorithmIdentifierRef, AssociatedAlgorithmIdentifier, der::AnyRef,
+};
+#[cfg(feature = "serde")]
+use serdect::serde::{Deserialize, Serialize, de, ser};
 #[cfg(feature = "algorithm")]
 use {
     core::str,
     elliptic_curve::{
         CurveArithmetic, NonZeroScalar, scalar::IsHigh, subtle::ConditionallySelectable,
     },
-};
-
-#[cfg(feature = "digest")]
-use digest::{
-    Digest,
-    const_oid::{AssociatedOid, ObjectIdentifier},
-};
-
-#[cfg(feature = "pkcs8")]
-use elliptic_curve::pkcs8::spki::{
-    AlgorithmIdentifierRef, AssociatedAlgorithmIdentifier, der::AnyRef,
-};
-
-#[cfg(feature = "serde")]
-use serdect::serde::{Deserialize, Serialize, de, ser};
-
-#[cfg(all(feature = "alloc", feature = "pkcs8"))]
-use elliptic_curve::pkcs8::spki::{
-    self, AlgorithmIdentifierOwned, DynAssociatedAlgorithmIdentifier,
 };
 
 /// OID for ECDSA with SHA-224 digests.
@@ -466,10 +462,10 @@ where
 ///
 /// To support non-default digest algorithms, use the [`SignatureWithOid`]
 /// type instead.
-#[cfg(all(feature = "digest", feature = "hazmat"))]
+#[cfg(feature = "digest")]
 impl<C> AssociatedOid for Signature<C>
 where
-    C: hazmat::DigestAlgorithm,
+    C: DigestAlgorithm,
     C::Digest: AssociatedOid,
 {
     const OID: ObjectIdentifier = match ecdsa_oid_for_digest(C::Digest::OID) {
@@ -668,6 +664,17 @@ where
     }
 }
 
+/// Bind a preferred [`Digest`] algorithm to an elliptic curve type.
+///
+/// Generally there is a preferred variety of the SHA-2 family used with ECDSA
+/// for a particular elliptic curve.
+#[cfg(feature = "digest")]
+pub trait DigestAlgorithm: EcdsaCurve {
+    /// Preferred digest to use when computing ECDSA signatures for this
+    /// elliptic curve. This is typically a member of the SHA-2 family.
+    type Digest: BlockSizeUser + Digest + FixedOutputReset;
+}
+
 #[cfg(feature = "digest")]
 impl<C> Copy for SignatureWithOid<C>
 where
@@ -735,14 +742,14 @@ where
 }
 
 /// NOTE: this implementation assumes the default digest for the given elliptic
-/// curve as defined by [`hazmat::DigestAlgorithm`].
+/// curve as defined by [`DigestAlgorithm`].
 ///
 /// When working with alternative digests, you will need to use e.g.
 /// [`SignatureWithOid::new_with_digest`].
-#[cfg(all(feature = "digest", feature = "hazmat"))]
+#[cfg(feature = "digest")]
 impl<C> SignatureEncoding for SignatureWithOid<C>
 where
-    C: hazmat::DigestAlgorithm,
+    C: DigestAlgorithm,
     C::Digest: AssociatedOid,
     SignatureSize<C>: ArraySize,
 {
@@ -750,14 +757,14 @@ where
 }
 
 /// NOTE: this implementation assumes the default digest for the given elliptic
-/// curve as defined by [`hazmat::DigestAlgorithm`].
+/// curve as defined by [`DigestAlgorithm`].
 ///
 /// When working with alternative digests, you will need to use e.g.
 /// [`SignatureWithOid::new_with_digest`].
-#[cfg(all(feature = "digest", feature = "hazmat"))]
+#[cfg(feature = "digest")]
 impl<C> TryFrom<&[u8]> for SignatureWithOid<C>
 where
-    C: hazmat::DigestAlgorithm,
+    C: DigestAlgorithm,
     C::Digest: AssociatedOid,
     SignatureSize<C>: ArraySize,
 {

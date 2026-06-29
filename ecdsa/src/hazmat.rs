@@ -12,72 +12,20 @@
 //! FULL PRIVATE KEY RECOVERY!
 //! </div>
 
-use crate::{EcdsaCurve, Error, Result};
-use core::cmp;
-use elliptic_curve::{FieldBytes, array::typenum::Unsigned};
-
-#[cfg(feature = "algorithm")]
-use {
-    crate::{RecoveryId, Signature, SignatureSize},
-    elliptic_curve::{
-        CurveArithmetic, NonZeroScalar, ProjectivePoint, Scalar,
-        array::ArraySize,
-        ff::PrimeField,
-        field,
-        group::{Curve as _, Group},
-        ops::{Invert, MulByGeneratorVartime, Reduce},
-        point::AffineCoordinates,
-        scalar::IsHigh,
-    },
+use crate::{EcdsaCurve, Error, RecoveryId, Result, Signature, SignatureSize};
+use elliptic_curve::{
+    CurveArithmetic, FieldBytes, NonZeroScalar, ProjectivePoint, Scalar,
+    array::ArraySize,
+    bigint::{BitOps, Encoding},
+    ff::PrimeField,
+    group::{Curve as _, Group},
+    ops::{Invert, MulByGeneratorVartime, Reduce},
+    point::AffineCoordinates,
+    scalar::IsHigh,
 };
 
 #[cfg(feature = "digest")]
-use digest::{Digest, FixedOutput, FixedOutputReset, common::BlockSizeUser};
-
-/// Bind a preferred [`Digest`] algorithm to an elliptic curve type.
-///
-/// Generally there is a preferred variety of the SHA-2 family used with ECDSA
-/// for a particular elliptic curve.
-#[cfg(feature = "digest")]
-pub trait DigestAlgorithm: EcdsaCurve {
-    /// Preferred digest to use when computing ECDSA signatures for this
-    /// elliptic curve. This is typically a member of the SHA-2 family.
-    type Digest: BlockSizeUser + Digest + FixedOutput + FixedOutputReset;
-}
-
-/// Partial implementation of the `bits2int` function as defined in
-/// [RFC6979 § 2.3.2] as well as [SEC1] § 2.3.8.
-///
-/// This is used to convert a message digest whose size may be smaller or
-/// larger than the size of the curve's scalar field into a serialized
-/// (unreduced) field element.
-///
-/// [RFC6979 § 2.3.2]: https://datatracker.ietf.org/doc/html/rfc6979#section-2.3.2
-/// [SEC1]: https://www.secg.org/sec1-v2.pdf
-pub fn bits2field<C: EcdsaCurve>(bits: &[u8]) -> Result<FieldBytes<C>> {
-    // Absolute 128-bit / 16-byte minimum to catch egregious digest misuse
-    // without rejecting legitimate combinations like SHA-256 with P-521
-    // (see e.g. XML Signature, which permits such pairings).
-    if bits.len() < 16 {
-        return Err(Error::new());
-    }
-
-    let mut field_bytes = FieldBytes::<C>::default();
-
-    match bits.len().cmp(&C::FieldBytesSize::USIZE) {
-        cmp::Ordering::Equal => field_bytes.copy_from_slice(bits),
-        cmp::Ordering::Less => {
-            // If bits is smaller than the field size, pad with zeroes on the left
-            field_bytes[(C::FieldBytesSize::USIZE - bits.len())..].copy_from_slice(bits);
-        }
-        cmp::Ordering::Greater => {
-            // If bits is larger than the field size, truncate
-            field_bytes.copy_from_slice(&bits[..C::FieldBytesSize::USIZE]);
-        }
-    }
-
-    Ok(field_bytes)
-}
+use digest::{Digest, FixedOutputReset, block_api::BlockSizeUser};
 
 /// Sign a prehashed message digest using the provided secret scalar and
 /// ephemeral scalar, returning an ECDSA signature.
@@ -102,18 +50,17 @@ pub fn bits2field<C: EcdsaCurve>(bits: &[u8]) -> Result<FieldBytes<C>> {
 ///
 /// This will return an error if a zero-scalar was generated. It can be tried again with a
 /// different `k`.
-#[cfg(feature = "algorithm")]
 #[allow(non_snake_case)]
 pub fn sign_prehashed<C>(
     d: &NonZeroScalar<C>,
     k: &NonZeroScalar<C>,
-    z: &FieldBytes<C>,
+    z: &[u8],
 ) -> Result<(Signature<C>, RecoveryId)>
 where
     C: EcdsaCurve + CurveArithmetic,
     SignatureSize<C>: ArraySize,
 {
-    let z = Scalar::<C>::reduce(z);
+    let z = bytes2scalar::<C>(z);
 
     // Compute scalar inversion of 𝑘.
     let k_inv = k.invert();
@@ -123,7 +70,7 @@ where
 
     // Lift x-coordinate of 𝑹 (element of base field) into a serialized big
     // integer, then reduce it into an element of the scalar field.
-    let r = Scalar::<C>::reduce(&R.x());
+    let r = bytes2scalar::<C>(&R.x());
 
     // Compute 𝒔 as a signature over 𝒓 and 𝒛.
     let s = *k_inv * (z + (r * d.as_ref()));
@@ -153,40 +100,30 @@ where
 /// - `z`: message digest to be signed, i.e. `H(m)`. Does not have to be reduced in advance.
 /// - `ad`: optional additional data, e.g. added entropy from an RNG
 ///
-/// # Errors
-///
-/// This will return an error if a zero-scalar was generated. It can be tried again with different
-/// entropy `ad`.
-///
 /// [RFC6979]: https://datatracker.ietf.org/doc/html/rfc6979
-#[cfg(feature = "algorithm")]
 pub fn sign_prehashed_rfc6979<C, D>(
     d: &NonZeroScalar<C>,
-    z: &FieldBytes<C>,
+    z: &[u8],
     ad: &[u8],
-) -> Result<(Signature<C>, RecoveryId)>
+) -> (Signature<C>, RecoveryId)
 where
     C: EcdsaCurve + CurveArithmetic,
-    D: Digest + BlockSizeUser + FixedOutput + FixedOutputReset,
+    D: Digest + BlockSizeUser + FixedOutputReset,
     SignatureSize<C>: ArraySize,
 {
-    // From RFC6979 § 2.4:
-    //
-    // H(m) is transformed into an integer modulo q using the bits2int
-    // transform and an extra modular reduction:
-    //
-    // h = bits2int(H(m)) mod q
-    let z2 = Scalar::<C>::reduce(z);
+    let order = C::ORDER;
+    let mut kgen = rfc6979::KGenerator::<D, C::Uint>::new(&d.to_repr(), z, ad, &order);
 
-    let k = NonZeroScalar::<C>::from_repr(rfc6979::generate_k::<D, _>(
-        &d.to_repr(),
-        &field::uint_to_bytes::<C>(&C::ORDER),
-        &z2.to_repr(),
-        ad,
-    ))
-    .unwrap();
+    loop {
+        let mut k_bytes = FieldBytes::<C>::default();
+        kgen.fill_next_k(&mut k_bytes);
 
-    sign_prehashed(d, &k, z)
+        if let Some(k) = NonZeroScalar::<C>::from_repr(k_bytes).into_option() {
+            if let Ok(ret) = sign_prehashed(d, &k, z) {
+                return ret;
+            }
+        }
+    }
 }
 
 /// Verify the prehashed message against the provided ECDSA signature.
@@ -197,12 +134,7 @@ where
 /// - `z`: message digest to be verified. MUST BE OUTPUT OF A CRYPTOGRAPHICALLY SECURE DIGEST
 ///   ALGORITHM!!!
 /// - `sig`: signature to be verified against the key and message.
-#[cfg(feature = "algorithm")]
-pub fn verify_prehashed<C>(
-    q: &ProjectivePoint<C>,
-    z: &FieldBytes<C>,
-    sig: &Signature<C>,
-) -> Result<()>
+pub fn verify_prehashed<C>(q: &ProjectivePoint<C>, z: &[u8], sig: &Signature<C>) -> Result<()>
 where
     C: EcdsaCurve + CurveArithmetic,
     SignatureSize<C>: ArraySize,
@@ -211,7 +143,7 @@ where
         return Err(Error::new());
     }
 
-    let z = Scalar::<C>::reduce(z);
+    let z = bytes2scalar::<C>(z);
     let (r, s) = sig.split_scalars();
     let s_inv = *s.invert_vartime();
     let u1 = z * s_inv;
@@ -220,53 +152,23 @@ where
         .to_affine()
         .x();
 
-    if *r == Scalar::<C>::reduce(&x) {
+    if *r == bytes2scalar::<C>(&x) {
         Ok(())
     } else {
         Err(Error::new())
     }
 }
 
-#[cfg(all(test, feature = "dev"))]
-mod tests {
-    use super::bits2field;
-    use elliptic_curve::dev::MockCurve;
-    use hex_literal::hex;
-
-    #[test]
-    fn bits2field_too_small() {
-        assert!(bits2field::<MockCurve>(b"").is_err());
-        // 15 bytes is one short of the 128-bit absolute floor.
-        let prehash = hex!("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-        assert!(bits2field::<MockCurve>(&prehash).is_err());
+/// Convert the provided bytestring into a `Scalar` for the given curve, interpreting it as big
+/// endian, zero-padding or truncating it to the bit length of `n` (curve order) if necessary,
+/// and then reducing it mod `n`.
+pub(crate) fn bytes2scalar<C: EcdsaCurve + CurveArithmetic>(mut bytes: &[u8]) -> Scalar<C> {
+    // Compute number of bytes in `n` (curve order)
+    let n_bits = C::ORDER.bits();
+    let n_bytes = n_bits.div_ceil(8) as usize;
+    if bytes.len() > n_bytes {
+        bytes = &bytes[..n_bytes];
     }
 
-    #[test]
-    fn bits2field_size_less() {
-        let prehash = hex!("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-        let field_bytes = bits2field::<MockCurve>(&prehash).expect("field bytes");
-        assert_eq!(
-            field_bytes.as_slice(),
-            &hex!("00000000000000000000000000000000AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-        );
-    }
-
-    #[test]
-    fn bits2field_size_eq() {
-        let prehash = hex!("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-        let field_bytes = bits2field::<MockCurve>(&prehash).expect("field bytes");
-        assert_eq!(field_bytes.as_slice(), &prehash);
-    }
-
-    #[test]
-    fn bits2field_size_greater() {
-        let prehash = hex!(
-            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
-        );
-        let field_bytes = bits2field::<MockCurve>(&prehash).expect("field bytes");
-        assert_eq!(
-            field_bytes.as_slice(),
-            &hex!("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-        );
-    }
+    <Scalar<C> as Reduce<C::Uint>>::reduce(&C::Uint::from_be_slice_truncated(bytes, n_bits))
 }

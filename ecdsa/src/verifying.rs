@@ -1,13 +1,10 @@
 //! ECDSA verifying: checking signatures are authentic using a [`VerifyingKey`].
 
-use crate::{
-    EcdsaCurve, Error, Result, Signature, SignatureSize,
-    hazmat::{self, DigestAlgorithm, bits2field},
-};
+use crate::{DigestAlgorithm, EcdsaCurve, Error, Result, Signature, SignatureSize, hazmat};
 use core::{cmp::Ordering, fmt::Debug};
 use digest::{Digest, Update};
 use elliptic_curve::{
-    AffinePoint, CurveArithmetic, FieldBytesSize, ProjectivePoint, PublicKey,
+    AffinePoint, CurveArithmetic, FieldBytesSize, PublicKey,
     array::ArraySize,
     point::PointCompression,
     sec1::{self, CompressedPoint, FromSec1Point, Sec1Point, ToSec1Point},
@@ -163,11 +160,7 @@ where
     SignatureSize<C>: ArraySize,
 {
     fn verify_prehash(&self, prehash: &[u8], signature: &Signature<C>) -> Result<()> {
-        hazmat::verify_prehashed::<C>(
-            &ProjectivePoint::<C>::from(*self.inner.as_affine()),
-            &bits2field::<C>(prehash)?,
-            signature,
-        )
+        hazmat::verify_prehashed::<C>(&(*self.inner.as_affine()).into(), prehash, signature)
     }
 }
 

@@ -1,8 +1,8 @@
 //! ECDSA signing: producing signatures using a [`SigningKey`].
 
 use crate::{
-    EcdsaCurve, Error, Result, Signature, SignatureSize, SignatureWithOid, ecdsa_oid_for_digest,
-    hazmat::{DigestAlgorithm, bits2field, sign_prehashed_rfc6979},
+    DigestAlgorithm, EcdsaCurve, Error, Result, Signature, SignatureSize, SignatureWithOid,
+    ecdsa_oid_for_digest, hazmat::sign_prehashed_rfc6979,
 };
 use core::fmt::{self, Debug};
 use digest::{Digest, FixedOutput, const_oid::AssociatedOid};
@@ -22,15 +22,6 @@ use signature::{
     rand_core::TryCryptoRng,
 };
 
-#[cfg(feature = "der")]
-use {crate::der, core::ops::Add};
-
-#[cfg(feature = "pem")]
-use {core::str::FromStr, elliptic_curve::pkcs8::DecodePrivateKey};
-
-#[cfg(any(feature = "der", feature = "pem"))]
-use elliptic_curve::FieldBytesSize;
-
 #[cfg(feature = "pkcs8")]
 use crate::elliptic_curve::{
     AffinePoint,
@@ -41,12 +32,16 @@ use crate::elliptic_curve::{
     },
     sec1::{self, FromSec1Point, ToSec1Point},
 };
-
-#[cfg(feature = "algorithm")]
-use {crate::VerifyingKey, elliptic_curve::PublicKey, signature::KeypairRef};
-
+#[cfg(any(feature = "der", feature = "pem"))]
+use elliptic_curve::FieldBytesSize;
 #[cfg(all(feature = "alloc", feature = "pkcs8"))]
 use elliptic_curve::pkcs8::{EncodePrivateKey, SecretDocument};
+#[cfg(feature = "algorithm")]
+use {crate::VerifyingKey, elliptic_curve::PublicKey, signature::KeypairRef};
+#[cfg(feature = "der")]
+use {crate::der, core::ops::Add};
+#[cfg(feature = "pem")]
+use {core::str::FromStr, elliptic_curve::pkcs8::DecodePrivateKey};
 
 /// ECDSA secret key used for signing. Generic over prime order elliptic curves
 /// (e.g. NIST P-curves).
@@ -157,8 +152,8 @@ where
     }
 }
 
-/// Sign message prehash using a deterministic ephemeral scalar (`k`)
-/// computed using the algorithm described in [RFC6979 § 3.2].
+/// Sign message prehash using a deterministic ephemeral scalar (`k`) computed using the algorithm
+/// described in [RFC6979 § 3.2].
 ///
 /// [RFC6979 § 3.2]: https://tools.ietf.org/html/rfc6979#section-3
 impl<C> PrehashSigner<Signature<C>> for SigningKey<C>
@@ -168,8 +163,7 @@ where
     SignatureSize<C>: ArraySize,
 {
     fn sign_prehash(&self, prehash: &[u8]) -> Result<Signature<C>> {
-        let z = bits2field::<C>(prehash)?;
-        Ok(sign_prehashed_rfc6979::<C, C::Digest>(&self.secret_scalar, &z, &[])?.0)
+        Ok(sign_prehashed_rfc6979::<C, C::Digest>(&self.secret_scalar, prehash, &[]).0)
     }
 }
 
@@ -231,18 +225,9 @@ where
         rng: &mut R,
         prehash: &[u8],
     ) -> Result<Signature<C>> {
-        let z = bits2field::<C>(prehash)?;
-
-        loop {
-            let mut ad = FieldBytes::<C>::default();
-            rng.try_fill_bytes(&mut ad).map_err(|_| Error::new())?;
-
-            if let Ok((signature, _)) =
-                sign_prehashed_rfc6979::<C, C::Digest>(&self.secret_scalar, &z, &ad)
-            {
-                break Ok(signature);
-            }
-        }
+        let mut ad = FieldBytes::<C>::default();
+        rng.try_fill_bytes(&mut ad).map_err(|_| Error::new())?;
+        Ok(sign_prehashed_rfc6979::<C, C::Digest>(&self.secret_scalar, prehash, &ad).0)
     }
 }
 

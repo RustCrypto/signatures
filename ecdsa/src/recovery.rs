@@ -5,8 +5,8 @@ use crate::{Error, Result};
 #[cfg(feature = "algorithm")]
 use {
     crate::{
-        EcdsaCurve, Signature, SignatureSize, SigningKey, VerifyingKey,
-        hazmat::{DigestAlgorithm, bits2field, sign_prehashed_rfc6979, verify_prehashed},
+        DigestAlgorithm, EcdsaCurve, Signature, SignatureSize, SigningKey, VerifyingKey,
+        hazmat::{bytes2scalar, sign_prehashed_rfc6979, verify_prehashed},
     },
     digest::{Digest, FixedOutputReset, Update},
     elliptic_curve::{
@@ -16,7 +16,7 @@ use {
         bigint::CheckedAdd,
         field,
         ops::Invert,
-        ops::{LinearCombination, Reduce},
+        ops::LinearCombination,
         point::DecompressPoint,
         sec1::{self, FromSec1Point, ToSec1Point},
         subtle::CtOption,
@@ -135,7 +135,7 @@ impl RecoveryId {
         // Ensure signature verifies with the provided key
         verify_prehashed::<C>(
             &ProjectivePoint::<C>::from(*verifying_key.as_affine()),
-            &bits2field::<C>(prehash)?,
+            prehash,
             signature,
         )?;
 
@@ -181,24 +181,22 @@ where
         rng: &mut R,
         prehash: &[u8],
     ) -> Result<(Signature<C>, RecoveryId)> {
-        let z = bits2field::<C>(prehash)?;
-
-        loop {
-            let mut ad = FieldBytes::<C>::default();
-            rng.try_fill_bytes(&mut ad).map_err(|_| Error::new())?;
-
-            if let Ok(result) =
-                sign_prehashed_rfc6979::<C, C::Digest>(self.as_nonzero_scalar(), &z, &ad)
-            {
-                break Ok(result);
-            }
-        }
+        let mut ad = FieldBytes::<C>::default();
+        rng.try_fill_bytes(&mut ad).map_err(|_| Error::new())?;
+        Ok(sign_prehashed_rfc6979::<C, C::Digest>(
+            self.as_nonzero_scalar(),
+            prehash,
+            &ad,
+        ))
     }
 
     /// Sign the given message prehash, returning a signature and recovery ID.
     pub fn sign_prehash_recoverable(&self, prehash: &[u8]) -> Result<(Signature<C>, RecoveryId)> {
-        let z = bits2field::<C>(prehash)?;
-        sign_prehashed_rfc6979::<C, C::Digest>(self.as_nonzero_scalar(), &z, &[])
+        Ok(sign_prehashed_rfc6979::<C, C::Digest>(
+            self.as_nonzero_scalar(),
+            prehash,
+            b"",
+        ))
     }
 
     /// Sign the given message digest, returning a signature and recovery ID.
@@ -362,7 +360,7 @@ where
         recovery_id: RecoveryId,
     ) -> Result<Self> {
         let (r, s) = signature.split_scalars();
-        let z = Scalar::<C>::reduce(&bits2field::<C>(prehash)?);
+        let z = bytes2scalar::<C>(prehash);
 
         let r_bytes = if recovery_id.is_x_reduced() {
             let uint = field::bytes_to_uint::<C>(&r.to_repr())
