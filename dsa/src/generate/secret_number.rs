@@ -36,15 +36,14 @@ where
     let hash = (hash % q).to_be_bytes();
     let hash = truncate_hash(&hash, size);
 
-    let q_bytes = q.to_be_bytes();
-    let q_bytes = truncate_hash(&q_bytes, size);
-
     let x_bytes = Zeroizing::new(signing_key.x().to_be_bytes());
     let x_bytes = truncate_hash(&x_bytes, size);
 
+    let mut kgen = rfc6979::KGenerator::<D, BoxedUint>::new(x_bytes, hash, &[], q);
+
     let mut buffer = vec![0; size];
     loop {
-        rfc6979::generate_k_mut::<D>(x_bytes, q_bytes, hash, &[], &mut buffer);
+        kgen.fill_next_k(&mut buffer);
 
         let k = BoxedUint::from_be_slice(&buffer, q.bits_precision())
             .map_err(|_| signature::Error::new())?;
