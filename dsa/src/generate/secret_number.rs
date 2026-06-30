@@ -7,7 +7,6 @@ use alloc::vec;
 use core::cmp::min;
 use crypto_bigint::{BoxedUint, NonZero, NonZeroBoxedUint, RandomBits, Resize};
 use digest::{Digest, common::BlockSizeUser};
-use rfc6979::KGenerator;
 use signature::rand_core::TryCryptoRng;
 use zeroize::Zeroizing;
 
@@ -44,7 +43,7 @@ fn init_kgen<'a, D: BlockSizeUser + Digest>(
     x: &NonZeroBoxedUint,
     z: &[u8],
     q: &'a NonZeroBoxedUint,
-) -> KGenerator<'a, D, BoxedUint> {
+) -> rfc6979::KGenerator<'a, D, BoxedUint> {
     // Truncate to the right `size` most bytes
     fn truncate(b: &[u8], size: usize) -> &[u8] {
         &b[(b.len() - size)..]
@@ -66,6 +65,7 @@ fn bytes2uint(b: &[u8], q: &NonZeroBoxedUint) -> BoxedUint {
     BoxedUint::from_be_slice_truncated(b, q.bits_precision())
 }
 
+#[allow(clippy::as_conversions)]
 fn qlen(q: &NonZeroBoxedUint) -> usize {
     q.bits().div_ceil(8) as usize
 }

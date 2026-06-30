@@ -45,9 +45,6 @@ default = ["pkcs8"]
 getrandom = ["crypto-common/getrandom"]
 hazmat = []
 
-[package.metadata.docs.rs]
-all-features = true
-
 [[example]]
 name = "sign"
 required-features = ["hazmat", "pkcs8"]
@@ -59,3 +56,9 @@ required-features = ["hazmat"]
 [[example]]
 name = "export"
 required-features = ["hazmat", "pkcs8"]
+
+[lints]
+workspace = true
+
+[package.metadata.docs.rs]
+all-features = true

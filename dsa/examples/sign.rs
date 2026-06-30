@@ -1,3 +1,7 @@
+//! Signing example.
+
+#![allow(clippy::unwrap_used, reason = "tests")]
+
 use digest::Digest;
 use dsa::{Components, KeySize, SigningKey};
 use getrandom::{SysRng, rand_core::UnwrapErr};

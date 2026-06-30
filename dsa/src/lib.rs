@@ -1,6 +1,5 @@
 #![no_std]
-#![forbid(unsafe_code)]
-#![warn(missing_docs, rust_2018_idioms, unreachable_pub)]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![doc = include_str!("../README.md")]
 #![doc(
     html_logo_url = "https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg",
@@ -105,6 +104,7 @@ pub struct Signature {
 
 impl Signature {
     /// Create a new Signature container from its components
+    #[must_use]
     pub fn from_components(r: BoxedUint, s: BoxedUint) -> Option<Self> {
         let r = NonZero::new(r).into_option()?;
         let s = NonZero::new(s).into_option()?;
@@ -127,6 +127,11 @@ impl Signature {
 impl<'a> DecodeValue<'a> for Signature {
     type Error = der::Error;
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        reason = "TODO"
+    )]
     fn decode_value<R: Reader<'a>>(reader: &mut R, _header: der::Header) -> der::Result<Self> {
         let r = UintRef::decode(reader)?;
         let s = UintRef::decode(reader)?;

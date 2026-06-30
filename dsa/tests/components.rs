@@ -1,3 +1,5 @@
+//! Integration tests for `dsa::Components`.
+
 use dsa::Components;
 use pkcs8::{
     Document,
