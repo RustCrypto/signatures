@@ -8,7 +8,7 @@ use {
         DigestAlgorithm, EcdsaCurve, Signature, SignatureSize, SigningKey, VerifyingKey,
         hazmat::{bytes2scalar, sign_prehashed_rfc6979, verify_prehashed},
     },
-    digest::{Digest, FixedOutputReset, Update},
+    digest::{Digest, Update},
     elliptic_curve::{
         AffinePoint, CurveArithmetic, FieldBytes, FieldBytesSize, Group, PrimeField,
         ProjectivePoint, Scalar,
@@ -252,7 +252,7 @@ where
 impl<C, D> RandomizedDigestSigner<D, (Signature<C>, RecoveryId)> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
-    D: Digest + Update + FixedOutputReset,
+    D: Digest + Update,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
     SignatureSize<C>: ArraySize,
 {
@@ -263,7 +263,7 @@ where
     ) -> Result<(Signature<C>, RecoveryId)> {
         let mut digest = D::new();
         f(&mut digest)?;
-        self.sign_prehash_with_rng(rng, &digest.finalize_reset())
+        self.sign_prehash_with_rng(rng, &digest.finalize())
     }
 }
 

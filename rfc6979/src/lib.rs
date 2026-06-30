@@ -55,20 +55,17 @@ pub use hmac::digest::array::typenum::consts;
 use crate::hmac_drbg::HmacDrbg;
 use bigint::{Encoding, Limb, Unsigned};
 use core::fmt;
-use hmac::digest::{Digest, FixedOutput, FixedOutputReset, block_api::BlockSizeUser};
+use hmac::digest::{Digest, OutputSizeUser, block_api::BlockSizeUser};
 
 /// Deterministic generator for the ephemeral scalar `k` as used by (EC)DSA.
-pub struct KGenerator<'a, D, U>
-where
-    D: Digest + BlockSizeUser + FixedOutput + FixedOutputReset,
-{
+pub struct KGenerator<'a, D: OutputSizeUser, U> {
     drbg: HmacDrbg<D>,
     q: &'a U,
 }
 
 impl<'a, D, U> KGenerator<'a, D, U>
 where
-    D: Digest + BlockSizeUser + FixedOutput + FixedOutputReset,
+    D: BlockSizeUser + Digest,
     U: Unsigned + Encoding,
 {
     /// Initialize `k` generator.
@@ -109,7 +106,7 @@ where
 
 impl<'a, D, U> fmt::Debug for KGenerator<'a, D, U>
 where
-    D: Digest + BlockSizeUser + FixedOutput + FixedOutputReset,
+    D: BlockSizeUser + Digest,
     U: Unsigned + Encoding,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
