@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.6.0 (2026-06-29)
+### Changed
+- Replace `generate_k(_mut)` free functions with new `KGenerator` struct ([#1395])
+- Use `crypto-bigint` for representing `q` ([#1395])
+
+### Fixed
+- Allow the use of non-`block_api`-backed hashes ([#1360])
+
+### Removed
+- `generate_k` and `generate_k_mut` free functions ([#1395])
+
+[#1360]: https://github.com/RustCrypto/signatures/pull/1360
+[#1395]: https://github.com/RustCrypto/signatures/pull/1395
+
 ## 0.5.0 (2026-05-06)
 ### Added
 - `generate_k_mut` function ([#773])
