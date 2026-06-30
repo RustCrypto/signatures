@@ -4,7 +4,7 @@
 
 #![cfg(feature = "hazmat")]
 
-use crate::{Components, Signature, VerifyingKey};
+use crate::{Components, Signature, VerifyingKey, generate};
 use core::{
     cmp::min,
     fmt::{self, Debug},
@@ -73,7 +73,7 @@ impl SigningKey {
         rng: &mut R,
         components: Components,
     ) -> Result<Self, R::Error> {
-        crate::generate::signing_keypair(rng, components)
+        generate::signing_keypair(rng, components)
     }
 
     /// DSA public key
@@ -98,7 +98,7 @@ impl SigningKey {
     where
         D: BlockSizeUser + Digest,
     {
-        let k_kinv = crate::generate::secret_number_rfc6979::<D>(self, prehash)?;
+        let k_kinv = generate::secret_number_rfc6979::<D>(self, prehash);
         self.sign_prehashed(k_kinv, prehash)
     }
 
@@ -179,7 +179,7 @@ impl MultipartSigner<Signature> for SigningKey {
 impl PrehashSigner<Signature> for SigningKey {
     /// Warning: This uses `sha2::Sha256` as the hash function for the digest. If you need to use a different one, use [`SigningKey::sign_prehashed_rfc6979`].
     fn sign_prehash(&self, prehash: &[u8]) -> Result<Signature, signature::Error> {
-        let k_kinv = crate::generate::secret_number_rfc6979::<sha2::Sha256>(self, prehash)?;
+        let k_kinv = generate::secret_number_rfc6979::<sha2::Sha256>(self, prehash);
         self.sign_prehashed(k_kinv, prehash)
     }
 }
@@ -192,7 +192,7 @@ impl RandomizedPrehashSigner<Signature> for SigningKey {
     ) -> Result<Signature, signature::Error> {
         let components = self.verifying_key.components();
 
-        if let Some(k_kinv) = crate::generate::secret_number(rng, components)? {
+        if let Some(k_kinv) = generate::secret_number(rng, components)? {
             self.sign_prehashed(k_kinv, prehash)
         } else {
             Err(signature::Error::new())
@@ -211,7 +211,7 @@ where
         let mut digest = D::new();
         f(&mut digest)?;
         let hash = digest.finalize();
-        let ks = crate::generate::secret_number_rfc6979::<D>(self, &hash)?;
+        let ks = generate::secret_number_rfc6979::<D>(self, &hash);
 
         self.sign_prehashed(ks, &hash)
     }
@@ -229,7 +229,7 @@ where
         rng: &mut R,
         f: F,
     ) -> Result<Signature, signature::Error> {
-        let ks = crate::generate::secret_number(rng, self.verifying_key().components())?
+        let ks = generate::secret_number(rng, self.verifying_key().components())?
             .ok_or_else(signature::Error::new)?;
         let mut digest = D::new();
         f(&mut digest)?;
@@ -290,7 +290,7 @@ impl<'a> TryFrom<PrivateKeyInfoRef<'a>> for SigningKey {
             BoxedUint::from_be_slice(y.as_bytes(), precision)
                 .map_err(|_| pkcs8::KeyError::Invalid)?
         } else {
-            crate::generate::public_component(&components, &x)
+            generate::public_component(&components, &x)
                 .into_option()
                 .ok_or(pkcs8::KeyError::Invalid)?
                 .get()
