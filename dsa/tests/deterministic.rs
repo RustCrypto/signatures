@@ -1,4 +1,13 @@
+//! Integration tests for RFC6979 deterministic signing.
+
 #![cfg(feature = "hazmat")]
+#![allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::unwrap_used,
+    reason = "tests"
+)]
+
 use crypto_bigint::BoxedUint;
 use digest::{Digest, Update, common::BlockSizeUser};
 use dsa::{Components, Signature, SigningKey, VerifyingKey};

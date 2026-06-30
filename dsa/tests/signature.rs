@@ -1,3 +1,5 @@
+//! Integration tests for signatures.
+
 #![cfg(feature = "hazmat")]
 #![allow(deprecated)]
 

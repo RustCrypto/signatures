@@ -50,13 +50,16 @@ pub struct SigningKey {
 }
 
 impl SigningKey {
-    /// Construct a new private key from the public key and private component
+    /// Construct a new private key from the public key and private component.
+    ///
+    /// # Errors
+    /// Returns an error in the event `x` is zero or equal to or larger than `q`.
     pub fn from_components(verifying_key: VerifyingKey, x: BoxedUint) -> signature::Result<Self> {
         let x = NonZero::new(x)
             .into_option()
             .ok_or_else(signature::Error::new)?;
 
-        if x > *verifying_key.components().q() {
+        if x >= *verifying_key.components().q() {
             return Err(signature::Error::new());
         }
 
@@ -66,7 +69,10 @@ impl SigningKey {
         })
     }
 
-    /// Generate a new DSA keypair
+    /// Generate a new DSA keypair.
+    ///
+    /// # Errors
+    /// Propagates errors from `R`.
     #[cfg(feature = "hazmat")]
     #[inline]
     pub fn try_generate_from_rng_with_components<R: TryCryptoRng + ?Sized>(
@@ -81,9 +87,17 @@ impl SigningKey {
         &self.verifying_key
     }
 
-    /// DSA private component
+    /// DSA private component.
     ///
-    /// If you decide to clone this value, please consider using [`Zeroize::zeroize`](::zeroize::Zeroize::zeroize()) to zero out the memory after you're done using the clone
+    /// <div class="warning">
+    /// <b>Security Warning</b>
+    ///
+    /// This value is key material. Please treat it with care!
+    ///
+    /// If you decide to clone this value, please consider using
+    /// [`Zeroize::zeroize`](::zeroize::Zeroize::zeroize) to zero out the memory after you're done
+    /// using the clone.
+    /// </div>
     #[must_use]
     pub fn x(&self) -> &NonZero<BoxedUint> {
         &self.x
@@ -94,15 +108,26 @@ impl SigningKey {
     ///
     /// [RFC6979]: https://datatracker.ietf.org/doc/html/rfc6979
     #[cfg(feature = "hazmat")]
+    #[allow(
+        clippy::missing_errors_doc,
+        reason = "errors shouldn't occur in practice"
+    )]
     pub fn sign_prehashed_rfc6979<D>(&self, prehash: &[u8]) -> Result<Signature, signature::Error>
     where
         D: BlockSizeUser + Digest,
     {
+        // TODO(tarcieri): make this operation infallible by retrying with a different `k`
         let k_kinv = generate::secret_number_rfc6979::<D>(self, prehash);
         self.sign_prehashed(k_kinv, prehash)
     }
 
-    /// Sign some pre-hashed data
+    /// Sign some pre-hashed data.
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::integer_division_remainder_used,
+        reason = "TODO"
+    )]
     fn sign_prehashed(
         &self,
         (k, inv_k): (BoxedUint, BoxedUint),
@@ -285,7 +310,11 @@ impl<'a> TryFrom<PrivateKeyInfoRef<'a>> for SigningKey {
             .into_option()
             .ok_or(pkcs8::KeyError::Invalid)?;
 
-        let y = if let Some(y_bytes) = value.public_key.as_ref().and_then(|bs| bs.as_bytes()) {
+        let y = if let Some(y_bytes) = value
+            .public_key
+            .as_ref()
+            .and_then(der::asn1::BitStringRef::as_bytes)
+        {
             let y = UintRef::from_der(y_bytes)?;
             BoxedUint::from_be_slice(y.as_bytes(), precision)
                 .map_err(|_| pkcs8::KeyError::Invalid)?

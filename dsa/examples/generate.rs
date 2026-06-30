@@ -1,3 +1,5 @@
+//! Key generation example.
+
 #![cfg(feature = "hazmat")]
 
 use dsa::{Components, KeySize, SigningKey};

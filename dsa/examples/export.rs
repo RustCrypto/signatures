@@ -1,4 +1,7 @@
+//! Example for serializing keys in SPKI/PKCS#8 format.
+
 #![cfg(feature = "hazmat")]
+#![allow(clippy::unwrap_used, reason = "tests")]
 
 use dsa::{Components, KeySize, SigningKey};
 use getrandom::SysRng;

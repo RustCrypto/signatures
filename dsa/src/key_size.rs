@@ -2,7 +2,7 @@ use core::cmp::Ordering;
 use crypto_bigint::Limb;
 
 /// DSA key size
-#[derive(Clone, Debug, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct KeySize {
     /// Bit size of p
     pub(crate) l: u32,
@@ -35,15 +35,15 @@ impl KeySize {
         Self { l, n }
     }
 
-    pub(crate) fn l_aligned(&self) -> u32 {
+    pub(crate) fn l_aligned(self) -> u32 {
         self.l.div_ceil(Limb::BITS) * Limb::BITS
     }
 
-    pub(crate) fn n_aligned(&self) -> u32 {
+    pub(crate) fn n_aligned(self) -> u32 {
         self.n.div_ceil(Limb::BITS) * Limb::BITS
     }
 
-    pub(crate) fn matches(&self, l: u32, n: u32) -> bool {
+    pub(crate) fn matches(self, l: u32, n: u32) -> bool {
         l == self.l_aligned() && n == self.n_aligned()
     }
 }

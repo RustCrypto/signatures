@@ -30,7 +30,17 @@ pub struct Components {
 }
 
 impl Components {
-    /// Construct the common components container from its inner values (p, q and g)
+    /// Construct the common components container from its inner values (`p`, `q`, and `g`).
+    ///
+    /// - `p` must be odd
+    /// - `g` must less than `p`
+    ///
+    /// # Errors
+    /// Returns [`signature::Error`] if any of the following occur:
+    /// - components aren't sized appropriately for a 1024-bit, 2048-bit, or 3072-bit key
+    /// - any of `p`, `q`, or `g` are less than `2`
+    /// - `p` is even instead of odd
+    /// - `g > p`
     pub fn from_components(p: BoxedUint, q: BoxedUint, g: BoxedUint) -> signature::Result<Self> {
         let (p, q, g) = Self::adapt_components(p, q, g)?;
 
@@ -49,9 +59,14 @@ impl Components {
     /// Construct the common components container from its inner values (p, q and g)
     ///
     /// # Safety
-    ///
     /// Any length of keys may be used, no checks are to be performed. You are responsible for
     /// checking the key strengths.
+    ///
+    /// # Errors
+    /// Returns [`signature::Error`] if any of the following occur:
+    /// - any of `p`, `q`, or `g` are less than `2`
+    /// - `p` is even instead of odd
+    /// - `g > p`
     #[cfg(feature = "hazmat")]
     pub fn from_components_unchecked(
         p: BoxedUint,
@@ -60,11 +75,10 @@ impl Components {
     ) -> signature::Result<Self> {
         let (p, q, g) = Self::adapt_components(p, q, g)?;
         let key_size = KeySize::other(p.bits_precision(), q.bits_precision());
-
         Ok(Self { p, q, g, key_size })
     }
 
-    /// Helper method to build a [`Components`]
+    /// Helper method to build [`Components`].
     fn adapt_components(
         p: BoxedUint,
         q: BoxedUint,
@@ -80,14 +94,18 @@ impl Components {
             .into_option()
             .ok_or_else(signature::Error::new)?;
 
-        if *p < two() || *q < two() || *g > *p {
+        if *p < two() || *q < two() || *g >= *p {
             return Err(signature::Error::new());
         }
 
         Ok((p, q, g))
     }
 
-    /// Generate a new pair of common components
+    /// Generate a new pair of common components.
+    ///
+    /// # Errors
+    /// Propagates errors from `R`.
+    #[allow(clippy::missing_panics_doc, reason = "shouldn't panic in practice")]
     pub fn try_generate_from_rng_with_key_size<R: TryCryptoRng + ?Sized>(
         rng: &mut R,
         key_size: KeySize,
