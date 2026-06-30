@@ -5,14 +5,11 @@
 use crate::{Components, signing_key::SigningKey};
 use alloc::vec;
 use core::cmp::min;
-use crypto_bigint::{BoxedUint, NonZero, RandomBits, Resize};
+use crypto_bigint::{BoxedUint, NonZero, NonZeroBoxedUint, RandomBits, Resize};
 use digest::{Digest, common::BlockSizeUser};
+use rfc6979::KGenerator;
 use signature::rand_core::TryCryptoRng;
 use zeroize::Zeroizing;
-
-fn truncate_hash(hash: &[u8], desired_size: usize) -> &[u8] {
-    &hash[(hash.len() - desired_size)..]
-}
 
 /// Generate a per-message secret number k deterministically using the method described in RFC 6979
 ///
@@ -23,37 +20,54 @@ fn truncate_hash(hash: &[u8], desired_size: usize) -> &[u8] {
 pub(crate) fn secret_number_rfc6979<D>(
     signing_key: &SigningKey,
     hash: &[u8],
-) -> Result<(BoxedUint, BoxedUint), signature::Error>
+) -> (BoxedUint, BoxedUint)
 where
     D: BlockSizeUser + Digest,
 {
     let q = signing_key.verifying_key().components().q();
-    let size = (q.bits() / 8) as usize;
+    let mut kgen = init_kgen::<D>(signing_key.x(), hash, q);
+    let mut buffer = vec![0; qlen(q)];
 
-    // Truncate hash and reduce mod q
-    // TODO(tarcieri): `rfc6979` now truncates and reduces mod q. some of this may be redundant?
-    let hash = BoxedUint::from_be_slice(&hash[..min(size, hash.len())], q.bits_precision())
-        .map_err(|_| signature::Error::new())?;
-    let hash = (hash % q).to_be_bytes();
-    let hash = truncate_hash(&hash, size);
-
-    let x_bytes = Zeroizing::new(signing_key.x().to_be_bytes());
-    let x_bytes = truncate_hash(&x_bytes, size);
-
-    let mut kgen = rfc6979::KGenerator::<D, BoxedUint>::new(x_bytes, hash, &[], q);
-
-    let mut buffer = vec![0; size];
     loop {
         kgen.fill_next_k(&mut buffer);
-
-        let k = BoxedUint::from_be_slice(&buffer, q.bits_precision())
-            .map_err(|_| signature::Error::new())?;
+        let k = bytes2uint(&buffer, q);
         if let Some(inv_k) = k.invert_mod(q).into() {
-            if (bool::from(k.is_nonzero())) && (k < **q) {
-                return Ok((k, inv_k));
+            if bool::from(k.is_nonzero()) && k < **q {
+                return (k, inv_k);
             }
         }
     }
+}
+
+/// Initialize `KGenerator` from a `hash`, `q`, and the
+fn init_kgen<'a, D: BlockSizeUser + Digest>(
+    x: &NonZeroBoxedUint,
+    z: &[u8],
+    q: &'a NonZeroBoxedUint,
+) -> KGenerator<'a, D, BoxedUint> {
+    // Truncate to the right `size` most bytes
+    fn truncate(b: &[u8], size: usize) -> &[u8] {
+        &b[(b.len() - size)..]
+    }
+
+    // Truncate hash and reduce mod q
+    let size = qlen(q);
+    let z = bytes2uint(&z[..min(size, z.len())], q);
+    let z = (z % q).to_be_bytes();
+    let z = truncate(&z, size);
+
+    let x = Zeroizing::new(x.to_be_bytes());
+    let x = truncate(&x, size);
+
+    rfc6979::KGenerator::<D, BoxedUint>::new(x, z, &[], q)
+}
+
+fn bytes2uint(b: &[u8], q: &NonZeroBoxedUint) -> BoxedUint {
+    BoxedUint::from_be_slice_truncated(b, q.bits_precision())
+}
+
+fn qlen(q: &NonZeroBoxedUint) -> usize {
+    q.bits().div_ceil(8) as usize
 }
 
 /// Generate a per-message secret number k according to Appendix B.2.1
