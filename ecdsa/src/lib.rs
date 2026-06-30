@@ -95,7 +95,7 @@ use elliptic_curve::{
 use alloc::vec::Vec;
 #[cfg(feature = "digest")]
 use digest::{
-    Digest, FixedOutputReset,
+    Digest, FixedOutput,
     common::BlockSizeUser,
     const_oid::{AssociatedOid, ObjectIdentifier},
 };
@@ -672,7 +672,7 @@ where
 pub trait DigestAlgorithm: EcdsaCurve {
     /// Preferred digest to use when computing ECDSA signatures for this
     /// elliptic curve. This is typically a member of the SHA-2 family.
-    type Digest: BlockSizeUser + Digest + FixedOutputReset;
+    type Digest: BlockSizeUser + Digest + FixedOutput;
 }
 
 #[cfg(feature = "digest")]

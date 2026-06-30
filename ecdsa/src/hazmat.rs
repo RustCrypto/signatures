@@ -25,7 +25,7 @@ use elliptic_curve::{
 };
 
 #[cfg(feature = "digest")]
-use digest::{Digest, FixedOutputReset, block_api::BlockSizeUser};
+use digest::{Digest, block_api::BlockSizeUser};
 
 /// Sign a prehashed message digest using the provided secret scalar and
 /// ephemeral scalar, returning an ECDSA signature.
@@ -108,7 +108,7 @@ pub fn sign_prehashed_rfc6979<C, D>(
 ) -> (Signature<C>, RecoveryId)
 where
     C: EcdsaCurve + CurveArithmetic,
-    D: Digest + BlockSizeUser + FixedOutputReset,
+    D: Digest + BlockSizeUser,
     SignatureSize<C>: ArraySize,
 {
     let order = C::ORDER;

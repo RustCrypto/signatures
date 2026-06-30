@@ -1,21 +1,19 @@
 use core::fmt::{self, Debug};
 use hmac::{
-    KeyInit, SimpleHmacReset,
-    digest::{Digest, FixedOutputReset, Mac, array::Array, block_api::BlockSizeUser},
+    KeyInit, SimpleHmac,
+    digest::{Digest, Mac, OutputSizeUser, array::Array, block_api::BlockSizeUser},
 };
 
-/// Implementation of `HMAC_DRBG` as described in NIST SP800-90A.
+/// Implementation of [NIST SP800-90A]'s `HMAC_DRBG` HMAC-based deterministic random bit generator.
 ///
-/// <https://csrc.nist.gov/publications/detail/sp/800-90a/rev-1/final>
-///
-/// This is a HMAC-based deterministic random bit generator.
-// TODO(tarcieri): extract this into its own crate
+/// [NIST SP800-90A]: https://csrc.nist.gov/publications/detail/sp/800-90a/rev-1/final
+// TODO(tarcieri): extract this into the `hmacdrbg` crate: RustCrypto/CSRNGs#7
 pub(crate) struct HmacDrbg<D>
 where
-    D: Digest + BlockSizeUser + FixedOutputReset,
+    D: OutputSizeUser,
 {
     /// HMAC key `K` (see RFC 6979 Section 3.2.c)
-    k: SimpleHmacReset<D>,
+    k: Array<u8, D::OutputSize>,
 
     /// Chaining value `V` (see RFC 6979 Section 3.2.c)
     v: Array<u8, D::OutputSize>,
@@ -23,63 +21,67 @@ where
 
 impl<D> HmacDrbg<D>
 where
-    D: Digest + BlockSizeUser + FixedOutputReset,
+    D: BlockSizeUser + Digest,
 {
     /// Initialize `HMAC_DRBG`.
     #[must_use]
-    #[allow(clippy::missing_panics_doc, reason = "should not panic")]
     pub(crate) fn new(entropy_input: &[u8], nonce: &[u8], personalization_string: &[u8]) -> Self {
-        let mut k = SimpleHmacReset::new(&Default::default());
-        let mut v = Array::default();
-
-        v.fill(0x01);
-
-        for i in 0..=1 {
-            k.update(&v);
-            k.update(&[i]);
-            k.update(entropy_input);
-            k.update(nonce);
-            k.update(personalization_string);
-            k = SimpleHmacReset::new_from_slice(&k.finalize().into_bytes()).expect("should work");
-
-            // Steps 3.2.e,g: v = HMAC_k(v)
-            k.update(&v);
-            v = k.finalize_reset().into_bytes();
-        }
-
-        Self { k, v }
+        let mut drbg = Self {
+            k: Array::default(),
+            v: Array::default(),
+        };
+        drbg.v.fill(0x01);
+        drbg.update(&[entropy_input, nonce, personalization_string]);
+        drbg
     }
 
     /// Write the next `HMAC_DRBG` output to the given byte slice.
-    #[allow(clippy::missing_panics_doc, reason = "should not panic")]
     pub(crate) fn fill_bytes(&mut self, out: &mut [u8]) {
-        let mut out_chunks = out.chunks_exact_mut(self.v.len());
-
-        for out_chunk in &mut out_chunks {
-            self.k.update(&self.v);
-            self.v = self.k.finalize_reset().into_bytes();
+        for out_chunk in out.chunks_mut(self.v.len()) {
+            self.update_v();
             out_chunk.copy_from_slice(&self.v[..out_chunk.len()]);
         }
 
-        let out_remainder = out_chunks.into_remainder();
-        if !out_remainder.is_empty() {
-            self.k.update(&self.v);
-            self.v = self.k.finalize_reset().into_bytes();
-            out_remainder.copy_from_slice(&self.v[..out_remainder.len()]);
-        }
+        self.update(&[]);
+    }
 
-        self.k.update(&self.v);
-        self.k.update(&[0x00]);
-        self.k = SimpleHmacReset::new_from_slice(&self.k.finalize_reset().into_bytes())
-            .expect("should work");
-        self.k.update(&self.v);
-        self.v = self.k.finalize_reset().into_bytes();
+    /// Update `K` and `V` using the provided seed material.
+    fn update(&mut self, inputs: &[&[u8]]) {
+        let mut hmac = self.hmac_k();
+        hmac.update(&self.v);
+        hmac.update(&[0x00]);
+        inputs.iter().for_each(|&input| hmac.update(input));
+
+        self.k = hmac.finalize().into_bytes();
+        self.update_v();
+
+        if !inputs.is_empty() {
+            let mut hmac = self.hmac_k();
+            hmac.update(&self.v);
+            hmac.update(&[0x01]);
+            inputs.iter().for_each(|&input| hmac.update(input));
+
+            self.k = hmac.finalize().into_bytes();
+            self.update_v();
+        }
+    }
+
+    /// Update `V = HMAC(K, V)`.
+    fn update_v(&mut self) {
+        let mut hmac = self.hmac_k();
+        hmac.update(&self.v);
+        self.v = hmac.finalize().into_bytes();
+    }
+
+    /// Initialize HMAC using the current value of `K`.
+    fn hmac_k(&self) -> SimpleHmac<D> {
+        SimpleHmac::<D>::new_from_slice(&self.k).expect("HMAC key should be valid")
     }
 }
 
 impl<D> Debug for HmacDrbg<D>
 where
-    D: Digest + BlockSizeUser + FixedOutputReset,
+    D: OutputSizeUser,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("HmacDrbg").finish_non_exhaustive()

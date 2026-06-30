@@ -14,7 +14,7 @@ use crypto_bigint::{
     modular::{BoxedMontyForm, BoxedMontyParams},
 };
 use crypto_common::Generate;
-use digest::{Digest, FixedOutputReset, common::BlockSizeUser};
+use digest::{Digest, Update, common::BlockSizeUser};
 use signature::{
     DigestSigner, MultipartSigner, RandomizedDigestSigner, Signer,
     hazmat::{PrehashSigner, RandomizedPrehashSigner},
@@ -96,7 +96,7 @@ impl SigningKey {
     #[cfg(feature = "hazmat")]
     pub fn sign_prehashed_rfc6979<D>(&self, prehash: &[u8]) -> Result<Signature, signature::Error>
     where
-        D: Digest + BlockSizeUser + FixedOutputReset,
+        D: BlockSizeUser + Digest,
     {
         let k_kinv = crate::generate::secret_number_rfc6979::<D>(self, prehash)?;
         self.sign_prehashed(k_kinv, prehash)
@@ -170,7 +170,7 @@ impl Signer<Signature> for SigningKey {
 impl MultipartSigner<Signature> for SigningKey {
     fn try_multipart_sign(&self, msg: &[&[u8]]) -> Result<Signature, signature::Error> {
         self.try_sign_digest(|digest: &mut sha2::Sha256| {
-            msg.iter().for_each(|slice| digest.update(slice));
+            msg.iter().for_each(|slice| Update::update(digest, slice));
             Ok(())
         })
     }
@@ -202,7 +202,7 @@ impl RandomizedPrehashSigner<Signature> for SigningKey {
 
 impl<D> DigestSigner<D, Signature> for SigningKey
 where
-    D: Digest + FixedOutputReset + BlockSizeUser,
+    D: BlockSizeUser + Digest + Update,
 {
     fn try_sign_digest<F: Fn(&mut D) -> Result<(), signature::Error>>(
         &self,
@@ -219,7 +219,7 @@ where
 
 impl<D> RandomizedDigestSigner<D, Signature> for SigningKey
 where
-    D: Digest + FixedOutputReset + BlockSizeUser,
+    D: BlockSizeUser + Digest + Update,
 {
     fn try_sign_digest_with_rng<
         R: TryCryptoRng + ?Sized,
