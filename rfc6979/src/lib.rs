@@ -4,12 +4,6 @@
     html_logo_url = "https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg",
     html_favicon_url = "https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg"
 )]
-#![allow(
-    clippy::as_conversions,
-    clippy::cast_possible_truncation,
-    clippy::integer_division_remainder_used,
-    reason = "TODO"
-)]
 
 //! ## Usage
 //!
@@ -91,7 +85,7 @@ where
     /// This may be called repeatedly in the event a particular `k` is unsuitable, e.g. the
     /// resulting `r` value is zero.
     pub fn fill_next_k(&mut self, k: &mut [u8]) {
-        debug_assert_eq!(k.len(), self.q.bits().div_ceil(8) as usize);
+        debug_assert_eq!(self.q.bits().div_ceil(8).try_into(), Ok(k.len()));
 
         loop {
             self.drbg.fill_bytes(k);
@@ -148,6 +142,7 @@ where
 ///
 /// [RFC6979 §2.3.2]: https://datatracker.ietf.org/doc/html/rfc6979#section-2.3.2
 #[inline]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 fn bits2int<U>(mut b: &[u8], q: &U) -> U
 where
     U: Unsigned + Encoding,
@@ -165,7 +160,7 @@ where
     // Ensure `b` is within one octet of the length of `q`. This helps ensure we don't exceed the
     // capacity of `U`. This effectively emulates the right shift described in the RFC by truncating
     // the least significant bytes.
-    let bytes_to_discard = bits_diff as usize / 8;
+    let bytes_to_discard = (bits_diff >> 3) as usize;
     if bytes_to_discard > 0 {
         b = &b[..b.len() - bytes_to_discard];
         blen -= (bytes_to_discard as u32) * 8;
@@ -194,6 +189,7 @@ where
 /// > name.
 ///
 /// [RFC6979 §2.3.3]: https://datatracker.ietf.org/doc/html/rfc6979#section-2.3.3
+#[allow(clippy::as_conversions)]
 fn int2octets<'a, U: Unsigned>(x: &U, q: &U, out: &'a mut [u8]) -> &'a [u8] {
     debug_assert!(x < q);
     let qlen = q.bits();
