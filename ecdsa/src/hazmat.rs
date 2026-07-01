@@ -161,7 +161,7 @@ where
 pub(crate) fn bytes2scalar<C: EcdsaCurve + CurveArithmetic>(mut bytes: &[u8]) -> Scalar<C> {
     // Compute number of bytes in `n` (curve order)
     let n_bits = C::ORDER.bits();
-    let n_bytes = n_bits.div_ceil(8) as usize;
+    let n_bytes = usize::try_from(n_bits.div_ceil(8)).expect("overflow");
     if bytes.len() > n_bytes {
         bytes = &bytes[..n_bytes];
     }

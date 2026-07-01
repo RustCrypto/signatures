@@ -31,7 +31,6 @@ spki = { version = "0.8", optional = true, default-features = false }
 
 [dev-dependencies]
 elliptic-curve = { version = "0.14", default-features = false, features = ["dev"] }
-hex-literal = "1"
 sha2 = { version = "0.11", default-features = false }
 
 [features]
@@ -48,6 +47,8 @@ pkcs8 = ["der", "digest", "elliptic-curve/pkcs8"]
 pem = ["elliptic-curve/pem", "pkcs8"]
 serde = ["dep:serdect", "elliptic-curve/serde", "pkcs8"]
 
+[lints]
+workspace = true
+
 [package.metadata.docs.rs]
 all-features = true
-rustdoc-args = ["--cfg", "docsrs"]

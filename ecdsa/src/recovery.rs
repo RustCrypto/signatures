@@ -29,17 +29,15 @@ use {
 
 /// Recovery IDs, a.k.a. "recid".
 ///
-/// This is an integer value `0`, `1`, `2`, or `3` included along with a
-/// signature which is used during the recovery process to select the correct
-/// public key from the signature.
+/// This is an integer value `0`, `1`, `2`, or `3` included along with a signature which is used
+/// during the recovery process to select the correct public key from the signature.
 ///
 /// It consists of two bits of information:
 ///
-/// - low bit (0/1): was the y-coordinate of the affine point resulting from
-///   the fixed-base multiplication 𝑘×𝑮 odd? This part of the algorithm
-///   functions similar to point decompression.
-/// - hi bit (2/3): did the affine x-coordinate of 𝑘×𝑮 overflow the order of
-///   the scalar field, requiring a reduction when computing `r`?
+/// 1. low bit (0/1): was the y-coordinate of the affine point resulting from the fixed-base
+///    multiplication 𝑘×𝑮 odd? This part of the algorithm functions similar to point decompression.
+/// 2. hi bit (2/3): did the affine x-coordinate of 𝑘×𝑮 overflow the order of the scalar field `n`,
+///    requiring a reduction when computing `r`?
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
 pub struct RecoveryId(pub(crate) u8);
 
@@ -51,21 +49,26 @@ impl RecoveryId {
     ///
     /// - `is_y_odd`: is the affine y-coordinate of 𝑘×𝑮 odd?
     /// - `is_x_reduced`: did the affine x-coordinate of 𝑘×𝑮 overflow the curve order?
+    #[must_use]
+    #[allow(clippy::as_conversions, reason = "const fn")]
     pub const fn new(is_y_odd: bool, is_x_reduced: bool) -> Self {
         Self(((is_x_reduced as u8) << 1) | (is_y_odd as u8))
     }
 
     /// Did the affine x-coordinate of 𝑘×𝑮 overflow the curve order?
+    #[must_use]
     pub const fn is_x_reduced(self) -> bool {
         (self.0 & 0b10) != 0
     }
 
     /// Is the affine y-coordinate of 𝑘×𝑮 odd?
+    #[must_use]
     pub const fn is_y_odd(self) -> bool {
         (self.0 & 1) != 0
     }
 
     /// Convert a `u8` into a [`RecoveryId`].
+    #[must_use]
     pub const fn from_byte(byte: u8) -> Option<Self> {
         if byte <= Self::MAX {
             Some(Self(byte))
@@ -75,6 +78,7 @@ impl RecoveryId {
     }
 
     /// Convert this [`RecoveryId`] into a `u8`.
+    #[must_use]
     pub const fn to_byte(self) -> u8 {
         self.0
     }
@@ -82,9 +86,12 @@ impl RecoveryId {
 
 #[cfg(feature = "algorithm")]
 impl RecoveryId {
-    /// Given a public key, message, and signature, use trial recovery
-    /// to determine if a suitable recovery ID exists, or return an error
-    /// otherwise.
+    /// Given a public key, message, and signature, use trial recovery to determine if a suitable
+    /// recovery ID exists.
+    ///
+    /// # Errors
+    /// Returns an error if a suitable solution could not be found and/or the signature does not
+    /// verify.
     pub fn trial_recovery_from_msg<C>(
         verifying_key: &VerifyingKey<C>,
         msg: &[u8],
@@ -98,9 +105,12 @@ impl RecoveryId {
         Self::trial_recovery_from_digest(verifying_key, C::Digest::new_with_prefix(msg), signature)
     }
 
-    /// Given a public key, message digest, and signature, use trial recovery
-    /// to determine if a suitable recovery ID exists, or return an error
-    /// otherwise.
+    /// Given a public key, message digest, and signature, use trial recovery to determine if a
+    /// suitable recovery ID exists.
+    ///
+    /// # Errors
+    /// Returns an error if a suitable solution could not be found and/or the signature does not
+    /// verify.
     pub fn trial_recovery_from_digest<C, D>(
         verifying_key: &VerifyingKey<C>,
         digest: D,
@@ -115,9 +125,12 @@ impl RecoveryId {
         Self::trial_recovery_from_prehash(verifying_key, &digest.finalize(), signature)
     }
 
-    /// Given a public key, message digest, and signature, use trial recovery
-    /// to determine if a suitable recovery ID exists, or return an error
-    /// otherwise.
+    /// Given a public key, message digest, and signature, use trial recovery to determine if a
+    /// suitable recovery ID exists.
+    ///
+    /// # Errors
+    /// Returns an error if a suitable solution could not be found and/or the signature does not
+    /// verify.
     pub fn trial_recovery_from_prehash<C>(
         verifying_key: &VerifyingKey<C>,
         prehash: &[u8],
