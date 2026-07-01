@@ -12,10 +12,9 @@
 //! FULL PRIVATE KEY RECOVERY!
 //! </div>
 
-use crate::{EcdsaCurve, Error, RecoveryId, Result, Signature, SignatureSize};
+use crate::{EcdsaCurve, Error, RecoveryId, Result, Signature};
 use elliptic_curve::{
     CurveArithmetic, FieldBytes, NonZeroScalar, ProjectivePoint, Scalar,
-    array::ArraySize,
     bigint::{BitOps, Encoding},
     ff::PrimeField,
     group::{Curve as _, Group},
@@ -58,7 +57,6 @@ pub fn sign_prehashed<C>(
 ) -> Result<(Signature<C>, RecoveryId)>
 where
     C: EcdsaCurve + CurveArithmetic,
-    SignatureSize<C>: ArraySize,
 {
     let z = bytes2scalar::<C>(z);
 
@@ -109,7 +107,6 @@ pub fn sign_prehashed_rfc6979<C, D>(
 where
     C: EcdsaCurve + CurveArithmetic,
     D: Digest + BlockSizeUser,
-    SignatureSize<C>: ArraySize,
 {
     let order = C::ORDER;
     let mut kgen = rfc6979::KGenerator::<D, C::Uint>::new(&d.to_repr(), z, ad, &order);
@@ -137,7 +134,6 @@ where
 pub fn verify_prehashed<C>(q: &ProjectivePoint<C>, z: &[u8], sig: &Signature<C>) -> Result<()>
 where
     C: EcdsaCurve + CurveArithmetic,
-    SignatureSize<C>: ArraySize,
 {
     if C::NORMALIZE_S && sig.s().is_high().into() {
         return Err(Error::new());

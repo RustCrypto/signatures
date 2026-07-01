@@ -1,11 +1,10 @@
 //! ECDSA verifying: checking signatures are authentic using a [`VerifyingKey`].
 
-use crate::{DigestAlgorithm, EcdsaCurve, Error, Result, Signature, SignatureSize, hazmat};
+use crate::{DigestAlgorithm, EcdsaCurve, Error, Result, Signature, hazmat};
 use core::{cmp::Ordering, fmt::Debug};
 use digest::{Digest, Update};
 use elliptic_curve::{
     AffinePoint, CurveArithmetic, FieldBytesSize, PublicKey,
-    array::ArraySize,
     point::PointCompression,
     sec1::{self, CompressedPoint, FromSec1Point, Sec1Point, ToSec1Point},
 };
@@ -13,13 +12,8 @@ use signature::{DigestVerifier, MultipartVerifier, Verifier, hazmat::PrehashVeri
 
 #[cfg(feature = "alloc")]
 use alloc::boxed::Box;
-
-#[cfg(feature = "der")]
-use {crate::der, core::ops::Add};
-
-#[cfg(feature = "pem")]
-use {core::str::FromStr, elliptic_curve::pkcs8::DecodePublicKey};
-
+#[cfg(all(feature = "alloc", feature = "pkcs8"))]
+use elliptic_curve::pkcs8::EncodePublicKey;
 #[cfg(feature = "pkcs8")]
 use elliptic_curve::pkcs8::{
     self, AssociatedOid, ObjectIdentifier,
@@ -28,10 +22,10 @@ use elliptic_curve::pkcs8::{
         self, AlgorithmIdentifier, AssociatedAlgorithmIdentifier, SignatureAlgorithmIdentifier,
     },
 };
-
 #[cfg(feature = "serde")]
 use serdect::serde::{Deserialize, Serialize, de, ser};
-
+#[cfg(feature = "der")]
+use {crate::der, core::ops::Add, elliptic_curve::array::ArraySize};
 #[cfg(feature = "sha2")]
 use {
     crate::{
@@ -39,9 +33,8 @@ use {
     },
     sha2::{Sha224, Sha256, Sha384, Sha512},
 };
-
-#[cfg(all(feature = "alloc", feature = "pkcs8"))]
-use elliptic_curve::pkcs8::EncodePublicKey;
+#[cfg(feature = "pem")]
+use {core::str::FromStr, elliptic_curve::pkcs8::DecodePublicKey};
 
 /// ECDSA public key used for verifying signatures. Generic over prime order
 /// elliptic curves (e.g. NIST P-curves).
@@ -141,7 +134,6 @@ impl<C, D> DigestVerifier<D, Signature<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
     D: Digest + Update,
-    SignatureSize<C>: ArraySize,
 {
     fn verify_digest<F: Fn(&mut D) -> Result<()>>(
         &self,
@@ -157,7 +149,6 @@ where
 impl<C> PrehashVerifier<Signature<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    SignatureSize<C>: ArraySize,
 {
     fn verify_prehash(&self, prehash: &[u8], signature: &Signature<C>) -> Result<()> {
         hazmat::verify_prehashed::<C>(&(*self.inner.as_affine()).into(), prehash, signature)
@@ -167,7 +158,6 @@ where
 impl<C> Verifier<Signature<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
-    SignatureSize<C>: ArraySize,
 {
     fn verify(&self, msg: &[u8], signature: &Signature<C>) -> Result<()> {
         self.multipart_verify(&[msg], signature)
@@ -177,7 +167,6 @@ where
 impl<C> MultipartVerifier<Signature<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
-    SignatureSize<C>: ArraySize,
 {
     fn multipart_verify(&self, msg: &[&[u8]], signature: &Signature<C>) -> Result<()> {
         self.verify_digest(
@@ -194,7 +183,6 @@ where
 impl<C> Verifier<SignatureWithOid<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
-    SignatureSize<C>: ArraySize,
 {
     fn verify(&self, msg: &[u8], sig: &SignatureWithOid<C>) -> Result<()> {
         self.multipart_verify(&[msg], sig)
@@ -205,7 +193,6 @@ where
 impl<C> MultipartVerifier<SignatureWithOid<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
-    SignatureSize<C>: ArraySize,
 {
     fn multipart_verify(&self, msg: &[&[u8]], sig: &SignatureWithOid<C>) -> Result<()> {
         match sig.oid() {
@@ -243,7 +230,6 @@ impl<C, D> DigestVerifier<D, der::Signature<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
     D: Digest + Update,
-    SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
 {
@@ -261,7 +247,6 @@ where
 impl<C> PrehashVerifier<der::Signature<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
 {
@@ -275,7 +260,6 @@ where
 impl<C> Verifier<der::Signature<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
-    SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
 {
@@ -289,7 +273,6 @@ where
 impl<C> MultipartVerifier<der::Signature<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
-    SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
 {

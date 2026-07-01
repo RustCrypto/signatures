@@ -87,7 +87,7 @@ pub use crate::verifying::VerifyingKey;
 
 use core::{fmt, ops::Add};
 use elliptic_curve::{
-    FieldBytes, FieldBytesSize, ScalarValue,
+    Curve, FieldBytes, FieldBytesSize, ScalarValue,
     array::{Array, ArraySize, typenum::Unsigned},
 };
 
@@ -164,7 +164,9 @@ const SHA384_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("2.16.840.1.10
 const SHA512_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("2.16.840.1.101.3.4.2.3");
 
 /// Marker trait for elliptic curves intended for use with ECDSA.
-pub trait EcdsaCurve: PrimeCurve {
+pub trait EcdsaCurve:
+    Curve<FieldBytesSize: Add<Output: ArraySize<ArrayType<u8>: Copy>>> + PrimeCurve
+{
     /// Does this curve use low-S normalized signatures?
     ///
     /// This is typically `false`. See [`Signature::normalize_s`] for more information.
@@ -203,7 +205,7 @@ pub type SignatureBytes<C> = Array<u8, SignatureSize<C>>;
 /// "human readable" text formats, and a binary encoding otherwise.
 ///
 /// [IEEE P1363]: https://en.wikipedia.org/wiki/IEEE_P1363
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone, Copy, Eq, PartialEq)]
 pub struct Signature<C: EcdsaCurve> {
     r: ScalarValue<C>,
     s: ScalarValue<C>,
@@ -212,7 +214,6 @@ pub struct Signature<C: EcdsaCurve> {
 impl<C> Signature<C>
 where
     C: EcdsaCurve,
-    SignatureSize<C>: ArraySize,
 {
     /// Parse a signature from fixed-width bytes, i.e. 2 * the size of
     /// [`FieldBytes`] for a particular curve.
@@ -301,7 +302,6 @@ where
 impl<C> Signature<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    SignatureSize<C>: ArraySize,
 {
     /// Get the `r` component of this signature
     pub fn r(&self) -> NonZeroScalar<C> {
@@ -318,30 +318,20 @@ where
         (self.r(), self.s())
     }
 
-    /// Normalize signature into "low S" form as described in
-    /// [BIP 0062: Dealing with Malleability][1].
+    /// Normalize signature into "low S" form described in [BIP 0062: Dealing with Malleability][1].
     ///
     /// [1]: https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki
     pub fn normalize_s(&self) -> Self {
-        let mut result = self.clone();
+        let mut result = *self;
         let s_inv = ScalarValue::from(-self.s());
         result.s.conditional_assign(&s_inv, self.s.is_high());
         result
     }
 }
 
-impl<C> Copy for Signature<C>
-where
-    C: EcdsaCurve,
-    SignatureSize<C>: ArraySize,
-    <SignatureSize<C> as ArraySize>::ArrayType<u8>: Copy,
-{
-}
-
 impl<C> From<Signature<C>> for SignatureBytes<C>
 where
     C: EcdsaCurve,
-    SignatureSize<C>: ArraySize,
 {
     fn from(signature: Signature<C>) -> SignatureBytes<C> {
         signature.to_bytes()
@@ -351,7 +341,6 @@ where
 impl<C> SignatureEncoding for Signature<C>
 where
     C: EcdsaCurve,
-    SignatureSize<C>: ArraySize,
 {
     type Repr = SignatureBytes<C>;
 }
@@ -359,7 +348,6 @@ where
 impl<C> TryFrom<&[u8]> for Signature<C>
 where
     C: EcdsaCurve,
-    SignatureSize<C>: ArraySize,
 {
     type Error = Error;
 
@@ -371,7 +359,6 @@ where
 impl<C> fmt::Debug for Signature<C>
 where
     C: EcdsaCurve,
-    SignatureSize<C>: ArraySize,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "ecdsa::Signature<{:?}>(", C::default())?;
@@ -387,7 +374,6 @@ where
 impl<C> fmt::Display for Signature<C>
 where
     C: EcdsaCurve,
-    SignatureSize<C>: ArraySize,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{self:X}")
@@ -397,7 +383,6 @@ where
 impl<C> core::hash::Hash for Signature<C>
 where
     C: EcdsaCurve,
-    SignatureSize<C>: ArraySize,
 {
     fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
         self.to_bytes().hash(state);
@@ -407,7 +392,6 @@ where
 impl<C> fmt::LowerHex for Signature<C>
 where
     C: EcdsaCurve,
-    SignatureSize<C>: ArraySize,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for byte in self.to_bytes() {
@@ -420,7 +404,6 @@ where
 impl<C> fmt::UpperHex for Signature<C>
 where
     C: EcdsaCurve,
-    SignatureSize<C>: ArraySize,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for byte in self.to_bytes() {
@@ -434,7 +417,6 @@ where
 impl<C> str::FromStr for Signature<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    SignatureSize<C>: ArraySize,
 {
     type Err = Error;
 
@@ -494,7 +476,6 @@ where
 impl<C> Serialize for Signature<C>
 where
     C: EcdsaCurve,
-    SignatureSize<C>: ArraySize,
 {
     fn serialize<S>(&self, serializer: S) -> core::result::Result<S::Ok, S::Error>
     where
@@ -508,7 +489,6 @@ where
 impl<'de, C> Deserialize<'de> for Signature<C>
 where
     C: EcdsaCurve,
-    SignatureSize<C>: ArraySize,
 {
     fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
     where
@@ -540,7 +520,7 @@ impl<C: EcdsaCurve> Zeroize for Signature<C> {
 ///
 /// [RFC5758 § 3.2]: https://www.rfc-editor.org/rfc/rfc5758#section-3.2
 #[cfg(feature = "digest")]
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct SignatureWithOid<C: EcdsaCurve> {
     /// Inner signature type.
     signature: Signature<C>,
@@ -596,7 +576,6 @@ where
     pub fn from_bytes_with_digest<D>(bytes: &SignatureBytes<C>) -> Result<Self>
     where
         D: AssociatedOid + Digest,
-        SignatureSize<C>: ArraySize,
     {
         Self::new_with_digest::<D>(Signature::<C>::from_bytes(bytes)?)
     }
@@ -605,7 +584,6 @@ where
     pub fn from_slice_with_digest<D>(slice: &[u8]) -> Result<Self>
     where
         D: AssociatedOid + Digest,
-        SignatureSize<C>: ArraySize,
     {
         Self::new_with_digest::<D>(Signature::<C>::from_slice(slice)?)
     }
@@ -643,9 +621,7 @@ where
 
     /// Serialize this signature as fixed-width bytes.
     pub fn to_bytes(&self) -> SignatureBytes<C>
-    where
-        SignatureSize<C>: ArraySize,
-    {
+where {
         self.signature.to_bytes()
     }
 
@@ -660,7 +636,7 @@ where
         der::MaxSize<C>: ArraySize,
         <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
     {
-        self.signature.clone().into()
+        self.signature.into()
     }
 }
 
@@ -676,19 +652,9 @@ pub trait DigestAlgorithm: EcdsaCurve {
 }
 
 #[cfg(feature = "digest")]
-impl<C> Copy for SignatureWithOid<C>
-where
-    C: EcdsaCurve,
-    SignatureSize<C>: ArraySize,
-    <SignatureSize<C> as ArraySize>::ArrayType<u8>: Copy,
-{
-}
-
-#[cfg(feature = "digest")]
 impl<C> core::hash::Hash for SignatureWithOid<C>
 where
     C: EcdsaCurve,
-    SignatureSize<C>: ArraySize,
 {
     fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
         self.signature.hash(state);
@@ -710,7 +676,6 @@ where
 impl<C> From<SignatureWithOid<C>> for SignatureBytes<C>
 where
     C: EcdsaCurve,
-    SignatureSize<C>: ArraySize,
 {
     fn from(signature: SignatureWithOid<C>) -> SignatureBytes<C> {
         signature.to_bytes()
@@ -751,7 +716,6 @@ impl<C> SignatureEncoding for SignatureWithOid<C>
 where
     C: DigestAlgorithm,
     C::Digest: AssociatedOid,
-    SignatureSize<C>: ArraySize,
 {
     type Repr = SignatureBytes<C>;
 }
@@ -766,7 +730,6 @@ impl<C> TryFrom<&[u8]> for SignatureWithOid<C>
 where
     C: DigestAlgorithm,
     C::Digest: AssociatedOid,
-    SignatureSize<C>: ArraySize,
 {
     type Error = Error;
 
