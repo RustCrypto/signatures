@@ -5,14 +5,13 @@ use crate::{Error, Result};
 #[cfg(feature = "algorithm")]
 use {
     crate::{
-        DigestAlgorithm, EcdsaCurve, Signature, SignatureSize, SigningKey, VerifyingKey,
+        DigestAlgorithm, EcdsaCurve, Signature, SigningKey, VerifyingKey,
         hazmat::{bytes2scalar, sign_prehashed_rfc6979, verify_prehashed},
     },
     digest::{Digest, Update},
     elliptic_curve::{
         AffinePoint, CurveArithmetic, FieldBytes, FieldBytesSize, Group, PrimeField,
         ProjectivePoint, Scalar,
-        array::ArraySize,
         bigint::CheckedAdd,
         field,
         ops::Invert,
@@ -95,7 +94,6 @@ impl RecoveryId {
         C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
         AffinePoint<C>: DecompressPoint<C> + FromSec1Point<C> + ToSec1Point<C>,
         FieldBytesSize<C>: sec1::ModulusSize,
-        SignatureSize<C>: ArraySize,
     {
         Self::trial_recovery_from_digest(verifying_key, C::Digest::new_with_prefix(msg), signature)
     }
@@ -113,7 +111,6 @@ impl RecoveryId {
         D: Digest,
         AffinePoint<C>: DecompressPoint<C> + FromSec1Point<C> + ToSec1Point<C>,
         FieldBytesSize<C>: sec1::ModulusSize,
-        SignatureSize<C>: ArraySize,
     {
         Self::trial_recovery_from_prehash(verifying_key, &digest.finalize(), signature)
     }
@@ -130,7 +127,6 @@ impl RecoveryId {
         C: EcdsaCurve + CurveArithmetic,
         AffinePoint<C>: DecompressPoint<C> + FromSec1Point<C> + ToSec1Point<C>,
         FieldBytesSize<C>: sec1::ModulusSize,
-        SignatureSize<C>: ArraySize,
     {
         // Ensure signature verifies with the provided key
         verify_prehashed::<C>(
@@ -172,7 +168,6 @@ impl<C> SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
-    SignatureSize<C>: ArraySize,
 {
     /// Sign the given message prehash, using the given rng for the RFC6979 Section 3.6 "additional
     /// data", returning a signature and recovery ID.
@@ -220,7 +215,6 @@ where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
     D: Digest + Update,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
-    SignatureSize<C>: ArraySize,
 {
     fn try_sign_digest<F: Fn(&mut D) -> Result<()>>(
         &self,
@@ -237,7 +231,6 @@ impl<C> RandomizedPrehashSigner<(Signature<C>, RecoveryId)> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
-    SignatureSize<C>: ArraySize,
 {
     fn sign_prehash_with_rng<R: TryCryptoRng + ?Sized>(
         &self,
@@ -254,7 +247,6 @@ where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
     D: Digest + Update,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
-    SignatureSize<C>: ArraySize,
 {
     fn try_sign_digest_with_rng<R: TryCryptoRng + ?Sized, F: Fn(&mut D) -> Result<()>>(
         &self,
@@ -272,7 +264,6 @@ impl<C> PrehashSigner<(Signature<C>, RecoveryId)> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
-    SignatureSize<C>: ArraySize,
 {
     fn sign_prehash(&self, prehash: &[u8]) -> Result<(Signature<C>, RecoveryId)> {
         self.sign_prehash_recoverable(prehash)
@@ -284,7 +275,6 @@ impl<C> Signer<(Signature<C>, RecoveryId)> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
-    SignatureSize<C>: ArraySize,
 {
     fn try_sign(&self, msg: &[u8]) -> Result<(Signature<C>, RecoveryId)> {
         self.try_multipart_sign(&[msg])
@@ -296,7 +286,6 @@ impl<C> MultipartSigner<(Signature<C>, RecoveryId)> for SigningKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
-    SignatureSize<C>: ArraySize,
 {
     fn try_multipart_sign(&self, msg: &[&[u8]]) -> Result<(Signature<C>, RecoveryId)> {
         let mut digest = C::Digest::new();
@@ -312,7 +301,6 @@ where
     C: EcdsaCurve + CurveArithmetic,
     AffinePoint<C>: DecompressPoint<C> + FromSec1Point<C> + ToSec1Point<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
-    SignatureSize<C>: ArraySize,
 {
     /// Recover a [`VerifyingKey`] from the given message, signature, and [`RecoveryId`].
     ///
