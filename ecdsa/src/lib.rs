@@ -5,7 +5,6 @@
     html_logo_url = "https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg",
     html_favicon_url = "https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg"
 )]
-#![allow(clippy::missing_errors_doc, reason = "TODO")]
 
 //! ## `serde` support
 //!
@@ -192,8 +191,8 @@ impl<C> Signature<C>
 where
     C: EcdsaCurve,
 {
-    /// Parse a signature from fixed-width bytes, i.e. 2 * the size of
-    /// [`FieldBytes`] for a particular curve.
+    /// Parse a signature from fixed-width bytes, i.e. 2 * the size of [`FieldBytes`] for a
+    /// particular curve.
     ///
     /// # Errors
     /// If the `r` and/or `s` component of the signature is out-of-range when interpreted as a big
@@ -206,6 +205,10 @@ where
     }
 
     /// Parse a signature from a byte slice.
+    ///
+    /// # Errors
+    /// Returns [`Error`] in the event the signature is not the expected size, i.e. 2 * the size of
+    /// [`FieldBytes`] for a particular curve.
     pub fn from_slice(slice: &[u8]) -> Result<Self> {
         <&SignatureBytes<C>>::try_from(slice)
             .map_err(|_| Error::new())
@@ -213,6 +216,9 @@ where
     }
 
     /// Parse a signature from ASN.1 DER.
+    ///
+    /// # Errors
+    /// Returns [`Error`] if `input` failed to parse as an ASN.1 DER-encoded ECDSA signature.
     #[cfg(feature = "der")]
     pub fn from_der(bytes: &[u8]) -> Result<Self>
     where
@@ -226,7 +232,8 @@ where
     /// which comprise the signature.
     ///
     /// # Errors
-    /// If the `r` and/or `s` component of the signature is out-of-range when interpreted as a big endian integer.
+    /// If the `r` and/or `s` component of the signature is out-of-range when interpreted as a big
+    /// endian integer.
     pub fn from_scalars(r: impl Into<FieldBytes<C>>, s: impl Into<FieldBytes<C>>) -> Result<Self> {
         let r = ScalarValue::from_slice(&r.into()).map_err(|_| Error::new())?;
         let s = ScalarValue::from_slice(&s.into()).map_err(|_| Error::new())?;
@@ -515,15 +522,12 @@ where
     /// OID must begin with `1.2.840.10045.4`, the [RFC5758] OID prefix for ECDSA variants.
     ///
     /// [RFC5758]: https://www.rfc-editor.org/rfc/rfc5758#section-3.2
+    ///
+    /// # Errors
+    /// Returns [`Error`] if `oid` does not start with `1.2.840.10045.4`.
     pub fn new(signature: Signature<C>, oid: ObjectIdentifier) -> Result<Self> {
-        // TODO(tarcieri): use `ObjectIdentifier::starts_with`
-        for (arc1, arc2) in ObjectIdentifier::new_unwrap("1.2.840.10045.4.3")
-            .arcs()
-            .zip(oid.arcs())
-        {
-            if arc1 != arc2 {
-                return Err(Error::new());
-            }
+        if !oid.starts_with(ObjectIdentifier::new_unwrap("1.2.840.10045.4")) {
+            return Err(Error::new());
         }
 
         Ok(Self { signature, oid })
@@ -531,10 +535,13 @@ where
 
     /// Create a new signature, determining the OID from the given digest.
     ///
-    /// Supports SHA-2 family digests as enumerated in [RFC5758 § 3.2], i.e.
-    /// SHA-224, SHA-256, SHA-384, or SHA-512.
+    /// Supports SHA-2 family digests as enumerated in [RFC5758 § 3.2], i.e. SHA-224, SHA-256,
+    /// SHA-384, or SHA-512.
     ///
     /// [RFC5758 § 3.2]: https://www.rfc-editor.org/rfc/rfc5758#section-3.2
+    ///
+    /// # Errors
+    /// Returns [`Error`] if the [`AssociatedOid`] for `D` is not one from the SHA2 family.
     pub fn new_with_digest<D>(signature: Signature<C>) -> Result<Self>
     where
         D: AssociatedOid + Digest,
@@ -544,6 +551,10 @@ where
     }
 
     /// Parse a signature from fixed-with bytes.
+    ///
+    /// # Errors
+    /// Returns [`Error`] if [`Signature`] fails to parse, or if `D` is not a valid digest.
+    /// See [`SignatureWithOid::new_with_digest`] documentation.
     pub fn from_bytes_with_digest<D>(bytes: &SignatureBytes<C>) -> Result<Self>
     where
         D: AssociatedOid + Digest,
@@ -552,6 +563,10 @@ where
     }
 
     /// Parse a signature from a byte slice.
+    ///
+    /// # Errors
+    /// Returns [`Error`] if [`Signature`] fails to parse, or if `D` is not a valid digest.
+    /// See [`SignatureWithOid::new_with_digest`] documentation.
     pub fn from_slice_with_digest<D>(slice: &[u8]) -> Result<Self>
     where
         D: AssociatedOid + Digest,
@@ -560,6 +575,10 @@ where
     }
 
     /// Parse a signature from ASN.1 DER and associate the given digest's OID with it.
+    ///
+    /// # Errors
+    /// Returns [`Error`] if `input` failed to parse as an ASN.1 DER-encoded ECDSA signature,
+    /// or if `D` is not a valid digest.
     #[cfg(feature = "der")]
     pub fn from_der_with_digest<D>(der_bytes: &[u8]) -> Result<Self>
     where
@@ -571,6 +590,10 @@ where
     }
 
     /// Parse a signature from ASN.1 DER and associate the given OID with it.
+    ///
+    /// # Errors
+    /// Returns [`Error`] if `input` failed to parse as an ASN.1 DER-encoded ECDSA signature,
+    /// or if `D` is not a valid digest.
     #[cfg(feature = "der")]
     pub fn from_der_with_oid(der_bytes: &[u8], oid: ObjectIdentifier) -> Result<Self>
     where

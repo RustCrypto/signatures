@@ -76,6 +76,11 @@ where
     FieldBytesSize<C>: sec1::ModulusSize,
 {
     /// Initialize [`VerifyingKey`] from a SEC1-encoded public key.
+    ///
+    /// # Errors
+    /// Returns [`Error`] if `bytes` is not a valid SEC1 encoding of a compressed or uncompressed
+    /// curve point (i.e. it should begin with `0x02`, `0x03`, or `0x04`), or if
+    /// [`VerifyingKey::from_sec1_point`] returns an error.
     pub fn from_sec1_bytes(bytes: &[u8]) -> Result<Self> {
         PublicKey::from_sec1_bytes(bytes)
             .map(|pk| Self { inner: pk })
@@ -84,8 +89,8 @@ where
 
     /// Initialize [`VerifyingKey`] from an affine point.
     ///
-    /// Returns an [`Error`] if the given affine point is the additive identity
-    /// (a.k.a. point at infinity).
+    /// # Errors
+    /// Returns [`Error`] if the `affine` point is the additive identity (a.k.a. point at infinity).
     pub fn from_affine(affine: AffinePoint<C>) -> Result<Self> {
         Ok(Self {
             inner: PublicKey::from_affine(affine).map_err(|_| Error::new())?,
@@ -93,6 +98,9 @@ where
     }
 
     /// Initialize [`VerifyingKey`] from an [`Sec1Point`].
+    ///
+    /// # Errors
+    /// Returns [`Error`] if `public_key` does not represent a valid elliptic curve point for `C`.
     pub fn from_sec1_point(public_key: &Sec1Point<C>) -> Result<Self> {
         PublicKey::<C>::from_sec1_point(public_key)
             .into_option()

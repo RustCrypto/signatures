@@ -183,13 +183,16 @@ where
 {
     /// Sign the given message prehash, using the given rng for the RFC6979 Section 3.6 "additional
     /// data", returning a signature and recovery ID.
+    ///
+    /// # Errors
+    ///
     pub fn sign_prehash_recoverable_with_rng<R: TryCryptoRng + ?Sized>(
         &self,
         rng: &mut R,
         prehash: &[u8],
-    ) -> Result<(Signature<C>, RecoveryId)> {
+    ) -> core::result::Result<(Signature<C>, RecoveryId), R::Error> {
         let mut ad = FieldBytes::<C>::default();
-        rng.try_fill_bytes(&mut ad).map_err(|_| Error::new())?;
+        rng.try_fill_bytes(&mut ad)?;
         Ok(sign_prehashed_rfc6979::<C, C::Digest>(
             self.as_nonzero_scalar(),
             prehash,
@@ -198,25 +201,18 @@ where
     }
 
     /// Sign the given message prehash, returning a signature and recovery ID.
-    pub fn sign_prehash_recoverable(&self, prehash: &[u8]) -> Result<(Signature<C>, RecoveryId)> {
-        Ok(sign_prehashed_rfc6979::<C, C::Digest>(
-            self.as_nonzero_scalar(),
-            prehash,
-            b"",
-        ))
+    pub fn sign_prehash_recoverable(&self, prehash: &[u8]) -> (Signature<C>, RecoveryId) {
+        sign_prehashed_rfc6979::<C, C::Digest>(self.as_nonzero_scalar(), prehash, b"")
     }
 
     /// Sign the given message digest, returning a signature and recovery ID.
-    pub fn sign_digest_recoverable<D>(&self, msg_digest: D) -> Result<(Signature<C>, RecoveryId)>
-    where
-        D: Digest,
-    {
+    pub fn sign_digest_recoverable<D: Digest>(&self, msg_digest: D) -> (Signature<C>, RecoveryId) {
         self.sign_prehash_recoverable(&msg_digest.finalize())
     }
 
     /// Sign the given message, hashing it with the curve's default digest
     /// function, and returning a signature and recovery ID.
-    pub fn sign_recoverable(&self, msg: &[u8]) -> Result<(Signature<C>, RecoveryId)> {
+    pub fn sign_recoverable(&self, msg: &[u8]) -> (Signature<C>, RecoveryId) {
         self.sign_digest_recoverable(C::Digest::new_with_prefix(msg))
     }
 }
@@ -234,7 +230,7 @@ where
     ) -> Result<(Signature<C>, RecoveryId)> {
         let mut digest = D::new();
         f(&mut digest)?;
-        self.sign_digest_recoverable(digest)
+        Ok(self.sign_digest_recoverable(digest))
     }
 }
 
@@ -250,6 +246,7 @@ where
         prehash: &[u8],
     ) -> Result<(Signature<C>, RecoveryId)> {
         self.sign_prehash_recoverable_with_rng(rng, prehash)
+            .map_err(|_| Error::new())
     }
 }
 
@@ -278,7 +275,7 @@ where
     Scalar<C>: Invert<Output = CtOption<Scalar<C>>>,
 {
     fn sign_prehash(&self, prehash: &[u8]) -> Result<(Signature<C>, RecoveryId)> {
-        self.sign_prehash_recoverable(prehash)
+        Ok(self.sign_prehash_recoverable(prehash))
     }
 }
 
@@ -303,7 +300,7 @@ where
         let mut digest = C::Digest::new();
         msg.iter()
             .for_each(|slice| Update::update(&mut digest, slice));
-        self.sign_digest_recoverable(digest)
+        Ok(self.sign_digest_recoverable(digest))
     }
 }
 
@@ -317,6 +314,9 @@ where
     /// Recover a [`VerifyingKey`] from the given message, signature, and [`RecoveryId`].
     ///
     /// The message is first hashed using this curve's [`DigestAlgorithm`].
+    ///
+    /// # Errors
+    /// Returns [`Error`] if the recovered elliptic curve point is the additive identity.
     pub fn recover_from_msg(
         msg: &[u8],
         signature: &Signature<C>,
@@ -329,6 +329,9 @@ where
     }
 
     /// Recover a [`VerifyingKey`] from the given message [`Digest`], signature, and [`RecoveryId`].
+    ///
+    /// # Errors
+    /// Returns [`Error`] if the recovered elliptic curve point is the additive identity.
     pub fn recover_from_digest<D>(
         msg_digest: D,
         signature: &Signature<C>,
@@ -353,6 +356,9 @@ where
     /// it in a system of linear equations that can cause the recovery function to output any public
     /// key the attacker wants.
     /// </div>
+    ///
+    /// # Errors
+    /// Returns [`Error`] if the recovered elliptic curve point is the additive identity.
     #[allow(non_snake_case)]
     pub fn recover_from_prehash(
         prehash: &[u8],
