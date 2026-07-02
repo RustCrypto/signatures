@@ -10,12 +10,11 @@ use {
     },
     digest::{Digest, Update},
     elliptic_curve::{
-        AffinePoint, CurveArithmetic, FieldBytes, FieldBytesSize, Group, PrimeField,
+        AffinePoint, CurveArithmetic, CurveGroup, FieldBytes, FieldBytesSize, PrimeField,
         ProjectivePoint, Scalar,
         bigint::CheckedAdd,
         field,
-        ops::Invert,
-        ops::LinearCombination,
+        ops::{Invert, MulByGeneratorVartime},
         point::DecompressPoint,
         sec1::{self, FromSec1Point, ToSec1Point},
         subtle::CtOption,
@@ -383,8 +382,8 @@ where
         let r_inv = *r.invert();
         let u1 = -(r_inv * z);
         let u2 = r_inv * *s;
-        let pk = ProjectivePoint::<C>::lincomb(&[(ProjectivePoint::<C>::generator(), u1), (R, u2)]);
-        Self::from_affine(pk.into())
+        let pk = ProjectivePoint::<C>::mul_by_generator_and_mul_add_vartime(&u1, &u2, &R);
+        Self::from_affine(pk.to_affine())
     }
 }
 
