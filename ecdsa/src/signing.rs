@@ -78,6 +78,9 @@ where
     C: EcdsaCurve + CurveArithmetic,
 {
     /// Initialize signing key from a raw scalar serialized as a byte array.
+    ///
+    /// # Errors
+    /// Returns an error if `bytes` is not a valid element of the scalar field for `C`.
     pub fn from_bytes(bytes: &FieldBytes<C>) -> Result<Self> {
         SecretKey::<C>::from_bytes(bytes)
             .map(Into::into)
@@ -85,6 +88,10 @@ where
     }
 
     /// Initialize signing key from a raw scalar serialized as a byte slice.
+    ///
+    /// # Errors
+    /// Returns an error if `bytes` is not the length of [`FieldBytes`] for `C`, or if it is not
+    /// a valid element of the scalar field for `C`.
     pub fn from_slice(bytes: &[u8]) -> Result<Self> {
         SecretKey::<C>::from_slice(bytes)
             .map(Into::into)
@@ -98,11 +105,11 @@ where
 
     /// Borrow the secret [`NonZeroScalar`] value for this key.
     ///
-    /// # ⚠️ Warning
+    /// <div class="warning">
+    /// <b>Security Warning</b>
     ///
-    /// This value is key material.
-    ///
-    /// Please treat it with the care it deserves!
+    /// This value is key material. Please treat it with the care it deserves!
+    /// </div>
     pub fn as_nonzero_scalar(&self) -> &NonZeroScalar<C> {
         &self.secret_scalar
     }

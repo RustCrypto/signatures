@@ -84,6 +84,9 @@ where
     <FieldBytesSize<C> as Add>::Output: Add<MaxOverhead> + ArraySize,
 {
     /// Parse signature from DER-encoded bytes.
+    ///
+    /// # Errors
+    /// Returns [`Error`] if `input` failed to parse as an ASN.1 DER-encoded ECDSA signature.
     pub fn from_bytes(input: &[u8]) -> Result<Self> {
         let SignatureRef { r, s } = SignatureRef::from_der(input).map_err(|_| Error::new())?;
 
@@ -110,8 +113,7 @@ where
         })
     }
 
-    /// Create an ASN.1 DER encoded signature from big endian `r` and `s` scalar
-    /// components.
+    /// Create an ASN.1 DER encoded signature from big endian `r` and `s` scalar components.
     pub(crate) fn from_components(r: &[u8], s: &[u8]) -> der::Result<Self> {
         let sig = SignatureRef {
             r: UintRef::new(r)?,

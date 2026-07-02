@@ -33,8 +33,7 @@ use digest::{Digest, block_api::BlockSizeUser};
 ///
 /// - `d`: signing key. MUST BE UNIFORMLY RANDOM!!!
 /// - `k`: ephemeral scalar value. MUST BE UNIFORMLY RANDOM!!!
-/// - `z`: message digest to be signed. MUST BE OUTPUT OF A CRYPTOGRAPHICALLY
-///   SECURE DIGEST ALGORITHM!!!
+/// - `z`: message digest to sign. MUST BE OUTPUT OF A CRYPTOGRAPHICALLY SECURE DIGEST ALGORITHM!
 ///
 /// # Low-S Normalization
 ///
@@ -58,6 +57,7 @@ pub fn sign_prehashed<C>(
 where
     C: EcdsaCurve + CurveArithmetic,
 {
+    // Reduce message hash into an element of the scalar field for `C`.
     let z = bytes2scalar::<C>(z);
 
     // Compute scalar inversion of 𝑘.
@@ -128,19 +128,22 @@ where
 /// Accepts the following arguments:
 ///
 /// - `q`: public key with which to verify the signature.
-/// - `z`: message digest to be verified. MUST BE OUTPUT OF A CRYPTOGRAPHICALLY SECURE DIGEST
-///   ALGORITHM!!!
-/// - `sig`: signature to be verified against the key and message.
-pub fn verify_prehashed<C>(q: &ProjectivePoint<C>, z: &[u8], sig: &Signature<C>) -> Result<()>
+/// - `z`: message digest to verify. MUST BE OUTPUT OF A CRYPTOGRAPHICALLY SECURE DIGEST ALGORITHM!
+/// - `signature`: purported signature to verify against the key and message.
+///
+/// # Errors
+/// Returns [`Error`] if the signature failed to verify.
+pub fn verify_prehashed<C>(q: &ProjectivePoint<C>, z: &[u8], signature: &Signature<C>) -> Result<()>
 where
     C: EcdsaCurve + CurveArithmetic,
 {
-    if C::NORMALIZE_S && sig.s().is_high().into() {
+    let (r, s) = signature.split_scalars();
+
+    if C::NORMALIZE_S && s.is_high().into() {
         return Err(Error::new());
     }
 
     let z = bytes2scalar::<C>(z);
-    let (r, s) = sig.split_scalars();
     let s_inv = *s.invert_vartime();
     let u1 = z * s_inv;
     let u2 = *r * s_inv;
