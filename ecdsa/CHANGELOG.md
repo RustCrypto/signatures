@@ -4,10 +4,70 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.17.0 (2026-07-02)
+### Added
+- DER support for `SignatureWithOid` ([#786])
+- `EcdsaCurve` marker trait ([#787])
+- Recoverable `RandomizedPrehashSigner` impl for `SigningKey` ([#878])
+- Implement `MultipartSigner/Verifier` ([#982])
+- `getrandom` feature ([#1107])
+- Implement `crypto_common::Generate` trait for `SigningKey` ([#1140])
+- Implement `Hash` on `Signature` and `VerifyingKey` ([#1309])
+
+### Changed
+- Make `Signature::normalize_s` infallible ([#780])
+- Use `NonZeroScalar` arguments to `sign_prehashed` ([#794])
+- Upgrade to the 2024 edition; bump MSRV to 1.85 ([#913])
+- Rename `DigestPrimitive` to `DigestAlgorithm` ([#996])
+- Bump `serdect` dependency to v0.4 - new wire format for binary serializations ([#1048])
+- Support new `signature::DigestSigner/Verifier` API ([#1064])
+- Bump `der` to v0.8 ([#1232])
+- Bump `digest` to v0.11 ([#1237])
+- Bump `sha2` dependency to v0.11 ([#1267])
+- Bump `spki` to v0.8 ([#1303])
+- Bump `signature` to v3 ([#1321])
+- Move low-S normalization check into `verify_prehashed` ([#1379])
+- Bump `elliptic-curve` to v0.14 ([#1391])
+- Low-level RFC6979 signing functions are now infallible ([#1395], [#1411])
+- Bump `rfc6979` to v0.6 ([#1404])
+- Move `Array*` bounds to `EcdsaCurve` ([#1408])
 
 ### Removed
+- `SignPrimitive` and `VerifyPrimitive` traits ([#793])
 - `signature::PrehashSignature` implementation for `Signature` ([#1007])
+- `VerifyingKey::recover*` no longer performs signature verification ([#1381])
+
+### Fixed
+- Reduce `z` mod `q` when performing RFC6979 ([#777], [#1395])
+
+[#777]: https://github.com/RustCrypto/signatures/pull/777
+[#780]: https://github.com/RustCrypto/signatures/pull/780
+[#786]: https://github.com/RustCrypto/signatures/pull/786
+[#787]: https://github.com/RustCrypto/signatures/pull/787
+[#793]: https://github.com/RustCrypto/signatures/pull/793
+[#794]: https://github.com/RustCrypto/signatures/pull/794
+[#878]: https://github.com/RustCrypto/signatures/pull/878
+[#913]: https://github.com/RustCrypto/signatures/pull/913
+[#982]: https://github.com/RustCrypto/signatures/pull/982
+[#996]: https://github.com/RustCrypto/signatures/pull/996
+[#1007]: https://github.com/RustCrypto/signatures/pull/1007
+[#1048]: https://github.com/RustCrypto/signatures/pull/1048
+[#1064]: https://github.com/RustCrypto/signatures/pull/1064
+[#1107]: https://github.com/RustCrypto/signatures/pull/1107
+[#1140]: https://github.com/RustCrypto/signatures/pull/1140
+[#1232]: https://github.com/RustCrypto/signatures/pull/1232
+[#1237]: https://github.com/RustCrypto/signatures/pull/1237
+[#1267]: https://github.com/RustCrypto/signatures/pull/1267
+[#1303]: https://github.com/RustCrypto/signatures/pull/1303
+[#1309]: https://github.com/RustCrypto/signatures/pull/1309
+[#1321]: https://github.com/RustCrypto/signatures/pull/1321
+[#1379]: https://github.com/RustCrypto/signatures/pull/1379
+[#1381]: https://github.com/RustCrypto/signatures/pull/1381
+[#1391]: https://github.com/RustCrypto/signatures/pull/1391
+[#1395]: https://github.com/RustCrypto/signatures/pull/1395
+[#1404]: https://github.com/RustCrypto/signatures/pull/1404
+[#1408]: https://github.com/RustCrypto/signatures/pull/1408
+[#1411]: https://github.com/RustCrypto/signatures/pull/1411
 
 ## 0.16.9 (2023-11-16)
 ### Changed

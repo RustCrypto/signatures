@@ -1,10 +1,10 @@
 [package]
 name = "ecdsa"
-version = "0.17.0-rc.23"
+version = "0.17.0"
 description = """
-Pure Rust implementation of the Elliptic Curve Digital Signature Algorithm
-(ECDSA) as specified in FIPS 186-4 (Digital Signature Standard), providing
-RFC6979 deterministic signatures as well as support for added entropy
+Pure Rust implementation of the Elliptic Curve Digital Signature Algorithm (ECDSA) as specified in
+FIPS 186-4 (Digital Signature Standard), implemented generically over elliptic curves, providing
+RFC6979 deterministic signing support as well as randomized signatures and signature verification
 """
 authors = ["RustCrypto Developers"]
 license = "Apache-2.0 OR MIT"
