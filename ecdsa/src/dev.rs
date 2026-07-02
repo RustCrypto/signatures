@@ -282,6 +282,7 @@ impl EcdsaCurve for MockCurve {
 }
 
 /// ECDSA test vector
+#[derive(Clone, Copy, Debug)]
 pub struct TestVector {
     /// Private scalar
     pub d: &'static [u8],
@@ -306,6 +307,7 @@ pub struct TestVector {
 }
 
 #[cfg(test)]
+#[allow(clippy::integer_division_remainder_used, reason = "tests")]
 mod tests {
     use super::*;
 

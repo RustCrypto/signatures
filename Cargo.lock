@@ -473,7 +473,6 @@ dependencies = [
  "der",
  "digest",
  "elliptic-curve",
- "hex-literal",
  "rfc6979",
  "serdect",
  "sha2",

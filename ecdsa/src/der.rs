@@ -394,6 +394,7 @@ impl<'a> DecodeValue<'a> for SignatureRef<'a> {
 impl<'a> Sequence<'a> for SignatureRef<'a> {}
 
 /// Locate the range within a slice at which a particular subslice is located
+#[allow(clippy::as_conversions)]
 fn find_scalar_range(outer: &[u8], inner: &[u8]) -> Result<Range<usize>> {
     let outer_start = outer.as_ptr() as usize;
     let inner_start = inner.as_ptr() as usize;

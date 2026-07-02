@@ -5,47 +5,26 @@
     html_logo_url = "https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg",
     html_favicon_url = "https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg"
 )]
-#![forbid(unsafe_code)]
-#![warn(
-    clippy::cast_lossless,
-    clippy::cast_possible_truncation,
-    clippy::cast_possible_wrap,
-    clippy::cast_precision_loss,
-    clippy::cast_sign_loss,
-    clippy::checked_conversions,
-    clippy::implicit_saturating_sub,
-    clippy::panic,
-    clippy::panic_in_result_fn,
-    clippy::unwrap_used,
-    missing_docs,
-    rust_2018_idioms,
-    unused_lifetimes,
-    unused_qualifications,
-    unreachable_pub
-)]
+#![allow(clippy::missing_errors_doc, reason = "TODO")]
 
 //! ## `serde` support
 //!
-//! When the `serde` feature of this crate is enabled, `Serialize` and
-//! `Deserialize` impls are provided for the [`Signature`] and [`VerifyingKey`]
-//! types.
+//! When the `serde` feature of this crate is enabled, `Serialize` and `Deserialize` impls are
+//! provided for the [`Signature`] and [`VerifyingKey`] types.
 //!
 //! Please see type-specific documentation for more information.
 //!
 //! ## Interop
 //!
-//! Any crates which provide an implementation of ECDSA for a particular
-//! elliptic curve can leverage the types from this crate, along with the
-//! [`k256`], [`p256`], and/or [`p384`] crates to expose ECDSA functionality in
-//! a generic, interoperable way by leveraging the [`Signature`] type with in
-//! conjunction with the [`signature::Signer`] and [`signature::Verifier`]
-//! traits.
+//! Any crates which provide an implementation of ECDSA for a particular elliptic curve can leverage
+//! the types from this crate, along with the [`k256`], [`p256`], and/or [`p384`] crates to expose
+//! ECDSA functionality in a generic, interoperable way by leveraging the [`Signature`] type with in
+//! conjunction with the [`signature::Signer`] and [`signature::Verifier`] traits.
 //!
-//! For example, the [`ring-compat`] crate implements the [`signature::Signer`]
-//! and [`signature::Verifier`] traits in conjunction with the
-//! [`p256::ecdsa::Signature`] and [`p384::ecdsa::Signature`] types to
-//! wrap the ECDSA implementations from [*ring*] in a generic, interoperable
-//! API.
+//! For example, the [`ring-compat`] crate implements the [`signature::Signer`] and
+//! [`signature::Verifier`] traits in conjunction with the [`p256::ecdsa::Signature`] and
+//! [`p384::ecdsa::Signature`] types to wrap the ECDSA implementations from [*ring*] in a generic,
+//! interoperable API.
 //!
 //! [`k256`]: https://docs.rs/k256
 //! [`p256`]: https://docs.rs/p256
@@ -188,21 +167,19 @@ pub type SignatureBytes<C> = Array<u8, SignatureSize<C>>;
 ///
 /// Both `r` and `s` MUST be non-zero.
 ///
-/// For example, in a curve with a 256-bit modulus like NIST P-256 or
-/// secp256k1, `r` and `s` will both be 32-bytes and serialized as big endian,
-/// resulting in a signature with a total of 64-bytes.
+/// For example, in a curve with a 256-bit modulus like NIST P-256 or secp256k1, `r` and `s` are
+/// both 32-bytes and serialized as big endian, resulting in a signature with a total of 64-bytes.
 ///
-/// ASN.1 DER-encoded signatures also supported via the
-/// [`Signature::from_der`] and [`Signature::to_der`] methods.
+/// ASN.1 DER-encoded signatures also supported via the [`Signature::from_der`] and
+/// [`Signature::to_der`] methods.
 ///
 /// # `serde` support
 ///
-/// When the `serde` feature of this crate is enabled, it provides support for
-/// serializing and deserializing ECDSA signatures using the `Serialize` and
-/// `Deserialize` traits.
+/// When the `serde` feature of this crate is enabled, it provides support for serializing and
+/// deserializing ECDSA signatures using the `Serialize` and `Deserialize` traits.
 ///
-/// The serialization uses a hexadecimal encoding when used with
-/// "human readable" text formats, and a binary encoding otherwise.
+/// The serialization uses a hexadecimal encoding when used with "human readable" text formats, and
+/// a binary encoding otherwise.
 ///
 /// [IEEE P1363]: https://en.wikipedia.org/wiki/IEEE_P1363
 #[derive(Clone, Copy, Eq, PartialEq)]
@@ -218,11 +195,9 @@ where
     /// Parse a signature from fixed-width bytes, i.e. 2 * the size of
     /// [`FieldBytes`] for a particular curve.
     ///
-    /// # Returns
-    /// - `Ok(signature)` if the `r` and `s` components are both in the valid
-    ///   range `1..n` when serialized as concatenated big endian integers.
-    /// - `Err(err)` if the `r` and/or `s` component of the signature is
-    ///   out-of-range when interpreted as a big endian integer.
+    /// # Errors
+    /// If the `r` and/or `s` component of the signature is out-of-range when interpreted as a big
+    /// endian integer.
     pub fn from_bytes(bytes: &SignatureBytes<C>) -> Result<Self> {
         let chunks = FieldBytes::<C>::slice_as_chunks(bytes).0;
         let r = chunks[0];
@@ -250,11 +225,8 @@ where
     /// Create a [`Signature`] from the serialized `r` and `s` scalar values
     /// which comprise the signature.
     ///
-    /// # Returns
-    /// - `Ok(signature)` if the `r` and `s` components are both in the valid
-    ///   range `1..n` when serialized as concatenated big endian integers.
-    /// - `Err(err)` if the `r` and/or `s` component of the signature is
-    ///   out-of-range when interpreted as a big endian integer.
+    /// # Errors
+    /// If the `r` and/or `s` component of the signature is out-of-range when interpreted as a big endian integer.
     pub fn from_scalars(r: impl Into<FieldBytes<C>>, s: impl Into<FieldBytes<C>>) -> Result<Self> {
         let r = ScalarValue::from_slice(&r.into()).map_err(|_| Error::new())?;
         let s = ScalarValue::from_slice(&s.into()).map_err(|_| Error::new())?;
@@ -282,6 +254,7 @@ where
 
     /// Serialize this signature as ASN.1 DER.
     #[cfg(feature = "der")]
+    #[allow(clippy::missing_panics_doc, reason = "should not panic in practice")]
     pub fn to_der(&self) -> der::Signature<C>
     where
         der::MaxSize<C>: ArraySize,
@@ -321,6 +294,7 @@ where
     /// Normalize signature into "low S" form described in [BIP 0062: Dealing with Malleability][1].
     ///
     /// [1]: https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki
+    #[must_use]
     pub fn normalize_s(&self) -> Self {
         let mut result = *self;
         let s_inv = ScalarValue::from(-self.s());
@@ -439,11 +413,10 @@ where
     }
 }
 
-/// ECDSA [`ObjectIdentifier`] which identifies the digest used by default
-/// with the `Signer` and `Verifier` traits.
+/// ECDSA [`ObjectIdentifier`] which identifies the digest used by default with the `Signer` and
+/// `Verifier` traits.
 ///
-/// To support non-default digest algorithms, use the [`SignatureWithOid`]
-/// type instead.
+/// To support non-default digest algorithms, use the [`SignatureWithOid`] type instead.
 #[cfg(feature = "digest")]
 impl<C> AssociatedOid for Signature<C>
 where
@@ -507,9 +480,8 @@ impl<C: EcdsaCurve> Zeroize for Signature<C> {
     }
 }
 
-/// An extended [`Signature`] type which is parameterized by an
-/// `ObjectIdentifier` which identifies the ECDSA variant used by a
-/// particular signature.
+/// An extended [`Signature`] type which is parameterized by an `ObjectIdentifier` which identifies
+/// the ECDSA variant used by a particular signature.
 ///
 /// Valid `ObjectIdentifiers` are defined in [RFC5758 § 3.2]:
 ///
@@ -540,8 +512,7 @@ where
 {
     /// Create a new signature with an explicitly provided OID.
     ///
-    /// OID must begin with `1.2.840.10045.4`, the [RFC5758] OID prefix for
-    /// ECDSA variants.
+    /// OID must begin with `1.2.840.10045.4`, the [RFC5758] OID prefix for ECDSA variants.
     ///
     /// [RFC5758]: https://www.rfc-editor.org/rfc/rfc5758#section-3.2
     pub fn new(signature: Signature<C>, oid: ObjectIdentifier) -> Result<Self> {
