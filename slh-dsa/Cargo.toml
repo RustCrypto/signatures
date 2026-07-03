@@ -38,7 +38,7 @@ cipher = "0.5"
 ctr = "0.10.0-rc.3"
 hex = { version = "0.4.1", features = ["serde"] }
 hex-literal = "1"
-num-bigint = "0.4.4"
+num-bigint = "0.5.0"
 paste = "1.0.15"
 pkcs8 = { version = "0.11", features = ["pem"] }
 proptest = "1.11.0"
