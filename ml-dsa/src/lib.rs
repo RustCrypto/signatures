@@ -558,3 +558,163 @@ mod test {
         test_debug::<MlDsa87>();
     }
 }
+
+// Deterministic, unit-level regression tests for the HintBitUnpack canonicity
+// clauses (FIPS 204 Algorithm 21), the GHSA-5x2r-hc65-25f9 / CVE-2026-24850 site.
+// These complement the Wycheproof verification corpus (which covers end-to-end
+// verification of the repeated-hint vector) by exercising `Signature::decode`
+// directly and pinning each decoder-local rule: strict per-polynomial index
+// ordering (the bug was `<=` where `<` is required), monotonic bounded cuts, zero
+// padding after the last cut, and the legal boundary that identical index values
+// may occur in different polynomials. Run for all three parameter sets.
+//
+// The encoded hint is the trailing omega + k bytes of the signature: omega index
+// bytes then k cumulative cut bytes.
+#[cfg(test)]
+mod hint_decode_regression {
+    use super::*;
+    use hybrid_array::typenum::Unsigned;
+
+    const MAX_K: usize = 8; // ML-DSA-87 k
+    const MAX_OMEGA: usize = 80; // ML-DSA-44 omega
+
+    fn omega<P: MlDsaParams>() -> usize {
+        <P::Omega as Unsigned>::USIZE
+    }
+    fn kk<P: MlDsaParams>() -> usize {
+        <P::K as Unsigned>::USIZE
+    }
+
+    fn base_sig<P: MlDsaParams>() -> EncodedSignature<P> {
+        let ssk = SigningKey::<P>::from_seed(&Array::default());
+        let sig = ssk
+            .expanded_key()
+            .sign_deterministic(b"hint regression", &[])
+            .expect("sign");
+        sig.encode()
+    }
+
+    // Overwrite the hint region: `indices` (zero-padded to omega) then the k cuts.
+    fn with_hint<P: MlDsaParams>(
+        mut enc: EncodedSignature<P>,
+        indices: &[u8],
+        cuts: &[u8],
+    ) -> EncodedSignature<P> {
+        let (om, k) = (omega::<P>(), kk::<P>());
+        assert_eq!(cuts.len(), k);
+        assert!(indices.len() <= om);
+        let off = enc.len() - (om + k);
+        for x in &mut enc[off..] {
+            *x = 0;
+        }
+        enc[off..off + indices.len()].copy_from_slice(indices);
+        enc[off + om..off + om + k].copy_from_slice(cuts);
+        enc
+    }
+
+    fn decodes<P: MlDsaParams>(enc: &EncodedSignature<P>) -> bool {
+        Signature::<P>::decode(enc).is_some()
+    }
+
+    // k cumulative cut bytes all equal to `v` (so polynomial 0 holds `v` hints).
+    fn cut_buf<P: MlDsaParams>(v: u8) -> [u8; MAX_K] {
+        let mut c = [0u8; MAX_K];
+        for x in c.iter_mut().take(kk::<P>()) {
+            *x = v;
+        }
+        c
+    }
+
+    fn run_cases<P: MlDsaParams>() {
+        let om = omega::<P>();
+        let k = kk::<P>();
+        let omb = u8::try_from(om).expect("omega fits in u8");
+        let base = base_sig::<P>();
+
+        // control: strictly increasing indices [5, 9] in polynomial 0
+        assert!(decodes::<P>(&with_hint::<P>(
+            base.clone(),
+            &[5, 9],
+            &cut_buf::<P>(2)[..k]
+        )));
+
+        // GHSA-5x2r-hc65-25f9: a repeated index within one polynomial (the `<=` bug)
+        assert!(!decodes::<P>(&with_hint::<P>(
+            base.clone(),
+            &[5, 5],
+            &cut_buf::<P>(2)[..k]
+        )));
+
+        // decreasing index within one polynomial
+        assert!(!decodes::<P>(&with_hint::<P>(
+            base.clone(),
+            &[9, 5],
+            &cut_buf::<P>(2)[..k]
+        )));
+
+        // non-monotonic cuts [1, 0, ...]
+        let mut dc = cut_buf::<P>(1);
+        dc[1] = 0;
+        assert!(!decodes::<P>(&with_hint::<P>(base.clone(), &[5], &dc[..k])));
+
+        // a cut strictly above omega
+        let mut co = cut_buf::<P>(0);
+        co[k - 1] = omb + 1;
+        assert!(!decodes::<P>(&with_hint::<P>(base.clone(), &[], &co[..k])));
+
+        // upper valid boundary: a cut EQUAL to omega, polynomial 0 using all omega
+        // hints as strictly increasing indices 0..omega
+        let mut full = [0u8; MAX_OMEGA];
+        for (i, x) in full.iter_mut().enumerate().take(om) {
+            *x = u8::try_from(i).expect("index fits in u8");
+        }
+        assert!(decodes::<P>(&with_hint::<P>(
+            base.clone(),
+            &full[..om],
+            &cut_buf::<P>(omb)[..k]
+        )));
+
+        // the empty hint (all cuts zero, all indices zero)
+        assert!(decodes::<P>(&with_hint::<P>(
+            base.clone(),
+            &[],
+            &cut_buf::<P>(0)[..k]
+        )));
+
+        // nonzero byte immediately after the last used index (start of padding)
+        let mut enc = with_hint::<P>(base.clone(), &[5], &cut_buf::<P>(1)[..k]);
+        let off = enc.len() - (om + k);
+        enc[off + 1] = 7;
+        assert!(!decodes::<P>(&enc));
+
+        // nonzero byte in the final padding slot
+        let mut enc = with_hint::<P>(base.clone(), &[5], &cut_buf::<P>(1)[..k]);
+        let last = enc.len() - k - 1;
+        enc[last] = 7;
+        assert!(!decodes::<P>(&enc));
+
+        // legal: the same index value in DIFFERENT polynomials (strictness is per-poly)
+        let mut cx = cut_buf::<P>(2);
+        cx[0] = 1; // poly 0 = [5], poly 1 = [5]
+        assert!(decodes::<P>(&with_hint::<P>(
+            base.clone(),
+            &[5, 5],
+            &cx[..k]
+        )));
+    }
+
+    #[test]
+    fn mldsa44() {
+        run_cases::<MlDsa44>();
+    }
+
+    #[test]
+    fn mldsa65() {
+        run_cases::<MlDsa65>();
+    }
+
+    #[test]
+    fn mldsa87() {
+        run_cases::<MlDsa87>();
+    }
+}
