@@ -832,25 +832,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "num-bigint"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93e7820bc0a80a0238e650327316f929ba18d5be054b647490a3a6a339f3e7c0"
-dependencies = [
- "num-integer",
- "num-traits",
-]
-
-[[package]]
-name = "num-integer"
-version = "0.1.46"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7969661fd2958a5cb096e56c8e1ad0444ac2bbcd0061bd28660485a44879858f"
-dependencies = [
- "num-traits",
-]
-
-[[package]]
 name = "num-traits"
 version = "0.2.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1329,13 +1310,13 @@ dependencies = [
  "cipher",
  "const-oid",
  "criterion",
+ "crypto-bigint",
  "ctr",
  "digest",
  "hex",
  "hex-literal",
  "hmac",
  "hybrid-array",
- "num-bigint",
  "paste",
  "pkcs8",
  "proptest",
