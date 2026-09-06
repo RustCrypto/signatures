@@ -7,7 +7,7 @@ use hybrid_array::{
     Array,
     typenum::{U256, Unsigned},
 };
-use module_lattice::{Field, Truncate};
+use module_lattice::{Field, MaybeBox, Truncate};
 
 /// Algorithm 39 `MakeHint`: computes hint bit indicating whether adding `z` to `r` alters the high
 /// bits of `r`.
@@ -44,7 +44,7 @@ fn use_hint<TwoGamma2: Unsigned>(h: bool, r: Elem) -> Elem {
 }
 
 #[derive(Clone, PartialEq, Debug)]
-pub(crate) struct Hint<P>(pub Array<Array<bool, U256>, P::K>)
+pub(crate) struct Hint<P>(pub MaybeBox<Array<Array<bool, U256>, P::K>>)
 where
     P: SignatureParams;
 
@@ -53,7 +53,7 @@ where
     P: SignatureParams,
 {
     fn default() -> Self {
-        Self(Array::default())
+        Self(MaybeBox::new(Array::default()))
     }
 }
 
@@ -65,7 +65,7 @@ where
         let zi = z.0.iter();
         let ri = r.0.iter();
 
-        Self(
+        Self(MaybeBox::new(
             zi.zip(ri)
                 .map(|(zv, rv)| {
                     let zvi = zv.0.iter();
@@ -76,7 +76,7 @@ where
                         .collect()
                 })
                 .collect(),
-        )
+        ))
     }
 
     pub(crate) fn hamming_weight(&self) -> usize {

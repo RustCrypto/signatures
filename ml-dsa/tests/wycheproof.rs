@@ -114,7 +114,7 @@ macro_rules! mldsa_verify_test {
 
             for group in &tests.groups {
                 if let Ok(encoded_vk) = group.public_key.as_slice().try_into() {
-                    let vk = VerifyingKey::<MlDsa44>::decode(&encoded_vk);
+                    let vk = VerifyingKey::<$params>::decode(&encoded_vk);
                     for test in &group.tests {
                         println!("Test #{}: {} ({:?})", test.id, &test.comment, &test.result);
 
@@ -123,7 +123,7 @@ macro_rules! mldsa_verify_test {
                             .as_slice()
                             .try_into()
                             .ok()
-                            .and_then(|sig| Signature::<MlDsa44>::decode(&sig))
+                            .and_then(|sig| Signature::<$params>::decode(&sig))
                         {
                             if test.ctx.is_empty() {
                                 let result = vk.verify(&test.msg, &sig);

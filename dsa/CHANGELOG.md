@@ -4,6 +4,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.7.0 (2026-06-30)
+### Added
+- Implement `ZeroizeOnDrop` for `SigningKey` ([#917])
+- Implement `MultipartSigner/Verifier` ([#982])
+- `from_components_unchecked` APIs gated under `hazmat` ([#1059])
+- `TryCryptoRng` support ([#1367])
+- Implement `Generate` for `Components` and `SigningKey` ([#1372])
+
+### Changed
+- Gate signing under `hazmat` feature ([#859])
+- Use `crypto-primes` for key generation ([#906])
+- Upgrade to the 2024 edition and bump MSRV to 1.85 ([#913])
+- Make `pkcs8` feature optional ([#1014]
+- Bump `rand_core` to v0.10 ([#1197])
+- Bump `getrandom` to v0.4 ([#1205])
+- Bump `der` to v0.8 ([#1232])
+- Bump `digest` to v0.11 ([#1237])
+- Bump `sha2` to v0.11 ([#1267])
+- Bump `pkcs8` dependency to v0.11 ([#1316])
+- Bump `signature` dependency to v3 ([#1321])
+- Bump `rfc6979` to v0.6 ([#1404])
+
+### Removed
+- `std` feature ([#980])
+
+### Security
+- Migrate from known non-constant-time `num-bigint` to `crypto-bigint` as numerical library ([#906])
+
+[#859]: https://github.com/RustCrypto/signatures/pull/859
+[#906]: https://github.com/RustCrypto/signatures/pull/906
+[#913]: https://github.com/RustCrypto/signatures/pull/913
+[#917]: https://github.com/RustCrypto/signatures/pull/917
+[#980]: https://github.com/RustCrypto/signatures/pull/980
+[#982]: https://github.com/RustCrypto/signatures/pull/982
+[#1014]: https://github.com/RustCrypto/signatures/pull/1014
+[#1059]: https://github.com/RustCrypto/signatures/pull/1059
+[#1197]: https://github.com/RustCrypto/signatures/pull/1197
+[#1205]: https://github.com/RustCrypto/signatures/pull/1205
+[#1232]: https://github.com/RustCrypto/signatures/pull/1232
+[#1237]: https://github.com/RustCrypto/signatures/pull/1237
+[#1267]: https://github.com/RustCrypto/signatures/pull/1267
+[#1316]: https://github.com/RustCrypto/signatures/pull/1316
+[#1321]: https://github.com/RustCrypto/signatures/pull/1321
+[#1372]: https://github.com/RustCrypto/signatures/pull/1372
+[#1404]: https://github.com/RustCrypto/signatures/pull/1404
+
 ## 0.6.3 (2024-01-28)
 ### Added
 - `SigningKey::sign_prehashed_rfc6979` ([#798])

@@ -1,6 +1,5 @@
 #![no_std]
-#![forbid(unsafe_code)]
-#![warn(missing_docs, rust_2018_idioms, unreachable_pub)]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![doc = include_str!("../README.md")]
 #![doc(
     html_logo_url = "https://raw.githubusercontent.com/RustCrypto/media/8f1a9894/logo.svg",
@@ -12,16 +11,14 @@
 //!
 //! Generate a DSA keypair
 //!
-#![cfg_attr(feature = "hazmat", doc = "```")]
-#![cfg_attr(not(feature = "hazmat"), doc = "```ignore")]
+#![cfg_attr(feature = "getrandom", doc = "```")]
+#![cfg_attr(not(feature = "getrandom"), doc = "```ignore")]
 //! # fn main() -> Result<(), core::convert::Infallible> {
-//! use dsa::{KeySize, Components, SigningKey};
+//! // Note: requires `getrandom` feature is enabled.
 //!
-//! # use getrandom::{SysRng, rand_core::UnwrapErr};
-//! # let mut csprng = UnwrapErr(SysRng);
+//! use dsa::{KeySize, Components, Generate, SigningKey};
 //!
-//! let components = Components::try_generate_from_rng_with_key_size(&mut csprng, KeySize::DSA_2048_256)?;
-//! let signing_key = SigningKey::generate(&mut csprng, components);
+//! let signing_key = SigningKey::generate();
 //! let verifying_key = signing_key.verifying_key();
 //! # Ok(())
 //! # }
@@ -61,9 +58,10 @@ extern crate alloc;
 #[cfg(feature = "hazmat")]
 pub use crate::signing_key::SigningKey;
 
-pub use crate::{components::Components, size::KeySize, verifying_key::VerifyingKey};
+pub use crate::{components::Components, key_size::KeySize, verifying_key::VerifyingKey};
 
 pub use crypto_bigint::BoxedUint;
+pub use crypto_common::Generate;
 pub use signature;
 
 #[cfg(feature = "pkcs8")]
@@ -73,8 +71,8 @@ use crypto_bigint::NonZero;
 
 mod components;
 mod generate;
+mod key_size;
 mod signing_key;
-mod size;
 mod verifying_key;
 
 use alloc::{boxed::Box, vec::Vec};
@@ -106,6 +104,7 @@ pub struct Signature {
 
 impl Signature {
     /// Create a new Signature container from its components
+    #[must_use]
     pub fn from_components(r: BoxedUint, s: BoxedUint) -> Option<Self> {
         let r = NonZero::new(r).into_option()?;
         let s = NonZero::new(s).into_option()?;
@@ -128,6 +127,11 @@ impl Signature {
 impl<'a> DecodeValue<'a> for Signature {
     type Error = der::Error;
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        reason = "TODO"
+    )]
     fn decode_value<R: Reader<'a>>(reader: &mut R, _header: der::Header) -> der::Result<Self> {
         let r = UintRef::decode(reader)?;
         let s = UintRef::decode(reader)?;

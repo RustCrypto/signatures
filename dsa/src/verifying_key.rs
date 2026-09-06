@@ -36,7 +36,10 @@ pub struct VerifyingKey {
 }
 
 impl VerifyingKey {
-    /// Construct a new public key from the common components and the public component
+    /// Construct a new public key from the common components and the public component.
+    ///
+    /// # Errors
+    /// Returns an error if `y < 2`.
     pub fn from_components(components: Components, y: BoxedUint) -> signature::Result<Self> {
         let params = BoxedMontyParams::new_vartime(components.p().clone());
         let form = BoxedMontyForm::new(y.clone(), &params);
@@ -65,6 +68,12 @@ impl VerifyingKey {
 
     /// Verify some prehashed data
     #[must_use]
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::integer_division_remainder_used,
+        reason = "TODO"
+    )]
     fn verify_prehashed(&self, hash: &[u8], signature: &Signature) -> Option<bool> {
         let components = self.components();
         let (p, q, g) = (components.p(), components.q(), components.g());

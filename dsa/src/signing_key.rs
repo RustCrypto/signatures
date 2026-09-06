@@ -4,7 +4,7 @@
 
 #![cfg(feature = "hazmat")]
 
-use crate::{Signature, VerifyingKey};
+use crate::{Components, Signature, VerifyingKey, generate};
 use core::{
     cmp::min,
     fmt::{self, Debug},
@@ -13,7 +13,8 @@ use crypto_bigint::{
     BoxedUint, ConcatenatingMul, NonZero, Resize,
     modular::{BoxedMontyForm, BoxedMontyParams},
 };
-use digest::{Update, block_api::EagerHash};
+use crypto_common::Generate;
+use digest::{Digest, Update, common::BlockSizeUser};
 use signature::{
     DigestSigner, MultipartSigner, RandomizedDigestSigner, Signer,
     hazmat::{PrehashSigner, RandomizedPrehashSigner},
@@ -21,8 +22,6 @@ use signature::{
 };
 use zeroize::{ZeroizeOnDrop, Zeroizing};
 
-#[cfg(feature = "hazmat")]
-use {crate::Components, signature::rand_core::CryptoRng};
 #[cfg(feature = "pkcs8")]
 use {
     crate::OID,
@@ -51,13 +50,16 @@ pub struct SigningKey {
 }
 
 impl SigningKey {
-    /// Construct a new private key from the public key and private component
+    /// Construct a new private key from the public key and private component.
+    ///
+    /// # Errors
+    /// Returns an error in the event `x` is zero or equal to or larger than `q`.
     pub fn from_components(verifying_key: VerifyingKey, x: BoxedUint) -> signature::Result<Self> {
         let x = NonZero::new(x)
             .into_option()
             .ok_or_else(signature::Error::new)?;
 
-        if x > *verifying_key.components().q() {
+        if x >= *verifying_key.components().q() {
             return Err(signature::Error::new());
         }
 
@@ -67,11 +69,17 @@ impl SigningKey {
         })
     }
 
-    /// Generate a new DSA keypair
+    /// Generate a new DSA keypair.
+    ///
+    /// # Errors
+    /// Propagates errors from `R`.
     #[cfg(feature = "hazmat")]
     #[inline]
-    pub fn generate<R: CryptoRng + ?Sized>(rng: &mut R, components: Components) -> SigningKey {
-        crate::generate::keypair(rng, components)
+    pub fn try_generate_from_rng_with_components<R: TryCryptoRng + ?Sized>(
+        rng: &mut R,
+        components: Components,
+    ) -> Result<Self, R::Error> {
+        generate::signing_keypair(rng, components)
     }
 
     /// DSA public key
@@ -79,9 +87,17 @@ impl SigningKey {
         &self.verifying_key
     }
 
-    /// DSA private component
+    /// DSA private component.
     ///
-    /// If you decide to clone this value, please consider using [`Zeroize::zeroize`](::zeroize::Zeroize::zeroize()) to zero out the memory after you're done using the clone
+    /// <div class="warning">
+    /// <b>Security Warning</b>
+    ///
+    /// This value is key material. Please treat it with care!
+    ///
+    /// If you decide to clone this value, please consider using
+    /// [`Zeroize::zeroize`](::zeroize::Zeroize::zeroize) to zero out the memory after you're done
+    /// using the clone.
+    /// </div>
     #[must_use]
     pub fn x(&self) -> &NonZero<BoxedUint> {
         &self.x
@@ -92,15 +108,26 @@ impl SigningKey {
     ///
     /// [RFC6979]: https://datatracker.ietf.org/doc/html/rfc6979
     #[cfg(feature = "hazmat")]
+    #[allow(
+        clippy::missing_errors_doc,
+        reason = "errors shouldn't occur in practice"
+    )]
     pub fn sign_prehashed_rfc6979<D>(&self, prehash: &[u8]) -> Result<Signature, signature::Error>
     where
-        D: EagerHash,
+        D: BlockSizeUser + Digest,
     {
-        let k_kinv = crate::generate::secret_number_rfc6979::<D>(self, prehash)?;
+        // TODO(tarcieri): make this operation infallible by retrying with a different `k`
+        let k_kinv = generate::secret_number_rfc6979::<D>(self, prehash);
         self.sign_prehashed(k_kinv, prehash)
     }
 
-    /// Sign some pre-hashed data
+    /// Sign some pre-hashed data.
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::integer_division_remainder_used,
+        reason = "TODO"
+    )]
     fn sign_prehashed(
         &self,
         (k, inv_k): (BoxedUint, BoxedUint),
@@ -152,6 +179,13 @@ impl SigningKey {
 
 impl ZeroizeOnDrop for SigningKey {}
 
+impl Generate for SigningKey {
+    fn try_generate_from_rng<R: TryCryptoRng + ?Sized>(rng: &mut R) -> Result<Self, R::Error> {
+        let components = Components::try_generate_from_rng(rng)?;
+        Self::try_generate_from_rng_with_components(rng, components)
+    }
+}
+
 impl Signer<Signature> for SigningKey {
     fn try_sign(&self, msg: &[u8]) -> Result<Signature, signature::Error> {
         self.try_multipart_sign(&[msg])
@@ -161,7 +195,7 @@ impl Signer<Signature> for SigningKey {
 impl MultipartSigner<Signature> for SigningKey {
     fn try_multipart_sign(&self, msg: &[&[u8]]) -> Result<Signature, signature::Error> {
         self.try_sign_digest(|digest: &mut sha2::Sha256| {
-            msg.iter().for_each(|slice| digest.update(slice));
+            msg.iter().for_each(|slice| Update::update(digest, slice));
             Ok(())
         })
     }
@@ -170,7 +204,7 @@ impl MultipartSigner<Signature> for SigningKey {
 impl PrehashSigner<Signature> for SigningKey {
     /// Warning: This uses `sha2::Sha256` as the hash function for the digest. If you need to use a different one, use [`SigningKey::sign_prehashed_rfc6979`].
     fn sign_prehash(&self, prehash: &[u8]) -> Result<Signature, signature::Error> {
-        let k_kinv = crate::generate::secret_number_rfc6979::<sha2::Sha256>(self, prehash)?;
+        let k_kinv = generate::secret_number_rfc6979::<sha2::Sha256>(self, prehash);
         self.sign_prehashed(k_kinv, prehash)
     }
 }
@@ -183,7 +217,7 @@ impl RandomizedPrehashSigner<Signature> for SigningKey {
     ) -> Result<Signature, signature::Error> {
         let components = self.verifying_key.components();
 
-        if let Some(k_kinv) = crate::generate::secret_number(rng, components)? {
+        if let Some(k_kinv) = generate::secret_number(rng, components)? {
             self.sign_prehashed(k_kinv, prehash)
         } else {
             Err(signature::Error::new())
@@ -193,7 +227,7 @@ impl RandomizedPrehashSigner<Signature> for SigningKey {
 
 impl<D> DigestSigner<D, Signature> for SigningKey
 where
-    D: EagerHash + Update,
+    D: BlockSizeUser + Digest + Update,
 {
     fn try_sign_digest<F: Fn(&mut D) -> Result<(), signature::Error>>(
         &self,
@@ -202,7 +236,7 @@ where
         let mut digest = D::new();
         f(&mut digest)?;
         let hash = digest.finalize();
-        let ks = crate::generate::secret_number_rfc6979::<D>(self, &hash)?;
+        let ks = generate::secret_number_rfc6979::<D>(self, &hash);
 
         self.sign_prehashed(ks, &hash)
     }
@@ -210,7 +244,7 @@ where
 
 impl<D> RandomizedDigestSigner<D, Signature> for SigningKey
 where
-    D: EagerHash + Update,
+    D: BlockSizeUser + Digest + Update,
 {
     fn try_sign_digest_with_rng<
         R: TryCryptoRng + ?Sized,
@@ -220,7 +254,7 @@ where
         rng: &mut R,
         f: F,
     ) -> Result<Signature, signature::Error> {
-        let ks = crate::generate::secret_number(rng, self.verifying_key().components())?
+        let ks = generate::secret_number(rng, self.verifying_key().components())?
             .ok_or_else(signature::Error::new)?;
         let mut digest = D::new();
         f(&mut digest)?;
@@ -276,12 +310,16 @@ impl<'a> TryFrom<PrivateKeyInfoRef<'a>> for SigningKey {
             .into_option()
             .ok_or(pkcs8::KeyError::Invalid)?;
 
-        let y = if let Some(y_bytes) = value.public_key.as_ref().and_then(|bs| bs.as_bytes()) {
+        let y = if let Some(y_bytes) = value
+            .public_key
+            .as_ref()
+            .and_then(der::asn1::BitStringRef::as_bytes)
+        {
             let y = UintRef::from_der(y_bytes)?;
             BoxedUint::from_be_slice(y.as_bytes(), precision)
                 .map_err(|_| pkcs8::KeyError::Invalid)?
         } else {
-            crate::generate::public_component(&components, &x)
+            generate::public_component(&components, &x)
                 .into_option()
                 .ok_or(pkcs8::KeyError::Invalid)?
                 .get()

@@ -2,6 +2,7 @@ name: Publish to crates.io
 on:
   push:
     tags: [
+      "bign-genk/v**",
       "dsa/v**",
       "ecdsa/v**",
       "ed448/v**",
@@ -10,6 +11,7 @@ on:
       "ml-dsa/v**",
       "rfc6979/v**",
       "slh-dsa/v**",
+      "xmss/v*"
     ]
 
 jobs:
@@ -19,7 +21,7 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v7
       - uses: rust-lang/crates-io-auth-action@v1
         id: auth
 

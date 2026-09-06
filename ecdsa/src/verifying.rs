@@ -1,29 +1,19 @@
 //! ECDSA verifying: checking signatures are authentic using a [`VerifyingKey`].
 
-use crate::{
-    EcdsaCurve, Error, Result, Signature, SignatureSize,
-    hazmat::{self, DigestAlgorithm, bits2field},
-};
+use crate::{DigestAlgorithm, EcdsaCurve, Error, Result, Signature, hazmat};
 use core::{cmp::Ordering, fmt::Debug};
-use digest::{Update, block_api::EagerHash};
+use digest::{Digest, Update};
 use elliptic_curve::{
-    AffinePoint, CurveArithmetic, FieldBytesSize, ProjectivePoint, PublicKey,
-    array::ArraySize,
+    AffinePoint, CurveArithmetic, FieldBytesSize, PublicKey,
     point::PointCompression,
-    scalar::IsHigh,
     sec1::{self, CompressedPoint, FromSec1Point, Sec1Point, ToSec1Point},
 };
 use signature::{DigestVerifier, MultipartVerifier, Verifier, hazmat::PrehashVerifier};
 
 #[cfg(feature = "alloc")]
 use alloc::boxed::Box;
-
-#[cfg(feature = "der")]
-use {crate::der, core::ops::Add};
-
-#[cfg(feature = "pem")]
-use {core::str::FromStr, elliptic_curve::pkcs8::DecodePublicKey};
-
+#[cfg(all(feature = "alloc", feature = "pkcs8"))]
+use elliptic_curve::pkcs8::EncodePublicKey;
 #[cfg(feature = "pkcs8")]
 use elliptic_curve::pkcs8::{
     self, AssociatedOid, ObjectIdentifier,
@@ -32,10 +22,10 @@ use elliptic_curve::pkcs8::{
         self, AlgorithmIdentifier, AssociatedAlgorithmIdentifier, SignatureAlgorithmIdentifier,
     },
 };
-
 #[cfg(feature = "serde")]
 use serdect::serde::{Deserialize, Serialize, de, ser};
-
+#[cfg(feature = "der")]
+use {crate::der, core::ops::Add, elliptic_curve::array::ArraySize};
 #[cfg(feature = "sha2")]
 use {
     crate::{
@@ -43,9 +33,8 @@ use {
     },
     sha2::{Sha224, Sha256, Sha384, Sha512},
 };
-
-#[cfg(all(feature = "alloc", feature = "pkcs8"))]
-use elliptic_curve::pkcs8::EncodePublicKey;
+#[cfg(feature = "pem")]
+use {core::str::FromStr, elliptic_curve::pkcs8::DecodePublicKey};
 
 /// ECDSA public key used for verifying signatures. Generic over prime order
 /// elliptic curves (e.g. NIST P-curves).
@@ -87,6 +76,11 @@ where
     FieldBytesSize<C>: sec1::ModulusSize,
 {
     /// Initialize [`VerifyingKey`] from a SEC1-encoded public key.
+    ///
+    /// # Errors
+    /// Returns [`Error`] if `bytes` is not a valid SEC1 encoding of a compressed or uncompressed
+    /// curve point (i.e. it should begin with `0x02`, `0x03`, or `0x04`), or if
+    /// [`VerifyingKey::from_sec1_point`] returns an error.
     pub fn from_sec1_bytes(bytes: &[u8]) -> Result<Self> {
         PublicKey::from_sec1_bytes(bytes)
             .map(|pk| Self { inner: pk })
@@ -95,8 +89,8 @@ where
 
     /// Initialize [`VerifyingKey`] from an affine point.
     ///
-    /// Returns an [`Error`] if the given affine point is the additive identity
-    /// (a.k.a. point at infinity).
+    /// # Errors
+    /// Returns [`Error`] if the `affine` point is the additive identity (a.k.a. point at infinity).
     pub fn from_affine(affine: AffinePoint<C>) -> Result<Self> {
         Ok(Self {
             inner: PublicKey::from_affine(affine).map_err(|_| Error::new())?,
@@ -104,6 +98,9 @@ where
     }
 
     /// Initialize [`VerifyingKey`] from an [`Sec1Point`].
+    ///
+    /// # Errors
+    /// Returns [`Error`] if `public_key` does not represent a valid elliptic curve point for `C`.
     pub fn from_sec1_point(public_key: &Sec1Point<C>) -> Result<Self> {
         PublicKey::<C>::from_sec1_point(public_key)
             .into_option()
@@ -144,8 +141,7 @@ where
 impl<C, D> DigestVerifier<D, Signature<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    D: EagerHash + Update,
-    SignatureSize<C>: ArraySize,
+    D: Digest + Update,
 {
     fn verify_digest<F: Fn(&mut D) -> Result<()>>(
         &self,
@@ -161,25 +157,15 @@ where
 impl<C> PrehashVerifier<Signature<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    SignatureSize<C>: ArraySize,
 {
     fn verify_prehash(&self, prehash: &[u8], signature: &Signature<C>) -> Result<()> {
-        if C::NORMALIZE_S && signature.s().is_high().into() {
-            return Err(Error::new());
-        }
-
-        hazmat::verify_prehashed::<C>(
-            &ProjectivePoint::<C>::from(*self.inner.as_affine()),
-            &bits2field::<C>(prehash)?,
-            signature,
-        )
+        hazmat::verify_prehashed::<C>(&(*self.inner.as_affine()).into(), prehash, signature)
     }
 }
 
 impl<C> Verifier<Signature<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
-    SignatureSize<C>: ArraySize,
 {
     fn verify(&self, msg: &[u8], signature: &Signature<C>) -> Result<()> {
         self.multipart_verify(&[msg], signature)
@@ -189,12 +175,11 @@ where
 impl<C> MultipartVerifier<Signature<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
-    SignatureSize<C>: ArraySize,
 {
     fn multipart_verify(&self, msg: &[&[u8]], signature: &Signature<C>) -> Result<()> {
         self.verify_digest(
             |digest: &mut C::Digest| {
-                msg.iter().for_each(|slice| digest.update(slice));
+                msg.iter().for_each(|slice| Update::update(digest, slice));
                 Ok(())
             },
             signature,
@@ -206,7 +191,6 @@ where
 impl<C> Verifier<SignatureWithOid<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
-    SignatureSize<C>: ArraySize,
 {
     fn verify(&self, msg: &[u8], sig: &SignatureWithOid<C>) -> Result<()> {
         self.multipart_verify(&[msg], sig)
@@ -217,31 +201,32 @@ where
 impl<C> MultipartVerifier<SignatureWithOid<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
-    SignatureSize<C>: ArraySize,
 {
     fn multipart_verify(&self, msg: &[&[u8]], sig: &SignatureWithOid<C>) -> Result<()> {
-        use digest::FixedOutput;
-
         match sig.oid() {
             ECDSA_SHA224_OID => {
                 let mut digest = Sha224::default();
-                msg.iter().for_each(|slice| digest.update(slice));
-                self.verify_prehash(&digest.finalize_fixed(), sig.signature())
+                msg.iter()
+                    .for_each(|slice| Update::update(&mut digest, slice));
+                self.verify_prehash(&digest.finalize(), sig.signature())
             }
             ECDSA_SHA256_OID => {
                 let mut digest = Sha256::default();
-                msg.iter().for_each(|slice| digest.update(slice));
-                self.verify_prehash(&digest.finalize_fixed(), sig.signature())
+                msg.iter()
+                    .for_each(|slice| Update::update(&mut digest, slice));
+                self.verify_prehash(&digest.finalize(), sig.signature())
             }
             ECDSA_SHA384_OID => {
                 let mut digest = Sha384::default();
-                msg.iter().for_each(|slice| digest.update(slice));
-                self.verify_prehash(&digest.finalize_fixed(), sig.signature())
+                msg.iter()
+                    .for_each(|slice| Update::update(&mut digest, slice));
+                self.verify_prehash(&digest.finalize(), sig.signature())
             }
             ECDSA_SHA512_OID => {
                 let mut digest = Sha512::default();
-                msg.iter().for_each(|slice| digest.update(slice));
-                self.verify_prehash(&digest.finalize_fixed(), sig.signature())
+                msg.iter()
+                    .for_each(|slice| Update::update(&mut digest, slice));
+                self.verify_prehash(&digest.finalize(), sig.signature())
             }
             _ => Err(Error::new()),
         }
@@ -252,8 +237,7 @@ where
 impl<C, D> DigestVerifier<D, der::Signature<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    D: EagerHash + Update,
-    SignatureSize<C>: ArraySize,
+    D: Digest + Update,
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
 {
@@ -271,7 +255,6 @@ where
 impl<C> PrehashVerifier<der::Signature<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic,
-    SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
 {
@@ -285,7 +268,6 @@ where
 impl<C> Verifier<der::Signature<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
-    SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
 {
@@ -299,7 +281,6 @@ where
 impl<C> MultipartVerifier<der::Signature<C>> for VerifyingKey<C>
 where
     C: EcdsaCurve + CurveArithmetic + DigestAlgorithm,
-    SignatureSize<C>: ArraySize,
     der::MaxSize<C>: ArraySize,
     <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
 {

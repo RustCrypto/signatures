@@ -23,7 +23,7 @@ hybrid-array = { version = "0.4", features = ["extra-sizes"] }
 pkcs8 = { version = "0.11", default-features = false }
 rand_core = "0.10"
 sha2 = { version = "0.11", default-features = false }
-sha3 = { version = "0.11", default-features = false }
+shake = { version = "0.1", default-features = false }
 signature = { version = "3", features = ["rand_core"] }
 typenum = { version = "1.20", features = ["const-generics"] }
 zerocopy = { version = "0.8", features = ["derive"] }
@@ -38,7 +38,7 @@ cipher = "0.5"
 ctr = "0.10.0-rc.3"
 hex = { version = "0.4.1", features = ["serde"] }
 hex-literal = "1"
-num-bigint = "0.4.4"
+crypto-bigint = { version = "0.7", default-features = false, features = ["alloc"] }
 paste = "1.0.15"
 pkcs8 = { version = "0.11", features = ["pem"] }
 proptest = "1.11.0"

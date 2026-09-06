@@ -186,8 +186,7 @@ impl AlgebraExt for Polynomial {
         self.0
             .iter()
             .map(AlgebraExt::infinity_norm)
-            .max()
-            .expect("should have a maximum")
+            .fold(0, |acc, x| u32::ct_select(&x, &acc, acc.ct_gt(&x)))
     }
 
     fn power2round(&self) -> (Self, Self) {
@@ -229,8 +228,7 @@ impl<K: ArraySize> AlgebraExt for Vector<K> {
         self.0
             .iter()
             .map(AlgebraExt::infinity_norm)
-            .max()
-            .expect("should have a maximum")
+            .fold(0, |acc, x| u32::ct_select(&x, &acc, acc.ct_gt(&x)))
     }
 
     fn power2round(&self) -> (Self, Self) {

@@ -21,7 +21,7 @@ prop_compose! {
         let mut rng = ChaCha8Rng::from_seed(seed);
         #[allow(deprecated)]
         let components = Components::try_generate_from_rng_with_key_size(&mut rng, KeySize::DSA_1024_160).unwrap();
-        SigningKey::generate(&mut rng, components)
+        SigningKey::try_generate_from_rng_with_components(&mut rng, components).unwrap()
     }
 }
 

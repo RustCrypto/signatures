@@ -90,7 +90,7 @@ pub(crate) mod macros {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use num_bigint::BigUint;
+    use crypto_bigint::BoxedUint;
     use proptest::prelude::*;
     use typenum::U;
 
@@ -100,14 +100,17 @@ mod tests {
         }
 
         let a = base_2b::<OutLen, B>(x);
-        let mut b = BigUint::from_bytes_be(&x[..(OutLen::USIZE * B::USIZE + 7) / 8]);
+        let mut b = BoxedUint::from_be_slice_vartime(&x[..(OutLen::USIZE * B::USIZE + 7) / 8]);
 
         if (B::USIZE * OutLen::USIZE) % 8 != 0 {
             // Clear lower bits of b
             b >>= 8 - ((B::USIZE * OutLen::USIZE) % 8);
         }
 
-        let c: BigUint = a.iter().fold(0u8.into(), |acc, x| (acc << B::U8) + x);
+        let c: BoxedUint = a.iter().fold(
+            BoxedUint::zero_with_precision(b.bits_precision()),
+            |acc, x| (acc << B::U32) + *x,
+        );
 
         assert_eq!(b, c);
     }
