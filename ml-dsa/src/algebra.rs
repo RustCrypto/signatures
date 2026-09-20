@@ -1,9 +1,10 @@
+use core::ops::Mul;
 use ctutils::{CtEq, CtGt, CtLt, CtSelect};
 use hybrid_array::{
-    ArraySize,
+    Array, ArraySize,
     typenum::{Shleft, U1, U13, Unsigned},
 };
-use module_lattice::{Field, Truncate};
+use module_lattice::{Field, MaybeBox, Truncate};
 
 module_lattice::define_field!(BaseField, u32, u64, u128, 8_380_417);
 
@@ -14,7 +15,25 @@ pub(crate) type Polynomial = module_lattice::Polynomial<BaseField>;
 pub(crate) type Vector<K> = module_lattice::Vector<BaseField, K>;
 pub(crate) type NttPolynomial = module_lattice::NttPolynomial<BaseField>;
 pub(crate) type NttVector<K> = module_lattice::NttVector<BaseField, K>;
-pub(crate) type NttMatrix<K, L> = module_lattice::NttMatrix<BaseField, K, L>;
+
+/// Private matrix storage which offloads each row before constructing the next one.
+/// Without `alloc`, `MaybeBox` keeps the rows inline.
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct NttMatrix<K: ArraySize, L: ArraySize>(Array<MaybeBox<NttVector<L>>, K>);
+
+impl<K: ArraySize, L: ArraySize> NttMatrix<K, L> {
+    pub(crate) fn from_fn(mut f: impl FnMut(usize) -> NttVector<L>) -> Self {
+        Self(Array::from_fn(|i| MaybeBox::new(f(i))))
+    }
+}
+
+impl<K: ArraySize, L: ArraySize> Mul<&NttVector<L>> for &NttMatrix<K, L> {
+    type Output = NttVector<K>;
+
+    fn mul(self, rhs: &NttVector<L>) -> Self::Output {
+        NttVector::new(self.0.iter().map(|row| &**row * rhs).collect())
+    }
+}
 
 // We require modular reduction for three moduli: q, 2^d, and 2 * gamma2.  All three of these are
 // greater than sqrt(q), which means that a number reduced mod q will always be less than M^2,

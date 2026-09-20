@@ -39,6 +39,11 @@ jobs:
           toolchain: ${{ matrix.rust }}
       - run: cargo build --benches
       - run: cargo build --benches --all-features
+      - name: Unoptimized small-stack regression
+        run: cargo test --all-features --test stack
+        env:
+          CARGO_PROFILE_DEV_OPT_LEVEL: 0
+          CARGO_PROFILE_TEST_OPT_LEVEL: 0
       - run: cargo test --release
       - run: cargo test --all-features --release
       - run: cargo test --no-default-features --release
