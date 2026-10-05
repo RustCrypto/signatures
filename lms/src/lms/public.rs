@@ -1,5 +1,5 @@
-use std::cmp::Ordering;
-use std::ops::Add;
+use core::cmp::Ordering;
+use core::ops::Add;
 
 use crate::constants::{D_LEAF, ID_LEN};
 
@@ -113,7 +113,7 @@ where
     fn from(pk: VerifyingKey<Mode>) -> Self {
         // Return u32(type) || u32(otstype) || id || k
         Array::try_from_iter(
-            std::iter::empty()
+            core::iter::empty()
                 .chain(Mode::TYPECODE.to_be_bytes())
                 .chain(Mode::OtsMode::TYPECODE.to_be_bytes())
                 .chain(pk.id)
@@ -162,7 +162,7 @@ impl<'a, Mode: LmsMode> TryFrom<&'a [u8]> for VerifyingKey<Mode> {
 
 #[cfg(test)]
 mod tests {
-    use std::ops::Add;
+    use core::ops::Add;
 
     use crate::{
         lms::SigningKey,
@@ -261,7 +261,7 @@ mod tests {
 
     fn test_serialize_deserialize_random<Mode: LmsMode>()
     where
-        VerifyingKey<Mode>: std::fmt::Debug,
+        VerifyingKey<Mode>: core::fmt::Debug,
         <Mode::Hasher as OutputSizeUser>::OutputSize: Add<U24>,
         Sum<<Mode::Hasher as OutputSizeUser>::OutputSize, U24>: ArraySize,
     {

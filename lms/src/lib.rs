@@ -1,11 +1,12 @@
-#![warn(unreachable_pub)]
-
 //! LMS in Rust
 //!
 //! This is a strongly typed implementation of Leighton-Micali signatures. You
 //! can find the private key, public key, and signature struct documentations in
 //! their respective crates. See [lms] for anything LMS related and [ots] for
 //! anything LM-OTS related.
+
+#![warn(unreachable_pub)]
+#![cfg_attr(not(test), no_std)]
 
 pub mod error;
 pub mod lms;

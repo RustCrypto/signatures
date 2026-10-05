@@ -8,10 +8,10 @@ use crate::ots::signature::Signature;
 use crate::types::Identifier;
 use digest::{Output, OutputSizeUser};
 
+use core::cmp::Ordering;
+use core::ops::Add;
 use hybrid_array::{Array, ArraySize};
 use signature::{Error, MultipartVerifier, Verifier};
-use std::cmp::Ordering;
-use std::ops::Add;
 use typenum::{Sum, U2, U24};
 
 #[derive(Debug)]
@@ -82,7 +82,7 @@ where
     fn from(pk: VerifyingKey<Mode>) -> Self {
         // Return u32str(type) || I || u32str(q) || K
         Array::try_from_iter(
-            std::iter::empty()
+            core::iter::empty()
                 .chain(Mode::TYPECODE.to_be_bytes())
                 .chain(pk.id)
                 .chain(pk.q.to_be_bytes())

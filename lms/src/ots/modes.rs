@@ -1,12 +1,13 @@
 use crate::ots::util::coefs;
 use crate::types::Typecode;
+use core::marker::PhantomData;
+use core::ops::{Add, Mul};
 use digest::{Digest, Output};
 use hybrid_array::{Array, ArraySize};
 use sha2::Sha256;
 use static_assertions::const_assert_eq;
-use std::marker::PhantomData;
-use typenum::Unsigned;
 use typenum::consts::{U34, U67, U133, U265};
+use typenum::{Prod, Sum, U1, U4, Unsigned};
 
 /// The basic trait that must be implemented by any OTS mode.
 pub trait LmsOtsMode: Typecode {
@@ -16,6 +17,8 @@ pub trait LmsOtsMode: Typecode {
     type NLen: ArraySize;
     /// The value of P as a type
     type PLen: ArraySize;
+    /// Length of an encoded signature, computed as `4 + n*(p+1)`
+    type SigLen: ArraySize;
     /// The length of the hash function output as a [usize]
     const N: usize;
     /// The Winternitz window, which should be a value that divides 8
@@ -87,10 +90,16 @@ impl<Hasher: Digest, const W: usize, PP: ArraySize, const TC: u32> Typecode
 /// https://datatracker.ietf.org/doc/html/rfc8554#section-4.1
 impl<Hasher: Digest, const W: usize, PP: ArraySize, const TC: u32> LmsOtsMode
     for LmsOtsModeInternal<Hasher, W, PP, TC>
+where
+    PP: Add<U1>,
+    Hasher::OutputSize: Mul<Sum<PP, U1>>,
+    Prod<Hasher::OutputSize, Sum<PP, U1>>: Add<U4>,
+    Sum<Prod<Hasher::OutputSize, Sum<PP, U1>>, U4>: ArraySize,
 {
     type Hasher = Hasher;
     type NLen = Hasher::OutputSize;
     type PLen = PP;
+    type SigLen = Sum<Prod<Hasher::OutputSize, Sum<PP, U1>>, U4>;
     const N: usize = Hasher::OutputSize::USIZE;
     const W: usize = W;
     const U: usize = (8 * Self::N).div_ceil(W);
@@ -118,6 +127,10 @@ const_assert_eq!(
     <LmsOtsSha256N32W1 as LmsOtsMode>::PLen::USIZE,
     LmsOtsSha256N32W1::P
 );
+const_assert_eq!(
+    <LmsOtsSha256N32W1 as LmsOtsMode>::SigLen::USIZE,
+    LmsOtsSha256N32W1::SIG_LEN
+);
 const_assert_eq!(LmsOtsSha256N32W1::N, 32);
 const_assert_eq!(LmsOtsSha256N32W1::P, 265);
 const_assert_eq!(LmsOtsSha256N32W1::LS, 7);
@@ -130,6 +143,10 @@ const_assert_eq!(
 const_assert_eq!(
     <LmsOtsSha256N32W2 as LmsOtsMode>::PLen::USIZE,
     LmsOtsSha256N32W2::P
+);
+const_assert_eq!(
+    <LmsOtsSha256N32W2 as LmsOtsMode>::SigLen::USIZE,
+    LmsOtsSha256N32W2::SIG_LEN
 );
 const_assert_eq!(LmsOtsSha256N32W2::N, 32);
 const_assert_eq!(LmsOtsSha256N32W2::P, 133);
@@ -144,6 +161,10 @@ const_assert_eq!(
     <LmsOtsSha256N32W4 as LmsOtsMode>::PLen::USIZE,
     LmsOtsSha256N32W4::P
 );
+const_assert_eq!(
+    <LmsOtsSha256N32W4 as LmsOtsMode>::SigLen::USIZE,
+    LmsOtsSha256N32W4::SIG_LEN
+);
 const_assert_eq!(LmsOtsSha256N32W4::N, 32);
 const_assert_eq!(LmsOtsSha256N32W4::P, 67);
 const_assert_eq!(LmsOtsSha256N32W4::LS, 4);
@@ -156,6 +177,10 @@ const_assert_eq!(
 const_assert_eq!(
     <LmsOtsSha256N32W8 as LmsOtsMode>::PLen::USIZE,
     LmsOtsSha256N32W8::P
+);
+const_assert_eq!(
+    <LmsOtsSha256N32W8 as LmsOtsMode>::SigLen::USIZE,
+    LmsOtsSha256N32W8::SIG_LEN
 );
 const_assert_eq!(LmsOtsSha256N32W8::N, 32);
 const_assert_eq!(LmsOtsSha256N32W8::P, 34);
