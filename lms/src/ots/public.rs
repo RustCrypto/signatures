@@ -8,10 +8,10 @@ use crate::ots::signature::Signature;
 use crate::types::Identifier;
 use digest::{Output, OutputSizeUser};
 
-use hybrid_array::{Array, ArraySize};
-use signature::{Error, MultipartVerifier, Verifier};
 use core::cmp::Ordering;
 use core::ops::Add;
+use hybrid_array::{Array, ArraySize};
+use signature::{Error, MultipartVerifier, Verifier};
 use typenum::{Sum, U2, U24};
 
 #[derive(Debug)]

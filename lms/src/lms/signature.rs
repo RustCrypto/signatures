@@ -4,16 +4,13 @@ use crate::error::LmsDeserializeError;
 use crate::lms::LmsMode;
 use crate::ots::Signature as OtsSignature;
 use crate::ots::modes::LmsOtsMode;
-use hybrid_array::{Array, ArraySize};
+use hybrid_array::Array;
 use signature::SignatureEncoding;
 
-use alloc::vec::Vec;
-use core::{
-    cmp::Ordering,
-    ops::{Add, Mul},
-};
+use core::cmp::Ordering;
 
-use typenum::{Prod, Sum, U1, U4};
+/// Byte representation of a [`Signature`]
+pub type SignatureBytes<Mode> = Array<u8, <Mode as LmsMode>::SigLen>;
 
 /// Opaque struct representing a LMS signature
 pub struct Signature<Mode: LmsMode> {
@@ -40,40 +37,29 @@ impl<Mode: LmsMode> PartialEq for Signature<Mode> {
     }
 }
 
-impl<Mode: LmsMode> SignatureEncoding for Signature<Mode>
-where
-    <Mode::OtsMode as LmsOtsMode>::PLen: Add<U1>,
-    <Mode::OtsMode as LmsOtsMode>::NLen: Mul<Sum<<Mode::OtsMode as LmsOtsMode>::PLen, U1>>,
-    Prod<<Mode::OtsMode as LmsOtsMode>::NLen, Sum<<Mode::OtsMode as LmsOtsMode>::PLen, U1>>:
-        Add<U4>,
-    Sum<
-        Prod<<Mode::OtsMode as LmsOtsMode>::NLen, Sum<<Mode::OtsMode as LmsOtsMode>::PLen, U1>>,
-        U4,
-    >: ArraySize,
-{
-    type Repr = Vec<u8>; // TODO: Array
+impl<Mode: LmsMode> SignatureEncoding for Signature<Mode> {
+    type Repr = SignatureBytes<Mode>;
 }
 
-impl<Mode: LmsMode> From<Signature<Mode>> for Vec<u8>
-where
-    <Mode::OtsMode as LmsOtsMode>::PLen: Add<U1>,
-    <Mode::OtsMode as LmsOtsMode>::NLen: Mul<Sum<<Mode::OtsMode as LmsOtsMode>::PLen, U1>>,
-    Prod<<Mode::OtsMode as LmsOtsMode>::NLen, Sum<<Mode::OtsMode as LmsOtsMode>::PLen, U1>>:
-        Add<U4>,
-    Sum<
-        Prod<<Mode::OtsMode as LmsOtsMode>::NLen, Sum<<Mode::OtsMode as LmsOtsMode>::PLen, U1>>,
-        U4,
-    >: ArraySize,
-{
+impl<Mode: LmsMode> From<Signature<Mode>> for SignatureBytes<Mode> {
     fn from(val: Signature<Mode>) -> Self {
-        let mut sig = Vec::new();
-        sig.extend_from_slice(&val.q.to_be_bytes());
-        let lms_sig: Array<u8, _> = val.lmots_sig.into();
-        sig.extend_from_slice(&lms_sig);
-        sig.extend_from_slice(&Mode::TYPECODE.to_be_bytes());
-        for node in val.path {
-            sig.extend_from_slice(&node);
+        let mut sig = SignatureBytes::<Mode>::default();
+        let (q, rest) = sig.split_at_mut(size_of::<u32>());
+        q.copy_from_slice(&val.q.to_be_bytes());
+
+        let (lms_sig, rest) = rest.split_at_mut(Mode::OtsMode::SIG_LEN);
+        lms_sig.copy_from_slice(&Array::<u8, _>::from(val.lmots_sig));
+
+        let (typecode, path) = rest.split_at_mut(size_of::<u32>());
+        typecode.copy_from_slice(&Mode::TYPECODE.to_be_bytes());
+
+        let mut path_chunks = path.chunks_exact_mut(Mode::M);
+        assert_eq!(path_chunks.len(), val.path.len());
+        for (buf, node) in (&mut path_chunks).zip(val.path.iter()) {
+            buf.copy_from_slice(node);
         }
+        assert_eq!(path_chunks.into_remainder().len(), 0);
+
         sig
     }
 }
@@ -139,12 +125,10 @@ mod tests {
         lms::{Signature, SigningKey, VerifyingKey, modes::*},
         ots::modes::*,
     };
-    use core::ops::{Add, Mul};
     use getrandom::SysRng;
     use hex_literal::hex;
-    use hybrid_array::ArraySize;
+    use hybrid_array::Array;
     use signature::{RandomizedSignerMut, Verifier};
-    use typenum::{Prod, Sum, U1, U4};
 
     #[test]
     fn test_deserialize_kat1() {
@@ -258,23 +242,13 @@ mod tests {
         assert!(pk.verify(&msg[..], &sig).is_ok());
     }
 
-    fn test_serialize_deserialize_random<Mode: LmsMode>()
-    where
-        <Mode::OtsMode as LmsOtsMode>::PLen: Add<U1>,
-        <Mode::OtsMode as LmsOtsMode>::NLen: Mul<Sum<<Mode::OtsMode as LmsOtsMode>::PLen, U1>>,
-        Prod<<Mode::OtsMode as LmsOtsMode>::NLen, Sum<<Mode::OtsMode as LmsOtsMode>::PLen, U1>>:
-            Add<U4>,
-        Sum<
-            Prod<<Mode::OtsMode as LmsOtsMode>::NLen, Sum<<Mode::OtsMode as LmsOtsMode>::PLen, U1>>,
-            U4,
-        >: ArraySize,
-    {
+    fn test_serialize_deserialize_random<Mode: LmsMode>() {
         let mut rng = rand_core::UnwrapErr(SysRng);
         let mut sk = SigningKey::<Mode>::new(&mut rng);
         let pk = sk.public();
         let msg = b"Hello, world!";
         let sig = sk.sign_with_rng(&mut rng, msg);
-        let sig_bytes: Vec<_> = sig.clone().into();
+        let sig_bytes: Array<_, _> = sig.clone().into();
         let sig2 = Signature::<Mode>::try_from(&sig_bytes[..]).unwrap();
         assert!(pk.verify(msg, &sig2).is_ok());
     }

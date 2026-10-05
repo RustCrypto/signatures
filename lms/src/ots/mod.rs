@@ -28,13 +28,13 @@ pub mod tests {
         },
     };
     use core::convert::Infallible;
+    use core::{matches, ops::Add};
     use digest::{Digest, OutputSizeUser};
     use getrandom::SysRng;
     use hex_literal::hex;
     use hybrid_array::{Array, ArraySize};
     use rand_core::{TryCryptoRng, TryRng, UnwrapErr};
     use signature::{RandomizedSignerMut, Verifier};
-    use core::{matches, ops::Add};
     use typenum::{Sum, U2};
 
     // tests that a signature signed with a private key verifies under

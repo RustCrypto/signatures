@@ -8,8 +8,6 @@
 #![warn(unreachable_pub)]
 #![cfg_attr(not(test), no_std)]
 
-extern crate alloc;
-
 pub mod error;
 pub mod lms;
 pub mod ots;

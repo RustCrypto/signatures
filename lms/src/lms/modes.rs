@@ -1,14 +1,14 @@
 //! LMS modes
 use crate::ots::modes::LmsOtsMode;
 use crate::types::Typecode;
-use core::ops::Add;
+use core::ops::{Add, Mul};
 use core::{
     marker::PhantomData,
     ops::{Shl, Sub},
 };
 use digest::Digest;
 use hybrid_array::ArraySize;
-use typenum::{Add1, Shleft, Sub1, U1, U5, U10, U15, U20, U25, bit::B1};
+use typenum::{Add1, Prod, Shleft, Sub1, Sum, U1, U5, U8, U10, U15, U20, U25, bit::B1};
 
 /// The basic trait that must be implemented for any valid LMS mode
 pub trait LmsMode: Typecode + Clone {
@@ -20,6 +20,8 @@ pub trait LmsMode: Typecode + Clone {
     type TreeLen: ArraySize;
     /// `h` as a type
     type HLen: ArraySize;
+    /// Length of an encoded signature, computed as `4 + ots_sig_len + 4 + m*h`
+    type SigLen: ArraySize;
     /// The length of the hash function output as a type
     const M: usize;
     /// `h` as a [usize]
@@ -82,11 +84,16 @@ where
     U1: Shl<<HLen as Add<B1>>::Output>,
     Shleft<U1, <HLen as Add<B1>>::Output>: Sub<B1>,
     Sub1<Shleft<U1, <HLen as Add<B1>>::Output>>: ArraySize,
+    Hasher::OutputSize: Mul<HLen>,
+    OtsMode::SigLen: Add<Prod<Hasher::OutputSize, HLen>>,
+    U8: Add<Sum<OtsMode::SigLen, Prod<Hasher::OutputSize, HLen>>>,
+    Sum<U8, Sum<OtsMode::SigLen, Prod<Hasher::OutputSize, HLen>>>: ArraySize,
 {
     type OtsMode = OtsMode;
     type Hasher = Hasher;
     type TreeLen = Sub1<Shleft<U1, Add1<HLen>>>;
     type HLen = HLen;
+    type SigLen = Sum<U8, Sum<OtsMode::SigLen, Prod<Hasher::OutputSize, HLen>>>;
     const M: usize = M;
     const H: usize = H;
     const LEAVES: u32 = 1 << H; // precomputed as 2 to the H power

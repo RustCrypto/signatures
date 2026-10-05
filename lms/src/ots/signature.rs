@@ -4,12 +4,10 @@ use crate::constants::{D_MESG, D_PBLC};
 use crate::error::LmsDeserializeError;
 use crate::ots::modes::LmsOtsMode;
 use crate::types::Identifier;
-use digest::Digest;
-use hybrid_array::{Array, ArraySize};
-use signature::SignatureEncoding;
 use core::cmp::Ordering;
-use core::ops::{Add, Mul};
-use typenum::{Prod, Sum, U1, U4};
+use digest::Digest;
+use hybrid_array::Array;
+use signature::SignatureEncoding;
 
 use super::VerifyingKey;
 
@@ -38,18 +36,10 @@ impl<Mode: LmsOtsMode> PartialEq for Signature<Mode> {
 }
 
 /// Useful type alias to get the [`Array`] representation
-pub type Output<Mode> =
-    Array<u8, Sum<Prod<<Mode as LmsOtsMode>::NLen, Sum<<Mode as LmsOtsMode>::PLen, U1>>, U4>>;
+pub type Output<Mode> = Array<u8, <Mode as LmsOtsMode>::SigLen>;
 
 /// Converts a [`Signature`] into its byte representation
-impl<Mode: LmsOtsMode> From<Signature<Mode>> for Output<Mode>
-where
-    // required for Output<Mode>
-    Mode::PLen: Add<U1>,
-    Mode::NLen: Mul<Sum<Mode::PLen, U1>>,
-    Prod<Mode::NLen, Sum<Mode::PLen, U1>>: Add<U4>,
-    Sum<Prod<Mode::NLen, Sum<Mode::PLen, U1>>, U4>: ArraySize,
-{
+impl<Mode: LmsOtsMode> From<Signature<Mode>> for Output<Mode> {
     fn from(sig: Signature<Mode>) -> Self {
         Array::try_from_iter(
             core::iter::empty()
@@ -161,14 +151,7 @@ impl<Mode: LmsOtsMode> Signature<Mode> {
     }
 }
 
-impl<Mode: LmsOtsMode> SignatureEncoding for Signature<Mode>
-where
-    // required for Output<Mode>
-    Mode::PLen: Add<U1>,
-    Mode::NLen: Mul<Sum<Mode::PLen, U1>>,
-    Prod<Mode::NLen, Sum<Mode::PLen, U1>>: Add<U4>,
-    Sum<Prod<Mode::NLen, Sum<Mode::PLen, U1>>, U4>: ArraySize,
-{
+impl<Mode: LmsOtsMode> SignatureEncoding for Signature<Mode> {
     type Repr = Output<Mode>;
 }
 
