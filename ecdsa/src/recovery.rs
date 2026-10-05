@@ -6,7 +6,7 @@ use crate::{Error, Result};
 use {
     crate::{
         DigestAlgorithm, EcdsaCurve, Signature, SigningKey, VerifyingKey,
-        hazmat::{bytes2scalar, sign_prehashed_rfc6979, verify_prehashed},
+        hazmat::{bits2scalar, sign_prehashed_rfc6979, verify_prehashed},
     },
     digest::{Digest, Update},
     elliptic_curve::{
@@ -366,7 +366,7 @@ where
         recovery_id: RecoveryId,
     ) -> Result<Self> {
         let (r, s) = signature.split_scalars();
-        let z = bytes2scalar::<C>(prehash);
+        let z = bits2scalar::<C>(prehash);
 
         let r_bytes = if recovery_id.is_x_reduced() {
             let uint = field::bytes_to_uint::<C>(&r.to_repr())
