@@ -7,8 +7,8 @@ use crate::types::Identifier;
 use digest::Digest;
 use hybrid_array::{Array, ArraySize};
 use signature::SignatureEncoding;
-use std::cmp::Ordering;
-use std::ops::{Add, Mul};
+use core::cmp::Ordering;
+use core::ops::{Add, Mul};
 use typenum::{Prod, Sum, U1, U4};
 
 use super::VerifyingKey;
@@ -52,7 +52,7 @@ where
 {
     fn from(sig: Signature<Mode>) -> Self {
         Array::try_from_iter(
-            std::iter::empty()
+            core::iter::empty()
                 .chain(Mode::TYPECODE.to_be_bytes())
                 .chain(sig.c.clone())
                 .chain(sig.y.iter().flatten().cloned()),

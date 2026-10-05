@@ -10,7 +10,7 @@ use hybrid_array::Array;
 use rand_core::{CryptoRng, TryCryptoRng};
 use signature::{Error, RandomizedMultipartSignerMut, RandomizedSignerMut};
 use zeroize::Zeroize;
-//use std::mem::MaybeUninit;
+//use core::mem::MaybeUninit;
 
 #[derive(Debug)]
 /// Opaque struct representing an LM-OTS private key. Does not implement

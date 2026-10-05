@@ -7,7 +7,8 @@ use crate::ots::modes::LmsOtsMode;
 use hybrid_array::{Array, ArraySize};
 use signature::SignatureEncoding;
 
-use std::{
+use alloc::vec::Vec;
+use core::{
     cmp::Ordering,
     ops::{Add, Mul},
 };
@@ -138,11 +139,11 @@ mod tests {
         lms::{Signature, SigningKey, VerifyingKey, modes::*},
         ots::modes::*,
     };
+    use core::ops::{Add, Mul};
     use getrandom::SysRng;
     use hex_literal::hex;
     use hybrid_array::ArraySize;
     use signature::{RandomizedSignerMut, Verifier};
-    use std::ops::{Add, Mul};
     use typenum::{Prod, Sum, U1, U4};
 
     #[test]

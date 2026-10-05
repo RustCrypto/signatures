@@ -34,7 +34,7 @@ pub mod tests {
     use hybrid_array::{Array, ArraySize};
     use rand_core::{TryCryptoRng, TryRng, UnwrapErr};
     use signature::{RandomizedSignerMut, Verifier};
-    use std::{matches, ops::Add};
+    use core::{matches, ops::Add};
     use typenum::{Sum, U2};
 
     // tests that a signature signed with a private key verifies under

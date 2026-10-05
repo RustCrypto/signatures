@@ -1,13 +1,13 @@
 //! LMS modes
 use crate::ots::modes::LmsOtsMode;
 use crate::types::Typecode;
-use digest::Digest;
-use hybrid_array::ArraySize;
-use std::ops::Add;
-use std::{
+use core::ops::Add;
+use core::{
     marker::PhantomData,
     ops::{Shl, Sub},
 };
+use digest::Digest;
+use hybrid_array::ArraySize;
 use typenum::{Add1, Shleft, Sub1, U1, U5, U10, U15, U20, U25, bit::B1};
 
 /// The basic trait that must be implemented for any valid LMS mode

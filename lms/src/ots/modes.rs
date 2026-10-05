@@ -4,7 +4,7 @@ use digest::{Digest, Output};
 use hybrid_array::{Array, ArraySize};
 use sha2::Sha256;
 use static_assertions::const_assert_eq;
-use std::marker::PhantomData;
+use core::marker::PhantomData;
 use typenum::Unsigned;
 use typenum::consts::{U34, U67, U133, U265};
 
