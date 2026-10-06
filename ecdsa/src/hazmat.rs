@@ -115,10 +115,10 @@ where
         let mut k_bytes = FieldBytes::<C>::default();
         kgen.fill_next_k(&mut k_bytes);
 
-        if let Some(k) = NonZeroScalar::<C>::from_repr(k_bytes).into_option() {
-            if let Ok(ret) = sign_prehashed(d, &k, z) {
-                return ret;
-            }
+        if let Some(k) = NonZeroScalar::<C>::from_repr(k_bytes).into_option()
+            && let Ok(ret) = sign_prehashed(d, &k, z)
+        {
+            return ret;
         }
     }
 }

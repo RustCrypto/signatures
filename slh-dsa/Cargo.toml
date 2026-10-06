@@ -6,7 +6,7 @@ FIPS-205 standard
 """
 version = "0.2.0-rc.5"
 edition = "2024"
-rust-version = "1.85"
+rust-version = "1.95"
 license = "Apache-2.0 OR MIT"
 homepage = "https://github.com/RustCrypto/signatures/tree/master/slh-dsa"
 repository = "https://github.com/RustCrypto/signatures"

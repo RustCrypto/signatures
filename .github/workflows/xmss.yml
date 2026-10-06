@@ -1,5 +1,6 @@
 name: xmss
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - ".github/workflows/xmss.yml"
@@ -27,7 +28,7 @@ jobs:
     strategy:
       matrix:
         rust:
-          - 1.85.0 # MSRV
+          - 1.95.0 # MSRV
           - stable
     steps:
       - uses: actions/checkout@v7

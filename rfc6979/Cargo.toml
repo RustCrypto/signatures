@@ -13,7 +13,7 @@ readme = "README.md"
 categories = ["cryptography", "no-std"]
 keywords = ["dsa", "ecdsa", "signature"]
 edition = "2024"
-rust-version = "1.85"
+rust-version = "1.95"
 
 [dependencies]
 bigint = { package = "crypto-bigint", version = "0.7.5", default-features = false }

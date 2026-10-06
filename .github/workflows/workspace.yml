@@ -1,5 +1,6 @@
 name: Workspace
 on:
+  workflow_dispatch:
   pull_request:
     paths-ignore:
       - README.md
