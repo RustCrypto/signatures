@@ -10,6 +10,10 @@
 Pure Rust implementation of the Module-Lattice-Based Digital Signature Standard
 (ML-DSA) as described in the [FIPS 204] (final).
 
+This checkout uses the [fork's row-wise private-matrix storage and small-stack
+regressions](../README.md#fork-scope). The package and documentation badges
+above refer to the published upstream crate; the fork is consumed from Git.
+
 ## About
 
 ML-DSA was formerly known as [CRYSTALS-Dilithium].

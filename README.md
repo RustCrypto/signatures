@@ -9,6 +9,22 @@ the [`signature`](https://docs.rs/signature/) crate.
 Crates are designed so they do not require the standard library (i.e. `no_std`)
 and can be easily used for bare-metal or lightweight WebAssembly programming.
 
+## Fork scope
+
+This checkout is the `qpernil/signatures` fork used by the local security-token
+projects. Its crates require Rust 1.95 or newer. With `alloc` enabled, ML-DSA
+private matrices offload each row through `MaybeBox` before constructing the
+next, avoiding a complete inline matrix during sampling and cloning. Public
+lattice types and constructors retain their upstream API. Without `alloc`,
+the rows remain inline.
+
+The fork's [ML-DSA CI](https://github.com/qpernil/signatures/actions/workflows/ml-dsa.yml)
+checks minimum and stable Rust, release feature combinations, no-std targets,
+and unoptimized construction, cloning, signing and verification for all three
+parameter sets on 512 KiB stacks. This is a tested configuration, not a portable
+stack bound. The crate catalog below links upstream package documentation and
+upstream build status.
+
 ## Crates
 
 | Name        | Algorithm | Crates.io | Documentation | Build |
@@ -17,8 +33,8 @@ and can be easily used for bare-metal or lightweight WebAssembly programming.
 | [`ecdsa`]   | [Elliptic Curve DSA](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm) | [![crates.io](https://img.shields.io/crates/v/ecdsa.svg)](https://crates.io/crates/ecdsa) | [![Documentation](https://docs.rs/ecdsa/badge.svg)](https://docs.rs/ecdsa) | [![ecdsa build](https://github.com/RustCrypto/signatures/actions/workflows/ecdsa.yml/badge.svg)](https://github.com/RustCrypto/signatures/actions/workflows/ecdsa.yml) |
 | [`ed25519`] | [EdDSA for Curve25519](https://en.wikipedia.org/wiki/EdDSA#Ed25519) | [![crates.io](https://img.shields.io/crates/v/ed25519.svg)](https://crates.io/crates/ed25519) | [![Documentation](https://docs.rs/ed25519/badge.svg)](https://docs.rs/ed25519) | [![ed25519 build](https://github.com/RustCrypto/signatures/actions/workflows/ed25519.yml/badge.svg)](https://github.com/RustCrypto/signatures/actions/workflows/ed25519.yml)
 | [`ed448`] | [EdDSA for Curve448](https://en.wikipedia.org/wiki/EdDSA#Ed448) | [![crates.io](https://img.shields.io/crates/v/ed448.svg)](https://crates.io/crates/ed448) | [![Documentation](https://docs.rs/ed448/badge.svg)](https://docs.rs/ed448) | [![ed448 build](https://github.com/RustCrypto/signatures/actions/workflows/ed448.yml/badge.svg)](https://github.com/RustCrypto/signatures/actions/workflows/ed448.yml)
-| [`lms`] | [Leighton-Micali Signature](https://datatracker.ietf.org/doc/html/rfc8554) | [![crates.io](https://img.shields.io/crates/v/lms-signature.svg)](https://crates.io/crates/lms-signature) | [![Documentation](https://docs.rs/lms-signature/badge.svg)](https://docs.rs/ed25519) | [![lms build](https://github.com/RustCrypto/signatures/actions/workflows/lms.yml/badge.svg)](https://github.com/RustCrypto/signatures/actions/workflows/lms.yml)
-| [`ml-dsa`] | [Module Lattice DSA](https://csrc.nist.gov/pubs/fips/204/final) | [![crates.io](https://img.shields.io/crates/v/ml-dsa.svg)](https://crates.io/crates/ml-dsa) | [![Documentation](https://docs.rs/ml-dsa/badge.svg)](https://docs.rs/ml-dsa) | [![lms build](https://github.com/RustCrypto/signatures/actions/workflows/ml-dsa.yml/badge.svg)](https://github.com/RustCrypto/signatures/actions/workflows/ml-dsa.yml)
+| [`lms`] | [Leighton-Micali Signature](https://datatracker.ietf.org/doc/html/rfc8554) | [![crates.io](https://img.shields.io/crates/v/lms-signature.svg)](https://crates.io/crates/lms-signature) | [![Documentation](https://docs.rs/lms-signature/badge.svg)](https://docs.rs/lms-signature) | [![lms build](https://github.com/RustCrypto/signatures/actions/workflows/lms.yml/badge.svg)](https://github.com/RustCrypto/signatures/actions/workflows/lms.yml)
+| [`ml-dsa`] | [Module Lattice DSA](https://csrc.nist.gov/pubs/fips/204/final) | [![crates.io](https://img.shields.io/crates/v/ml-dsa.svg)](https://crates.io/crates/ml-dsa) | [![Documentation](https://docs.rs/ml-dsa/badge.svg)](https://docs.rs/ml-dsa) | [![ml-dsa build](https://github.com/RustCrypto/signatures/actions/workflows/ml-dsa.yml/badge.svg)](https://github.com/RustCrypto/signatures/actions/workflows/ml-dsa.yml)
 | [`rfc6979`] | [Deterministic (EC)DSA Signatures](https://datatracker.ietf.org/doc/html/rfc6979) | [![crates.io](https://img.shields.io/crates/v/rfc6979.svg)](https://crates.io/crates/rfc6979) | [![Documentation](https://docs.rs/rfc6979/badge.svg)](https://docs.rs/rfc6979) | [![rfc6979 build](https://github.com/RustCrypto/signatures/actions/workflows/rfc6979.yml/badge.svg)](https://github.com/RustCrypto/signatures/actions/workflows/rfc6979.yml)
 | [`slh-dsa`] | [Stateless Hash-Based Signature](https://csrc.nist.gov/pubs/fips/205/final) | [![crates.io](https://img.shields.io/crates/v/slh-dsa.svg)](https://crates.io/crates/slh-dsa) | [![Documentation](https://docs.rs/slh-dsa/badge.svg)](https://docs.rs/slh-dsa) | [![slh-dsa build](https://github.com/RustCrypto/signatures/actions/workflows/slh-dsa.yml/badge.svg)](https://github.com/RustCrypto/signatures/actions/workflows/slh-dsa.yml)
 | [`xmss`] | [eXtended Merkle Signature Scheme](https://datatracker.ietf.org/doc/html/rfc8391) | [![crates.io](https://img.shields.io/crates/v/xmss.svg)](https://crates.io/crates/xmss) | [![Documentation](https://docs.rs/xmss/badge.svg)](https://docs.rs/xmss) | [![xmss build](https://github.com/RustCrypto/signatures/actions/workflows/xmss.yml/badge.svg)](https://github.com/RustCrypto/signatures/actions/workflows/xmss.yml)
