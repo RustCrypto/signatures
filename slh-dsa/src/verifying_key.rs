@@ -123,7 +123,7 @@ impl<P: ParameterSet + VerifyingKeyLen> VerifyingKey<P> {
     /// This clones the underlying fields
     pub fn to_bytes(&self) -> Array<u8, P::VkLen> {
         let mut bytes = Array::<u8, P::VkLen>::default();
-        debug_assert!(P::N::USIZE * 2 == P::VkLen::USIZE);
+        debug_assert_eq!(P::N::USIZE * 2, P::VkLen::USIZE);
         bytes[..P::N::USIZE].copy_from_slice(&self.pk_seed.0);
         bytes[P::N::USIZE..].copy_from_slice(&self.pk_root);
         bytes
@@ -160,7 +160,7 @@ impl<P: ParameterSet> From<&VerifyingKey<P>> for Array<u8, P::VkLen> {
 impl<P: ParameterSet> From<Array<u8, P::VkLen>> for VerifyingKey<P> {
     #[allow(deprecated)] // clone_from_slice
     fn from(bytes: Array<u8, P::VkLen>) -> VerifyingKey<P> {
-        debug_assert!(P::VkLen::USIZE == 2 * P::N::USIZE);
+        debug_assert_eq!(P::VkLen::USIZE, 2 * P::N::USIZE);
         let pk_seed = PkSeed(Array::clone_from_slice(&bytes[..P::N::USIZE]));
         let pk_root = Array::clone_from_slice(&bytes[P::N::USIZE..]);
         VerifyingKey { pk_seed, pk_root }

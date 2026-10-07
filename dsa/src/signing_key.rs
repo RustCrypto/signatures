@@ -83,6 +83,7 @@ impl SigningKey {
     }
 
     /// DSA public key
+    #[must_use]
     pub const fn verifying_key(&self) -> &VerifyingKey {
         &self.verifying_key
     }

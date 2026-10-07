@@ -91,8 +91,8 @@ fn rej_ntt_poly(rho: &[u8], r: u8, s: u8) -> NttPolynomial {
     let mut buf = [0u8; 840];
     ctx.squeeze(&mut buf);
 
-    for chunk in buf.chunks_exact(3) {
-        if let Some(x) = coeff_from_three_bytes([chunk[0], chunk[1], chunk[2]]) {
+    for chunk in buf.as_chunks::<3>().0 {
+        if let Some(x) = coeff_from_three_bytes(*chunk) {
             a.0[j] = x;
             j += 1;
             if j == 256 {
