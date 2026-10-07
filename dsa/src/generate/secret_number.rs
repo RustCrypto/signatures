@@ -30,10 +30,11 @@ where
     loop {
         kgen.fill_next_k(&mut buffer);
         let k = bytes2uint(&buffer, q);
-        if let Some(inv_k) = k.invert_mod(q).into() {
-            if bool::from(k.is_nonzero()) && k < **q {
-                return (k, inv_k);
-            }
+        if let Some(inv_k) = k.invert_mod(q).into()
+            && bool::from(k.is_nonzero())
+            && k < **q
+        {
+            return (k, inv_k);
         }
     }
 }

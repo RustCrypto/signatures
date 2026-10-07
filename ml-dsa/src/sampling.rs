@@ -91,8 +91,8 @@ fn rej_ntt_poly(rho: &[u8], r: u8, s: u8) -> NttPolynomial {
     let mut buf = [0u8; 840];
     ctx.squeeze(&mut buf);
 
-    for chunk in buf.chunks_exact(3) {
-        if let Some(x) = coeff_from_three_bytes([chunk[0], chunk[1], chunk[2]]) {
+    for chunk in buf.as_chunks::<3>().0 {
+        if let Some(x) = coeff_from_three_bytes(*chunk) {
             a.0[j] = x;
             j += 1;
             if j == 256 {
@@ -155,11 +155,11 @@ fn rej_bounded_poly(rho: &[u8], eta: Eta, r: u16) -> Polynomial {
             a.0[j] = x;
             j += 1;
         }
-        if j < 256 {
-            if let Some(x) = z1 {
-                a.0[j] = x;
-                j += 1;
-            }
+        if j < 256
+            && let Some(x) = z1
+        {
+            a.0[j] = x;
+            j += 1;
         }
     }
     #[cfg(feature = "zeroize")]
@@ -172,11 +172,11 @@ fn rej_bounded_poly(rho: &[u8], eta: Eta, r: u16) -> Polynomial {
 
 // Algorithm 32 ExpandA
 pub(crate) fn expand_a<K: ArraySize, L: ArraySize>(rho: &[u8]) -> NttMatrix<K, L> {
-    NttMatrix::new(Array::from_fn(|r| {
+    NttMatrix::from_fn(|r| {
         NttVector::new(Array::from_fn(|s| {
             rej_ntt_poly(rho, Truncate::truncate(r), Truncate::truncate(s))
         }))
-    }))
+    })
 }
 
 // Algorithm 33 ExpandS

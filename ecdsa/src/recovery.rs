@@ -150,10 +150,10 @@ impl RecoveryId {
         for id in 0..=Self::MAX {
             let recovery_id = RecoveryId(id);
 
-            if let Ok(vk) = VerifyingKey::recover_from_prehash(prehash, signature, recovery_id) {
-                if verifying_key == &vk {
-                    return Ok(recovery_id);
-                }
+            if let Ok(vk) = VerifyingKey::recover_from_prehash(prehash, signature, recovery_id)
+                && verifying_key == &vk
+            {
+                return Ok(recovery_id);
             }
         }
 

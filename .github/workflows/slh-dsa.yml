@@ -1,5 +1,6 @@
 name: slh-dsa
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - ".github/workflows/slh-dsa.yml"
@@ -32,7 +33,7 @@ jobs:
           - thumbv7em-none-eabi
           - wasm32-unknown-unknown
         rust:
-          - 1.85.0 # MSRV
+          - 1.95.0 # MSRV
           - stable
     steps:
       - uses: actions/checkout@v7
@@ -51,7 +52,7 @@ jobs:
     strategy:
       matrix:
         rust:
-          - 1.85.0 # MSRV
+          - 1.95.0 # MSRV
           - stable
         test_config:
           - --no-default-features
@@ -92,7 +93,7 @@ jobs:
       matrix:
         test-partition: [1, 2, 3, 4]
         rust:
-          - 1.85.0 # MSRV
+          - 1.95.0 # MSRV
           - stable
         test_config:
           - --no-default-features

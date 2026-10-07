@@ -13,7 +13,7 @@ readme = "README.md"
 categories = ["cryptography", "no-std"]
 keywords = ["dsa", "ecdsa", "signature", "bign"]
 edition = "2024"
-rust-version = "1.85"
+rust-version = "1.95"
 
 [dependencies]
 cipher = { version = "0.5", default-features = false }

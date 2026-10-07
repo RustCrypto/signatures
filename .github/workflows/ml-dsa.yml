@@ -1,5 +1,6 @@
 name: ml-dsa
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - ".github/workflows/ml-dsa.yml"
@@ -28,7 +29,7 @@ jobs:
     strategy:
       matrix:
         rust:
-          - 1.85.0 # MSRV
+          - 1.95.0 # MSRV
           - stable
     steps:
       - uses: actions/checkout@v7
@@ -39,6 +40,11 @@ jobs:
           toolchain: ${{ matrix.rust }}
       - run: cargo build --benches
       - run: cargo build --benches --all-features
+      - name: Unoptimized small-stack regression
+        run: cargo test --all-features --test stack
+        env:
+          CARGO_PROFILE_DEV_OPT_LEVEL: 0
+          CARGO_PROFILE_TEST_OPT_LEVEL: 0
       - run: cargo test --release
       - run: cargo test --all-features --release
       - run: cargo test --no-default-features --release
@@ -52,7 +58,7 @@ jobs:
           - thumbv7em-none-eabi
           - wasm32-unknown-unknown
         rust:
-          - 1.85.0 # MSRV
+          - 1.95.0 # MSRV
           - stable
     steps:
       - uses: actions/checkout@v7

@@ -10,6 +10,10 @@
 Pure Rust implementation of the Module-Lattice-Based Digital Signature Standard
 (ML-DSA) as described in the [FIPS 204] (final).
 
+This checkout uses the [fork's row-wise private-matrix storage and small-stack
+regressions](../README.md#fork-scope). The package and documentation badges
+above refer to the published upstream crate; the fork is consumed from Git.
+
 ## About
 
 ML-DSA was formerly known as [CRYSTALS-Dilithium].
@@ -42,7 +46,7 @@ dual licensed as above, without any additional terms or conditions.
 [build-image]: https://github.com/RustCrypto/signatures/actions/workflows/ml-dsa.yml/badge.svg
 [build-link]: https://github.com/RustCrypto/signatures/actions/workflows/ml-dsa.yml
 [license-image]: https://img.shields.io/badge/license-Apache2.0/MIT-blue.svg
-[rustc-image]: https://img.shields.io/badge/rustc-1.85+-blue.svg
+[rustc-image]: https://img.shields.io/badge/rustc-1.95+-blue.svg
 [chat-image]: https://img.shields.io/badge/zulip-join_chat-blue.svg
 [chat-link]: https://rustcrypto.zulipchat.com/#narrow/stream/260048-signatures
 

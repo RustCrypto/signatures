@@ -56,6 +56,7 @@ impl VerifyingKey {
     }
 
     /// DSA common components
+    #[must_use]
     pub const fn components(&self) -> &Components {
         &self.components
     }

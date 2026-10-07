@@ -53,7 +53,7 @@ impl<P: ParameterSet> Signature<P> {
         bytes.extend_from_slice(&self.randomizer);
         bytes.extend_from_slice(&self.fors_sig.to_vec());
         bytes.extend_from_slice(&self.ht_sig.to_vec());
-        debug_assert!(bytes.len() == P::SigLen::USIZE);
+        debug_assert_eq!(bytes.len(), P::SigLen::USIZE);
         bytes
     }
 
