@@ -11,9 +11,10 @@ use ml_dsa::{
 /// ML-DSA benchmarks.
 #[allow(deprecated)] // TODO(tarcieri): stop using expanded signing keys
 fn criterion_benchmark(c: &mut Criterion) {
-    let xi = B32::generate();
-    let m = B32::generate();
-    let ctx = B32::generate();
+    // Keep the signing rejection sequence identical between benchmark runs.
+    let xi = B32::default();
+    let m = B32::from([1; 32]);
+    let ctx = B32::from([2; 32]);
 
     let kp = SigningKey::<MlDsa65>::from_seed(&xi);
     let sk = kp.expanded_key();
@@ -23,6 +24,19 @@ fn criterion_benchmark(c: &mut Criterion) {
     let sk_bytes = sk.to_expanded();
     let vk_bytes = vk.encode();
     let sig_bytes = sig.encode();
+
+    // Reuse the expanded key so this measures signing independently of key import.
+    c.bench_function("sign_reused_key", |b| {
+        #[cfg(feature = "low-memory")]
+        let mut workspace = ml_dsa::SigningWorkspace::<MlDsa65>::new();
+        b.iter(|| {
+            #[cfg(feature = "low-memory")]
+            let sig = sk.sign_deterministic_with_workspace(&m, &ctx, &mut workspace);
+            #[cfg(not(feature = "low-memory"))]
+            let sig = sk.sign_deterministic(&m, &ctx);
+            core::hint::black_box(sig)
+        });
+    });
 
     // Key generation
     c.bench_function("keygen", |b| {

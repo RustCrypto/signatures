@@ -55,6 +55,11 @@ mod param;
 mod sampling;
 mod signing;
 mod verifying;
+#[cfg(feature = "low-memory")]
+mod workspace;
+
+#[cfg(feature = "low-memory")]
+pub use workspace::SigningWorkspace;
 
 pub use crate::{
     param::{EncodedSignature, EncodedVerifyingKey, ExpandedSigningKeyBytes, MlDsaParams},

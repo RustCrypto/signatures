@@ -2,15 +2,19 @@
 //!
 //! These types implement signature generation.
 
+#[cfg(not(feature = "low-memory"))]
+use crate::algebra::NttVector;
 use crate::{
     B32, B64, ExpandedSigningKeyBytes, MlDsaParams, MuBuilder, Seed, Signature, VerifyingKey,
-    algebra::{AlgebraExt, NttMatrix, NttVector, Vector},
+    algebra::{AlgebraExt, NttMatrix, Vector},
     crypto::H,
     hint::Hint,
-    ntt::{Ntt, NttInverse},
+    ntt::Ntt,
     param::{SamplingSize, SpecQ},
-    sampling::{expand_a, expand_mask, expand_s, sample_in_ball},
+    sampling::{expand_a, expand_s, sample_in_ball},
 };
+#[cfg(any(not(feature = "low-memory"), test))]
+use crate::{ntt::NttInverse, sampling::expand_mask};
 use common::{KeyExport, KeyInit, KeySizeUser, typenum::U32};
 use core::fmt;
 use ctutils::{Choice, CtEq};
@@ -18,6 +22,17 @@ use hybrid_array::typenum::Unsigned;
 use module_lattice::MaybeBox;
 use shake::Shake256;
 use signature::{DigestSigner, Error, MultipartSigner, Signer};
+#[cfg(feature = "low-memory")]
+use {
+    crate::{
+        SigningWorkspace,
+        hint::make_hint,
+        ntt::{ntt_in_place, ntt_inverse_in_place},
+        sampling::expand_mask_poly,
+    },
+    ctutils::{CtGt, CtSelect},
+    module_lattice::{Encode, Truncate},
+};
 
 #[cfg(feature = "rand_core")]
 use {
@@ -53,31 +68,7 @@ impl<P: MlDsaParams> SigningKey<P> {
     /// This method reflects the `ML-DSA.KeyGen_internal` algorithm from FIPS 204 (Algorithm 6).
     #[must_use]
     pub fn from_seed(xi: &Seed) -> Self {
-        // Derive seeds
-        let mut h = H::default()
-            .absorb(xi)
-            .absorb(&[P::K::U8])
-            .absorb(&[P::L::U8]);
-
-        let rho: B32 = h.squeeze_new();
-        let rhop: B64 = h.squeeze_new();
-        let K: B32 = h.squeeze_new();
-
-        // Sample private key components
-        let A_hat = expand_a::<P::K, P::L>(&rho);
-        let s1 = expand_s::<P::L>(&rhop, P::Eta::ETA, 0);
-        let s2 = expand_s::<P::K>(&rhop, P::Eta::ETA, P::L::USIZE);
-
-        // Compute derived values
-        let As1_hat = &A_hat * &s1.ntt();
-        let t = &As1_hat.ntt_inverse() + &s2;
-
-        // Compress and encode
-        let (t1, t0) = t.power2round();
-
-        let enc = VerifyingKey::<P>::encode_internal(&rho, &t1);
-        let tr: B64 = H::default().absorb(&enc).squeeze_new();
-        let expanded_key = ExpandedSigningKey::new(rho, K, tr, s1, s2, t0, A_hat);
+        let expanded_key = ExpandedSigningKey::from_seed(xi);
 
         #[cfg(feature = "alloc")]
         let verifying_key = expanded_key.verifying_key();
@@ -236,14 +227,19 @@ pub struct ExpandedSigningKey<P: MlDsaParams> {
     rho: B32,
     K: B32,
     pub(crate) tr: B64,
-    s1: Vector<P::L>,
-    s2: Vector<P::K>,
-    t0: Vector<P::K>,
+    // Allocate components separately to avoid constructing or cloning the entire key on the stack.
+    // Without `alloc`, MaybeBox stores the same vectors inline.
+    s1: MaybeBox<Vector<P::L>>,
+    s2: MaybeBox<Vector<P::K>>,
+    t0: MaybeBox<Vector<P::K>>,
 
     // Derived values
-    s1_hat: NttVector<P::L>,
-    s2_hat: NttVector<P::K>,
-    t0_hat: NttVector<P::K>,
+    #[cfg(not(feature = "low-memory"))]
+    s1_hat: MaybeBox<NttVector<P::L>>,
+    #[cfg(not(feature = "low-memory"))]
+    s2_hat: MaybeBox<NttVector<P::K>>,
+    #[cfg(not(feature = "low-memory"))]
+    t0_hat: MaybeBox<NttVector<P::K>>,
     A_hat: NttMatrix<P::K, P::L>,
 }
 
@@ -252,14 +248,17 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
         rho: B32,
         K: B32,
         tr: B64,
-        s1: Vector<P::L>,
-        s2: Vector<P::K>,
-        t0: Vector<P::K>,
+        s1: MaybeBox<Vector<P::L>>,
+        s2: MaybeBox<Vector<P::K>>,
+        t0: MaybeBox<Vector<P::K>>,
         A_hat: NttMatrix<P::K, P::L>,
     ) -> Self {
-        let s1_hat = s1.ntt();
-        let s2_hat = s2.ntt();
-        let t0_hat = t0.ntt();
+        #[cfg(not(feature = "low-memory"))]
+        let s1_hat = MaybeBox::new(s1.ntt());
+        #[cfg(not(feature = "low-memory"))]
+        let s2_hat = MaybeBox::new(s2.ntt());
+        #[cfg(not(feature = "low-memory"))]
+        let t0_hat = MaybeBox::new(t0.ntt());
 
         Self {
             rho,
@@ -269,8 +268,11 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
             s2,
             t0,
 
+            #[cfg(not(feature = "low-memory"))]
             s1_hat,
+            #[cfg(not(feature = "low-memory"))]
             s2_hat,
+            #[cfg(not(feature = "low-memory"))]
             t0_hat,
             A_hat,
         }
@@ -281,9 +283,9 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
         rho: B32,
         K: B32,
         tr: B64,
-        s1: Vector<P::L>,
-        s2: Vector<P::K>,
-        t0: Vector<P::K>,
+        s1: MaybeBox<Vector<P::L>>,
+        s2: MaybeBox<Vector<P::K>>,
+        t0: MaybeBox<Vector<P::K>>,
     ) -> Self {
         let A_hat = expand_a(&rho);
         Self::new(rho, K, tr, s1, s2, t0, A_hat)
@@ -295,9 +297,53 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
     /// signing key.
     #[must_use]
     #[inline]
-    pub fn from_seed(seed: &Seed) -> Self {
-        let kp = SigningKey::from_seed(seed);
-        (*kp.expanded_key).clone()
+    pub fn from_seed(xi: &Seed) -> Self {
+        // Derive seeds
+        let mut h = H::default()
+            .absorb(xi)
+            .absorb(&[P::K::U8])
+            .absorb(&[P::L::U8]);
+
+        let rho: B32 = h.squeeze_new();
+        let rhop: B64 = h.squeeze_new();
+        let K: B32 = h.squeeze_new();
+
+        // Sample private key components
+        let A_hat = expand_a::<P::K, P::L>(&rho);
+        let s1 = MaybeBox::new(expand_s::<P::L>(&rhop, P::Eta::ETA, 0));
+        let s2 = MaybeBox::new(expand_s::<P::K>(&rhop, P::Eta::ETA, P::L::USIZE));
+
+        // Compute derived values
+        #[cfg(not(feature = "low-memory"))]
+        let (t1, t0) = {
+            let As1_hat = &A_hat * &s1.ntt();
+            let t = &As1_hat.ntt_inverse() + &*s2;
+            t.power2round()
+        };
+        #[cfg(feature = "low-memory")]
+        let (t1, t0) = {
+            #[allow(unused_mut)]
+            let mut s1_hat = s1.ntt();
+            let mut t1 = Vector::<P::K>::default();
+            let mut t0 = Vector::<P::K>::default();
+            for r in 0..P::K::USIZE {
+                let mut t = crate::algebra::Polynomial::default();
+                A_hat.multiply_row_into(r, &s1_hat, &mut t);
+                ntt_inverse_in_place(&mut t.0.0);
+                for j in 0..256 {
+                    (t1.0[r].0[j], t0.0[r].0[j]) = (t.0[j] + s2.0[r].0[j]).power2round();
+                }
+                #[cfg(feature = "zeroize")]
+                t.zeroize();
+            }
+            #[cfg(feature = "zeroize")]
+            s1_hat.zeroize();
+            (t1, t0)
+        };
+
+        let enc = VerifyingKey::<P>::encode_internal(&rho, &t1);
+        let tr: B64 = H::default().absorb(&enc).squeeze_new();
+        Self::new(rho, K, tr, s1, s2, MaybeBox::new(t0), A_hat)
     }
 
     /// This method reflects the ML-DSA.Sign_internal algorithm from FIPS 204. It does not
@@ -305,6 +351,7 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
     /// and it does not separate the context string from the rest of the message.
     // Algorithm 7 ML-DSA.Sign_internal
     // TODO(RLB) Only expose based on a feature. Tests need access, but normal code shouldn't.
+    #[must_use]
     pub fn sign_internal(&self, Mp: &[&[u8]], rnd: &B32) -> Signature<P>
     where
         P: MlDsaParams,
@@ -313,10 +360,29 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
         self.raw_sign_mu(&mu, rnd)
     }
 
-    pub(crate) fn raw_sign_mu(&self, mu: &B64, rnd: &B32) -> Signature<P>
+    pub(crate) fn raw_sign_mu(&self, mu: &B64, rnd: &B32) -> Signature<P> {
+        #[cfg(not(feature = "low-memory"))]
+        {
+            self.raw_sign_mu_reference(mu, rnd)
+        }
+        #[cfg(feature = "low-memory")]
+        {
+            self.sign_mu_with_workspace(mu, rnd, &mut SigningWorkspace::default())
+        }
+    }
+
+    #[cfg(any(not(feature = "low-memory"), test))]
+    fn raw_sign_mu_reference(&self, mu: &B64, rnd: &B32) -> Signature<P>
     where
         P: MlDsaParams,
     {
+        #[cfg(feature = "low-memory")]
+        let (h1, h2, h0) = (self.s1.ntt(), self.s2.ntt(), self.t0.ntt());
+        #[cfg(feature = "low-memory")]
+        let (s1_hat, s2_hat, t0_hat) = (&h1, &h2, &h0);
+        #[cfg(not(feature = "low-memory"))]
+        let (s1_hat, s2_hat, t0_hat) = (&*self.s1_hat, &*self.s2_hat, &*self.t0_hat);
+
         // Compute the private random seed
         let rhopp: B64 = H::default()
             .absorb(&self.K)
@@ -338,8 +404,8 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
             let c = sample_in_ball(&c_tilde, P::TAU);
             let c_hat = c.ntt();
 
-            let cs1 = (&c_hat * &self.s1_hat).ntt_inverse();
-            let cs2 = (&c_hat * &self.s2_hat).ntt_inverse();
+            let cs1 = (&c_hat * s1_hat).ntt_inverse();
+            let cs2 = (&c_hat * s2_hat).ntt_inverse();
 
             let z = &y + &cs1;
             let r0 = (&w - &cs2).low_bits::<P::TwoGamma2>();
@@ -350,7 +416,7 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
                 continue;
             }
 
-            let ct0 = (&c_hat * &self.t0_hat).ntt_inverse();
+            let ct0 = (&c_hat * t0_hat).ntt_inverse();
             let minus_ct0 = -&ct0;
             let w_cs2_ct0 = &(&w - &cs2) + &ct0;
             let h = Hint::<P>::new(&minus_ct0, &w_cs2_ct0);
@@ -419,6 +485,168 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
         Ok(self.raw_sign_mu(mu, &rnd))
     }
 
+    /// Sign deterministically using caller-owned scratch.
+    ///
+    /// No heap allocation occurs when `alloc` is disabled. Enable `zeroize` to erase the
+    /// workspace's secret intermediates after signing.
+    ///
+    /// # Errors
+    /// Returns an error if the context is longer than 255 bytes.
+    #[cfg(feature = "low-memory")]
+    pub fn sign_deterministic_with_workspace(
+        &self,
+        M: &[u8],
+        ctx: &[u8],
+        workspace: &mut SigningWorkspace<P>,
+    ) -> Result<Signature<P>, Error> {
+        if ctx.len() > 255 {
+            return Err(Error::new());
+        }
+        let mu = MuBuilder::new(&self.tr, ctx).message(&[M]);
+        Ok(self.sign_mu_with_workspace(&mu, &B32::default(), workspace))
+    }
+
+    /// Sign using caller-owned scratch and fresh randomness from the supplied RNG.
+    ///
+    /// # Errors
+    /// Returns an error if the context is longer than 255 bytes or the RNG fails.
+    #[cfg(all(feature = "low-memory", feature = "rand_core"))]
+    pub fn sign_randomized_with_workspace<R: TryCryptoRng + ?Sized>(
+        &self,
+        M: &[u8],
+        ctx: &[u8],
+        rng: &mut R,
+        workspace: &mut SigningWorkspace<P>,
+    ) -> Result<Signature<P>, Error> {
+        if ctx.len() > 255 {
+            return Err(Error::new());
+        }
+        let mu = MuBuilder::new(&self.tr, ctx).message(&[M]);
+        let mut rnd = B32::default();
+        rng.try_fill_bytes(&mut rnd).map_err(|_| Error::new())?;
+        let sig = self.sign_mu_with_workspace(&mu, &rnd, workspace);
+        #[cfg(feature = "zeroize")]
+        rnd.zeroize();
+        Ok(sig)
+    }
+
+    /// Sign a precomputed mu with caller-owned scratch and a 32-byte randomizer.
+    ///
+    /// Use an all-zero randomizer for deterministic signing, or a fresh uniformly random
+    /// randomizer for hedged signing. As with [`Self::sign_mu_deterministic`], the caller must
+    /// compute mu with the correct public-key hash, domain separator, context, and message.
+    #[cfg(feature = "low-memory")]
+    #[must_use]
+    pub fn sign_mu_with_workspace(
+        &self,
+        mu: &B64,
+        rnd: &B32,
+        workspace: &mut SigningWorkspace<P>,
+    ) -> Signature<P> {
+        let sig = self.raw_sign_mu_workspace(mu, rnd, workspace);
+        #[cfg(feature = "zeroize")]
+        workspace.zeroize();
+        sig
+    }
+
+    #[cfg(feature = "low-memory")]
+    fn raw_sign_mu_workspace(
+        &self,
+        mu: &B64,
+        rnd: &B32,
+        workspace: &mut SigningWorkspace<P>,
+    ) -> Signature<P> {
+        #[allow(unused_mut)] // Mutable when zeroize is enabled.
+        let mut rhopp: B64 = H::default()
+            .absorb(&self.K)
+            .absorb(rnd)
+            .absorb(mu)
+            .squeeze_new();
+
+        for kappa in (0..u16::MAX).step_by(P::L::USIZE) {
+            for s in 0..P::L::USIZE {
+                workspace.z.0[s] = expand_mask_poly::<P::Gamma1>(
+                    &rhopp,
+                    kappa + <u16 as Truncate<_>>::truncate(s),
+                );
+                workspace.y_hat.0[s].0.copy_from_slice(&workspace.z.0[s].0);
+                ntt_in_place(&mut workspace.y_hat.0[s].0.0);
+            }
+
+            // Hash the encoded high bits one row at a time, preserving the FIPS 204 byte order.
+            let mut hash = H::default().absorb(mu);
+            for r in 0..P::K::USIZE {
+                self.A_hat
+                    .multiply_row_into(r, &workspace.y_hat, &mut workspace.w.0[r]);
+                ntt_inverse_in_place(&mut workspace.w.0[r].0.0);
+                for j in 0..256 {
+                    workspace.product.0[j] = workspace.w.0[r].0[j].high_bits::<P::TwoGamma2>();
+                }
+                hash = hash.absorb(&Encode::<P::W1Bits>::encode(&workspace.product));
+            }
+            let c_tilde = hash.squeeze_new::<P::Lambda>();
+            workspace.c_hat.0 = sample_in_ball(&c_tilde, P::TAU).0;
+            ntt_in_place(&mut workspace.c_hat.0.0);
+
+            // Scan every coefficient before each existing rejection decision. Bounds, NTT
+            // accesses, and dense products depend only on the public parameter set.
+            let mut z_norm = 0;
+            for s in 0..P::L::USIZE {
+                workspace.multiply_secret(&self.s1.0[s]);
+                for j in 0..256 {
+                    let z = workspace.z.0[s].0[j] + workspace.product.0[j];
+                    workspace.z.0[s].0[j] = z;
+                    let norm = z.infinity_norm();
+                    z_norm = u32::ct_select(&norm, &z_norm, z_norm.ct_gt(&norm));
+                }
+            }
+            let mut r0_norm = 0;
+            for r in 0..P::K::USIZE {
+                workspace.multiply_secret(&self.s2.0[r]);
+                for j in 0..256 {
+                    let w_cs2 = workspace.w.0[r].0[j] - workspace.product.0[j];
+                    workspace.w.0[r].0[j] = w_cs2;
+                    let norm = w_cs2.low_bits::<P::TwoGamma2>().infinity_norm();
+                    r0_norm = u32::ct_select(&norm, &r0_norm, r0_norm.ct_gt(&norm));
+                }
+            }
+            if z_norm >= P::GAMMA1_MINUS_BETA || r0_norm >= P::GAMMA2_MINUS_BETA {
+                continue;
+            }
+
+            let mut ct0_norm = 0;
+            let mut weight = 0;
+            for r in 0..P::K::USIZE {
+                workspace.multiply_secret(&self.t0.0[r]);
+                for j in 0..256 {
+                    let ct0 = workspace.product.0[j];
+                    let norm = ct0.infinity_norm();
+                    ct0_norm = u32::ct_select(&norm, &ct0_norm, ct0_norm.ct_gt(&norm));
+                    let h = make_hint::<P::TwoGamma2>(-ct0, workspace.w.0[r].0[j] + ct0);
+                    workspace.hints[r][j] = h;
+                    weight += usize::from(h);
+                }
+            }
+            if ct0_norm >= P::Gamma2::U32 || weight > P::Omega::USIZE {
+                continue;
+            }
+
+            for z in &mut workspace.z.0 {
+                for x in &mut z.0 {
+                    *x = x.mod_plus_minus::<SpecQ>();
+                }
+            }
+            #[cfg(feature = "zeroize")]
+            rhopp.zeroize();
+            return Signature {
+                c_tilde,
+                z: MaybeBox::new(workspace.z.clone()),
+                h: Hint(MaybeBox::new(workspace.hints.clone())),
+            };
+        }
+        unreachable!("Rejection sampling failed to find a valid signature");
+    }
+
     /// This method reflects the optional deterministic variant of the ML-DSA.Sign algorithm.
     ///
     /// # Errors
@@ -432,6 +660,7 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
     /// This method reflects the optional deterministic variant of the ML-DSA.Sign algorithm with a
     /// pre-computed μ.
     // Algorithm 2 ML-DSA.Sign (optional deterministic and pre-computed μ variant)
+    #[must_use]
     pub fn sign_mu_deterministic(&self, mu: &B64) -> Signature<P> {
         let rnd = B32::default();
         self.raw_sign_mu(mu, &rnd)
@@ -457,6 +686,7 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
     /// `ExpandedSigningKey` implements `signature::Keypair`: this inherent method is
     /// retained for convenience, so it is available for callers even when the
     /// `signature::Keypair` trait is out-of-scope.
+    #[must_use]
     pub fn verifying_key(&self) -> VerifyingKey<P> {
         let kp: &dyn signature::Keypair<VerifyingKey = VerifyingKey<P>> = self;
         kp.verifying_key()
@@ -485,9 +715,9 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
             rho.clone(),
             K.clone(),
             tr.clone(),
-            P::decode_s1(s1_enc),
-            P::decode_s2(s2_enc),
-            P::decode_t0(t0_enc),
+            MaybeBox::new(P::decode_s1(s1_enc)),
+            MaybeBox::new(P::decode_s2(s2_enc)),
+            MaybeBox::new(P::decode_t0(t0_enc)),
         )
     }
 
@@ -496,6 +726,7 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
     /// Note that this form is deprecated in practice; prefer to use [`SigningKey::to_seed`].
     // Algorithm 24 skEncode
     #[deprecated(since = "0.1.0", note = "use `SigningKey::to_seed` instead")]
+    #[must_use]
     pub fn to_expanded(&self) -> ExpandedSigningKeyBytes<P>
     where
         P: MlDsaParams,
@@ -558,11 +789,31 @@ impl<P: MlDsaParams> signature::Keypair for ExpandedSigningKey<P> {
     /// provide the precomputed public key associated with the private key
     /// itself.
     fn verifying_key(&self) -> Self::VerifyingKey {
-        let As1 = &self.A_hat * &self.s1_hat;
-        let t = &As1.ntt_inverse() + &self.s2;
-
-        /* Discard t0 */
-        let (t1, _) = t.power2round();
+        #[cfg(not(feature = "low-memory"))]
+        let t1 = {
+            let As1 = &self.A_hat * &*self.s1_hat;
+            let t = &As1.ntt_inverse() + &*self.s2;
+            t.power2round().0
+        };
+        #[cfg(feature = "low-memory")]
+        let t1 = {
+            #[allow(unused_mut)]
+            let mut s1_hat = self.s1.ntt();
+            let mut t1 = Vector::<P::K>::default();
+            for r in 0..P::K::USIZE {
+                let mut t = crate::algebra::Polynomial::default();
+                self.A_hat.multiply_row_into(r, &s1_hat, &mut t);
+                ntt_inverse_in_place(&mut t.0.0);
+                for j in 0..256 {
+                    t1.0[r].0[j] = (t.0[j] + self.s2.0[r].0[j]).power2round().0;
+                }
+                #[cfg(feature = "zeroize")]
+                t.zeroize();
+            }
+            #[cfg(feature = "zeroize")]
+            s1_hat.zeroize();
+            t1
+        };
 
         VerifyingKey::new(self.rho.clone(), t1, self.A_hat.clone(), None)
     }
@@ -629,9 +880,9 @@ impl<P: MlDsaParams> CtEq for ExpandedSigningKey<P> {
             .ct_eq(&other.rho)
             .and(self.K.ct_eq(&other.K))
             .and(self.tr.ct_eq(&other.tr))
-            .and(self.s1.ct_eq(&other.s1))
-            .and(self.s2.ct_eq(&other.s2))
-            .and(self.t0.ct_eq(&other.t0))
+            .and(self.s1.ct_eq(&*other.s1))
+            .and(self.s2.ct_eq(&*other.s2))
+            .and(self.t0.ct_eq(&*other.t0))
     }
 }
 
@@ -651,8 +902,11 @@ impl<P: MlDsaParams> Drop for ExpandedSigningKey<P> {
             self.s1.zeroize();
             self.s2.zeroize();
             self.t0.zeroize();
+            #[cfg(not(feature = "low-memory"))]
             self.s1_hat.zeroize();
+            #[cfg(not(feature = "low-memory"))]
             self.s2_hat.zeroize();
+            #[cfg(not(feature = "low-memory"))]
             self.t0_hat.zeroize();
         }
     }
@@ -660,3 +914,55 @@ impl<P: MlDsaParams> Drop for ExpandedSigningKey<P> {
 
 #[cfg(feature = "zeroize")]
 impl<P: MlDsaParams> ZeroizeOnDrop for ExpandedSigningKey<P> {}
+
+#[cfg(all(test, feature = "low-memory"))]
+mod workspace_tests {
+    use super::*;
+    use crate::{MlDsa44, MlDsa65, MlDsa87};
+
+    fn compare<P: MlDsaParams + PartialEq>() {
+        let mut workspace = SigningWorkspace::<P>::default();
+        for seed_byte in [0, 1, 0x55, 0xff] {
+            let sk = ExpandedSigningKey::<P>::from_seed(&Seed::from([seed_byte; 32]));
+            let vk = sk.verifying_key();
+            for nonce in [0, 1, 0xff] {
+                let mu = MuBuilder::new(&sk.tr, b"workspace").message(&[b"rejection sampling"]);
+                let rnd = B32::from([nonce; 32]);
+                let expected = sk.raw_sign_mu_reference(&mu, &rnd);
+                let actual = sk.sign_mu_with_workspace(&mu, &rnd, &mut workspace);
+                assert_eq!(actual.encode(), expected.encode());
+                assert!(vk.raw_verify_mu(&mu, &actual));
+                #[cfg(feature = "zeroize")]
+                {
+                    assert!(workspace.z.0.iter().all(|p| p.0.iter().all(|x| x.0 == 0)));
+                    assert!(
+                        workspace
+                            .y_hat
+                            .0
+                            .iter()
+                            .all(|p| p.0.iter().all(|x| x.0 == 0))
+                    );
+                    assert!(workspace.w.0.iter().all(|p| p.0.iter().all(|x| x.0 == 0)));
+                    assert!(workspace.product.0.iter().all(|x| x.0 == 0));
+                    assert!(workspace.c_hat.0.iter().all(|x| x.0 == 0));
+                    assert!(workspace.hints.iter().all(|p| p.iter().all(|h| !h)));
+                }
+            }
+            let sig = sk
+                .sign_deterministic_with_workspace(b"message", &[7; 255], &mut workspace)
+                .expect("signing");
+            assert!(vk.verify_with_context(b"message", &[7; 255], &sig));
+            assert!(
+                sk.sign_deterministic_with_workspace(b"message", &[7; 256], &mut workspace)
+                    .is_err()
+            );
+        }
+    }
+
+    #[test]
+    fn workspace_matches_reference_all_parameter_sets() {
+        compare::<MlDsa44>();
+        compare::<MlDsa65>();
+        compare::<MlDsa87>();
+    }
+}
