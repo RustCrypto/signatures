@@ -1,9 +1,17 @@
+use core::ops::Mul;
 use ctutils::{CtEq, CtGt, CtLt, CtSelect};
 use hybrid_array::{
-    ArraySize,
+    Array, ArraySize,
     typenum::{Shleft, U1, U13, Unsigned},
 };
+#[cfg(not(feature = "low-memory"))]
+use module_lattice::MaybeBox;
 use module_lattice::{Field, Truncate};
+#[cfg(feature = "low-memory")]
+use {
+    crate::{B32, sampling::rej_ntt_poly},
+    core::marker::PhantomData,
+};
 
 module_lattice::define_field!(BaseField, u32, u64, u128, 8_380_417);
 
@@ -14,7 +22,64 @@ pub(crate) type Polynomial = module_lattice::Polynomial<BaseField>;
 pub(crate) type Vector<K> = module_lattice::Vector<BaseField, K>;
 pub(crate) type NttPolynomial = module_lattice::NttPolynomial<BaseField>;
 pub(crate) type NttVector<K> = module_lattice::NttVector<BaseField, K>;
-pub(crate) type NttMatrix<K, L> = module_lattice::NttMatrix<BaseField, K, L>;
+
+/// An expanded public matrix, with each row independently heap-allocated when `alloc` is enabled.
+///
+/// With `alloc`, building and cloning one row at a time avoids a full matrix temporary on the stack.
+/// Row sizes, allocation counts, and multiplication's iteration order depend only on public parameters.
+#[cfg(not(feature = "low-memory"))]
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct NttMatrix<K: ArraySize, L: ArraySize>(Array<MaybeBox<NttVector<L>>, K>);
+
+#[cfg(not(feature = "low-memory"))]
+impl<K: ArraySize, L: ArraySize> NttMatrix<K, L> {
+    pub(crate) fn from_fn(mut f: impl FnMut(usize) -> NttVector<L>) -> Self {
+        Self(Array::from_fn(|r| MaybeBox::new(f(r))))
+    }
+}
+
+/// In low-memory builds only the public seed is retained. Entries are regenerated in row order.
+#[cfg(feature = "low-memory")]
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct NttMatrix<K: ArraySize, L: ArraySize>(B32, PhantomData<fn() -> (K, L)>);
+
+#[cfg(feature = "low-memory")]
+impl<K: ArraySize, L: ArraySize> NttMatrix<K, L> {
+    pub(crate) fn from_seed(rho: &B32) -> Self {
+        Self(rho.clone(), PhantomData)
+    }
+
+    /// One polynomial of scratch, regardless of the public matrix dimensions.
+    pub(crate) fn multiply_row_into(&self, r: usize, rhs: &NttVector<L>, out: &mut Polynomial) {
+        out.0.fill(Elem::new(0));
+        for s in 0..L::USIZE {
+            // Rejection sampling depends solely on rho and these public indices.
+            let a = rej_ntt_poly(&self.0, Truncate::truncate(r), Truncate::truncate(s));
+            for j in 0..256 {
+                out.0[j] = out.0[j] + a.0[j] * rhs.0[s].0[j];
+            }
+        }
+    }
+}
+
+impl<K: ArraySize, L: ArraySize> Mul<&NttVector<L>> for &NttMatrix<K, L> {
+    type Output = NttVector<K>;
+
+    fn mul(self, rhs: &NttVector<L>) -> Self::Output {
+        #[cfg(not(feature = "low-memory"))]
+        {
+            NttVector::new(Array::from_fn(|r| &*self.0[r] * rhs))
+        }
+        #[cfg(feature = "low-memory")]
+        {
+            NttVector::new(Array::from_fn(|r| {
+                let mut out = Polynomial::default();
+                self.multiply_row_into(r, rhs, &mut out);
+                NttPolynomial::new(out.0)
+            }))
+        }
+    }
+}
 
 // We require modular reduction for three moduli: q, 2^d, and 2 * gamma2.  All three of these are
 // greater than sqrt(q), which means that a number reduced mod q will always be less than M^2,
@@ -346,6 +411,34 @@ mod test {
             let (decomp_high, decomp_low) = elem.decompose::<Mod>();
             assert_eq!(elem.high_bits::<Mod>(), decomp_high);
             assert_eq!(elem.low_bits::<Mod>(), decomp_low);
+        }
+    }
+}
+
+#[cfg(all(test, feature = "low-memory"))]
+mod streamed_matrix_tests {
+    use super::*;
+    use hybrid_array::typenum::{U5, U6};
+
+    #[test]
+    fn streamed_matrix_matches_explicit_expansion() {
+        let rho = B32::from([0x55; 32]);
+        let a = NttMatrix::<U6, U5>::from_seed(&rho);
+        let input = NttVector::new(Array::from_fn(|s| {
+            NttPolynomial::new(Array::from_fn(|j| {
+                Elem::new(u32::try_from(s * 256 + j).expect("small index"))
+            }))
+        }));
+        let actual = &a * &input;
+        for r in 0..6 {
+            let row = NttVector::new(Array::from_fn(|s| {
+                rej_ntt_poly(
+                    &rho,
+                    <u8 as Truncate<_>>::truncate(r),
+                    <u8 as Truncate<_>>::truncate(s),
+                )
+            }));
+            assert_eq!(actual.0[r], &row * &input);
         }
     }
 }

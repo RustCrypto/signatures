@@ -27,6 +27,8 @@ exclude = [
 [features]
 default = ["alloc", "getrandom", "pkcs8"]
 alloc = ["hybrid-array/alloc", "module-lattice/alloc", "pkcs8?/alloc", "signature/alloc"]
+# Regenerate public matrix entries and secret NTTs to reduce retained RAM and stack usage.
+low-memory = []
 
 getrandom = ["common/getrandom", "rand_core"]
 pkcs8 = ["dep:const-oid", "dep:pkcs8"]

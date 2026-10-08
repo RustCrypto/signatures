@@ -35,7 +35,7 @@ struct PrecomputedValues<P: ParameterSet> {
     A_hat: NttMatrix<P::K, P::L>,
 
     /// `2ᵈ ⋅ t1` which can be reused in signature verification.
-    t1_2d_hat: NttVector<P::K>,
+    t1_2d_hat: MaybeBox<NttVector<P::K>>,
 
     /// Hash of the encoded public key, used to bind messages to the key this was precomputed from.
     tr: B64,
@@ -48,7 +48,7 @@ impl<P: MlDsaParams> PrecomputedValues<P> {
 
         Self {
             A_hat,
-            t1_2d_hat,
+            t1_2d_hat: MaybeBox::new(t1_2d_hat),
             tr,
         }
     }
@@ -113,7 +113,7 @@ impl<P: MlDsaParams> VerifyingKey<P> {
         let z_hat = sigma.z.ntt();
         let c_hat = c.ntt();
         let Az_hat = &self.precomputed_values.A_hat * &z_hat;
-        let ct1_2d_hat = &c_hat * &self.precomputed_values.t1_2d_hat;
+        let ct1_2d_hat = &c_hat * &*self.precomputed_values.t1_2d_hat;
 
         let wp_approx = (&Az_hat - &ct1_2d_hat).ntt_inverse();
         let w1p = sigma.h.use_hint(&wp_approx);

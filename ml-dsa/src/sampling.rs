@@ -1,5 +1,7 @@
+#[cfg(not(feature = "low-memory"))]
+use crate::algebra::NttVector;
 use crate::{
-    algebra::{BaseField, Elem, Int, NttMatrix, NttPolynomial, NttVector, Polynomial, Vector},
+    algebra::{BaseField, Elem, Int, NttMatrix, NttPolynomial, Polynomial, Vector},
     crypto::{G, H},
     param::{Eta, MaskSamplingSize},
 };
@@ -80,7 +82,7 @@ pub(crate) fn sample_in_ball(rho: &[u8], tau: usize) -> Polynomial {
 }
 
 // Algorithm 30 RejNTTPoly
-fn rej_ntt_poly(rho: &[u8], r: u8, s: u8) -> NttPolynomial {
+pub(crate) fn rej_ntt_poly(rho: &[u8], r: u8, s: u8) -> NttPolynomial {
     let mut j = 0;
     let mut ctx = G::default().absorb(rho).absorb(&[s]).absorb(&[r]);
     let mut a = NttPolynomial::default();
@@ -171,12 +173,18 @@ fn rej_bounded_poly(rho: &[u8], eta: Eta, r: u16) -> Polynomial {
 }
 
 // Algorithm 32 ExpandA
-pub(crate) fn expand_a<K: ArraySize, L: ArraySize>(rho: &[u8]) -> NttMatrix<K, L> {
-    NttMatrix::new(Array::from_fn(|r| {
+#[cfg(not(feature = "low-memory"))]
+pub(crate) fn expand_a<K: ArraySize, L: ArraySize>(rho: &crate::B32) -> NttMatrix<K, L> {
+    NttMatrix::from_fn(|r| {
         NttVector::new(Array::from_fn(|s| {
             rej_ntt_poly(rho, Truncate::truncate(r), Truncate::truncate(s))
         }))
-    }))
+    })
+}
+
+#[cfg(feature = "low-memory")]
+pub(crate) fn expand_a<K: ArraySize, L: ArraySize>(rho: &crate::B32) -> NttMatrix<K, L> {
+    NttMatrix::from_seed(rho)
 }
 
 // Algorithm 33 ExpandS
@@ -194,20 +202,27 @@ pub(crate) fn expand_s<K: ArraySize>(rho: &[u8], eta: Eta, base: usize) -> Vecto
 }
 
 // Algorithm 34 ExpandMask
+#[cfg(any(not(feature = "low-memory"), test))]
 pub(crate) fn expand_mask<K, Gamma1>(rho: &[u8], mu: u16) -> Vector<K>
 where
     K: ArraySize,
     Gamma1: MaskSamplingSize,
 {
     Vector::new(Array::from_fn(|r| {
-        let r: u16 = Truncate::truncate(r);
-        let v = H::default()
-            .absorb(rho)
-            .absorb(&(mu + r).to_le_bytes())
-            .squeeze_new::<Gamma1::SampleSize>();
-
-        Gamma1::unpack(&v)
+        expand_mask_poly::<Gamma1>(rho, mu + <u16 as Truncate<_>>::truncate(r))
     }))
+}
+
+pub(crate) fn expand_mask_poly<Gamma1: MaskSamplingSize>(rho: &[u8], nonce: u16) -> Polynomial {
+    #[allow(unused_mut)] // Mutable when zeroize is enabled.
+    let mut v = H::default()
+        .absorb(rho)
+        .absorb(&nonce.to_le_bytes())
+        .squeeze_new::<Gamma1::SampleSize>();
+    let p = Gamma1::unpack(&v);
+    #[cfg(feature = "zeroize")]
+    v.zeroize();
+    p
 }
 
 #[cfg(test)]
