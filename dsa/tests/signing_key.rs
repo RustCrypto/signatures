@@ -12,11 +12,50 @@ use crypto_bigint::{
 use digest::Digest;
 use dsa::{Components, KeySize, SigningKey};
 use getrandom::{SysRng, rand_core::UnwrapErr};
-use pkcs8::{DecodePrivateKey, EncodePrivateKey, LineEnding};
+use pkcs8::{
+    DecodePrivateKey, EncodePrivateKey, LineEnding, PrivateKeyInfoRef,
+    der::{
+        Decode, Encode,
+        asn1::{BitStringRef, UintRef},
+    },
+};
 use sha1::Sha1;
 use signature::{DigestVerifier, RandomizedDigestSigner};
 
 const OPENSSL_PEM_PRIVATE_KEY: &str = include_str!("pems/private.pem");
+
+#[test]
+fn pkcs8_checks_supplied_public_component_consistency() {
+    let key = SigningKey::from_pkcs8_pem(OPENSSL_PEM_PRIVATE_KEY).unwrap();
+    let document = key.to_pkcs8_der().unwrap();
+    let public = key.verifying_key().y().to_be_bytes();
+    let supplied = UintRef::new(&public).unwrap().to_der().unwrap();
+    let mut info = PrivateKeyInfoRef::from_der(document.as_bytes()).unwrap();
+    info.public_key = Some(BitStringRef::from_bytes(&supplied).unwrap());
+    assert_eq!(SigningKey::try_from(info).unwrap(), key);
+
+    // Both alternatives are valid subgroup elements but belong to different
+    // private components, so subgroup checks alone cannot reject them.
+    let components = key.verifying_key().components();
+    let params = BoxedMontyParams::new(components.p().clone());
+    let generator = BoxedMontyForm::new((**components.g()).clone(), &params);
+    for exponent in [1u64, 2] {
+        let different = generator.pow(&BoxedUint::from(exponent)).retrieve();
+        assert_ne!(different, **key.verifying_key().y());
+        assert!(dsa::VerifyingKey::from_components(components.clone(), different.clone()).is_ok());
+        let bytes = different.to_be_bytes();
+        let supplied = UintRef::new(&bytes).unwrap().to_der().unwrap();
+        let mut info = PrivateKeyInfoRef::from_der(document.as_bytes()).unwrap();
+        info.public_key = Some(BitStringRef::from_bytes(&supplied).unwrap());
+        assert!(SigningKey::try_from(info).is_err());
+    }
+
+    // Documents omitting the optional public component still derive it.
+    assert_eq!(
+        SigningKey::from_pkcs8_der(document.as_bytes()).unwrap(),
+        key
+    );
+}
 
 fn generate_keypair() -> SigningKey {
     let mut rng = UnwrapErr(SysRng);
