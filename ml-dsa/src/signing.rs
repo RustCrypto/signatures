@@ -77,10 +77,11 @@ impl<P: MlDsaParams> SigningKey<P> {
 
         let enc = VerifyingKey::<P>::encode_internal(&rho, &t1);
         let tr: B64 = H::default().absorb(&enc).squeeze_new();
-        let expanded_key = ExpandedSigningKey::new(rho, K, tr, s1, s2, t0, A_hat);
 
         #[cfg(feature = "alloc")]
-        let verifying_key = expanded_key.verifying_key();
+        let verifying_key = VerifyingKey::new(rho.clone(), t1, A_hat.clone(), Some(enc));
+
+        let expanded_key = ExpandedSigningKey::new(rho, K, tr, s1, s2, t0, A_hat);
 
         SigningKey {
             expanded_key: MaybeBox::new(expanded_key),
