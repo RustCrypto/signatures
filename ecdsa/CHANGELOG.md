@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rename `DigestPrimitive` to `DigestAlgorithm` ([#996])
 - Bump `serdect` dependency to v0.4 - new wire format for binary serializations ([#1048])
 - Support new `signature::DigestSigner/Verifier` API ([#1064])
+- Merge the `signing` and `verifying` features into the unconditional `signature` crate dependency, with RFC 6979 signing support now under the `algorithm` feature ([#1076])
 - Bump `der` to v0.8 ([#1232])
 - Bump `digest` to v0.11 ([#1237])
 - Bump `sha2` dependency to v0.11 ([#1267])
@@ -53,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#1007]: https://github.com/RustCrypto/signatures/pull/1007
 [#1048]: https://github.com/RustCrypto/signatures/pull/1048
 [#1064]: https://github.com/RustCrypto/signatures/pull/1064
+[#1076]: https://github.com/RustCrypto/signatures/pull/1076
 [#1107]: https://github.com/RustCrypto/signatures/pull/1107
 [#1140]: https://github.com/RustCrypto/signatures/pull/1140
 [#1232]: https://github.com/RustCrypto/signatures/pull/1232
