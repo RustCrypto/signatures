@@ -144,6 +144,21 @@ mod tests {
     }
 
     #[test]
+    fn test_xmssmt_keys_roundtrip_from_bytes() {
+        // XMSSMT_SHA2_20/2_256 has raw OID 0x01, which collides with XMSS-SHA2_10_256
+        let mut kp = KeyPair::<XmssMtSha2_20_2_256>::generate(&mut rand::rng()).unwrap();
+
+        let vk =
+            VerifyingKey::<XmssMtSha2_20_2_256>::try_from(kp.verifying_key().as_ref()).unwrap();
+        let mut sk =
+            SigningKey::<XmssMtSha2_20_2_256>::try_from(kp.signing_key().as_ref()).unwrap();
+
+        let message = b"imported xmssmt keys";
+        let sig = sk.sign(message).unwrap();
+        assert_eq!(vk.verify(&sig).unwrap(), message);
+    }
+
+    #[test]
     fn test_multiple_signatures() {
         let mut kp = KeyPair::<XmssSha2_10_256>::generate(&mut rand::rng()).unwrap();
 
