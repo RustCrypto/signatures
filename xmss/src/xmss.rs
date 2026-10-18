@@ -33,6 +33,9 @@ fn parse_oid_and_params(bytes: &[u8]) -> XmssResult<(XmssOid, XmssParams)> {
 pub struct SigningKey<P: XmssParameter> {
     bytes: Array<u8, P::SkLen>,
     params: XmssParams,
+    /// BDS traversal state for the next signature. `None` for a key loaded
+    /// from bytes; it is rebuilt on the first signature.
+    state: Option<xmss_core::XmssStateStorage>,
     _marker: PhantomData<P>,
 }
 
@@ -54,6 +57,10 @@ impl<P: XmssParameter> Drop for SigningKey<P> {
 impl<P: XmssParameter> Zeroize for SigningKey<P> {
     fn zeroize(&mut self) {
         self.bytes.zeroize();
+        if let Some(state) = self.state.as_mut() {
+            state.zeroize();
+        }
+        self.state = None;
     }
 }
 
@@ -85,6 +92,7 @@ impl<P: XmssParameter> TryFrom<&[u8]> for SigningKey<P> {
         Ok(Self {
             bytes,
             params,
+            state: None,
             _marker: PhantomData,
         })
     }
@@ -157,24 +165,42 @@ impl<P: XmssParameter> SigningKey<P> {
         Self {
             bytes,
             params,
+            state: None,
             _marker: PhantomData,
         }
+    }
+
+    /// Signs using the BDS state, rebuilding it if missing. On error, neither
+    /// the key nor the state changes.
+    fn sign_with_state(&mut self, m: &[u8]) -> XmssResult<Vec<u8>> {
+        let storage = match self.state.take() {
+            Some(storage) => self.state.insert(storage),
+            None => {
+                let mut storage = xmss_core::XmssStateStorage::new(&self.params);
+                xmss_core::xmssmt_core_restore_state(
+                    &self.params,
+                    &self.bytes[XMSS_OID_LEN..],
+                    &mut storage,
+                )?;
+                self.state.insert(storage)
+            }
+        };
+
+        xmss_core::xmssmt_core_sign(&self.params, &mut self.bytes[XMSS_OID_LEN..], m, storage)
     }
 
     /// Signs a message. Returns the signature followed by the message and updates
     /// the internal state (one-time key index is advanced).
     pub fn sign(&mut self, m: &[u8]) -> XmssResult<Signature<P>> {
-        xmss_core::xmssmt_core_sign(&self.params, &mut self.bytes[XMSS_OID_LEN..], m).map(|bytes| {
-            Signature {
-                bytes,
-                _marker: PhantomData,
-            }
+        self.sign_with_state(m).map(|bytes| Signature {
+            bytes,
+            _marker: PhantomData,
         })
     }
 
     /// Signs a message, returning only the detached signature (without the message appended).
     pub fn sign_detached(&mut self, m: &[u8]) -> XmssResult<DetachedSignature<P>> {
-        let mut sm = xmss_core::xmssmt_core_sign(&self.params, &mut self.bytes[XMSS_OID_LEN..], m)?;
+        let mut sm = self.sign_with_state(m)?;
         let sig_bytes = sm.len() - m.len();
         sm.truncate(sig_bytes);
         Ok(DetachedSignature {
@@ -591,11 +617,13 @@ impl<P: XmssParameter> KeyPair<P> {
     pub fn generate<R: rand::CryptoRng>(rng: &mut R) -> XmssResult<Self> {
         let oid = P::oid();
         let (params, mut pk, mut sk) = oid.init_keypair_buffers(None)?;
+        let mut storage = xmss_core::XmssStateStorage::new(&params);
         xmss_core::xmssmt_core_keypair(
             &params,
             &mut pk[XMSS_OID_LEN..],
             &mut sk[XMSS_OID_LEN..],
             rng,
+            &mut storage,
         )?;
         let pk_array = Array::<u8, P::VkLen>::try_from(pk.as_slice()).map_err(|_| {
             Error::InvalidKeyLength {
@@ -609,9 +637,11 @@ impl<P: XmssParameter> KeyPair<P> {
                 got: sk.len(),
             }
         })?;
+        let mut signing_key = SigningKey::new(sk_array, params);
+        signing_key.state = Some(storage);
         Ok(Self {
             verifying_key: VerifyingKey::new(pk_array, params),
-            signing_key: SigningKey::new(sk_array, params),
+            signing_key,
         })
     }
 
@@ -620,11 +650,13 @@ impl<P: XmssParameter> KeyPair<P> {
     pub fn from_seed(seed: &[u8]) -> XmssResult<Self> {
         let oid = P::oid();
         let (params, mut pk, mut sk) = oid.init_keypair_buffers(Some(seed))?;
+        let mut storage = xmss_core::XmssStateStorage::new(&params);
         xmss_core::xmssmt_core_seed_keypair(
             &params,
             &mut pk[XMSS_OID_LEN..],
             &mut sk[XMSS_OID_LEN..],
             seed,
+            &mut storage,
         )?;
         let pk_array = Array::<u8, P::VkLen>::try_from(pk.as_slice()).map_err(|_| {
             Error::InvalidKeyLength {
@@ -638,9 +670,11 @@ impl<P: XmssParameter> KeyPair<P> {
                 got: sk.len(),
             }
         })?;
+        let mut signing_key = SigningKey::new(sk_array, params);
+        signing_key.state = Some(storage);
         Ok(Self {
             verifying_key: VerifyingKey::new(pk_array, params),
-            signing_key: SigningKey::new(sk_array, params),
+            signing_key,
         })
     }
 
