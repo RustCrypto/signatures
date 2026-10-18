@@ -354,7 +354,7 @@ fn bds_move(
     let auth_path = &mut xmss_state.auth_path;
 
     // Lowest height whose auth node changes when moving to leaf_idx. It becomes
-    // a left node; every height below it gets a new right node. 
+    // a left node; every height below it gets a new right node.
     let changed_height = leaf_idx.trailing_zeros().min(params.tree_height);
     let changed_height_idx = changed_height as usize;
 
@@ -845,7 +845,7 @@ pub fn xmssmt_core_sign(
             if layer + 1 == params.d || leaf_idx & ((1u64 << params.tree_height) - 1) != 0 {
                 break;
             }
-            
+
             layer_root(
                 params,
                 &mut root_below,
