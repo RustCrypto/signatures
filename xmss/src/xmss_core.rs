@@ -1,4 +1,4 @@
-use zeroize::Zeroize;
+use zeroize::{Zeroize, Zeroizing};
 
 use crate::error::{Error, XmssResult};
 use crate::hash::{hash_message, prf, thash_h};
@@ -227,9 +227,9 @@ fn bds_precompute_future_nodes(
     set_type(&mut ltree_addr, XMSS_ADDR_TYPE_LTREE);
     set_type(&mut node_addr, XMSS_ADDR_TYPE_HASHTREE);
 
+    // Pick the lowest height that needs to be precomputed as it is the most urgent
     let tree_height = params.tree_height as usize;
     for _ in 0..updates {
-        // Pick the lowest height that needs to be precomputed as it is the most urgent
         let mut lowest_found_height = params.tree_height;
         let mut chosen_height = tree_height;
         for height in 0..params.tree_height {
@@ -354,8 +354,7 @@ fn bds_move(
     let auth_path = &mut xmss_state.auth_path;
 
     // Lowest height whose auth node changes when moving to leaf_idx. It becomes
-    // a left node; every height below it gets a new right node. Capped at
-    // tree_height: entering a new tree only takes right nodes.
+    // a left node; every height below it gets a new right node. 
     let changed_height = leaf_idx.trailing_zeros().min(params.tree_height);
     let changed_height_idx = changed_height as usize;
 
@@ -742,9 +741,9 @@ pub fn xmssmt_core_sign(
         return Err(Error::KeyExhausted);
     }
 
-    // Copy secret values out before mutating sk.
-    let mut sk_seed = sk[sk_seed_start..sk_seed_start + n].to_vec();
-    let mut sk_prf = sk[sk_prf_start..sk_prf_start + n].to_vec();
+    // Copy secret values out before mutating sk. Wiped on drop, on every path.
+    let sk_seed = Zeroizing::new(sk[sk_seed_start..sk_seed_start + n].to_vec());
+    let sk_prf = Zeroizing::new(sk[sk_prf_start..sk_prf_start + n].to_vec());
     let pub_root = sk[pub_root_start..pub_root_start + n].to_vec();
     let pub_seed = sk[pub_seed_start..pub_seed_start + n].to_vec();
 
@@ -754,16 +753,6 @@ pub fn xmssmt_core_sign(
 
     // Write index into signature.
     sm[..idx_bytes].copy_from_slice(&sk[..idx_bytes]);
-
-    // Advance the index in sk.
-    if idx == max_idx {
-        // Last valid index — mark as exhausted for next call.
-        for b in sk[..idx_bytes].iter_mut() {
-            *b = 0xFF;
-        }
-    } else {
-        ull_to_bytes(&mut sk[..idx_bytes], idx + 1);
-    }
 
     // Compute R (randomness for message hashing).
     let mut idx_bytes_32 = [0u8; 32];
@@ -825,10 +814,12 @@ pub fn xmssmt_core_sign(
     if idx < max_idx {
         let next_idx = idx + 1;
         let mut root_below = vec![0u8; n];
+        // Moved on a copy, so a failure leaves the state unchanged.
+        let mut next_storage = storage.clone();
 
         for layer in 0..params.d {
             let leaf_idx = next_idx >> (params.tree_height * layer);
-            let mut layer_state = storage.layers[layer as usize].state();
+            let mut layer_state = next_storage.layers[layer as usize].state();
 
             bds_move(
                 params,
@@ -838,6 +829,7 @@ pub fn xmssmt_core_sign(
                 layer,
                 leaf_idx,
             )?;
+
             if layer > 0 {
                 layer_wots_sign(
                     params,
@@ -853,6 +845,7 @@ pub fn xmssmt_core_sign(
             if layer + 1 == params.d || leaf_idx & ((1u64 << params.tree_height) - 1) != 0 {
                 break;
             }
+            
             layer_root(
                 params,
                 &mut root_below,
@@ -863,11 +856,19 @@ pub fn xmssmt_core_sign(
                 leaf_idx,
             )?;
         }
+        *storage = next_storage;
     }
 
-    // Zeroize secret copies.
-    sk_seed.zeroize();
-    sk_prf.zeroize();
+    // Nothing below can fail, so the key only changes on success.
+    // Advance the index in sk.
+    if idx == max_idx {
+        // Last valid index — mark as exhausted for next call.
+        for b in sk[..idx_bytes].iter_mut() {
+            *b = 0xFF;
+        }
+    } else {
+        ull_to_bytes(&mut sk[..idx_bytes], idx + 1);
+    }
 
     // If this was the last valid index, zero the secret key material in sk.
     if idx == max_idx {

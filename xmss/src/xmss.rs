@@ -170,7 +170,8 @@ impl<P: XmssParameter> SigningKey<P> {
         }
     }
 
-    /// Signs using the BDS state, rebuilding it if missing. Drops it on error.
+    /// Signs using the BDS state, rebuilding it if missing. On error, neither
+    /// the key nor the state changes.
     fn sign_with_state(&mut self, m: &[u8]) -> XmssResult<Vec<u8>> {
         let storage = match self.state.take() {
             Some(storage) => self.state.insert(storage),
@@ -185,12 +186,7 @@ impl<P: XmssParameter> SigningKey<P> {
             }
         };
 
-        let result =
-            xmss_core::xmssmt_core_sign(&self.params, &mut self.bytes[XMSS_OID_LEN..], m, storage);
-        if result.is_err() {
-            self.state = None;
-        }
-        result
+        xmss_core::xmssmt_core_sign(&self.params, &mut self.bytes[XMSS_OID_LEN..], m, storage)
     }
 
     /// Signs a message. Returns the signature followed by the message and updates
