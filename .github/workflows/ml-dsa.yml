@@ -42,6 +42,7 @@ jobs:
       - run: cargo test --release
       - run: cargo test --all-features --release
       - run: cargo test --no-default-features --release
+      - run: cargo test --no-default-features --features low-memory,zeroize --release
       - run: cargo test --no-default-features --features alloc --lib --release
 
   no_std:
@@ -50,6 +51,7 @@ jobs:
       matrix:
         target:
           - thumbv7em-none-eabi
+          - thumbv8m.main-none-eabi
           - wasm32-unknown-unknown
         rust:
           - 1.85.0 # MSRV
@@ -63,3 +65,25 @@ jobs:
 
       - uses: RustCrypto/actions/cargo-hack-install@master
       - run: cargo hack build --target ${{ matrix.target }} --feature-powerset --exclude-features default,getrandom
+
+  cortex_m_stack:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        features:
+          - low-memory
+          - low-memory,ml-dsa-65
+          - low-memory,ml-dsa-87
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: thumbv8m.main-none-eabi
+      - run: sudo apt-get update && sudo apt-get install -y qemu-system-arm
+      - run: >-
+          cargo build --locked --release --target thumbv8m.main-none-eabi
+          --manifest-path tools/cortex-m-stack/Cargo.toml --features ${{ matrix.features }}
+      - run: >-
+          timeout 60s qemu-system-arm -M mps2-an505 -display none -serial none -monitor none
+          -semihosting-config enable=on,target=native
+          -kernel tools/cortex-m-stack/target/thumbv8m.main-none-eabi/release/ml-dsa-cortex-m-stack

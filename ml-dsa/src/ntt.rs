@@ -75,19 +75,22 @@ impl Ntt for Polynomial {
     // bounds are compile-time constants, avoiding potential UDIV instructions.
     fn ntt(&self) -> Self::Output {
         let mut w: [Elem; 256] = self.0.clone().into();
-        let mut m = 0;
-
-        ntt_layer::<128, 1>(&mut w, &mut m);
-        ntt_layer::<64, 2>(&mut w, &mut m);
-        ntt_layer::<32, 4>(&mut w, &mut m);
-        ntt_layer::<16, 8>(&mut w, &mut m);
-        ntt_layer::<8, 16>(&mut w, &mut m);
-        ntt_layer::<4, 32>(&mut w, &mut m);
-        ntt_layer::<2, 64>(&mut w, &mut m);
-        ntt_layer::<1, 128>(&mut w, &mut m);
-
+        ntt_in_place(&mut w);
         NttPolynomial::new(w.into())
     }
+}
+
+/// Transform a caller-owned coefficient buffer with a fixed butterfly schedule.
+pub(crate) fn ntt_in_place(w: &mut [Elem; 256]) {
+    let mut m = 0;
+    ntt_layer::<128, 1>(w, &mut m);
+    ntt_layer::<64, 2>(w, &mut m);
+    ntt_layer::<32, 4>(w, &mut m);
+    ntt_layer::<16, 8>(w, &mut m);
+    ntt_layer::<8, 16>(w, &mut m);
+    ntt_layer::<4, 32>(w, &mut m);
+    ntt_layer::<2, 64>(w, &mut m);
+    ntt_layer::<1, 128>(w, &mut m);
 }
 
 impl<K: ArraySize> Ntt for Vector<K> {
@@ -134,21 +137,26 @@ impl NttInverse for NttPolynomial {
     // This implementation uses const-generic helper functions to ensure all loop
     // bounds are compile-time constants, avoiding potential UDIV instructions.
     fn ntt_inverse(&self) -> Self::Output {
-        const INVERSE_256: Elem = Elem::new(8_347_681);
-
         let mut w: [Elem; 256] = self.0.clone().into();
-        let mut m = 256;
+        ntt_inverse_in_place(&mut w);
+        Polynomial::new(w.into())
+    }
+}
 
-        ntt_inverse_layer::<1, 128>(&mut w, &mut m);
-        ntt_inverse_layer::<2, 64>(&mut w, &mut m);
-        ntt_inverse_layer::<4, 32>(&mut w, &mut m);
-        ntt_inverse_layer::<8, 16>(&mut w, &mut m);
-        ntt_inverse_layer::<16, 8>(&mut w, &mut m);
-        ntt_inverse_layer::<32, 4>(&mut w, &mut m);
-        ntt_inverse_layer::<64, 2>(&mut w, &mut m);
-        ntt_inverse_layer::<128, 1>(&mut w, &mut m);
-
-        INVERSE_256 * &Polynomial::new(w.into())
+/// Invert an NTT in the same buffer, including the final normalization.
+pub(crate) fn ntt_inverse_in_place(w: &mut [Elem; 256]) {
+    const INVERSE_256: Elem = Elem::new(8_347_681);
+    let mut m = 256;
+    ntt_inverse_layer::<1, 128>(w, &mut m);
+    ntt_inverse_layer::<2, 64>(w, &mut m);
+    ntt_inverse_layer::<4, 32>(w, &mut m);
+    ntt_inverse_layer::<8, 16>(w, &mut m);
+    ntt_inverse_layer::<16, 8>(w, &mut m);
+    ntt_inverse_layer::<32, 4>(w, &mut m);
+    ntt_inverse_layer::<64, 2>(w, &mut m);
+    ntt_inverse_layer::<128, 1>(w, &mut m);
+    for x in w {
+        *x = INVERSE_256 * *x;
     }
 }
 
@@ -178,12 +186,11 @@ impl MultiplyNtt for BaseField {
 #[allow(clippy::cast_possible_truncation)]
 mod test {
     use super::*;
-    use hybrid_array::{
-        Array,
-        typenum::{U2, U3},
-    };
+    use hybrid_array::{Array, typenum::U3};
 
     use crate::algebra::*;
+    #[cfg(not(feature = "low-memory"))]
+    use hybrid_array::typenum::U2;
 
     // Multiplication in R_q, modulo X^256 + 1
     fn poly_mul(lhs: &Polynomial, rhs: &Polynomial) -> Polynomial {
@@ -247,14 +254,16 @@ mod test {
         assert_eq!((&v2 * &v3), const_ntt(18));
     }
 
+    #[cfg(not(feature = "low-memory"))]
     #[test]
     fn ntt_matrix() {
         // Verify matrix multiplication by a vector
-        let a: NttMatrix<U3, U2> = NttMatrix::new(Array([
+        let rows = [
             NttVector::new(Array([const_ntt(1), const_ntt(2)])),
             NttVector::new(Array([const_ntt(3), const_ntt(4)])),
             NttVector::new(Array([const_ntt(5), const_ntt(6)])),
-        ]));
+        ];
+        let a: NttMatrix<U3, U2> = NttMatrix::from_fn(|r| rows[r].clone());
         let v_in: NttVector<U2> = NttVector::new(Array([const_ntt(1), const_ntt(2)]));
         let v_out: NttVector<U3> =
             NttVector::new(Array([const_ntt(5), const_ntt(11), const_ntt(17)]));

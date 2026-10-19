@@ -14,6 +14,14 @@ Pure Rust implementation of the Module-Lattice-Based Digital Signature Standard
 
 ML-DSA was formerly known as [CRYSTALS-Dilithium].
 
+With the `alloc` feature, expanded matrix rows and cached key components are stored on the heap to
+reduce construction and cloning stack usage. The opt-in `low-memory` feature regenerates public
+matrix entries and secret NTTs instead of retaining them, and provides a reusable `SigningWorkspace`.
+With `default-features = false`, this path needs no allocator. Enable `zeroize` to erase scratch after
+signing. This trades additional SHAKE and NTT work for lower RAM usage. A caller-owned workspace can
+reside in a static SRAM cell; existing signing methods construct it locally. See the
+[Cortex-M33 stack probe](tools/cortex-m-stack) for reproduction instructions.
+
 ## ⚠️ Security Warning
 
 The implementation contained in this crate has never been independently audited!

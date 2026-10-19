@@ -1,0 +1,25 @@
+[package]
+name = "ml-dsa-cortex-m-stack"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[features]
+default = []
+low-memory = ["ml-dsa/low-memory"]
+ml-dsa-65 = []
+ml-dsa-87 = []
+
+[dependencies]
+ml-dsa = { path = "../..", default-features = false, features = ["zeroize"] }
+cortex-m = "0.7"
+cortex-m-rt = "0.7"
+cortex-m-semihosting = "0.5"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
