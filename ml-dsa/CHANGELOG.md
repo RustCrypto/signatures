@@ -7,8 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 ### Fixed
-- Zeroize signing intermediates, the key-derivation seed and the SHAKE state when the
-  `zeroize` feature is enabled, per FIPS 204 § 3.6.3 ([#1471])
+- Zeroize the SHAKE state when the `zeroize` feature is enabled, by wiring
+  `shake/zeroize` into it ([#1471])
 
 [#1471]: https://github.com/RustCrypto/signatures/issues/1471
 
