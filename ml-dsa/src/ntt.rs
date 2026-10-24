@@ -250,11 +250,12 @@ mod test {
     #[test]
     fn ntt_matrix() {
         // Verify matrix multiplication by a vector
-        let a: NttMatrix<U3, U2> = NttMatrix::new(Array([
+        let rows = [
             NttVector::new(Array([const_ntt(1), const_ntt(2)])),
             NttVector::new(Array([const_ntt(3), const_ntt(4)])),
             NttVector::new(Array([const_ntt(5), const_ntt(6)])),
-        ]));
+        ];
+        let a: NttMatrix<U3, U2> = NttMatrix::from_fn(|i| rows[i].clone());
         let v_in: NttVector<U2> = NttVector::new(Array([const_ntt(1), const_ntt(2)]));
         let v_out: NttVector<U3> =
             NttVector::new(Array([const_ntt(5), const_ntt(11), const_ntt(17)]));
