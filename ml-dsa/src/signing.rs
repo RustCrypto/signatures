@@ -1,6 +1,9 @@
 //! ML-DSA `SigningKey` and `ExpandedSigningKey`.
 //!
 //! These types implement signature generation.
+// The `mut` bindings on signing intermediates below are only written to
+// when the `zeroize` feature is enabled.
+#![cfg_attr(not(feature = "zeroize"), allow(unused_mut))]
 
 use crate::{
     B32, B64, ExpandedSigningKeyBytes, MlDsaParams, MuBuilder, Seed, Signature, VerifyingKey,
@@ -60,20 +63,29 @@ impl<P: MlDsaParams> SigningKey<P> {
             .absorb(&[P::L::U8]);
 
         let rho: B32 = h.squeeze_new();
-        let rhop: B64 = h.squeeze_new();
+        let mut rhop: B64 = h.squeeze_new();
         let K: B32 = h.squeeze_new();
 
         // Sample private key components
         let A_hat = expand_a::<P::K, P::L>(&rho);
         let s1 = expand_s::<P::L>(&rhop, P::Eta::ETA, 0);
         let s2 = expand_s::<P::K>(&rhop, P::Eta::ETA, P::L::USIZE);
+        #[cfg(feature = "zeroize")]
+        {
+            rhop.zeroize();
+        }
 
         // Compute derived values
-        let As1_hat = &A_hat * &s1.ntt();
-        let t = &As1_hat.ntt_inverse() + &s2;
+        let mut As1_hat = &A_hat * &s1.ntt();
+        let mut t = &As1_hat.ntt_inverse() + &s2;
 
         // Compress and encode
         let (t1, t0) = t.power2round();
+        #[cfg(feature = "zeroize")]
+        {
+            As1_hat.zeroize();
+            t.zeroize();
+        }
 
         let enc = VerifyingKey::<P>::encode_internal(&rho, &t1);
         let tr: B64 = H::default().absorb(&enc).squeeze_new();
@@ -318,7 +330,7 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
         P: MlDsaParams,
     {
         // Compute the private random seed
-        let rhopp: B64 = H::default()
+        let mut rhopp: B64 = H::default()
             .absorb(&self.K)
             .absorb(rnd)
             .absorb(mu)
@@ -326,9 +338,9 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
 
         // Rejection sampling loop
         for kappa in (0..u16::MAX).step_by(P::L::USIZE) {
-            let y = expand_mask::<P::L, P::Gamma1>(&rhopp, kappa);
-            let w = (&self.A_hat * &y.ntt()).ntt_inverse();
-            let w1 = w.high_bits::<P::TwoGamma2>();
+            let mut y = expand_mask::<P::L, P::Gamma1>(&rhopp, kappa);
+            let mut w = (&self.A_hat * &y.ntt()).ntt_inverse();
+            let mut w1 = w.high_bits::<P::TwoGamma2>();
 
             let w1_tilde = P::encode_w1(&w1);
             let c_tilde = H::default()
@@ -338,29 +350,70 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
             let c = sample_in_ball(&c_tilde, P::TAU);
             let c_hat = c.ntt();
 
-            let cs1 = (&c_hat * &self.s1_hat).ntt_inverse();
-            let cs2 = (&c_hat * &self.s2_hat).ntt_inverse();
+            let mut cs1 = (&c_hat * &self.s1_hat).ntt_inverse();
+            let mut cs2 = (&c_hat * &self.s2_hat).ntt_inverse();
 
-            let z = &y + &cs1;
-            let r0 = (&w - &cs2).low_bits::<P::TwoGamma2>();
+            let mut z = &y + &cs1;
+            let mut r0 = (&w - &cs2).low_bits::<P::TwoGamma2>();
 
             if z.infinity_norm() >= P::GAMMA1_MINUS_BETA
                 || r0.infinity_norm() >= P::GAMMA2_MINUS_BETA
             {
+                #[cfg(feature = "zeroize")]
+                {
+                    y.zeroize();
+                    w.zeroize();
+                    w1.zeroize();
+                    cs1.zeroize();
+                    cs2.zeroize();
+                    z.zeroize();
+                    r0.zeroize();
+                }
                 continue;
             }
 
-            let ct0 = (&c_hat * &self.t0_hat).ntt_inverse();
-            let minus_ct0 = -&ct0;
-            let w_cs2_ct0 = &(&w - &cs2) + &ct0;
+            let mut ct0 = (&c_hat * &self.t0_hat).ntt_inverse();
+            let mut minus_ct0 = -&ct0;
+            let mut w_cs2_ct0 = &(&w - &cs2) + &ct0;
             let h = Hint::<P>::new(&minus_ct0, &w_cs2_ct0);
 
             if ct0.infinity_norm() >= P::Gamma2::U32 || h.hamming_weight() > P::Omega::USIZE {
+                #[cfg(feature = "zeroize")]
+                {
+                    y.zeroize();
+                    w.zeroize();
+                    w1.zeroize();
+                    cs1.zeroize();
+                    cs2.zeroize();
+                    z.zeroize();
+                    r0.zeroize();
+                    ct0.zeroize();
+                    minus_ct0.zeroize();
+                    w_cs2_ct0.zeroize();
+                }
                 continue;
             }
 
-            let z = MaybeBox::new(z.mod_plus_minus::<SpecQ>());
-            return Signature { c_tilde, z, h };
+            let z_norm = MaybeBox::new(z.mod_plus_minus::<SpecQ>());
+            #[cfg(feature = "zeroize")]
+            {
+                rhopp.zeroize();
+                y.zeroize();
+                w.zeroize();
+                w1.zeroize();
+                cs1.zeroize();
+                cs2.zeroize();
+                z.zeroize();
+                r0.zeroize();
+                ct0.zeroize();
+                minus_ct0.zeroize();
+                w_cs2_ct0.zeroize();
+            }
+            return Signature {
+                c_tilde,
+                z: z_norm,
+                h,
+            };
         }
 
         unreachable!("Rejection sampling failed to find a valid signature");
@@ -398,7 +451,12 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
         rng.try_fill_bytes(&mut rnd).map_err(|_| Error::new())?;
 
         let mu = MuBuilder::new(&self.tr, ctx).message(Mp);
-        Ok(self.raw_sign_mu(&mu, &rnd))
+        let sig = self.raw_sign_mu(&mu, &rnd);
+        #[cfg(feature = "zeroize")]
+        {
+            rnd.zeroize();
+        }
+        Ok(sig)
     }
 
     /// This method reflects the randomized ML-DSA.Sign algorithm with a pre-computed μ.
@@ -416,7 +474,12 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
         let mut rnd = B32::default();
         rng.try_fill_bytes(&mut rnd).map_err(|_| Error::new())?;
 
-        Ok(self.raw_sign_mu(mu, &rnd))
+        let sig = self.raw_sign_mu(mu, &rnd);
+        #[cfg(feature = "zeroize")]
+        {
+            rnd.zeroize();
+        }
+        Ok(sig)
     }
 
     /// This method reflects the optional deterministic variant of the ML-DSA.Sign algorithm.

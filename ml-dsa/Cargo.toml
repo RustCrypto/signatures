@@ -31,7 +31,7 @@ alloc = ["hybrid-array/alloc", "module-lattice/alloc", "pkcs8?/alloc", "signatur
 getrandom = ["common/getrandom", "rand_core"]
 pkcs8 = ["dep:const-oid", "dep:pkcs8"]
 rand_core = ["common/rand_core", "signature/rand_core"]
-zeroize = ["dep:zeroize", "hybrid-array/zeroize", "module-lattice/zeroize"]
+zeroize = ["dep:zeroize", "hybrid-array/zeroize", "module-lattice/zeroize", "shake/zeroize"]
 
 [dependencies]
 common = { package = "crypto-common", version = "0.2", default-features = false }
