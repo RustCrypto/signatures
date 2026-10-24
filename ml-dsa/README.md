@@ -12,7 +12,17 @@ Pure Rust implementation of the Module-Lattice-Based Digital Signature Standard
 
 ## About
 
-ML-DSA was formerly known as [CRYSTALS-Dilithium].
+ML-DSA is a digital signature algorithm (formerly known as [CRYSTALS-Dilithium])
+which provides post-quantum security, i.e. it is designed to remain secure
+against attacks using future sufficiently powerful quantum computers.
+
+Three parameter sets (i.e. security levels) are supported:
+- ML-DSA-44 (NIST Category 2)
+- ML-DSA-65 (NIST Category 3)
+- ML-DSA-87 (NIST Category 5)
+
+Higher categories provide a larger security margin at the cost of larger keys
+and signatures.
 
 ## ⚠️ Security Warning
 
