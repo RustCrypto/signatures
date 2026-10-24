@@ -491,6 +491,64 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
         )
     }
 
+    /// Decode an expanded signing key and check its internal consistency.
+    ///
+    /// Seed-based import remains preferred. This method supports expanded-only
+    /// keys without allowing malformed packed coefficients to panic.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if a secret coefficient encoding is out of range, or if
+    /// the stored low-order bits or public-key hash do not match the secret key.
+    pub fn try_from_expanded(enc: &ExpandedSigningKeyBytes<P>) -> Result<Self, Error> {
+        let (rho, K, tr, s1_enc, s2_enc, t0_enc) = P::split_sk(enc);
+        // FIPS 204 section 7.2, Algorithms 19 and 24-25: skEncode's secret
+        // coefficient codes occupy [0, 2*eta]. BitUnpack also decodes unused
+        // codes outside that range; check these before the trusted decoder.
+        // https://doi.org/10.6028/NIST.FIPS.204
+        let eta = P::Eta::U16;
+        let bits = if eta == 2 { 3 } else { 4 };
+        if !valid_secret_encoding(s1_enc.as_slice(), bits, 2 * eta)
+            || !valid_secret_encoding(s2_enc.as_slice(), bits, 2 * eta)
+        {
+            return Err(Error::new());
+        }
+
+        let key = Self::new_expand_a(
+            rho.clone(),
+            K.clone(),
+            tr.clone(),
+            P::decode_s1(s1_enc),
+            P::decode_s2(s2_enc),
+            P::decode_t0(t0_enc),
+        );
+        // Reconstruct the values derived by FIPS 204 Algorithm 6 rather than
+        // trusting independently supplied t0 and tr. This is an import-time
+        // consistency check, not a proof that the original seed is available.
+        let As1_hat = &key.A_hat * &key.s1_hat;
+        let As1 = As1_hat.ntt_inverse();
+        let t = &As1 + &key.s2;
+        let (t1, t0) = t.power2round();
+        let t0_matches = t0.ct_eq(&key.t0);
+        #[cfg(feature = "zeroize")]
+        {
+            let mut As1_hat = As1_hat;
+            let mut As1 = As1;
+            let mut t = t;
+            let mut t0 = t0;
+            As1_hat.zeroize();
+            As1.zeroize();
+            t.zeroize();
+            t0.zeroize();
+        }
+        let public = VerifyingKey::<P>::encode_internal(&key.rho, &t1);
+        let expected_tr: B64 = H::default().absorb(&public).squeeze_new();
+        if !bool::from(t0_matches.and(expected_tr.ct_eq(&key.tr))) {
+            return Err(Error::new());
+        }
+        Ok(key)
+    }
+
     /// DEPRECATED: encode the key in a fixed-size byte array.
     ///
     /// Note that this form is deprecated in practice; prefer to use [`SigningKey::to_seed`].
@@ -512,6 +570,25 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
             t0_enc,
         )
     }
+}
+
+/// Check packed secret coefficients without allocating or invoking BitUnPack.
+fn valid_secret_encoding(bytes: &[u8], bits: u32, maximum: u16) -> bool {
+    let mask = (1u16 << bits) - 1;
+    let mut pending = 0u16;
+    let mut width = 0;
+    let mut invalid = 0u16;
+    for &byte in bytes {
+        pending |= u16::from(byte) << width;
+        width += 8;
+        while width >= bits {
+            invalid |= u16::from((pending & mask) > maximum);
+            pending >>= bits;
+            width -= bits;
+        }
+    }
+    debug_assert_eq!(width, 0, "ML-DSA polynomials contain 256 coefficients");
+    invalid == 0
 }
 
 /// The `Signer` implementation for `ExpandedSigningKey` uses the optional deterministic variant of ML-DSA, and
@@ -660,3 +737,36 @@ impl<P: MlDsaParams> Drop for ExpandedSigningKey<P> {
 
 #[cfg(feature = "zeroize")]
 impl<P: MlDsaParams> ZeroizeOnDrop for ExpandedSigningKey<P> {}
+
+#[cfg(test)]
+mod checked_encoding_tests {
+    use super::valid_secret_encoding;
+
+    #[test]
+    fn all_packed_coefficient_positions_are_checked() {
+        // Exercise every unused code at every bit alignment, including codes
+        // crossing byte boundaries and the last coefficient in a polynomial.
+        for (bits, maximum) in [(3usize, 4u16), (4, 8)] {
+            for coefficient in 0..256 {
+                for value in 0..(1u16 << bits) {
+                    let mut encoded = [0u8; 128];
+                    let start = coefficient * bits;
+                    for bit in 0..bits {
+                        let index = start + bit;
+                        if value & (1 << bit) != 0 {
+                            encoded[index >> 3] |= 1 << (index & 7);
+                        }
+                    }
+                    assert_eq!(
+                        valid_secret_encoding(
+                            &encoded[..32 * bits],
+                            u32::try_from(bits).expect("three or four bits"),
+                            maximum,
+                        ),
+                        value <= maximum,
+                    );
+                }
+            }
+        }
+    }
+}
