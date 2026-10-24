@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+### Fixed
+- Zeroize the SHAKE state when the `zeroize` feature is enabled, by wiring
+  `shake/zeroize` into it ([#1471])
+
+[#1471]: https://github.com/RustCrypto/signatures/issues/1471
+
 ## 0.1.1 (2026-06-05)
 ### Fixed
 - Enable `module-lattice/alloc` when `alloc` feature is enabled ([#1365])
