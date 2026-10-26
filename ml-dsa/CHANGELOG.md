@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Zeroize the SHAKE state when the `zeroize` feature is enabled, by wiring
   `shake/zeroize` into it ([#1471])
+- Construct and clone expanded matrices one row at a time with `alloc`, reducing
+  stack usage without changing the public lattice types or constructors.
 
 [#1471]: https://github.com/RustCrypto/signatures/issues/1471
 

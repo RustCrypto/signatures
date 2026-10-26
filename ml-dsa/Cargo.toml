@@ -6,7 +6,7 @@ described in FIPS-204 (final)
 """
 version = "0.1.1"
 edition = "2024"
-rust-version = "1.85"
+rust-version = "1.87"
 license = "Apache-2.0 OR MIT"
 homepage = "https://github.com/RustCrypto/signatures/tree/master/ml-dsa"
 repository = "https://github.com/RustCrypto/signatures"
@@ -35,7 +35,7 @@ zeroize = ["dep:zeroize", "hybrid-array/zeroize", "module-lattice/zeroize", "sha
 
 [dependencies]
 common = { package = "crypto-common", version = "0.2", default-features = false }
-ctutils = { version = "0.4", default-features = false }
+ctutils = { version = "0.4.5", default-features = false }
 hybrid-array = { version = "0.4", features = ["extra-sizes"] }
 module-lattice = { version = "0.2.3", features = ["ctutils"] }
 shake = { version = "0.1", default-features = false }
