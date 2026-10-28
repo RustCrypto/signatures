@@ -203,7 +203,7 @@ where
         let r: u16 = Truncate::truncate(r);
         let v = H::default()
             .absorb(rho)
-            .absorb(&(mu + r).to_le_bytes())
+            .absorb(&mu.wrapping_add(r).to_le_bytes())
             .squeeze_new::<Gamma1::SampleSize>();
 
         Gamma1::unpack(&v)
@@ -215,6 +215,7 @@ where
 #[allow(clippy::cast_possible_truncation)]
 mod test {
     use super::*;
+    use crate::{MlDsa44, MlDsa65, MlDsa87, ParameterSet};
     use hybrid_array::typenum::{U16, U256};
 
     fn max_abs_1(p: &Polynomial) -> bool {
@@ -276,5 +277,27 @@ mod test {
         let all_in_range = sample.iter().map(|x| *x + Elem::new(4)).all(|x| x.0 < 9);
         assert!(all_in_range);
         // TODO measure uniformity
+    }
+
+    fn expand_mask_boundary<P: ParameterSet>() {
+        let rho = [0; 64];
+        for mu in [0, 65530, 65534, 65535] {
+            let y = expand_mask::<P::L, P::Gamma1>(&rho, mu);
+            for (r, p) in y.0.iter().enumerate() {
+                let nonce = ((usize::from(mu) + r) % 65536) as u16;
+                let v = H::default()
+                    .absorb(&rho)
+                    .absorb(&nonce.to_le_bytes())
+                    .squeeze_new();
+                assert_eq!(*p, P::Gamma1::unpack(&v));
+            }
+        }
+    }
+
+    #[test]
+    fn test_expand_mask_boundary() {
+        expand_mask_boundary::<MlDsa44>();
+        expand_mask_boundary::<MlDsa65>();
+        expand_mask_boundary::<MlDsa87>();
     }
 }
