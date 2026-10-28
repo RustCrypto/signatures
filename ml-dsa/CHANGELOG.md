@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Construct and clone expanded matrices one row at a time with `alloc`, reducing
   stack usage without changing the public lattice types or constructors.
+- Return an error instead of panicking from the fallible signing APIs when rejection
+  sampling exhausts its attempts.
 
 ## 0.1.1 (2026-06-05)
 ### Fixed
