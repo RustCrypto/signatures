@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Construct and clone expanded matrices one row at a time with `alloc`, reducing
   stack usage without changing the public lattice types or constructors.
+- Wrap the `ExpandMask` nonce modulo 2^16 instead of overflowing on ML-DSA-87's last
+  signing attempt.
 
 ## 0.1.1 (2026-06-05)
 ### Fixed
