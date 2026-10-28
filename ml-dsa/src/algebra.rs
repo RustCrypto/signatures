@@ -85,7 +85,7 @@ pub(crate) trait ConstantTimeDiv: Unsigned {
     #[inline(always)]
     fn ct_div(x: u32) -> u32 {
         // Barrett reduction: q = (x * MULTIPLIER) >> SHIFT
-        // This gives us floor(x / M) for x < 2^SHIFT / MULTIPLIER * M
+        // This gives us floor(x / M) for x < Q
         let x64 = u64::from(x);
         let quotient = (x64 * Self::CT_DIV_MULTIPLIER) >> Self::CT_DIV_SHIFT;
         // Quotient is guaranteed to fit in u32 because:
