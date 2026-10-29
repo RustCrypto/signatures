@@ -335,7 +335,7 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
             .squeeze_new();
 
         // Rejection sampling loop
-        for kappa in (0..u16::MAX).step_by(P::L::USIZE) {
+        for kappa in signing_nonces::<P>() {
             let y = expand_mask::<P::L, P::Gamma1>(&rhopp, kappa);
             let w = (&self.A_hat * &y.ntt()).ntt_inverse();
             let w1 = w.high_bits::<P::TwoGamma2>();
@@ -678,3 +678,40 @@ impl<P: MlDsaParams> Drop for ExpandedSigningKey<P> {
 
 #[cfg(feature = "zeroize")]
 impl<P: MlDsaParams> ZeroizeOnDrop for ExpandedSigningKey<P> {}
+
+/// Nonce bases for complete `ExpandMask` batches, without overflowing `u16` nonce.
+fn signing_nonces<P: MlDsaParams>() -> impl Iterator<Item = u16> {
+    (0..=u16::MAX - (P::L::U16 - 1)).step_by(P::L::USIZE)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{MlDsa44, MlDsa65, MlDsa87};
+
+    fn check_signing_nonces<P: MlDsaParams>(expected_last: u16, expected_count: usize) {
+        let mut count = 0;
+        let mut last = None;
+        for kappa in signing_nonces::<P>() {
+            assert_eq!(usize::from(kappa), count * P::L::USIZE);
+            assert!(kappa.checked_add(P::L::U16 - 1).is_some());
+            last = Some(kappa);
+            count += 1;
+        }
+        assert_eq!(last, Some(expected_last));
+        assert_eq!(count, expected_count);
+
+        // The next batch would exceed the nonce space.
+        assert!(u32::from(expected_last) + 2 * P::L::U32 - 1 > u32::from(u16::MAX));
+
+        // Exercise ExpandMask at the final permitted nonce base.
+        let _ = expand_mask::<P::L, P::Gamma1>(&B64::default(), expected_last);
+    }
+
+    #[test]
+    fn signing_nonce_bounds() {
+        check_signing_nonces::<MlDsa44>(65532, 16384);
+        check_signing_nonces::<MlDsa65>(65530, 13107);
+        check_signing_nonces::<MlDsa87>(65527, 9362);
+    }
+}
