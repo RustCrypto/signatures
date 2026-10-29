@@ -1,0 +1,26 @@
+[package]
+name = "driver"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[dependencies]
+checkct_macros = { path = "../checkct_macros" }
+ml-dsa = { path = "../..", default-features = false }
+# PrivateRng and PublicRng implement the traits of all these rand_core versions,
+# so that they can be passed to libraries depending on any of them.
+rand_core = "0.10"
+rand_core_09 = { package = "rand_core", version = "0.9" }
+rand_core_06 = { package = "rand_core", version = "0.6" }
+
+[dependencies.ctutils]
+version = "0.4.7"
+default-features = false
+
+[dependencies.hybrid-array]
+version = "0.4"
+features = ["extra-sizes"]
+
+[dependencies.module-lattice]
+version = "0.2.3"
+features = ["ctutils"]
