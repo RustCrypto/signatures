@@ -31,6 +31,8 @@ use {
 #[cfg(feature = "zeroize")]
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
+mod steps;
+
 /// ML-DSA signing key (i.e. private/secret key).
 ///
 /// This type is initialized through a [`Seed`], and can be used to generate ML-DSA signatures.
@@ -348,11 +350,8 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
             let c = sample_in_ball(&c_tilde, P::TAU);
             let c_hat = c.ntt();
 
-            let cs1 = (&c_hat * &self.s1_hat).ntt_inverse();
-            let cs2 = (&c_hat * &self.s2_hat).ntt_inverse();
-
-            let z = &y + &cs1;
-            let r0 = (&w - &cs2).low_bits::<P::TwoGamma2>();
+            let steps::Response { z, cs2, r0 } =
+                steps::response::<P>(&y, &w, &c_hat, &self.s1_hat, &self.s2_hat);
 
             if z.infinity_norm() >= P::GAMMA1_MINUS_BETA
                 || r0.infinity_norm() >= P::GAMMA2_MINUS_BETA
@@ -360,9 +359,8 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
                 continue;
             }
 
-            let ct0 = (&c_hat * &self.t0_hat).ntt_inverse();
+            let (ct0, w_cs2_ct0) = steps::hint_polynomials::<P>(&w, &cs2, &c_hat, &self.t0_hat);
             let minus_ct0 = -&ct0;
-            let w_cs2_ct0 = &(&w - &cs2) + &ct0;
             let h = Hint::<P>::new(&minus_ct0, &w_cs2_ct0);
 
             if ct0.infinity_norm() >= P::Gamma2::U32 || h.hamming_weight() > P::Omega::USIZE {

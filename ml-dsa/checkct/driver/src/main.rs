@@ -10,8 +10,38 @@ mod algebra;
 #[path = "../../../src/ntt.rs"]
 mod ntt;
 
+// These modules share the production algebra and parameter traits.
+#[allow(dead_code)]
+#[path = "../../../src/crypto.rs"]
+mod crypto;
+#[allow(dead_code)]
+#[path = "../../../src/encode.rs"]
+mod encode;
+#[allow(dead_code)]
+#[path = "../../../src/hint.rs"]
+mod hint;
+#[allow(dead_code)]
+#[allow(non_snake_case)] // Match the production crate's specification notation.
+#[path = "../../../src/param.rs"]
+mod param;
+#[allow(dead_code)]
+#[path = "../../../src/sampling.rs"]
+mod sampling;
+#[path = "../../../src/signing/steps.rs"]
+mod signing_steps;
+
+use hybrid_array::{
+    Array,
+    sizes::{U32, U64},
+};
+use param::MlDsaParams;
+type B32 = Array<u8, U32>;
+type B64 = Array<u8, U64>;
+
 mod driver;
+mod params;
 mod rng;
+mod signing;
 
 #[unsafe(no_mangle)]
 pub extern "C" fn _start() -> ! {

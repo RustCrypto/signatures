@@ -12,12 +12,12 @@ use module_lattice::{Field, MultiplyNtt};
 
 // All canonical field elements are reachable. Use hardened selection rather
 // than a secret-dependent guard (which would itself fail the analysis).
-fn secret_elem() -> Elem {
+pub(crate) fn secret_elem() -> Elem {
     let x = PrivateRng.next_u32() & 0x7f_ffff;
     Elem::new(x - BaseField::Q.ct_select(&0, x.ct_lt(&BaseField::Q)))
 }
 
-fn secret_poly() -> Polynomial {
+pub(crate) fn secret_poly() -> Polynomial {
     Polynomial::new(Array::from_fn(|_| secret_elem()))
 }
 

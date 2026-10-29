@@ -7,6 +7,7 @@ edition = "2024"
 [dependencies]
 checkct_macros = { path = "../checkct_macros" }
 ml-dsa = { path = "../..", default-features = false }
+shake = { version = "0.1", default-features = false }
 # PrivateRng and PublicRng implement the traits of all these rand_core versions,
 # so that they can be passed to libraries depending on any of them.
 rand_core = "0.10"
@@ -24,3 +25,12 @@ features = ["extra-sizes"]
 [dependencies.module-lattice]
 version = "0.2.3"
 features = ["ctutils"]
+
+# Source-included modules use the same feature cfgs as the library.
+[features]
+zeroize = ["ml-dsa/zeroize", "dep:zeroize"]
+
+[dependencies.zeroize]
+version = "1.8.1"
+default-features = false
+optional = true
