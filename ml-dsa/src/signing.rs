@@ -304,6 +304,10 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
     /// This method reflects the ML-DSA.Sign_internal algorithm from FIPS 204. It does not
     /// include the domain separator that distinguishes between the normal and pre-hashed cases,
     /// and it does not separate the context string from the rest of the message.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the rejection sampling loop fails to find a valid signature.
     // Algorithm 7 ML-DSA.Sign_internal
     // TODO(RLB) Only expose based on a feature. Tests need access, but normal code shouldn't.
     pub fn sign_internal(&self, Mp: &[&[u8]], rnd: &B32) -> Signature<P>
@@ -318,6 +322,11 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
     where
         P: MlDsaParams,
     {
+        self.try_raw_sign_mu(mu, rnd)
+            .expect("Rejection sampling failed to find a valid signature")
+    }
+
+    fn try_raw_sign_mu(&self, mu: &B64, rnd: &B32) -> Result<Signature<P>, Error> {
         // Compute the private random seed
         let rhopp: B64 = H::default()
             .absorb(&self.K)
@@ -361,10 +370,10 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
             }
 
             let z = MaybeBox::new(z.mod_plus_minus::<SpecQ>());
-            return Signature { c_tilde, z, h };
+            return Ok(Signature { c_tilde, z, h });
         }
 
-        unreachable!("Rejection sampling failed to find a valid signature");
+        Err(Error::new())
     }
 
     /// This method reflects the randomized ML-DSA.Sign algorithm.
@@ -372,7 +381,8 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
     /// # Errors
     ///
     /// This method will return an opaque error if the context string is more than 255 bytes long,
-    /// or if it fails to get enough randomness.
+    /// if it fails to get enough randomness, or if the rejection sampling loop fails to find a
+    /// valid signature.
     // Algorithm 2 ML-DSA.Sign
     #[cfg(feature = "rand_core")]
     pub fn sign_randomized<R: TryCryptoRng + ?Sized>(
@@ -399,14 +409,15 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
         rng.try_fill_bytes(&mut rnd).map_err(|_| Error::new())?;
 
         let mu = MuBuilder::new(&self.tr, ctx).message(Mp);
-        Ok(self.raw_sign_mu(&mu, &rnd))
+        self.try_raw_sign_mu(&mu, &rnd)
     }
 
     /// This method reflects the randomized ML-DSA.Sign algorithm with a pre-computed μ.
     ///
     /// # Errors
     ///
-    /// This method can return an opaque error if it fails to get enough randomness.
+    /// This method can return an opaque error if it fails to get enough randomness, or if the
+    /// rejection sampling loop fails to find a valid signature.
     // Algorithm 2 ML-DSA.Sign (optional pre-computed μ variant)
     #[cfg(feature = "rand_core")]
     pub fn sign_mu_randomized<R: TryCryptoRng + ?Sized>(
@@ -417,7 +428,7 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
         let mut rnd = B32::default();
         rng.try_fill_bytes(&mut rnd).map_err(|_| Error::new())?;
 
-        Ok(self.raw_sign_mu(mu, &rnd))
+        self.try_raw_sign_mu(mu, &rnd)
     }
 
     /// This method reflects the optional deterministic variant of the ML-DSA.Sign algorithm.
@@ -425,6 +436,8 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
     /// # Errors
     ///
     /// This method will return an opaque error if the context string is more than 255 bytes long.
+    /// It will also return an opaque error if the rejection sampling loop fails to find a valid
+    /// signature.
     // Algorithm 2 ML-DSA.Sign (optional deterministic variant)
     pub fn sign_deterministic(&self, M: &[u8], ctx: &[u8]) -> Result<Signature<P>, Error> {
         self.raw_sign_deterministic(&[M], ctx)
@@ -432,6 +445,10 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
 
     /// This method reflects the optional deterministic variant of the ML-DSA.Sign algorithm with a
     /// pre-computed μ.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the rejection sampling loop fails to find a valid signature.
     // Algorithm 2 ML-DSA.Sign (optional deterministic and pre-computed μ variant)
     pub fn sign_mu_deterministic(&self, mu: &B64) -> Signature<P> {
         let rnd = B32::default();
@@ -444,7 +461,7 @@ impl<P: MlDsaParams> ExpandedSigningKey<P> {
         }
 
         let mu = MuBuilder::new(&self.tr, ctx).message(Mp);
-        Ok(self.sign_mu_deterministic(&mu))
+        self.try_raw_sign_mu(&mu, &B32::default())
     }
 
     /// This auxiliary function derives a `VerifyingKey` from a bare
@@ -545,7 +562,7 @@ impl<P: MlDsaParams> DigestSigner<Shake256, Signature<P>> for ExpandedSigningKey
         f(mu.as_mut())?;
         let mu = mu.finish();
 
-        Ok(self.sign_mu_deterministic(&mu))
+        self.try_raw_sign_mu(&mu, &B32::default())
     }
 }
 
