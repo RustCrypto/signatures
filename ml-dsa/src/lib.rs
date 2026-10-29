@@ -262,7 +262,7 @@ mod test {
     use super::*;
     use crate::param::*;
     use hybrid_array::typenum::Unsigned;
-    use signature::Keypair;
+    use signature::{Keypair, digest::Update};
 
     #[test]
     fn output_sizes() {
@@ -510,6 +510,26 @@ mod test {
             let sig = sk.sign_deterministic(msg, &short_ctx).unwrap();
             assert!(!vk.verify_with_context(msg, &long_ctx, &sig));
             assert!(vk.verify_with_context(msg, &short_ctx, &sig));
+
+            assert!(
+                vk.compute_mu(
+                    |_| panic!("oversized context must be rejected before invoking the callback"),
+                    &long_ctx,
+                )
+                .is_err()
+            );
+
+            let mu = vk
+                .compute_mu(
+                    |h| {
+                        h.update(msg);
+                        Ok(())
+                    },
+                    &short_ctx,
+                )
+                .unwrap();
+            assert!(vk.verify_mu(&mu, &sig));
+            assert_eq!(sk.sign_mu_deterministic(&mu).encode(), sig.encode());
         }
         test_ctx_length::<MlDsa44>();
         test_ctx_length::<MlDsa65>();
