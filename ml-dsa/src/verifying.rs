@@ -80,12 +80,17 @@ impl<P: MlDsaParams> VerifyingKey<P> {
     /// Computes µ according to FIPS 204 for use in `ML-DSA.Sign` and `ML-DSA.Verify`.
     ///
     /// # Errors
-    /// Returns [`Error`] if the given `Mp` returns one.
+    /// Returns [`Error`] if the context string is more than 255 bytes long or the given `Mp`
+    /// returns one. An oversized context is rejected before `Mp` is called.
     pub fn compute_mu<F: FnOnce(&mut Shake256) -> Result<(), Error>>(
         &self,
         Mp: F,
         ctx: &[u8],
     ) -> Result<B64, Error> {
+        if ctx.len() > 255 {
+            return Err(Error::new());
+        }
+
         let mut mu = MuBuilder::new(&self.precomputed_values.tr, ctx);
         Mp(mu.as_mut())?;
         Ok(mu.finish())
