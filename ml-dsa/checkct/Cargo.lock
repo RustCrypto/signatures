@@ -77,6 +77,8 @@ dependencies = [
  "rand_core 0.10.1",
  "rand_core 0.6.4",
  "rand_core 0.9.5",
+ "shake",
+ "zeroize",
 ]
 
 [[package]]
@@ -87,6 +89,7 @@ checksum = "27f864f10dfb56725ce5ce5472bc52252c8f93a4ab86327122cebf62c5f59a17"
 dependencies = [
  "ctutils",
  "typenum",
+ "zeroize",
 ]
 
 [[package]]
@@ -115,6 +118,7 @@ dependencies = [
  "module-lattice",
  "shake",
  "signature",
+ "zeroize",
 ]
 
 [[package]]
@@ -126,6 +130,7 @@ dependencies = [
  "ctutils",
  "hybrid-array",
  "num-traits",
+ "zeroize",
 ]
 
 [[package]]
@@ -221,3 +226,9 @@ name = "unicode-ident"
 version = "1.0.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2c754d6c33795a1c324727428e5a7dedb5b06195f9890bdbcba760d3e246563"
+
+[[package]]
+name = "zeroize"
+version = "1.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e13084392c5e4bc371903e2935a5eaeed24905a7511356b883835e18a78f6879"

@@ -201,13 +201,22 @@ where
 {
     Vector::new(Array::from_fn(|r| {
         let r: u16 = Truncate::truncate(r);
-        let v = H::default()
-            .absorb(rho)
-            .absorb(&(mu + r).to_le_bytes())
-            .squeeze_new::<Gamma1::SampleSize>();
+        let v = expand_mask_xof::<Gamma1>(rho, mu + r);
 
         Gamma1::unpack(&v)
     }))
+}
+
+/// Expand one mask polynomial's seed before decoding it into coefficients.
+#[inline]
+pub(crate) fn expand_mask_xof<Gamma1: MaskSamplingSize>(
+    rho: &[u8],
+    nonce: u16,
+) -> Array<u8, Gamma1::SampleSize> {
+    H::default()
+        .absorb(rho)
+        .absorb(&nonce.to_le_bytes())
+        .squeeze_new::<Gamma1::SampleSize>()
 }
 
 #[cfg(test)]
