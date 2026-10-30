@@ -1101,6 +1101,7 @@ dependencies = [
  "hmac",
  "sha2",
  "sha3",
+ "zeroize",
 ]
 
 [[package]]
