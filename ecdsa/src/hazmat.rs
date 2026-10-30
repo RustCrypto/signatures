@@ -23,6 +23,8 @@ use elliptic_curve::{
     scalar::IsHigh,
 };
 
+use core::ops::ShrAssign;
+
 #[cfg(feature = "digest")]
 use digest::{Digest, block_api::BlockSizeUser};
 
@@ -58,7 +60,7 @@ where
     C: EcdsaCurve + CurveArithmetic,
 {
     // Reduce message hash into an element of the scalar field for `C`.
-    let z = bytes2scalar::<C>(z);
+    let z = bits2scalar::<C>(z);
 
     // Compute scalar inversion of 𝑘.
     let k_inv = k.invert();
@@ -143,7 +145,7 @@ where
         return Err(Error::new());
     }
 
-    let z = bytes2scalar::<C>(z);
+    let z = bits2scalar::<C>(z);
     let s_inv = *s.invert_vartime();
     let u1 = z * s_inv;
     let u2 = *r * s_inv;
@@ -158,6 +160,28 @@ where
     }
 }
 
+/// Convert a message digest into a `Scalar` for the given curve using the `bits2int` conversion
+/// from FIPS 186-5 / SEC1: when the digest is longer than the bit length of `n` (curve order),
+/// only its leftmost bits are used. The result is then reduced mod `n`.
+pub(crate) fn bits2scalar<C: EcdsaCurve + CurveArithmetic>(bytes: &[u8]) -> Scalar<C> {
+    let uint = bits2uint::<C::Uint>(bytes, C::ORDER.bits());
+    <Scalar<C> as Reduce<C::Uint>>::reduce(&uint)
+}
+
+/// Interpret the leftmost `n_bits` bits of `bytes` as a big endian integer.
+fn bits2uint<U: Encoding + ShrAssign<usize>>(bytes: &[u8], n_bits: u32) -> U {
+    let n_bytes = usize::try_from(n_bits.div_ceil(8)).expect("overflow");
+    let bytes = &bytes[..bytes.len().min(n_bytes)];
+    let mut uint = U::from_be_slice_truncated(bytes, n_bits.next_multiple_of(8));
+
+    // Drop the excess low bits when `n_bits` is not a multiple of 8 (e.g. P-521)
+    if bytes.len() == n_bytes {
+        uint >>= usize::try_from(n_bits.next_multiple_of(8) - n_bits).expect("overflow");
+    }
+
+    uint
+}
+
 /// Convert the provided bytestring into a `Scalar` for the given curve, interpreting it as big
 /// endian, zero-padding or truncating it to the bit length of `n` (curve order) if necessary,
 /// and then reducing it mod `n`.
@@ -170,4 +194,40 @@ pub(crate) fn bytes2scalar<C: EcdsaCurve + CurveArithmetic>(mut bytes: &[u8]) ->
     }
 
     <Scalar<C> as Reduce<C::Uint>>::reduce(&C::Uint::from_be_slice_truncated(bytes, n_bits))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::bits2uint;
+    use elliptic_curve::bigint::{U256, U576};
+
+    #[test]
+    fn bits2uint_uses_leftmost_bits() {
+        // 66 bytes are 528 bits, so only the leftmost 521 bits are kept
+        let mut bytes = [0u8; 66];
+        bytes[0] = 0x80;
+        bytes[65] = 0x7f;
+        assert_eq!(bits2uint::<U576>(&bytes, 521), U576::ONE.shl_vartime(520));
+
+        let bytes = [0xff; 70];
+        assert_eq!(
+            bits2uint::<U576>(&bytes, 521),
+            U576::ONE.shl_vartime(521).wrapping_sub(&U576::ONE)
+        );
+
+        // Shorter inputs are used as is
+        let bytes = [0xff; 64];
+        assert_eq!(
+            bits2uint::<U576>(&bytes, 521),
+            U576::ONE.shl_vartime(512).wrapping_sub(&U576::ONE)
+        );
+    }
+
+    #[test]
+    fn bits2uint_byte_aligned_order() {
+        let mut bytes = [0u8; 40];
+        bytes[31] = 1;
+        bytes[32] = 0xff;
+        assert_eq!(bits2uint::<U256>(&bytes, 256), U256::ONE);
+    }
 }
