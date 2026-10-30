@@ -1,4 +1,4 @@
-use std::iter::IntoIterator;
+use core::iter::IntoIterator;
 
 /// Returns an iterator over the w-bit Winternitz coefficients of the inout bytes
 /// Implements the Coef function from section 3.1.3 of RFC8554
