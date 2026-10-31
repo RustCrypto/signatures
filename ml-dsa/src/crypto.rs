@@ -97,3 +97,17 @@ mod test {
         assert_eq!(actual, expected2);
     }
 }
+
+#[cfg(all(test, feature = "zeroize"))]
+mod zeroize_tests {
+    use super::*;
+    use zeroize::ZeroizeOnDrop;
+
+    fn assert_zeroize_on_drop<T: ZeroizeOnDrop>(_: &T) {}
+
+    #[test]
+    fn shake_sponges_zeroize_on_drop() {
+        assert_zeroize_on_drop(&Shake128::default());
+        assert_zeroize_on_drop(&Shake256::default());
+    }
+}
