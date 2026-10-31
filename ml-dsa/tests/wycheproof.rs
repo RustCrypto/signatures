@@ -134,7 +134,13 @@ macro_rules! mldsa_verify_test {
                                     other => todo!("{:?}", other),
                                 }
                             } else {
-                                // TODO(test) contexts
+                                let result = vk.verify_with_context(&test.msg, &test.ctx, &sig);
+
+                                match test.result {
+                                    ExpectedResult::Valid => assert!(result),
+                                    ExpectedResult::Invalid => assert!(!result),
+                                    other => todo!("{:?}", other),
+                                }
                             }
                         } else {
                             println!("error decoding signature (length: {})", test.sig.len(),);
