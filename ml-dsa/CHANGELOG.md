@@ -5,16 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-### Fixed
-- Zeroize the SHAKE state when the `zeroize` feature is enabled, by wiring
-  `shake/zeroize` into it ([#1471])
-- Construct and clone expanded matrices one row at a time with `alloc`, reducing
-  stack usage without changing the public lattice types or constructors.
-- Return an error instead of panicking from the fallible signing APIs when rejection
-  sampling exhausts its attempts.
+## 0.1.2 (2026-10-31)
+### Added
+- `c_tilde` getter on `Signature` ([#1362])
 
-[#1471]: https://github.com/RustCrypto/signatures/issues/1471
+### Changed
+- Place heavy bits of the signature on the heap when available ([#1419])
+- Return an error when signing exhausts rejection sampling ([#1481])
+- Bump `module-lattice` to v0.2.4 ([#1494])
+
+### Fixed
+- Construct and clone expanded matrices one row at a time ([#1444])
+- Reuse public key during key generation ([#1461])
+- Zeroize the SHAKE state when the `zeroize` feature is enabled, by wiring
+  `shake/zeroize` into it ([#1473])
+- Return an error instead of panicking from the fallible signing APIs when rejection
+  sampling exhausts its attempts ([#1481])
+- Reject `AlgorithmIdentifier` parameters in PKCS#8 and SPKI keys ([#1482])
+- Reject oversized contexts in `compute_mu` ([#1489])
+
+### Security
+- Fixed constant time issues ([#1386])
+- Bump `crypto-bigint` to v0.7.7; MSRV 1.87 ([#1475])
+
+[#1362]: https://github.com/RustCrypto/signatures/issues/1362
+[#1386]: https://github.com/RustCrypto/signatures/issues/1386
+[#1419]: https://github.com/RustCrypto/signatures/issues/1419
+[#1444]: https://github.com/RustCrypto/signatures/issues/1444
+[#1461]: https://github.com/RustCrypto/signatures/issues/1461
+[#1473]: https://github.com/RustCrypto/signatures/issues/1473
+[#1475]: https://github.com/RustCrypto/signatures/issues/1475
+[#1481]: https://github.com/RustCrypto/signatures/issues/1481
+[#1482]: https://github.com/RustCrypto/signatures/issues/1482
+[#1489]: https://github.com/RustCrypto/signatures/issues/1489
+[#1494]: https://github.com/RustCrypto/signatures/issues/1494
 
 ## 0.1.1 (2026-06-05)
 ### Fixed
