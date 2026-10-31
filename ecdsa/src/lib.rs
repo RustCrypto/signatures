@@ -406,7 +406,9 @@ where
             return Err(Error::new());
         }
 
-        let (r_hex, s_hex) = hex.split_at(C::FieldBytesSize::USIZE * 2);
+        let (r_hex, s_hex) = hex
+            .split_at_checked(C::FieldBytesSize::USIZE * 2)
+            .ok_or_else(Error::new)?;
 
         let r = r_hex
             .parse::<NonZeroScalar<C>>()
