@@ -37,7 +37,7 @@ zeroize = ["dep:zeroize", "hybrid-array/zeroize", "module-lattice/zeroize"]
 common = { package = "crypto-common", version = "0.2", default-features = false }
 ctutils = { version = "0.4.7", default-features = false }
 hybrid-array = { version = "0.4", features = ["extra-sizes"] }
-module-lattice = { version = "0.2.3", features = ["ctutils"] }
+module-lattice = { version = "0.2.4", features = ["ctutils"] }
 shake = { version = "0.1", default-features = false }
 signature = { version = "3", default-features = false, features = ["digest"] }
 
