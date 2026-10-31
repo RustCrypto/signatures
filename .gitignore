@@ -1,2 +1,4 @@
 target
 *.swp
+config.bat
+node_modules
