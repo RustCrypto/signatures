@@ -9,8 +9,10 @@ use crate::xmss_commons;
 use crate::xmss_core;
 
 /// Parses the OID and initializes params from the first bytes of a key.
-/// Tries XMSS OIDs first, then falls back to XMSSMT.
-fn parse_oid_and_params(bytes: &[u8]) -> XmssResult<(XmssOid, XmssParams)> {
+///
+/// XMSS and XMSSMT raw OIDs share the same numbering, so the expected kind
+/// decides how the raw value is read.
+fn parse_oid_and_params(bytes: &[u8], xmssmt: bool) -> XmssResult<(XmssOid, XmssParams)> {
     if bytes.len() < XMSS_OID_LEN {
         return Err(Error::InvalidOid(0));
     }
@@ -18,7 +20,11 @@ fn parse_oid_and_params(bytes: &[u8]) -> XmssResult<(XmssOid, XmssParams)> {
     for i in 0..XMSS_OID_LEN {
         raw_oid |= (bytes[XMSS_OID_LEN - i - 1] as u32) << (i * 8);
     }
-    let oid = XmssOid::try_from(raw_oid).or_else(|_| XmssOid::from_xmssmt_raw_oid(raw_oid))?;
+    let oid = if xmssmt {
+        XmssOid::from_xmssmt_raw_oid(raw_oid)?
+    } else {
+        XmssOid::try_from(raw_oid)?
+    };
     let mut params = XmssParams::default();
     oid.initialize(&mut params)?;
     Ok((oid, params))
@@ -67,8 +73,8 @@ impl<P: XmssParameter> TryFrom<&[u8]> for SigningKey<P> {
     type Error = Error;
 
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
-        let (oid, params) = parse_oid_and_params(value)?;
         let expected_oid = P::oid();
+        let (oid, params) = parse_oid_and_params(value, !expected_oid.is_xmss())?;
         if oid != expected_oid {
             return Err(Error::InvalidOid(oid.raw_oid()));
         }
@@ -220,8 +226,8 @@ impl<P: XmssParameter> TryFrom<&[u8]> for VerifyingKey<P> {
     type Error = Error;
 
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
-        let (oid, params) = parse_oid_and_params(value)?;
         let expected_oid = P::oid();
+        let (oid, params) = parse_oid_and_params(value, !expected_oid.is_xmss())?;
         if oid != expected_oid {
             return Err(Error::InvalidOid(oid.raw_oid()));
         }
