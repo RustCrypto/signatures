@@ -27,6 +27,23 @@ fn k163_sha256() {
     let mut k = [0u8; 21];
     kgen.fill_next_k(&mut k);
     assert_eq!(k, hex!("023AF4074C90A02B3FE61D286D5C87F425E6BDD81B"));
+
+    let mut checked = KGenerator::<Sha256, U256>::try_new(&x, &h, b"", &q).unwrap();
+    let mut checked_k = [0u8; 21];
+    checked.fill_next_k(&mut checked_k);
+    assert_eq!(checked_k, k);
+}
+
+#[test]
+fn checked_constructor_rejects_invalid_input_lengths() {
+    let q = U256::from_be_hex("000000000000000000000004000000000000000000020108A2E0CC0D99F8A5EF");
+    let h = Sha256::digest(EXAMPLE_MSG);
+    for len in [0, 20, 22, 32, 33, 34] {
+        assert!(KGenerator::<Sha256, U256>::try_new(&[1u8; 34][..len], &h, b"", &q).is_none());
+    }
+    assert!(KGenerator::<Sha256, U256>::try_new(&[1u8; 21], &h, b"", &q).is_some());
+    assert!(KGenerator::<Sha256, U256>::try_new(&[1u8; 21], &[], b"", &q).is_none());
+    assert!(KGenerator::<Sha256, U256>::try_new(&[], &h, b"", &U256::ZERO).is_none());
 }
 
 /// Example from RFC6979 Appendix A.2.7.
@@ -48,6 +65,11 @@ fn p521_sha512() {
         "01DAE2EA071F8110DC26882D4D5EAE0621A3256FC8847FB9022E2B7D28E6F10198B1574FDD03A9053C08A1854A168AA5A57470EC97DD5CE090124EF52A2F7ECBFFD3"
     );
     assert_eq!(k, expected_k);
+
+    let mut checked = KGenerator::<Sha512, U576>::try_new(&x, &h, b"", &q).unwrap();
+    let mut checked_k = [0u8; 66];
+    checked.fill_next_k(&mut checked_k);
+    assert_eq!(checked_k, expected_k);
 }
 
 /// Ensure things are working with the SHA-3 crate, which doesn't support `block_api`.
