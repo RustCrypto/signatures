@@ -213,6 +213,110 @@ mod tests {
     }
 
     #[test]
+    fn test_xmssmt_h40_exhaustion_detected() {
+        // Regression test for #1453: on the XMSS^MT height-40 sets
+        // `index_bytes * 8 == full_height`, so the all-`0xFF` exhaustion
+        // marker equals `max_idx` and the `idx > max_idx` check can never
+        // fire. Signing after the last index used to return `Ok` with an
+        // invalid signature instead of `KeyExhausted`.
+        let mut kp = KeyPair::<XmssMtSha2_40_8_192>::from_seed(&[7u8; 72]).unwrap();
+        let vk = kp.verifying_key().clone();
+
+        // Place the key at the last valid index (2^40 - 1) and sign once.
+        let mut sk_bytes = kp.signing_key().as_ref().to_vec();
+        // Index lives at bytes[4..9] (after the OID, big-endian, 5 bytes).
+        sk_bytes[4] = 0xFF;
+        sk_bytes[5] = 0xFF;
+        sk_bytes[6] = 0xFF;
+        sk_bytes[7] = 0xFF;
+        sk_bytes[8] = 0xFF;
+        let mut sk = SigningKey::<XmssMtSha2_40_8_192>::try_from(sk_bytes).unwrap();
+
+        // The last valid index must still be usable.
+        let sig = sk.sign(b"last").unwrap();
+        vk.verify(&sig).unwrap();
+
+        // The next call must report `KeyExhausted`, not return `Ok` with a
+        // signature that fails verification.
+        let result = sk.sign(b"after exhaustion");
+        assert!(matches!(result, Err(Error::KeyExhausted)));
+    }
+
+    #[test]
+    fn test_xmssmt_h40_all_zero_seed_at_last_index_still_signs() {
+        // The exhausted state is recognized from the whole remainder of the
+        // key being zero, not from SK_SEED alone: a key generated from an
+        // all-zero seed has an all-zero SK_SEED (and PRF/public seed), yet
+        // is a perfectly usable key whose Merkle root is non-zero. Such a
+        // key at the last index must still sign, and its signature must
+        // verify.
+        let mut kp = KeyPair::<XmssMtSha2_40_8_192>::from_seed(&[0u8; 72]).unwrap();
+        let vk = kp.verifying_key().clone();
+
+        let mut sk_bytes = kp.signing_key().as_ref().to_vec();
+        // Index at bytes[4..9], big-endian, 5 bytes: 2^40 - 1.
+        sk_bytes[4] = 0xFF;
+        sk_bytes[5] = 0xFF;
+        sk_bytes[6] = 0xFF;
+        sk_bytes[7] = 0xFF;
+        sk_bytes[8] = 0xFF;
+        let mut sk = SigningKey::<XmssMtSha2_40_8_192>::try_from(sk_bytes).unwrap();
+
+        let sig = sk.sign(b"last").unwrap();
+        vk.verify(&sig).unwrap();
+    }
+
+    #[test]
+    fn test_xmssmt_h20_exhaustion_still_detected() {
+        // Control: on the height-20 sets the 3-byte exhaustion marker
+        // (2^24 - 1) is greater than `max_idx` (2^20 - 1), so the original
+        // index check keeps working. Pins that behavior.
+        let mut kp = KeyPair::<XmssMtSha2_20_4_192>::from_seed(&[7u8; 72]).unwrap();
+        let vk = kp.verifying_key().clone();
+
+        let mut sk_bytes = kp.signing_key().as_ref().to_vec();
+        // Index at bytes[4..7], big-endian, 3 bytes: 2^20 - 1.
+        sk_bytes[4] = 0x0F;
+        sk_bytes[5] = 0xFF;
+        sk_bytes[6] = 0xFF;
+        let mut sk = SigningKey::<XmssMtSha2_20_4_192>::try_from(sk_bytes).unwrap();
+
+        let sig = sk.sign(b"last").unwrap();
+        vk.verify(&sig).unwrap();
+
+        assert!(matches!(
+            sk.sign(b"after exhaustion"),
+            Err(Error::KeyExhausted)
+        ));
+    }
+
+    #[test]
+    fn test_xmss_d1_exhaustion_still_detected() {
+        // Control: single-tree XMSS uses a 4-byte index regardless of
+        // height, so the marker (2^32 - 1) exceeds `max_idx` and the
+        // original check keeps working. Pins that behavior (h=10 keeps the
+        // sign cost at the same order as `test_key_exhaustion`).
+        let mut kp = KeyPair::<XmssSha2_10_192>::from_seed(&[7u8; 72]).unwrap();
+        let vk = kp.verifying_key().clone();
+
+        let mut sk_bytes = kp.signing_key().as_ref().to_vec();
+        // Index at bytes[4..8], big-endian, 4 bytes: 2^10 - 1.
+        sk_bytes[4] = 0x00;
+        sk_bytes[5] = 0x00;
+        sk_bytes[6] = 0x03;
+        sk_bytes[7] = 0xFF;
+        let mut sk = SigningKey::<XmssSha2_10_192>::try_from(sk_bytes).unwrap();
+
+        let sig = sk.sign(b"last").unwrap();
+        vk.verify(&sig).unwrap();
+
+        assert!(matches!(
+            sk.sign(b"after exhaustion"),
+            Err(Error::KeyExhausted)
+        ));
+    }
+
+    #[test]
     fn test_deterministic_keygen() {
         // Sequential seed pattern: SK_SEED || SK_PRF || PUB_SEED
         let seed: Vec<u8> = (0u8..96).collect();

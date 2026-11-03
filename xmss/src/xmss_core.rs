@@ -172,6 +172,28 @@ pub fn xmssmt_core_sign(params: &XmssParams, sk: &mut [u8], m: &[u8]) -> XmssRes
         return Err(Error::KeyExhausted);
     }
 
+    // `idx == max_idx` is ambiguous: it means either "the last index is still
+    // unused" or "the key was exhausted by the last signature". Distinguishing
+    // the two from the index alone is only possible when the all-`0xFF`
+    // exhaustion marker written by the previous `sign()` is greater than
+    // `max_idx`, which happens for every set except the XMSS^MT height-40
+    // ones, where `index_bytes * 8 == full_height` makes the marker equal
+    // `max_idx`. For those sets the exhaustion is recognized from the secret
+    // key state instead: after the last signature the entire remainder of the
+    // key (`sk_seed || sk_prf || root || pub_seed`) is zeroed, which cannot
+    // occur for a usable key, since the root and public seed are always
+    // non-zero.
+    #[allow(clippy::cast_possible_truncation)]
+    // bounded by sk_bytes == idx_bytes + 4 * n, at most 4 + 256
+    if idx == max_idx
+        && params.index_bytes as usize * 8 == params.full_height as usize
+        && sk[idx_bytes..params.sk_bytes as usize]
+            .iter()
+            .all(|&b| b == 0)
+    {
+        return Err(Error::KeyExhausted);
+    }
+
     // Copy secret values out before mutating sk.
     let mut sk_seed = sk[sk_seed_start..sk_seed_start + n].to_vec();
     let mut sk_prf = sk[sk_prf_start..sk_prf_start + n].to_vec();
