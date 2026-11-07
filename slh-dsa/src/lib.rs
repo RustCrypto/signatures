@@ -55,6 +55,8 @@ pub use signature;
 mod address;
 mod fors;
 mod hashes;
+#[cfg(feature = "hazmat")]
+pub mod hazmat;
 mod hypertree;
 mod signature_encoding;
 mod signing_key;

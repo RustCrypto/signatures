@@ -55,5 +55,6 @@ harness = false
 
 [features]
 alloc = []
+hazmat = []
 default = ["alloc", "pkcs8/alloc"]
 zeroize = ["dep:zeroize", "hybrid-array/zeroize"]
