@@ -52,7 +52,7 @@ macro_rules! new_signing_test {
     ($curve:path, $vectors:expr) => {
         use $crate::{
             elliptic_curve::{
-                Curve, CurveArithmetic, FieldBytes, NonZeroScalar, Scalar,
+                Curve, CurveArithmetic, NonZeroScalar, Scalar,
                 array::{Array, typenum::Unsigned},
                 bigint::Encoding,
                 group::ff::PrimeField,
@@ -74,13 +74,7 @@ macro_rules! new_signing_test {
                 let d = decode_scalar(vector.d).expect("invalid vector.d");
                 let k = decode_scalar(vector.k).expect("invalid vector.k");
 
-                assert_eq!(
-                    <$curve as Curve>::FieldBytesSize::USIZE,
-                    vector.m.len(),
-                    "invalid vector.m (must be field-sized digest)"
-                );
-                let z = FieldBytes::<$curve>::try_from(vector.m).unwrap();
-                let sig = sign_prehashed::<$curve>(&d, &k, &z)
+                let sig = sign_prehashed::<$curve>(&d, &k, vector.m)
                     .expect("ECDSA sign failed")
                     .0;
 
