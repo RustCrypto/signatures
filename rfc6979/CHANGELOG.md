@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+### Added
+- `zeroize` feature which zeroizes the HMAC-DRBG state (i.e. `K` and `V`) on drop ([#1472])
+
+[#1472]: https://github.com/RustCrypto/signatures/issues/1472
+
 ## 0.6.0 (2026-06-29)
 ### Changed
 - Replace `generate_k(_mut)` free functions with new `KGenerator` struct ([#1395])
