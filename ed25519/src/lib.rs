@@ -232,10 +232,10 @@
 //!
 //! The following features are presently supported:
 //!
+//! - `alloc` *(default)*: Enable methods which require heap allocation, such as
+//!   [`Signature::to_vec`].
 //! - `pkcs8`: support for decoding/encoding PKCS#8-formatted private keys using the
 //!   [`KeypairBytes`] type.
-//! - `std` *(default)*: Enable `std` support in [`signature`], which currently only affects whether
-//!   [`signature::Error`] implements `std::error::Error`.
 //! - `serde`: Implement `serde::Deserialize` and `serde::Serialize` for [`Signature`]. Signatures
 //!   are serialized as their bytes.
 //! - `serde_bytes`: Implement `serde_bytes::Deserialize` and `serde_bytes::Serialize` for
