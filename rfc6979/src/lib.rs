@@ -85,7 +85,7 @@ where
     /// This may be called repeatedly in the event a particular `k` is unsuitable, e.g. the
     /// resulting `r` value is zero.
     pub fn fill_next_k(&mut self, k: &mut [u8]) {
-        debug_assert_eq!(self.q.bits().div_ceil(8).try_into(), Ok(k.len()));
+        debug_assert_eq!(self.q.bit_width().div_ceil(8).try_into(), Ok(k.len()));
 
         loop {
             self.drbg.fill_bytes(k);
@@ -149,7 +149,7 @@ where
 {
     debug_assert!(!b.is_empty());
 
-    let qlen = q.bits();
+    let qlen = q.bit_width();
     let mut blen = u32::try_from(b.len())
         .ok()
         .and_then(|len| len.checked_mul(8))
@@ -192,7 +192,7 @@ where
 #[allow(clippy::as_conversions)]
 fn int2octets<'a, U: Unsigned>(x: &U, q: &U, out: &'a mut [u8]) -> &'a [u8] {
     debug_assert!(x < q);
-    let qlen = q.bits();
+    let qlen = q.bit_width();
     let rlen = qlen.div_ceil(8) as usize; // NOTE: rlen in RFC is bits; we use bytes
 
     debug_assert!(out.len() >= rlen);

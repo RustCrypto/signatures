@@ -67,7 +67,7 @@ fn bytes2uint(b: &[u8], q: &NonZeroBoxedUint) -> BoxedUint {
 
 #[allow(clippy::as_conversions)]
 fn qlen(q: &NonZeroBoxedUint) -> usize {
-    q.bits().div_ceil(8) as usize
+    q.bit_width().div_ceil(8) as usize
 }
 
 /// Generate a per-message secret number k according to Appendix B.2.1
@@ -81,7 +81,7 @@ pub(crate) fn secret_number<R: TryCryptoRng + ?Sized>(
     components: &Components,
 ) -> Result<Option<(BoxedUint, BoxedUint)>, signature::Error> {
     let q = components.q();
-    let n = q.bits();
+    let n = q.bit_width();
     let q = q.resize(n + 64);
     let q = &q;
 

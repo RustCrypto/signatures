@@ -16,7 +16,7 @@ edition = "2024"
 rust-version = "1.87"
 
 [dependencies]
-bigint = { package = "crypto-bigint", version = "0.7.7", default-features = false }
+bigint = { package = "crypto-bigint", version = "0.7.11", default-features = false }
 hmac = { version = "0.13", default-features = false }
 
 [dev-dependencies]
