@@ -152,7 +152,7 @@ impl SigningKey {
         debug_assert_eq!(key_size.l_aligned(), r.bits_precision());
 
         let r_short = r.clone().resize(key_size.n_aligned());
-        let n = q.bits() / 8;
+        let n = q.bit_width() / 8;
         let block_size = hash.len(); // Hash function output size
 
         let z_len = min(n as usize, block_size);
