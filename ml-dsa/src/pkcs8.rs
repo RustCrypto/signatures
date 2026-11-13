@@ -19,6 +19,7 @@ use pkcs8::{
     der::{
         Encode, TagMode,
         asn1::{BitString, BitStringRef},
+        zeroize::Zeroizing,
     },
     spki::SignatureBitStringEncoding,
 };
@@ -126,7 +127,8 @@ where
             tag_number: SEED_TAG_NUMBER,
             value: OctetStringRef::new(self.as_seed())?,
         }
-        .to_der()?;
+        .to_der()
+        .map(Zeroizing::new)?;
 
         let private_key = OctetStringRef::new(&seed_der)?;
         let private_key_info = PrivateKeyInfoRef::new(P::ALGORITHM_IDENTIFIER, private_key);
