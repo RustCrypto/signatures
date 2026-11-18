@@ -55,7 +55,7 @@ fn l_tree(
 }
 
 /// Computes a root node given a leaf and an auth path.
-fn compute_root(
+pub(crate) fn compute_root(
     params: &XmssParams,
     root: &mut [u8],
     leaf: &[u8],

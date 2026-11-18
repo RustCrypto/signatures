@@ -230,6 +230,44 @@ mod tests {
     }
 
     #[test]
+    fn test_xmssmt_sign_across_tree_boundaries() {
+        // Crosses layer 0 (every 32) and layer 1 (every 1024) tree boundaries.
+        let mut kp = KeyPair::<XmssMtSha2_20_4_256>::generate(&mut rand::rng()).unwrap();
+
+        for i in 0u64..1030 {
+            let msg = i.to_le_bytes();
+            let sig = kp.signing_key().sign_detached(&msg).unwrap();
+
+            // Verify around each layer 0 tree boundary.
+            if i % 32 == 0 || i % 32 == 31 {
+                kp.verifying_key().verify_detached(&sig, &msg).unwrap();
+            }
+        }
+    }
+
+    #[test]
+    fn test_loaded_signing_key_signs_identically() {
+        let mut kp = KeyPair::<XmssSha2_10_256>::generate(&mut rand::rng()).unwrap();
+
+        for i in 0u32..37 {
+            kp.signing_key().sign_detached(&i.to_le_bytes()).unwrap();
+        }
+
+        // A key loaded from bytes signs like the original.
+        let mut loaded_sk =
+            SigningKey::<XmssSha2_10_256>::try_from(kp.signing_key().as_ref()).unwrap();
+        for i in 37u32..80 {
+            let msg = i.to_le_bytes();
+            let original_sig = kp.signing_key().sign_detached(&msg).unwrap();
+            let loaded_sig = loaded_sk.sign_detached(&msg).unwrap();
+            assert_eq!(original_sig, loaded_sig);
+        }
+        kp.verifying_key()
+            .verify_detached(&loaded_sk.sign_detached(b"last").unwrap(), b"last")
+            .unwrap();
+    }
+
+    #[test]
     fn test_verifying_key_from_signing_key() {
         let kp = KeyPair::<XmssSha2_10_256>::generate(&mut rand::rng()).unwrap();
 
