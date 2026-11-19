@@ -88,6 +88,73 @@ where
     }
 }
 
+#[cfg(feature = "zeroize")]
+impl<D> zeroize::Zeroize for HmacDrbg<D>
+where
+    D: OutputSizeUser,
+{
+    fn zeroize(&mut self) {
+        zeroize::Zeroize::zeroize(self.k.as_mut_slice());
+        zeroize::Zeroize::zeroize(self.v.as_mut_slice());
+    }
+}
+
+impl<D> Drop for HmacDrbg<D>
+where
+    D: OutputSizeUser,
+{
+    fn drop(&mut self) {
+        #[cfg(feature = "zeroize")]
+        {
+            zeroize::Zeroize::zeroize(self);
+        }
+    }
+}
+
+#[cfg(feature = "zeroize")]
+impl<D> zeroize::ZeroizeOnDrop for HmacDrbg<D> where D: OutputSizeUser {}
+
+#[cfg(all(test, feature = "zeroize"))]
+mod zeroize_tests {
+    use super::HmacDrbg;
+    use hex_literal::hex;
+    use sha2::Sha256;
+    use zeroize::Zeroize;
+
+    // ECDSA with K-163+SHA-256 (RFC 6979 Appendix A.1).
+    const X: [u8; 21] = hex!("009A4D6792295A7F730FC3F2B49CBC0F62E862272F");
+
+    // NOTE: this input is `SHA256("sample")` with `bits2octets` applied in advance
+    const H: [u8; 21] = hex!("01795EDF0D54DB760F156D0DAC04C0322B3A204224");
+
+    fn assert_zeroize_on_drop<T: zeroize::ZeroizeOnDrop>(_: &T) {}
+
+    #[test]
+    fn hmac_drbg_is_zeroize_on_drop() {
+        let mut drbg = HmacDrbg::<Sha256>::new(&X, &H, &[]);
+        let mut out = [0u8; 21];
+        drbg.fill_bytes(&mut out);
+        assert_ne!(out, [0u8; 21]);
+        assert_zeroize_on_drop(&drbg);
+    }
+
+    #[test]
+    fn hmac_drbg_zeroize_clears_state() {
+        let mut drbg = HmacDrbg::<Sha256>::new(&X, &H, &[]);
+        let mut out = [0u8; 21];
+        drbg.fill_bytes(&mut out);
+
+        // The DRBG state is non-zero after use.
+        assert!(drbg.k.as_slice().iter().any(|&b| b != 0));
+        assert!(drbg.v.as_slice().iter().any(|&b| b != 0));
+
+        drbg.zeroize();
+
+        assert!(drbg.k.as_slice().iter().all(|&b| b == 0));
+        assert!(drbg.v.as_slice().iter().all(|&b| b == 0));
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::HmacDrbg;

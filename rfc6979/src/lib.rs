@@ -108,6 +108,12 @@ where
     }
 }
 
+// NOTE: KGenerator has no Drop impl of its own: dropping it drops the
+// HmacDrbg it owns, which zeroizes the DRBG state when the `zeroize`
+// feature is enabled.
+#[cfg(feature = "zeroize")]
+impl<'a, D, U> zeroize::ZeroizeOnDrop for KGenerator<'a, D, U> where D: OutputSizeUser {}
+
 /// `bits2int` transform as defined in [RFC6979 §2.3.2]: "Bit String to Integer"
 ///
 /// From the RFC:
@@ -399,5 +405,32 @@ mod tests {
             assert_eq!(&actual[..12], &[0u8; 12]);
             assert_eq!(&actual[12..], &h);
         }
+    }
+}
+
+#[cfg(all(test, feature = "zeroize"))]
+mod zeroize_tests {
+    use crate::{KGenerator, bigint::U256};
+    use hex_literal::hex;
+    use hmac::digest::Digest;
+    use sha2::Sha256;
+    use zeroize::ZeroizeOnDrop;
+
+    // Private key for the RFC6979 NIST P256/SHA256 test case (RFC 6979 Appendix A.2.5).
+    // WARNING: never hardcode private keys in real source code!
+    const RFC6979_KEY: [u8; 32] =
+        hex!("C9AFA9D845BA75166B5C215767B1D6934E50C3DB36E89B127B8A622B120F6721");
+
+    // NIST P-256 field modulus
+    const NIST_P256_MODULUS: U256 =
+        U256::from_be_hex("FFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551");
+
+    fn assert_zeroize_on_drop<T: ZeroizeOnDrop>(_: &T) {}
+
+    #[test]
+    fn k_generator_is_zeroize_on_drop() {
+        let h = Sha256::digest(b"sample");
+        let kgen = KGenerator::<Sha256, U256>::new(&RFC6979_KEY, &h, b"", &NIST_P256_MODULUS);
+        assert_zeroize_on_drop(&kgen);
     }
 }
