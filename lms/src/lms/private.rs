@@ -1,6 +1,5 @@
 use crate::constants::{D_INTR, D_LEAF, ID_LEN};
 use crate::error::LmsDeserializeError;
-use crate::lms::error::LmsOutOfPrivateKeys;
 use crate::lms::{LmsMode, Signature, VerifyingKey};
 use crate::ots::SigningKey as OtsPrivateKey;
 use crate::types::{Identifier, Typecode};
@@ -11,8 +10,8 @@ use rand_core::{CryptoRng, TryCryptoRng};
 use signature::{Error, RandomizedMultipartSignerMut, RandomizedSignerMut};
 
 use core::array::TryFromSliceError;
-use std::cmp::Ordering;
-use std::ops::Add;
+use core::cmp::Ordering;
+use core::ops::Add;
 use typenum::{Sum, U28};
 
 /// Opaque struct representing a LMS private key
@@ -122,7 +121,12 @@ impl<Mode: LmsMode> RandomizedMultipartSignerMut<Signature<Mode>> for SigningKey
         msg: &[&[u8]],
     ) -> Result<Signature<Mode>, Error> {
         if self.q >= Mode::LEAVES {
-            return Err(Error::from_source(LmsOutOfPrivateKeys {}));
+            #[cfg(feature = "alloc")]
+            return Err(Error::from_source(
+                crate::lms::error::LmsOutOfPrivateKeys {},
+            ));
+            #[cfg(not(feature = "alloc"))]
+            return Err(Error::new());
         }
 
         let mut ots_priv_key =
@@ -154,7 +158,7 @@ where
     fn from(pk: SigningKey<Mode>) -> Self {
         // Return u32(type) || u32(otstype) || u32(q) || id || seed
         Array::try_from_iter(
-            std::iter::empty()
+            core::iter::empty()
                 .chain(Mode::TYPECODE.to_be_bytes())
                 .chain(Mode::OtsMode::TYPECODE.to_be_bytes())
                 .chain(pk.q.to_be_bytes())

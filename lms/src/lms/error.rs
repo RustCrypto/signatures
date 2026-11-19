@@ -1,7 +1,7 @@
 //! LMS Signing error
 
-use std::error::Error;
-use std::fmt::{Display, Formatter, Result};
+use core::error::Error;
+use core::fmt::{Display, Formatter, Result};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct LmsOutOfPrivateKeys {}
