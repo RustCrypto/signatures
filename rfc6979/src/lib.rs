@@ -70,6 +70,11 @@ where
     /// - `h`: raw hash/digest of input message
     /// - `data`: additional associated data, e.g. CSRNG output used as added entropy
     /// - `q`: field modulus
+    ///
+    /// # Panics
+    ///
+    /// Panics if `x` is shorter than `ceil(q.bits() / 8)` bytes or longer than
+    /// the byte width of `U`. Use [`Self::try_new`] to check input bounds.
     pub fn new(x: &[u8], h: &[u8], data: &[u8], q: &'a U) -> Self {
         // Process `h` through `bits2octets`
         let mut h_scratch = q.to_be_bytes();
@@ -78,6 +83,18 @@ where
 
         let drbg = HmacDrbg::<D>::new(x, h_ref, data);
         Self { drbg, q }
+    }
+
+    /// Initialize a `k` generator, returning `None` if `q` is zero, `h` is empty
+    /// or too long to encode its bit length, or `x` is not exactly
+    /// `ceil(q.bits() / 8)` bytes long, as required for RFC6979 encoding.
+    pub fn try_new(x: &[u8], h: &[u8], data: &[u8], q: &'a U) -> Option<Self> {
+        let x_len = usize::try_from(q.bits().div_ceil(8)).ok()?;
+        u32::try_from(h.len()).ok()?.checked_mul(8)?;
+        if q.is_zero().to_bool() || h.is_empty() || x.len() != x_len {
+            return None;
+        }
+        Some(Self::new(x, h, data, q))
     }
 
     /// Generate a candidate `k` value.

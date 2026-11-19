@@ -316,8 +316,15 @@ impl<'a> TryFrom<PrivateKeyInfoRef<'a>> for SigningKey {
             .and_then(der::asn1::BitStringRef::as_bytes)
         {
             let y = UintRef::from_der(y_bytes)?;
-            BoxedUint::from_be_slice(y.as_bytes(), precision)
-                .map_err(|_| pkcs8::KeyError::Invalid)?
+            let y = BoxedUint::from_be_slice(y.as_bytes(), precision)
+                .map_err(|_| pkcs8::KeyError::Invalid)?;
+            let expected_y = generate::public_component(&components, &x)
+                .into_option()
+                .ok_or(pkcs8::KeyError::Invalid)?;
+            if y != *expected_y {
+                return Err(pkcs8::KeyError::Invalid.into());
+            }
+            y
         } else {
             generate::public_component(&components, &x)
                 .into_option()
